@@ -1,0 +1,16 @@
+:root {
+  color-scheme: light;
+  --color-forest: #24483d;
+  --color-leaf: #739b63;
+  --color-sun: #f2c65d;
+  --color-canvas: #f3efe1;
+  --color-board: #d6c7a4;
+  --color-ink: #26352d;
+  --color-muted: #718078;
+  --color-locked: #8d9a91;
+  --font-ui: "Trebuchet MS", "Segoe UI", sans-serif;
+  --board-columns: 7;
+  --board-rows: 9;
+  --cell-gap: 4px;
+  --radius-panel: 12px;
+}

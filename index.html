@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Merge Camping Game - 45 Levels</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-app">
+        <!-- HEADER: Thông số người chơi & Cài đặt -->
+        <header id="game-header">
+            <div class="stat-box energy-box" id="btn-refill-energy" title="Bấm để mở Trạm Tiếp Năng Lượng">
+                ⚡ <span id="energy-val">100</span>
+                <small id="energy-timer" class="regen-timer"></small>
+                <small class="plus-btn">+</small>
+            </div>
+            <div class="stat-box coin-box" id="btn-coin-shop" title="Xu tích lũy">💰 <span id="coin-val">100</span></div>
+            <div class="stat-box gem-box" id="btn-gem-shop" title="Kim cương nhận từ Sổ Tay Sưu Tập">💎 <span id="gem-val">20</span></div>
+            <button id="btn-settings" class="icon-header-btn" title="Cài đặt trò chơi">⚙️</button>
+        </header>
+
+        <!-- THANH ĐIỀU KHIỂN BẢN ĐỒ LEVEL & AUTO -->
+        <section id="level-test-bar">
+            <button id="btn-world-map" class="nav-btn map-btn" title="Mở Bản Đồ Hành Trình 45 Màn">🗺️ Bản đồ</button>
+            <button id="btn-prev-lv" class="nav-btn" title="Level trước">◀</button>
+            <select id="level-select"></select>
+            <button id="btn-next-lv" class="nav-btn" title="Level tiếp theo">▶</button>
+            <button id="btn-reset-lv" class="nav-btn reset-btn" title="Chơi lại màn này">🔄</button>
+            <button id="btn-toggle-auto" class="nav-btn auto-btn" title="Bật/Tắt Tự động sinh đồ (chế độ debug)">⚡ AUTO: OFF</button>
+        </section>
+
+        <!-- BẢNG NHIỆM VỤ / ĐƠN HÀNG CỦA LEVEL & AVATAR HƯỚNG DẪN -->
+        <section id="level-goals-bar">
+            <div class="goals-left">
+                <div id="npc-guide-wrap" class="npc-guide-wrap">
+                    <button id="npc-avatar-btn" class="npc-avatar-btn" title="Chạm vào nhân vật để trò chuyện & xem gợi ý">
+                        <img id="npc-avatar-img" class="npc-avatar-img" src="assets/images/items/avata_gau.png" alt="NPC">
+                        <span id="npc-mood-dot" class="npc-mood-dot">💡</span>
+                    </button>
+                    <div id="npc-speech-bubble" class="npc-speech-bubble" style="display:none">
+                        <div id="npc-speaker-name" class="npc-speaker-name">🐻 Gấu Nâu</div>
+                        <div id="npc-speech-text" class="npc-speech-text"></div>
+                    </div>
+                </div>
+                <div id="orders-container"></div>
+            </div>
+            <div class="goals-right">
+                <div class="web-counter">🕸️ Nhện: <span id="web-count">0</span></div>
+                <div id="level-status-msg">Đang chơi</div>
+            </div>
+        </section>
+
+        <!-- MAIN: Bàn cờ 7x9 -->
+        <main class="board-container">
+            <div id="grid-board"></div>
+        </main>
+
+        <!-- FOOTER: Khu Trại, Sổ Tay Sưu Tập, Bán vật phẩm -->
+        <footer id="game-footer">
+            <button id="btn-camp" class="footer-btn">⛺ KHU TRẠI</button>
+            <button id="btn-book" class="footer-btn book-btn">
+                📖 SỔ TAY <span id="book-badge" class="badge-dot" style="display:none">0</span>
+            </button>
+            <button id="btn-sell" class="disabled">
+                🗑️ BÁN (💰 <span id="sell-price">0</span>)
+            </button>
+        </footer>
+    </div>
+    
+    <script src="js/data.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/progress.js"></script>
+    <script src="js/camp.js"></script>
+    <script src="js/components/board.js"></script>
+</body>
+</html>

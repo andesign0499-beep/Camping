@@ -1,0 +1,37 @@
+﻿.game-board {
+  display: grid;
+  width: min(100%, 560px);
+  aspect-ratio: 7 / 9;
+  grid-template-columns: repeat(var(--board-columns), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--board-rows), minmax(0, 1fr));
+  gap: var(--cell-gap);
+  margin: 0 auto;
+  padding: 8px;
+  border-radius: var(--radius-panel);
+  background: var(--color-board);
+}
+
+.board-cell {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: #f4e8c8;
+  color: var(--color-ink);
+  font-size: clamp(0.7rem, 3vw, 1.4rem);
+  cursor: pointer;
+}
+
+.board-cell.is-locked {
+  background: var(--color-locked);
+  color: #fff;
+  cursor: not-allowed;
+}
+
+.board-cell:focus-visible {
+  outline: 3px solid var(--color-sun);
+  outline-offset: 1px;
+}
+

@@ -1,0 +1,21 @@
+.modal-root:empty {
+  display: none;
+}
+
+.modal-root:not(:empty) {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(20 32 26 / 58%);
+}
+
+.modal-panel {
+  width: min(100%, 440px);
+  padding: 24px;
+  border-radius: var(--radius-panel);
+  background: var(--color-canvas);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 24%);
+}

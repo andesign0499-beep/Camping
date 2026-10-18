@@ -1,0 +1,52 @@
+.game-header {
+  display: flex;
+  min-height: 76px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px max(20px, calc((100vw - 1040px) / 2));
+  background: var(--color-forest);
+  color: #fff;
+}
+
+.player-summary,
+.resource-list {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-avatar {
+  display: grid;
+  width: 44px;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-sun);
+  color: var(--color-forest);
+  font-weight: 700;
+}
+
+.player-level,
+.resource-value {
+  font-weight: 700;
+}
+
+.resource {
+  display: grid;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .game-header {
+    min-height: 64px;
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
+  .resource-list,
+  .player-summary {
+    gap: 8px;
+  }
+}

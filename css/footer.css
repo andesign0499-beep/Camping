@@ -1,0 +1,24 @@
+.game-footer {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--color-forest);
+}
+
+.game-footer button {
+  min-width: 88px;
+  padding: 9px 14px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.game-footer button:hover,
+.game-footer button:focus-visible {
+  background: rgb(255 255 255 / 14%);
+}

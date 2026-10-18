@@ -1,0 +1,47 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+}
+
+button {
+  font: inherit;
+}
+
+.game-shell {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+.game-layout {
+  display: grid;
+  width: min(100%, 1080px);
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 20px;
+  align-items: start;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.board-panel,
+.orders-panel {
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .game-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+}
