@@ -16,6 +16,7 @@ function defaultSave() {
         claimedBook: {},
         settings: {
             sound: true,
+            bgm: true,
             vibrate: true,
             unlockAllLevels: false
         },
@@ -88,15 +89,15 @@ function itemUnits(id) {
     return Math.pow(2, lv - 1);
 }
 
-// Giá bán = đúng giá trị năng lượng đã bỏ ra (1 xu / 1 đơn vị)
-function sellPrice(id) { return itemUnits(id); }
+// Giá bán hào phóng giúp người chơi thoải mái thu Vàng khi dọn bàn
+function sellPrice(id) { return 5 * itemUnits(id); }
 
-// Thưởng khi nộp đơn hàng
-function orderReward(id) { return 5 * itemUnits(id); }
+// Thưởng Vàng dồi dào khi nộp đơn hàng
+function orderReward(id) { return 15 * itemUnits(id); }
 
 // Shop năng lượng
 var ENERGY_PACK = 50;
-var ENERGY_PACK_PRICE = 60;
+var ENERGY_PACK_PRICE = 120;
 var GEM_ENERGY_PACK = 100;
 var GEM_ENERGY_PRICE = 5;
 
@@ -208,10 +209,10 @@ function getItemDisplayName(id) {
     return (chain.names[lv - 1] || id) + ' (Lv.' + lv + ')';
 }
 
-// Thưởng khi mở khóa lần đầu trong Sổ Tay: trả về { coins, gems }
+// Thưởng khi mở khóa lần đầu trong Cẩm Nang: trả về { coins, gems }
 function getBookReward(id) {
     var lv = parseInt(String(id).split('_lv')[1]) || 1;
-    var coins = lv * 8;
+    var coins = lv * 25;
     var gems = lv >= 7 ? 3 : (lv >= 5 ? 1 : 0);
     return { coins: coins, gems: gems };
 }

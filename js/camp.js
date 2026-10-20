@@ -3,11 +3,15 @@
 // 1. Toast thông báo mượt (thay thế alert)
 // 2. Màn hình Chiến Thắng (Win Modal)
 // 3. Khu Cắm Trại Tương Tác (Camp Modal)
-// 4. Cửa Hàng Năng Lượng & Cứu Trợ Kiểm Lâm (Energy Shop Modal - thay thế confirm)
-// 5. Sổ Tay Sưu Tập 72 Vật Phẩm (Discovery Book Modal)
+// 4. Cửa Hàng Năng Lượng & Cứu Trợ Kiểm Lâm (Energy Shop Modal)
+// 5. Cẩm Nang Sưu Tập 72 Vật Phẩm (Discovery Book Modal)
 // 6. Bản Đồ Hành Trình 45 Màn Chơi (World Map Modal)
-// 7. Cài Đặt Hệ Thống (Settings Modal)
+// 7. Cài Đặt Hệ Thống & Chọn Màn Chơi (Settings Modal)
 // ==========================================
+
+var ICON_GOLD_HTML = '<img class="inline-ui-icon" src="assets/images/ui/icon_glod.png" alt="Vàng">';
+var ICON_RUBY_HTML = '<img class="inline-ui-icon" src="assets/images/ui/icon_ruby.png" alt="Kim cương">';
+var ICON_ENERGY_HTML = '<img class="inline-ui-icon" src="assets/images/ui/icon_nangluong.png" alt="Năng lượng">';
 
 function closeModal() {
     var m = document.getElementById('modal-overlay');
@@ -16,7 +20,6 @@ function closeModal() {
 
 function createModal(innerHtml, extraClass) {
     closeModal();
-    // Ẩn ngay mọi toast, bong bóng thoại NPC và bàn tay hướng dẫn để không bao giờ chồng 2 popup
     var oldToast = document.getElementById('game-toast');
     if (oldToast) oldToast.remove();
     if (typeof hideNpcBubble === 'function') hideNpcBubble();
@@ -38,9 +41,6 @@ function showToast(msg, bg) {
     var old = document.getElementById('game-toast');
     if (old) old.remove();
     if (toastTimer) clearTimeout(toastTimer);
-
-    // Khi hiện Toast thì ẩn bong bóng thoại NPC để tránh 2 thông báo chồng nhau
-    if (typeof hideNpcBubble === 'function') hideNpcBubble();
 
     var t = document.createElement('div');
     t.id = 'game-toast';
@@ -66,14 +66,17 @@ function showWinModal(info, onReplay, onNext) {
             (info.firstTime ? '🎉 Mở khóa vật trang trí mới:' : 'Vật trang trí màn này:') +
             '<div class="win-decor-item">' + info.decor[1] + ' ' + info.decor[2] + '</div></div>';
     }
-    var gemText = info.gems > 0 ? ' &nbsp;+' + info.gems + ' 💎' : '';
+    var gemText = info.gems > 0 ? ' &nbsp;+' + info.gems + ' ' + ICON_RUBY_HTML : '';
 
     var overlay = createModal(
         '<div class="modal-title">🎉 HOÀN THÀNH!</div>' +
         '<div class="modal-sub">Level ' + info.level + ': ' + info.name + '</div>' +
         '<div class="win-stars">' + starsHtml + '</div>' +
-        '<div class="win-coins">+' + info.coins + ' 💰' + gemText +
+        '<div class="win-coins">+' + info.coins + ' ' + ICON_GOLD_HTML + gemText +
             (info.firstTime ? '' : ' <small>(chơi lại)</small>') + '</div>' +
+        '<div class="win-ad-banner">' +
+            '<button class="modal-btn gem-btn" id="mb-double-ad">🎬 x2 Vàng (+' + info.coins + ' ' + ICON_GOLD_HTML + ')</button>' +
+        '</div>' +
         decorHtml +
         '<div class="modal-buttons">' +
             '<button class="modal-btn" id="mb-camp">⛺ Khu trại</button>' +
@@ -81,6 +84,25 @@ function showWinModal(info, onReplay, onNext) {
             (info.hasNext ? '<button class="modal-btn primary" id="mb-next">Màn tiếp ▶</button>' : '') +
         '</div>'
     );
+
+    var doubleBtn = overlay.querySelector('#mb-double-ad');
+    if (doubleBtn) {
+        doubleBtn.onclick = function () {
+            simulateWatchAd('Nhân Đôi Vàng Thưởng Màn Chơi (+' + info.coins + ' 🪙)', function () {
+                if (typeof playerCoins !== 'undefined') playerCoins += info.coins;
+                if (typeof updateUIStats === 'function') updateUIStats();
+                if (typeof playSound === 'function') playSound('win');
+                var coinEl = document.getElementById('btn-coin-shop') || document.body;
+                if (typeof spawnFlyingCurrency === 'function') spawnFlyingCurrency(coinEl, 'gold', Math.min(info.coins, 100));
+                showToast('🎉 Đã x2 Vàng thành công: +' + info.coins + ' Vàng!', '#2e7d32');
+                if (doubleBtn) {
+                    doubleBtn.className = 'modal-btn disabled-btn';
+                    doubleBtn.innerText = '✅ Đã x2 Thưởng';
+                    doubleBtn.disabled = true;
+                }
+            });
+        };
+    }
 
     overlay.querySelector('#mb-replay').onclick = function () { closeModal(); onReplay(); };
     overlay.querySelector('#mb-camp').onclick = function () {
@@ -137,8 +159,194 @@ function openCamp(highlightLevel, onBack) {
     };
 }
 
-// ---------- 4. CỬA HÀNG NĂNG LƯỢNG & CỨU TRỢ (THAY THẾ CONFIRM) ----------
-// opts: { energy, budget, coins, gems, secLeft, onBuyCoins, onBuyGems, onRescue }
+// ==========================================
+// ĐỊNH NGHĨA KINH TẾ IAP, QUẢNG CÁO & CỬA HÀNG
+// ==========================================
+var GEM_IAP_PACKS = [
+    {
+        id: 'gem_tier_1',
+        name: 'Túi Kim Cương Nhỏ',
+        gems: 80,
+        bonusGems: 0,
+        priceVnd: '25.000 ₫',
+        badge: null,
+        desc: 'Hồi nhanh năng lượng khẩn cấp'
+    },
+    {
+        id: 'gem_tier_2',
+        name: 'Túi Kim Cương Vừa',
+        gems: 500,
+        bonusGems: 50,
+        priceVnd: '129.000 ₫',
+        badge: '+10% THÊM',
+        desc: 'Tặng thêm +50 💎 khuyến mãi'
+    },
+    {
+        id: 'gem_tier_3',
+        name: 'Rương Kim Cương',
+        gems: 1200,
+        bonusGems: 200,
+        priceVnd: '249.000 ₫',
+        badge: '⭐ PHỔ BIẾN NHẤT',
+        isPopular: true,
+        desc: 'Gói nạp tối ưu chi phí & giá trị'
+    },
+    {
+        id: 'gem_tier_4',
+        name: 'Thùng Châu Báu',
+        gems: 3000,
+        bonusGems: 600,
+        priceVnd: '599.000 ₫',
+        badge: '🔥 SIÊU HỜI +20%',
+        desc: 'Tặng thêm +600 💎 cực lớn'
+    },
+    {
+        id: 'gem_tier_5',
+        name: 'Kho Báu Hoàng Gia',
+        gems: 6500,
+        bonusGems: 1500,
+        priceVnd: '1.199.000 ₫',
+        badge: '👑 VIP WHALE',
+        desc: 'Gói siêu cấp dành cho VIP (+1.500 💎)'
+    }
+];
+
+var STARTER_PACK = {
+    id: 'starter_pack',
+    name: 'Gói Tân Thủ Khởi Đầu',
+    gems: 250,
+    coins: 2000,
+    energy: 100,
+    priceVnd: '49.000 ₫',
+    badge: '🔥 GIẢM 80% (CHỈ MUA 1 LẦN)',
+    isStarter: true,
+    desc: 'Bao gồm +250 💎, +2.000 🪙 & +100 ⚡ Năng lượng'
+};
+
+var COIN_PACKS = [
+    {
+        id: 'coin_pack_1',
+        name: 'Túi Vàng Nhỏ',
+        coins: 1000,
+        gemCost: 10,
+        desc: 'Đổi từ 10 Kim Cương'
+    },
+    {
+        id: 'coin_pack_2',
+        name: 'Rương Vàng Lớn',
+        coins: 5500,
+        gemCost: 50,
+        badge: '⭐ TIẾT KIỆM 10%',
+        desc: 'Đổi từ 50 Kim Cương (Tặng thêm +500 Vàng)'
+    },
+    {
+        id: 'coin_pack_3',
+        name: 'Kho Vàng Hoàng Gia',
+        coins: 12000,
+        gemCost: 100,
+        badge: '🔥 SIÊU LỜI +20%',
+        desc: 'Đổi từ 100 Kim Cương (Tặng thêm +2.000 Vàng)'
+    }
+];
+
+// ---------- MÔ PHỎNG XEM QUẢNG CÁO (REWARDED AD) ----------
+function simulateWatchAd(title, onReward) {
+    var timerVal = 3;
+    var overlay = createModal(
+        '<div class="ad-sim-container">' +
+            '<div class="ad-sim-topbar">' +
+                '<span class="ad-sponsor-tag">🎬 QUẢNG CÁO TÀI TRỢ</span>' +
+                '<span id="ad-sim-timer" class="ad-sim-timer">Bỏ qua sau 3s</span>' +
+            '</div>' +
+            '<div class="ad-sim-viewport">' +
+                '<div class="ad-sim-badge">CAMPING MERGE ADVENTURE</div>' +
+                '<div class="ad-sim-icon-glow">🏕️✨</div>' +
+                '<div class="ad-sim-title">' + (title || 'Đang phát video tài trợ...') + '</div>' +
+                '<div class="ad-sim-sub">Cảm ơn bạn đã xem quảng cáo ủng hộ trò chơi!</div>' +
+                '<div class="ad-sim-pbar-wrap">' +
+                    '<div id="ad-sim-pbar" class="ad-sim-pbar"></div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="ad-sim-bottom">' +
+                '<button class="modal-btn disabled-btn" id="ad-sim-action" disabled>⏳ Đang phát (3s)...</button>' +
+            '</div>' +
+        '</div>',
+        'ad-sim-box'
+    );
+
+    var pbar = overlay.querySelector('#ad-sim-pbar');
+    var timerEl = overlay.querySelector('#ad-sim-timer');
+    var actionBtn = overlay.querySelector('#ad-sim-action');
+
+    setTimeout(function () {
+        if (pbar) pbar.style.width = '100%';
+    }, 50);
+
+    var countdownInterval = setInterval(function () {
+        timerVal--;
+        if (timerVal > 0) {
+            if (timerEl) timerEl.innerText = 'Bỏ qua sau ' + timerVal + 's';
+            if (actionBtn) actionBtn.innerText = '⏳ Đang phát (' + timerVal + 's)...';
+        } else {
+            clearInterval(countdownInterval);
+            if (timerEl) timerEl.innerText = '✅ Hoàn tất';
+            if (actionBtn) {
+                actionBtn.className = 'modal-btn primary';
+                actionBtn.disabled = false;
+                actionBtn.innerText = '🎁 NHẬN THƯỞNG NGAY';
+                actionBtn.onclick = function () {
+                    closeModal();
+                    if (onReward) onReward();
+                };
+            }
+        }
+    }, 800);
+}
+
+// ---------- MÔ PHỎNG MUA IAP (APPLE STORE / GOOGLE PLAY) ----------
+function simulateBuyIAP(pack, onConfirm) {
+    var overlay = createModal(
+        '<div class="iap-dialog-container">' +
+            '<div class="iap-header">' +
+                '<span class="iap-store-badge"> App Store / Google Play</span>' +
+                '<div class="iap-title">Xác Nhận Mua Gói IAP</div>' +
+            '</div>' +
+            '<div class="iap-pack-banner">' +
+                '<div class="iap-pack-name">💎 ' + pack.name + '</div>' +
+                (pack.badge ? '<span class="iap-pack-badge">' + pack.badge + '</span>' : '') +
+            '</div>' +
+            '<div class="iap-body">' +
+                '<div class="iap-row">' +
+                    '<span>Kim cương nhận:</span>' +
+                    '<b style="color:#0288d1">+' + (pack.gems + (pack.bonusGems || 0)).toLocaleString('vi-VN') + ' ' + ICON_RUBY_HTML + '</b>' +
+                '</div>' +
+                (pack.coins ? '<div class="iap-row"><span>Vàng kèm theo:</span> <b style="color:#f57f17">+' + pack.coins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</b></div>' : '') +
+                (pack.energy ? '<div class="iap-row"><span>Năng lượng tức thì:</span> <b style="color:#2e7d32">+' + pack.energy + ' ' + ICON_ENERGY_HTML + '</b></div>' : '') +
+                '<div class="iap-row price-row">' +
+                    '<span>Tổng giá thanh toán:</span>' +
+                    '<b class="iap-price-val">' + pack.priceVnd + '</b>' +
+                '</div>' +
+            '</div>' +
+            '<div class="iap-mock-notice">' +
+                '<small>💡 Đây là giao diện giả lập nạp IAP theo yêu cầu. Nhấn "Thanh Toán" để cộng ngay vật phẩm vào tài khoản!</small>' +
+            '</div>' +
+            '<div class="modal-buttons">' +
+                '<button class="modal-btn" id="btn-iap-cancel">Hủy Bỏ</button>' +
+                '<button class="modal-btn primary" id="btn-iap-pay">Thanh Toán</button>' +
+            '</div>' +
+        '</div>',
+        'iap-box'
+    );
+
+    overlay.querySelector('#btn-iap-cancel').onclick = closeModal;
+    overlay.querySelector('#btn-iap-pay').onclick = function () {
+        closeModal();
+        if (onConfirm) onConfirm(pack);
+    };
+}
+
+// ---------- 4A. CỬA HÀNG NĂNG LƯỢNG & CỨU TRỢ (TRẠM TIẾP NĂNG LƯỢNG) ----------
+// opts: { energy, budget, coins, gems, secLeft, onBuyCoins, onBuyGems, onWatchAd, onRescue, onOpenGemShop }
 function showEnergyShopModal(opts) {
     var canCoin = opts.coins >= ENERGY_PACK_PRICE;
     var canGem = opts.gems >= GEM_ENERGY_PRICE;
@@ -148,42 +356,62 @@ function showEnergyShopModal(opts) {
         ? '<div class="shop-card rescue-card">' +
             '<div class="shop-card-left">' +
                 '<div class="shop-card-title">🏕️ Cứu Trợ Kiểm Lâm</div>' +
-                '<div class="shop-card-desc">Hỗ trợ khẩn cấp khi bạn cạn năng lượng (+20 ⚡)</div>' +
+                '<div class="shop-card-desc">Hỗ trợ khẩn cấp khi bạn cạn năng lượng (+20 ' + ICON_ENERGY_HTML + ')</div>' +
             '</div>' +
             '<button class="modal-btn primary" id="btn-shop-rescue">MIỄN PHÍ</button>' +
           '</div>'
         : '';
 
     var overlay = createModal(
-        '<div class="modal-title">⚡ TRẠM TIẾP NĂNG LƯỢNG</div>' +
-        '<div id="shop-status-bar" class="modal-sub">Hiện có: <b>' + opts.energy + ' ⚡</b> &nbsp;|&nbsp; <b>' + opts.coins + ' 💰</b> &nbsp;|&nbsp; <b>' + opts.gems + ' 💎</b><br>' +
-            '<small>⏳ Tự động hồi +1 ⚡ sau mỗi ' + ENERGY_REGEN_SEC + ' giây (còn ' + opts.secLeft + 's)</small></div>' +
-        '<div class="shop-list">' +
-            '<div class="shop-card">' +
+        '<div class="modal-title">' + ICON_ENERGY_HTML + ' TRẠM TIẾP NĂNG LƯỢNG</div>' +
+        '<div id="shop-status-bar" class="modal-sub">' +
+            'Hiện có: <b>' + opts.energy + ' ' + ICON_ENERGY_HTML + '</b> &nbsp;|&nbsp; ' +
+            '<b>' + opts.coins + ' ' + ICON_GOLD_HTML + '</b> &nbsp;|&nbsp; ' +
+            '<b>' + opts.gems + ' ' + ICON_RUBY_HTML + '</b><br>' +
+            '<small>⏳ Tự động hồi +1 năng lượng sau mỗi ' + ENERGY_REGEN_SEC + ' giây (còn ' + opts.secLeft + 's)</small>' +
+        '</div>' +
+        '<div class="shop-scroll">' +
+            // 1. Instant Skip Cooldown bằng Kim Cương
+            '<div class="shop-card popular-card">' +
+                '<span class="shop-badge popular">⚡ KHÔNG CẦN CHỜ</span>' +
                 '<div class="shop-card-left">' +
-                    '<div class="shop-card-title">⚡ Gói Năng Lượng Vừa (+' + ENERGY_PACK + ' ⚡)</div>' +
-                    '<div class="shop-card-desc">Dùng xu tích lũy từ bán đồ & đơn hàng</div>' +
+                    '<div class="shop-card-title">' + ICON_RUBY_HTML + ' Nạp Siêu Tốc (+' + GEM_ENERGY_PACK + ' ' + ICON_ENERGY_HTML + ')</div>' +
+                    '<div class="shop-card-desc">Bỏ qua thời gian chờ, nạp đầy vượt trần ngay tức thì!</div>' +
                 '</div>' +
-                '<button class="modal-btn ' + (canCoin ? 'primary' : 'disabled-btn') + '" id="btn-shop-coin">' + ENERGY_PACK_PRICE + ' 💰</button>' +
+                '<button class="modal-btn ' + (canGem ? 'gem-btn' : 'disabled-btn') + '" id="btn-shop-gem">' + GEM_ENERGY_PRICE + ' ' + ICON_RUBY_HTML + '</button>' +
             '</div>' +
+            // 2. Xem Ads nhận miễn phí
+            '<div class="shop-card">' +
+                '<span class="shop-badge best">MIỄN PHÍ 🎬</span>' +
+                '<div class="shop-card-left">' +
+                    '<div class="shop-card-title">🎬 Tiếp Tế Nhanh (+25 ' + ICON_ENERGY_HTML + ')</div>' +
+                    '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay 25 năng lượng miễn phí</div>' +
+                '</div>' +
+                '<button class="modal-btn primary" id="btn-shop-ad">XEM ADS</button>' +
+            '</div>' +
+            // 3. Đổi Vàng
             '<div class="shop-card">' +
                 '<div class="shop-card-left">' +
-                    '<div class="shop-card-title">💎 Gói Siêu Tốc (+' + GEM_ENERGY_PACK + ' ⚡)</div>' +
-                    '<div class="shop-card-desc">Dùng kim cương nhận từ Sổ Tay Sưu Tập</div>' +
+                    '<div class="shop-card-title">' + ICON_ENERGY_HTML + ' Gói Năng Lượng Vừa (+' + ENERGY_PACK + ')</div>' +
+                    '<div class="shop-card-desc">Dùng Vàng từ ghép đồ, bán đồ hoặc nộp đơn</div>' +
                 '</div>' +
-                '<button class="modal-btn ' + (canGem ? 'gem-btn' : 'disabled-btn') + '" id="btn-shop-gem">' + GEM_ENERGY_PRICE + ' 💎</button>' +
+                '<button class="modal-btn ' + (canCoin ? 'primary' : 'disabled-btn') + '" id="btn-shop-coin">' + ENERGY_PACK_PRICE + ' ' + ICON_GOLD_HTML + '</button>' +
             '</div>' +
             rescueHtml +
         '</div>' +
+        '<div class="shop-footer-action">' +
+            '<button class="modal-btn gem-btn" id="btn-goto-gemshop" style="width:100%;margin-bottom:8px">💎 Mua Thêm Kim Cương (IAP) ▶</button>' +
+        '</div>' +
         '<div class="modal-buttons">' +
             '<button class="modal-btn" id="mb-close">Đóng</button>' +
-        '</div>'
+        '</div>',
+        'shop-box'
     );
 
     var shopStatusBar = overlay.querySelector('#shop-status-bar');
     overlay.querySelector('#btn-shop-coin').onclick = function () {
         if (!canCoin) {
-            if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">❌ Chưa đủ ' + ENERGY_PACK_PRICE + ' xu! Hãy nộp đơn hoặc bán bớt đồ.</b>';
+            if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">❌ Chưa đủ ' + ENERGY_PACK_PRICE + ' Vàng! Hãy ghép đồ (Lv.3+), nộp đơn hoặc bán đồ nhé.</b>';
             return;
         }
         closeModal();
@@ -191,12 +419,19 @@ function showEnergyShopModal(opts) {
     };
     overlay.querySelector('#btn-shop-gem').onclick = function () {
         if (!canGem) {
-            if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">❌ Chưa đủ ' + GEM_ENERGY_PRICE + ' kim cương! Hãy mở Sổ Tay nhận thưởng.</b>';
+            if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">❌ Chưa đủ ' + GEM_ENERGY_PRICE + ' Kim cương! Hãy nạp thêm Kim Cương để bỏ qua thời gian chờ nhé.</b>';
             return;
         }
         closeModal();
         opts.onBuyGems();
     };
+    var adBtn = overlay.querySelector('#btn-shop-ad');
+    if (adBtn) {
+        adBtn.onclick = function () {
+            closeModal();
+            opts.onWatchAd();
+        };
+    }
     var rescueBtn = overlay.querySelector('#btn-shop-rescue');
     if (rescueBtn) {
         rescueBtn.onclick = function () {
@@ -204,10 +439,217 @@ function showEnergyShopModal(opts) {
             opts.onRescue();
         };
     }
+    var gotoGemBtn = overlay.querySelector('#btn-goto-gemshop');
+    if (gotoGemBtn) {
+        gotoGemBtn.onclick = function () {
+            closeModal();
+            if (opts.onOpenGemShop) opts.onOpenGemShop();
+        };
+    }
     overlay.querySelector('#mb-close').onclick = closeModal;
 }
 
-// ---------- 5. SỔ TAY SƯU TẬP 72 VẬT PHẨM ----------
+// ---------- 4B. CỬA HÀNG KIM CƯƠNG IAP (MÔ PHỎNG) ----------
+function showGemShopModal(opts) {
+    var isStarterBought = !!SAVE.starterPackBought;
+
+    var starterHtml = !isStarterBought
+        ? '<div class="shop-card starter-card">' +
+            '<span class="shop-badge best">🔥 GIẢM 80% - CHỈ MUA 1 LẦN</span>' +
+            '<div class="shop-card-left">' +
+                '<div class="shop-card-title">🎒 Gói Tân Thủ Khởi Đầu</div>' +
+                '<div class="shop-card-desc">+250 ' + ICON_RUBY_HTML + ' &nbsp;+2.000 ' + ICON_GOLD_HTML + ' &nbsp;+100 ' + ICON_ENERGY_HTML + '</div>' +
+            '</div>' +
+            '<button class="modal-btn danger-btn" id="btn-buy-starter">49.000 ₫</button>' +
+          '</div>'
+        : '';
+
+    var packsHtml = '';
+    GEM_IAP_PACKS.forEach(function (p) {
+        var total = p.gems + (p.bonusGems || 0);
+        var badgeHtml = p.badge
+            ? '<span class="shop-badge ' + (p.isPopular ? 'popular' : 'best') + '">' + p.badge + '</span>'
+            : '';
+        var cls = 'shop-card' + (p.isPopular ? ' popular-card' : '');
+        packsHtml += '<div class="' + cls + '">' +
+            badgeHtml +
+            '<div class="shop-card-left">' +
+                '<div class="shop-card-title">' + ICON_RUBY_HTML + ' ' + p.name + ' (+' + total.toLocaleString('vi-VN') + ')</div>' +
+                '<div class="shop-card-desc">' + p.desc + (p.bonusGems ? ' (Gốc ' + p.gems + ' + Thưởng ' + p.bonusGems + ' 💎)' : '') + '</div>' +
+            '</div>' +
+            '<button class="modal-btn gem-btn btn-buy-pack" data-id="' + p.id + '">' + p.priceVnd + '</button>' +
+        '</div>';
+    });
+
+    var overlay = createModal(
+        '<div class="modal-title">💎 CỬA HÀNG KIM CƯƠNG (IAP)</div>' +
+        '<div id="gem-status-bar" class="modal-sub">' +
+            'Số dư: <b>' + opts.gems + ' ' + ICON_RUBY_HTML + '</b> &nbsp;|&nbsp; ' +
+            '<b>' + opts.coins + ' ' + ICON_GOLD_HTML + '</b> &nbsp;|&nbsp; ' +
+            '<b>' + opts.energy + ' ' + ICON_ENERGY_HTML + '</b><br>' +
+            '<small>✨ Dùng Kim Cương để nạp đầy năng lượng siêu tốc không cần chờ đợi!</small>' +
+        '</div>' +
+        '<div class="shop-scroll">' +
+            starterHtml +
+            '<div class="shop-card">' +
+                '<span class="shop-badge best">MIỄN PHÍ 🎬</span>' +
+                '<div class="shop-card-left">' +
+                    '<div class="shop-card-title">🎁 Quà Nhà Tài Trợ (+10 ' + ICON_RUBY_HTML + ')</div>' +
+                    '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay 10 Kim cương miễn phí</div>' +
+                '</div>' +
+                '<button class="modal-btn primary" id="btn-gem-ad">XEM ADS</button>' +
+            '</div>' +
+            '<div class="shop-section-title">Danh Sách Gói Nạp IAP</div>' +
+            packsHtml +
+        '</div>' +
+        '<div class="modal-buttons">' +
+            '<button class="modal-btn" id="mb-close">Đóng</button>' +
+        '</div>',
+        'shop-box'
+    );
+
+    var starterBtn = overlay.querySelector('#btn-buy-starter');
+    if (starterBtn) {
+        starterBtn.onclick = function () {
+            closeModal();
+            opts.onBuyIAP(STARTER_PACK);
+        };
+    }
+
+    var adBtn = overlay.querySelector('#btn-gem-ad');
+    if (adBtn) {
+        adBtn.onclick = function () {
+            closeModal();
+            opts.onWatchAd();
+        };
+    }
+
+    overlay.querySelectorAll('.btn-buy-pack').forEach(function (btn) {
+        btn.onclick = function () {
+            var id = btn.dataset.id;
+            var pack = GEM_IAP_PACKS.find(function (p) { return p.id === id; });
+            if (pack) {
+                closeModal();
+                opts.onBuyIAP(pack);
+            }
+        };
+    });
+
+    overlay.querySelector('#mb-close').onclick = closeModal;
+}
+
+// ---------- 4C. NGÂN HÀNG VÀNG ----------
+function showCoinShopModal(opts) {
+    var packsHtml = '';
+    COIN_PACKS.forEach(function (p) {
+        var badgeHtml = p.badge ? '<span class="shop-badge best">' + p.badge + '</span>' : '';
+        packsHtml += '<div class="shop-card">' +
+            badgeHtml +
+            '<div class="shop-card-left">' +
+                '<div class="shop-card-title">' + ICON_GOLD_HTML + ' ' + p.name + ' (+' + p.coins.toLocaleString('vi-VN') + ')</div>' +
+                '<div class="shop-card-desc">' + p.desc + '</div>' +
+            '</div>' +
+            '<button class="modal-btn primary btn-exchange-coin" data-id="' + p.id + '">' + p.gemCost + ' ' + ICON_RUBY_HTML + '</button>' +
+        '</div>';
+    });
+
+    var overlay = createModal(
+        '<div class="modal-title">' + ICON_GOLD_HTML + ' NGÂN HÀNG VÀNG</div>' +
+        '<div id="coin-status-bar" class="modal-sub">' +
+            'Hiện có: <b>' + opts.coins + ' ' + ICON_GOLD_HTML + '</b> &nbsp;|&nbsp; ' +
+            '<b>' + opts.gems + ' ' + ICON_RUBY_HTML + '</b><br>' +
+            '<small>Vàng dùng để mua năng lượng cơ bản (+50 ⚡) & dọn dẹp bàn cờ</small>' +
+        '</div>' +
+        '<div class="shop-scroll">' +
+            '<div class="shop-card">' +
+                '<span class="shop-badge best">MIỄN PHÍ 🎬</span>' +
+                '<div class="shop-card-left">' +
+                    '<div class="shop-card-title">🎬 Quà Tài Trợ Video (+500 ' + ICON_GOLD_HTML + ')</div>' +
+                    '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay 500 Vàng miễn phí</div>' +
+                '</div>' +
+                '<button class="modal-btn primary" id="btn-coin-ad">XEM ADS</button>' +
+            '</div>' +
+            '<div class="shop-section-title">Đổi Kim Cương Lấy Vàng</div>' +
+            packsHtml +
+        '</div>' +
+        '<div class="shop-footer-action">' +
+            '<button class="modal-btn gem-btn" id="btn-goto-gemshop-coin" style="width:100%;margin-bottom:8px">💎 Mua Thêm Kim Cương (IAP) ▶</button>' +
+        '</div>' +
+        '<div class="modal-buttons">' +
+            '<button class="modal-btn" id="mb-close">Đóng</button>' +
+        '</div>',
+        'shop-box'
+    );
+
+    var adBtn = overlay.querySelector('#btn-coin-ad');
+    if (adBtn) {
+        adBtn.onclick = function () {
+            closeModal();
+            opts.onWatchAd();
+        };
+    }
+
+    overlay.querySelectorAll('.btn-exchange-coin').forEach(function (btn) {
+        btn.onclick = function () {
+            var id = btn.dataset.id;
+            var pack = COIN_PACKS.find(function (p) { return p.id === id; });
+            if (pack) {
+                closeModal();
+                opts.onExchange(pack);
+            }
+        };
+    });
+
+    var gotoGemBtn = overlay.querySelector('#btn-goto-gemshop-coin');
+    if (gotoGemBtn) {
+        gotoGemBtn.onclick = function () {
+            closeModal();
+            if (opts.onOpenGemShop) opts.onOpenGemShop();
+        };
+    }
+
+    overlay.querySelector('#mb-close').onclick = closeModal;
+}
+
+// ---------- 4D. HỘP TIẾP TẾ MAY MẮN (LUCKY AIR DROP) ----------
+function showLuckyDropModal(onReward) {
+    var overlay = createModal(
+        '<div class="lucky-drop-dialog">' +
+            '<div class="lucky-drop-header">🎁 HỘP TIẾP TẾ MAY MẮN</div>' +
+            '<div class="lucky-drop-visual">🪂📦</div>' +
+            '<div class="lucky-drop-desc">' +
+                'Kiểm lâm vừa thả dù một kiện hàng tiếp tế đặc biệt xuống khu trại!<br>' +
+                'Xem một đoạn video ngắn từ nhà tài trợ để nhận ngẫu nhiên phần quà:' +
+            '</div>' +
+            '<div class="lucky-drop-rewards-list">' +
+                '<div class="lucky-reward-pill">' + ICON_ENERGY_HTML + ' +35 Năng Lượng</div>' +
+                '<div class="lucky-reward-pill">' + ICON_GOLD_HTML + ' +300 Vàng</div>' +
+                '<div class="lucky-reward-pill">' + ICON_RUBY_HTML + ' +8 Kim Cương</div>' +
+            '</div>' +
+            '<div class="modal-buttons">' +
+                '<button class="modal-btn" id="btn-lucky-cancel">Để Sau</button>' +
+                '<button class="modal-btn primary" id="btn-lucky-watch">🎬 XEM VIDEO NHẬN QUÀ</button>' +
+            '</div>' +
+        '</div>',
+        'lucky-box'
+    );
+
+    overlay.querySelector('#btn-lucky-cancel').onclick = closeModal;
+    overlay.querySelector('#btn-lucky-watch').onclick = function () {
+        closeModal();
+        simulateWatchAd('Mở Kiện Hàng Tiếp Tế May Mắn 🎁', function () {
+            var rolls = [
+                { type: 'energy', val: 35, text: '+35 ⚡ Năng lượng', color: '#2e7d32' },
+                { type: 'coin', val: 300, text: '+300 🪙 Vàng', color: '#f57f17' },
+                { type: 'gem', val: 8, text: '+8 💎 Kim cương', color: '#1565c0' }
+            ];
+            var roll = rolls[Math.floor(Math.random() * rolls.length)];
+            if (onReward) onReward(roll);
+        });
+    };
+}
+
+// ---------- 5. CẨM NANG SƯU TẬP 72 VẬT PHẨM ----------
 function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
     var totalItems = ITEM_CHAINS.length * 8;
     var discCount = countDiscoveredItems();
@@ -245,10 +687,10 @@ function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
         ? '<button class="modal-btn primary" id="btn-claim-all">🎁 Nhận hết thưởng (' + unclaimedCount + ')</button>'
         : '';
 
-    var defaultDetail = statusMsgHtml || 'Chạm vào vật phẩm để xem tên & nhận thưởng khám phá lần đầu!';
+    var defaultDetail = statusMsgHtml || 'Chạm vào vật phẩm để xem tên & nhận Vàng ' + ICON_GOLD_HTML + ' / Kim cương ' + ICON_RUBY_HTML + ' khám phá lần đầu!';
 
     var overlay = createModal(
-        '<div class="modal-title">📖 SỔ TAY SƯU TẬP</div>' +
+        '<div class="modal-title">📖 CẨM NANG SƯU TẬP</div>' +
         '<div class="modal-sub">Đã khám phá: <b>' + discCount + '/' + totalItems + '</b> vật phẩm cắm trại</div>' +
         '<div id="book-detail-bar" class="camp-info-bar">' + defaultDetail + '</div>' +
         '<div class="book-scroll">' + chainsHtml + '</div>' +
@@ -275,12 +717,12 @@ function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
                 SAVE.claimedBook[id] = true;
                 saveGame();
                 if (onRewardClaimed) onRewardClaimed(rw.coins, rw.gems);
-                var msg = '🎁 <b style="color:#2e7d32">Đã nhận thưởng ' + name + ': +' + rw.coins + ' 💰' + (rw.gems ? ' +' + rw.gems + ' 💎' : '') + '!</b>';
+                var msg = '🎁 <b style="color:#2e7d32">Đã nhận thưởng ' + name + ': +' + rw.coins + ' ' + ICON_GOLD_HTML + (rw.gems ? ' +' + rw.gems + ' ' + ICON_RUBY_HTML : '') + '!</b>';
                 openDiscoveryBook(onRewardClaimed, msg);
                 return;
             }
             var rwInfo = getBookReward(id);
-            detailBar.innerHTML = '✅ <b>' + name + ' (Lv.' + lv + ')</b> — Giá bán: ' + sellPrice(id) + ' 💰 | Thưởng đơn: ' + orderReward(id) + ' 💰 (Đã nhận +' + rwInfo.coins + '💰)';
+            detailBar.innerHTML = '✅ <b>' + name + ' (Lv.' + lv + ')</b> — Giá bán: ' + sellPrice(id) + ' ' + ICON_GOLD_HTML + ' | Thưởng đơn: ' + orderReward(id) + ' ' + ICON_GOLD_HTML + ' (Đã nhận +' + rwInfo.coins + ' ' + ICON_GOLD_HTML + ')';
         };
     });
 
@@ -298,7 +740,7 @@ function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
             });
             saveGame();
             if (onRewardClaimed) onRewardClaimed(totalC, totalG);
-            var allMsg = '🎉 <b style="color:#2e7d32">Đã nhận tất cả thưởng Sổ Tay: +' + totalC + ' 💰' + (totalG ? ' & +' + totalG + ' 💎' : '') + '!</b>';
+            var allMsg = '🎉 <b style="color:#2e7d32">Đã nhận tất cả thưởng Cẩm Nang: +' + totalC + ' ' + ICON_GOLD_HTML + (totalG ? ' & +' + totalG + ' ' + ICON_RUBY_HTML : '') + '!</b>';
             openDiscoveryBook(onRewardClaimed, allMsg);
         };
     }
@@ -328,13 +770,19 @@ function openWorldMap(currentLv, onSelectLevel) {
             var unlocked = unlockAll || lv <= SAVE.maxLevel;
             var isCur = lv === currentLv;
             var cls = 'map-node' + (unlocked ? ' unlocked' : ' locked') + (isCur ? ' current' : '');
-            var starStr = st > 0 ? ('★'.repeat(st) + '☆'.repeat(3 - st)) : (unlocked ? '☆☆☆' : '🔒');
-            var badge = cfg.spreadEvery ? '<span class="map-badge">🕷️</span>' : (cfg.bonus ? '<span class="map-badge">🎁</span>' : '');
-            nodesHtml += '<button class="' + cls + '" data-lv="' + lv + '" title="Level ' + lv + ': ' + cfg.name + '">' +
-                badge +
-                '<div class="map-lv-num">' + (isCur ? '🏕️ ' : '') + 'Lv.' + lv + '</div>' +
-                '<div class="map-lv-name">' + cfg.name + '</div>' +
-                '<div class="map-lv-stars ' + (st > 0 ? 'has-star' : '') + '">' + starStr + '</div>' +
+            var starStr = '★'.repeat(st) + '☆'.repeat(3 - st);
+            var badge = cfg.spreadEvery ? '<span class="map-badge" title="Mạng nhện lan">🕷️</span>' : (cfg.bonus ? '<span class="map-badge" title="Hộp tiếp tế">🎁</span>' : '');
+            var bgUrl = (typeof getLevelBackground === 'function') ? getLevelBackground(lv) : 'assets/images/ui/bg_01.jpg';
+            var lvPrefix = isCur ? '🏕️ ' : (!unlocked ? '🔒 ' : '');
+
+            nodesHtml += '<button class="' + cls + '" data-lv="' + lv + '" title="Level ' + lv + ': ' + cfg.name + '" style="background-image:url(\'' + bgUrl + '\')">' +
+                '<div class="map-node-top">' +
+                    '<span class="map-lv-num">' + lvPrefix + 'Lv.' + lv + '</span>' +
+                    '<span class="map-lv-stars ' + (st > 0 ? 'has-star' : '') + '">' + starStr + badge + '</span>' +
+                '</div>' +
+                '<div class="map-node-bottom">' +
+                    '<div class="map-lv-name">' + cfg.name + '</div>' +
+                '</div>' +
             '</button>';
         }
         chaptersHtml += '<div class="map-chapter" style="background:' + ch.bg + '">' +
@@ -366,17 +814,47 @@ function openWorldMap(currentLv, onSelectLevel) {
         };
     });
 
+    var curNode = overlay.querySelector('.map-node.current');
+    if (curNode) {
+        setTimeout(function () {
+            curNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }, 50);
+    }
+
     overlay.querySelector('#mb-close').onclick = closeModal;
 }
 
-// ---------- 7. MÀN HÌNH CÀI ĐẶT ----------
-// opts: { isAuto, onToggleAuto, onRestartLevel, onResetAll }
+// ---------- 7. MÀN HÌNH CÀI ĐẶT & CHỌN MÀN NHANH ----------
+// opts: { currentLevel, onSelectLevel, isAuto, onToggleAuto, onUnlockChanged, onRestartLevel, onResetAll }
 function openSettingsModal(opts) {
     var s = SAVE.settings;
+    var unlockAll = s && s.unlockAllLevels;
+    var curLv = opts.currentLevel || SAVE.level || 1;
+
+    var levelOptionsHtml = '';
+    RAW_LEVELS.forEach(function (r) {
+        var lv = r[0];
+        var st = SAVE.stars[lv] || 0;
+        var mark = st ? (' ' + '★'.repeat(st)) : ((!unlockAll && lv > SAVE.maxLevel) ? ' 🔒' : '');
+        var selectedAttr = (lv === curLv) ? ' selected' : '';
+        levelOptionsHtml += '<option value="' + lv + '"' + selectedAttr + '>Lv.' + lv + ': ' + r[1] + mark + '</option>';
+    });
+
     var overlay = createModal(
         '<div class="modal-title">⚙️ CÀI ĐẶT TRÒ CHƠI</div>' +
-        '<div class="modal-sub">Tùy chỉnh âm thanh, cảm ứng và dữ liệu</div>' +
+        '<div class="modal-sub">Tùy chỉnh âm thanh, chọn màn chơi và dữ liệu</div>' +
         '<div class="settings-list">' +
+            '<div class="setting-row">' +
+                '<div class="setting-level-picker">' +
+                    '<button class="modal-btn" id="st-prev-lv" title="Màn trước">◀</button>' +
+                    '<select id="st-level-select" class="setting-level-select">' + levelOptionsHtml + '</select>' +
+                    '<button class="modal-btn" id="st-next-lv" title="Màn tiếp">▶</button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="setting-row">' +
+                '<span>🎵 Nhạc nền cắm trại (BGM)</span>' +
+                '<button class="modal-btn ' + (s.bgm !== false ? 'primary' : '') + '" id="st-bgm">' + (s.bgm !== false ? 'ĐANG BẬT' : 'ĐANG TẮT') + '</button>' +
+            '</div>' +
             '<div class="setting-row">' +
                 '<span>🔊 Âm thanh hiệu ứng</span>' +
                 '<button class="modal-btn ' + (s.sound ? 'primary' : '') + '" id="st-sound">' + (s.sound ? 'ĐANG BẬT' : 'ĐANG TẮT') + '</button>' +
@@ -395,7 +873,7 @@ function openSettingsModal(opts) {
             '</div>' +
         '</div>' +
         '<div id="reset-confirm-area" class="reset-confirm-area" style="display:none">' +
-            '<p>⚠️ Bạn chắc chắn muốn xóa toàn bộ tiến trình, sao, xu và sổ tay về ban đầu?</p>' +
+            '<p>⚠️ Bạn chắc chắn muốn xóa toàn bộ tiến trình, sao, vàng và cẩm nang về ban đầu?</p>' +
             '<div class="modal-buttons">' +
                 '<button class="modal-btn danger-btn" id="st-confirm-reset">Xác nhận xóa hết</button>' +
                 '<button class="modal-btn" id="st-cancel-reset">Hủy</button>' +
@@ -408,6 +886,52 @@ function openSettingsModal(opts) {
         '</div>'
     );
 
+    var stSelect = overlay.querySelector('#st-level-select');
+    if (stSelect) {
+        stSelect.onchange = function (e) {
+            var targetLv = parseInt(e.target.value);
+            var canPlay = (SAVE.settings && SAVE.settings.unlockAllLevels) || targetLv <= SAVE.maxLevel;
+            if (!canPlay) {
+                showToast('🔒 Màn này chưa mở! Bật "Mở khóa 45 màn" ngay bên dưới nếu muốn test.', '#c62828');
+                stSelect.value = curLv;
+                return;
+            }
+            closeModal();
+            if (opts.onSelectLevel) opts.onSelectLevel(targetLv);
+        };
+    }
+
+    var stPrev = overlay.querySelector('#st-prev-lv');
+    if (stPrev) {
+        stPrev.onclick = function () {
+            if (curLv > 1) {
+                closeModal();
+                if (opts.onSelectLevel) opts.onSelectLevel(curLv - 1);
+            }
+        };
+    }
+
+    var stNext = overlay.querySelector('#st-next-lv');
+    if (stNext) {
+        stNext.onclick = function () {
+            if (curLv < RAW_LEVELS.length) {
+                var canPlay = (SAVE.settings && SAVE.settings.unlockAllLevels) || (curLv + 1 <= SAVE.maxLevel);
+                if (!canPlay) {
+                    showToast('🔒 Hãy vượt qua màn hiện tại hoặc bật "Mở khóa 45 màn" bên dưới!', '#c62828');
+                    return;
+                }
+                closeModal();
+                if (opts.onSelectLevel) opts.onSelectLevel(curLv + 1);
+            }
+        };
+    }
+
+    overlay.querySelector('#st-bgm').onclick = function () {
+        s.bgm = (s.bgm === false) ? true : false;
+        saveGame();
+        if (typeof updateBgmPlayback === 'function') updateBgmPlayback();
+        openSettingsModal(opts);
+    };
     overlay.querySelector('#st-sound').onclick = function () {
         s.sound = !s.sound;
         saveGame();

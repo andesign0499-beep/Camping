@@ -6,6 +6,21 @@
 // - Lv 36 - 45: Mở khóa trọn bộ 9 vật phẩm tối thượng Lv.8
 // ==========================================
 
+// Danh sách ảnh nền màn chơi & bản đồ (Tự động lặp tuần hoàn 1..N; khi thêm ảnh nền mới chỉ cần nối tiếp vào mảng này)
+var LEVEL_BACKGROUNDS = [
+    'assets/images/ui/bg_01.jpg',
+    'assets/images/ui/bg_02.jpg',
+    'assets/images/ui/bg_03.jpg',
+    'assets/images/ui/bg04.jpg',
+    'assets/images/ui/bg05.jpg'
+];
+
+function getLevelBackground(lvNum) {
+    if (!LEVEL_BACKGROUNDS || !LEVEL_BACKGROUNDS.length) return 'assets/images/ui/bg_01.jpg';
+    var idx = (Math.max(1, parseInt(lvNum, 10) || 1) - 1) % LEVEL_BACKGROUNDS.length;
+    return LEVEL_BACKGROUNDS[idx];
+}
+
 var RAW_LEVELS = [
     // --- CHƯƠNG 1: KHỞI ĐẦU BÃI CỎ (Lv 1 - 10: Đơn hàng Lv.3 - Lv.5) ---
     [1, "Bữa Sáng Khởi Đầu", "box5x5", [[31,"generator_cooler"]], [], [[15,"an_lv1"],[19,"ban_lv1"],[37,"cafe_lv2"],[41,"cafe_lv2"]], ["an_lv4","ban_lv3"]],
