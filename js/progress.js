@@ -101,12 +101,94 @@ var ENERGY_PACK_PRICE = 120;
 var GEM_ENERGY_PACK = 100;
 var GEM_ENERGY_PRICE = 5;
 
-// B7: giữ nguyên cấp đơn hàng theo thiết kế của từng level (cho phép mở tới cấp tối đa Lv.8)
-function tuneOrders(ids, lvNum) {
-    return ids.slice(0, 3);
+// B7: Tính toán và mở rộng kịch bản nhiệm vụ (3 đến 5 đơn hàng mỗi level để tạo trải nghiệm chơi liên tục)
+function tuneOrders(rawOrders, lvNum, levelCfg) {
+    var base = (rawOrders || []).slice();
+    var targetCount = 3;
+    if (lvNum >= 9) {
+        targetCount = 5;
+    } else if (lvNum >= 3) {
+        targetCount = 4;
+    }
+
+    if (base.length >= targetCount) {
+        return base.slice(0, targetCount);
+    }
+
+    // Thu thập các dòng item khả dụng từ nguồn phát của màn chơi hiện tại
+    var genList = [];
+    var cfgGens = (levelCfg && (levelCfg.generators || levelCfg.gens)) || [];
+    cfgGens.forEach(function (g) {
+        if (g && g[1]) genList.push(g[1]);
+    });
+
+    var availableLines = [];
+    genList.forEach(function (gId) {
+        var items = (typeof GENERATORS !== 'undefined' ? GENERATORS[gId] : null) || [];
+        items.forEach(function (it) {
+            var line = it.split('_lv')[0];
+            if (availableLines.indexOf(line) === -1) {
+                availableLines.push(line);
+            }
+        });
+    });
+
+    // Nếu không có generator hoặc không tìm thấy dòng từ generator, trích xuất dòng từ các đơn hàng gốc đã định nghĩa của màn
+    if (!availableLines.length) {
+        base.forEach(function (id) {
+            var line = id.split('_lv')[0];
+            if (availableLines.indexOf(line) === -1) {
+                availableLines.push(line);
+            }
+        });
+    }
+    if (!availableLines.length) availableLines = ['an', 'ban', 'cafe'];
+
+    var existingLines = base.map(function (id) { return id.split('_lv')[0]; });
+
+    // Cấp độ đơn hàng bổ sung: Tối thiểu là Lv.3 để đảm bảo người chơi phải ghép đồ, không bị hoàn thành ngay từ đầu
+    // Màn 1-5: Lv.3 - Lv.4
+    // Màn 6-15: Lv.4 - Lv.5
+    // Màn 16-35: Lv.5 - Lv.6
+    // Màn 36-45: Lv.6 - Lv.7
+    var subMinLv = lvNum <= 5 ? 3 : (lvNum <= 15 ? 4 : (lvNum <= 35 ? 5 : 6));
+    var subMaxLv = lvNum <= 5 ? 4 : (lvNum <= 15 ? 5 : (lvNum <= 35 ? 6 : 7));
+
+    // Ưu tiên bổ sung các dòng chưa có đơn hàng
+    for (var i = 0; i < availableLines.length && base.length < targetCount; i++) {
+        var line = availableLines[i];
+        if (existingLines.indexOf(line) === -1) {
+            var lv = subMinLv + (base.length % (subMaxLv - subMinLv + 1));
+            var newId = line + '_lv' + lv;
+            base.push(newId);
+            existingLines.push(line);
+        }
+    }
+
+    // Nếu vẫn chưa đủ targetCount, bổ sung đơn hàng có cấp độ khác
+    var cycleIdx = 0;
+    while (base.length < targetCount && cycleIdx < 20) {
+        var line = availableLines[cycleIdx % availableLines.length];
+        var lv = subMinLv + (cycleIdx % (subMaxLv - subMinLv + 1));
+        var candidateId = line + '_lv' + lv;
+        if (base.indexOf(candidateId) === -1) {
+            base.push(candidateId);
+        } else {
+            var altLv = Math.max(3, lv - 1);
+            var altId = line + '_lv' + altLv;
+            if (base.indexOf(altId) === -1) {
+                base.push(altId);
+            } else {
+                base.push(line + '_lv' + (lv + 1));
+            }
+        }
+        cycleIdx++;
+    }
+
+    return base.slice(0, targetCount);
 }
 
-// B5: ngân sách năng lượng riêng cho mỗi level, đã hiệu chỉnh bằng Bot Mô Phỏng Monte Carlo
+// B5: ngân sách năng lượng riêng cho mỗi level, đã hiệu chỉnh tương ứng với 3 - 5 đơn hàng
 function computeEnergyBudget(board, orderIds, level) {
     var existing = {};
     var webCount = 0;
@@ -124,7 +206,7 @@ function computeEnergyBudget(board, orderIds, level) {
         var line = id.split('_lv')[0];
         var u = itemUnits(id);
         var have = existing[line] || 0;
-        var use = Math.min(u, have * 0.85);
+        var use = Math.min(u, have * 0.75);
         existing[line] = have - use;
         var net = Math.max(0, u - use);
 
@@ -151,7 +233,7 @@ function computeEnergyBudget(board, orderIds, level) {
     if (level && level.spreadEvery) raw *= 1.12;
 
     var budget = Math.round((raw * 1.35) / 5) * 5;
-    return Math.max(35, Math.min(420, budget));
+    return Math.max(50, Math.min(450, budget));
 }
 
 // Số sao theo phần trăm năng lượng còn lại

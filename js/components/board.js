@@ -824,10 +824,10 @@ function loadLevel(lvNum) {
     updateSellButton(null);
 
     boardData = buildBoard(currentLevelCfg);
-    var orderIds = tuneOrders(currentLevelCfg.rawOrders, lvNum);
+    var orderIds = tuneOrders(currentLevelCfg.rawOrders, lvNum, currentLevelCfg);
     currentOrders = orderIds.map(id => ({ id: id, done: false }));
 
-    // Tự động sinh sẵn một danh sách vật phẩm trên bàn cờ khi vào màn chơi, không bắt người chơi phải bấm mới có đồ
+    // Tự động đổ kín 100% các ô trên bàn chơi ngay từ đầu, không trừ năng lượng của người chơi
     populateInitialBoardItems();
 
     levelBudget = computeEnergyBudget(boardData, orderIds, currentLevelCfg);
@@ -841,7 +841,8 @@ function loadLevel(lvNum) {
     renderBoard();
 }
 
-// Tự động rải sẵn khoảng 4 - 8 vật phẩm (Lv.1 - Lv.2) từ các nguồn phát khi bắt đầu màn
+// Đổ đầy 100% các ô trống có thể chơi được trên bàn cờ khi bắt đầu màn chơi
+// QUY TẮC BẮT BUỘC: Tuyệt đối KHÔNG ĐƯỢC sinh sẵn bất kỳ icon nhiệm vụ nào trên bàn chơi lúc đầu
 function populateInitialBoardItems() {
     var generators = [];
     boardData.forEach((c, idx) => {
@@ -852,15 +853,64 @@ function populateInitialBoardItems() {
     var empties = getEmptyIndexes(boardData);
     if (!empties.length) return;
 
-    // Rải sẵn từ 5 đến 8 vật phẩm (hoặc tối đa số ô trống còn lại trừ đi 4 ô đệm)
-    var targetCount = Math.min(Math.max(5, Math.floor(empties.length * 0.35)), 8);
-    for (var i = 0; i < targetCount; i++) {
-        var currentEmpties = getEmptyIndexes(boardData);
-        if (currentEmpties.length <= 3) break;
-        var genIdx = generators[Math.floor(Math.random() * generators.length)];
+    // Thu thập các dòng sản phẩm từ các máy sinh đồ trong màn
+    var availableLines = [];
+    generators.forEach(genIdx => {
         var genId = boardData[genIdx].id;
-        spawnItem(boardData, genId);
+        var list = GENERATORS[genId] || [];
+        list.forEach(id => {
+            var line = id.split('_lv')[0];
+            if (availableLines.indexOf(line) === -1) {
+                availableLines.push(line);
+            }
+        });
+    });
+    if (!availableLines.length) availableLines = ['an', 'ban', 'cafe'];
+
+    // Danh sách các vật phẩm nhiệm vụ đang hoạt động
+    var activeOrderIds = new Set((currentOrders || []).map(function (o) { return o.id; }));
+
+    // Tạo danh sách vật phẩm theo cặp (để người chơi luôn có rất nhiều nước ghép hấp dẫn ngay từ đầu)
+    // Tỷ lệ: 75% Lv.1, 25% Lv.2
+    var itemsToPlace = [];
+    while (itemsToPlace.length < empties.length) {
+        var line = availableLines[Math.floor(Math.random() * availableLines.length)];
+        var lv = Math.random() < 0.25 ? 2 : 1;
+        var itemId = line + '_lv' + lv;
+
+        // Nếu trùng với bất kỳ vật phẩm nhiệm vụ nào, hạ cấp ngay xuống Lv.1
+        if (activeOrderIds.has(itemId)) {
+            itemId = line + '_lv1';
+        }
+
+        // Ghép theo cặp 2 món giống nhau
+        itemsToPlace.push(itemId);
+        if (itemsToPlace.length < empties.length) {
+            itemsToPlace.push(itemId);
+        }
     }
+
+    // Xáo trộn vị trí rải đều trên bàn cờ
+    for (var i = itemsToPlace.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = itemsToPlace[i];
+        itemsToPlace[i] = itemsToPlace[j];
+        itemsToPlace[j] = temp;
+    }
+
+    // Đổ kín toàn bộ các ô trống, không trừ bất kỳ điểm năng lượng nào
+    empties.forEach((cellIdx, i) => {
+        boardData[cellIdx] = { id: itemsToPlace[i], isRock: false, isLocked: false };
+    });
+
+    // Quét bảo đảm lần cuối: Tuyệt đối không để sót bất kỳ vật phẩm nhiệm vụ nào mở sẵn trên bàn chơi
+    boardData.forEach(function (cell) {
+        if (cell && cell.id && !cell.isLocked && !GENERATORS[cell.id] && activeOrderIds.has(cell.id)) {
+            var line = cell.id.split('_lv')[0];
+            var lv = parseInt(cell.id.split('_lv')[1]) || 2;
+            cell.id = line + '_lv' + Math.max(1, lv - 1);
+        }
+    });
 }
 
 function fillBoardInstantly() {
@@ -1311,7 +1361,28 @@ boardElement.addEventListener('contextmenu', e => { if (dragState) e.preventDefa
 // ==========================================
 // SINH ITEM & CHẠM CHỌN (TAP-TO-MOVE)
 // ==========================================
-function spawnFromGenerator(gen) {
+// Biến theo dõi nhấp đúp máy sinh đồ (Double-click detection: 1 lần sinh 1 món, 2 lần sinh đầy ô trống)
+var lastGenClickTs = 0;
+var lastGenCellIdx = -1;
+
+function handleGeneratorClick(gen, cellElement) {
+    var now = Date.now();
+    var idx = parseInt(cellElement.dataset.index);
+    var isDoubleClick = (now - lastGenClickTs < 450 && lastGenCellIdx === idx);
+
+    if (isDoubleClick) {
+        lastGenClickTs = 0; // Reset sau khi đã kích hoạt bulk spawn
+        lastGenCellIdx = -1;
+        bulkSpawnFromGenerator(gen, cellElement);
+    } else {
+        lastGenClickTs = now;
+        lastGenCellIdx = idx;
+        spawnFromGenerator(gen, cellElement);
+    }
+}
+
+// Bấm 1 lần: Sinh 1 item từ nguồn phát vào 1 ô trống ngẫu nhiên (tiêu tốn 1 ⚡)
+function spawnFromGenerator(gen, cellElement) {
     if (playerEnergy <= 0) {
         openEnergyShop();
         return;
@@ -1354,6 +1425,72 @@ function spawnFromGenerator(gen) {
     }
 }
 
+// Bấm 2 lần liên tục: Xả đồ ra toàn bộ các ô trống trên bàn cờ (tiêu tốn tương ứng với số ô trống và năng lượng hiện có)
+function bulkSpawnFromGenerator(gen, cellElement) {
+    if (playerEnergy <= 0) {
+        openEnergyShop();
+        return;
+    }
+    var empties = getEmptyIndexes(boardData);
+    if (!empties.length) {
+        renderBoard();
+        showToast('⚠️ Bàn cờ đã đầy! Hãy ghép các món trên bàn trước nhé.', '#f57c00');
+        return;
+    }
+
+    var spawnCount = Math.min(empties.length, playerEnergy);
+    if (spawnCount <= 0) {
+        openEnergyShop();
+        return;
+    }
+
+    var spawnedTargets = [];
+    for (var i = 0; i < spawnCount; i++) {
+        var tIdx = spawnItem(boardData, gen.id);
+        if (tIdx === -1) break;
+        playerEnergy--;
+        levelClicks++;
+        spawnedTargets.push(tIdx);
+
+        if (currentLevelCfg && currentLevelCfg.spreadEvery && levelClicks % currentLevelCfg.spreadEvery === 0) {
+            spreadWeb(boardData);
+        }
+    }
+
+    playSound('spawn');
+    updateUIStats();
+    renderBoard();
+
+    // Hiệu ứng pháo hoa & badge thông báo xả đồ cực đã mắt
+    if (cellElement) {
+        triggerParticleBurst(cellElement, ['#ffd54f', '#ffb300', '#ffffff', '#4fc3f7']);
+        showFloatingBadge(cellElement, '🚀 XẢ ĐẦY Ô TRỐNG (-' + spawnedTargets.length + ' ⚡)', '#e65100');
+    }
+
+    // Hiệu ứng nảy liên hoàn lượn sóng cho các ô vừa nhận đồ
+    spawnedTargets.forEach(function (idx, seq) {
+        var cEl = boardElement.children[idx];
+        if (cEl) {
+            var img = cEl.querySelector('.item-img');
+            if (img) {
+                img.style.transform = 'scale(0.3)';
+                setTimeout(function () {
+                    img.animate([
+                        { transform: 'scale(0.3)' },
+                        { transform: 'scale(1.2)' },
+                        { transform: 'scale(1)' }
+                    ], { duration: 240, easing: 'cubic-bezier(.2,.85,.32,1.2)' });
+                    img.style.transform = 'scale(1)';
+                }, Math.min(seq * 20, 240));
+            }
+        }
+    });
+
+    if (playerEnergy <= 0) {
+        setTimeout(openEnergyShop, 450);
+    }
+}
+
 function handleCellClick(e, cellElement) {
     var index = parseInt(cellElement.dataset.index);
     var clickedItem = boardData[index];
@@ -1361,7 +1498,7 @@ function handleCellClick(e, cellElement) {
     if (clickedItem && clickedItem.id && !clickedItem.isLocked && GENERATORS[clickedItem.id] && !isAutoEnabled) {
         selectedIndex = null;
         updateSellButton(null);
-        spawnFromGenerator(clickedItem);
+        handleGeneratorClick(clickedItem, cellElement);
         return;
     }
 

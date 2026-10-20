@@ -84,6 +84,7 @@ function getLevelConfig(lvNum) {
         name: row[1],
         pattern: row[2],
         gens: row[3],
+        generators: row[3],
         free: row[4],
         webs: row[5],
         rawOrders: row[6],

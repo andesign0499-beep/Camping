@@ -18,7 +18,7 @@ function closeModal() {
     if (m) m.remove();
 }
 
-function createModal(innerHtml, extraClass) {
+function createModal(innerHtml, extraClass, titleText) {
     closeModal();
     var oldToast = document.getElementById('game-toast');
     if (oldToast) oldToast.remove();
@@ -27,10 +27,21 @@ function createModal(innerHtml, extraClass) {
 
     var overlay = document.createElement('div');
     overlay.id = 'modal-overlay';
-    overlay.innerHTML = '<div class="modal-box ' + (extraClass || '') + '">' + innerHtml + '</div>';
+
+    var ribbonHtml = titleText ? ('<div class="popup-ribbon"><span>' + titleText + '</span></div>') : '';
+    overlay.innerHTML = '<div class="modal-box ' + (extraClass || '') + '">' +
+        ribbonHtml +
+        '<button class="popup-close" id="modal-top-close-btn" title="Đóng"></button>' +
+        '<div class="modal-content-wrap">' + innerHtml + '</div>' +
+    '</div>';
+
     overlay.addEventListener('click', function (e) {
         if (e.target === overlay) closeModal();
     });
+
+    var topClose = overlay.querySelector('#modal-top-close-btn');
+    if (topClose) topClose.onclick = closeModal;
+
     document.body.appendChild(overlay);
     return overlay;
 }
@@ -750,10 +761,10 @@ function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
 
 // ---------- 6. BẢN ĐỒ HÀNH TRÌNH 45 LEVEL (WORLD MAP) ----------
 var CHAPTERS = [
-    { title: 'Chương 1: Khởi Đầu Bãi Cỏ (Lv 1 – 10)', from: 1, to: 10, bg: '#e8f5e9' },
-    { title: 'Chương 2: Rừng Sâu & Bờ Suối (Lv 11 – 25)', from: 11, to: 25, bg: '#e0f2f1' },
-    { title: 'Chương 3: Chinh Phục Đèo Cao (Lv 26 – 35)', from: 26, to: 35, bg: '#fff3e0' },
-    { title: 'Chương 4: Đỉnh Tuyết Huyền Thoại (Lv 36 – 45)', from: 36, to: 45, bg: '#ede7f6' }
+    { title: 'Chương 1 Khởi đầu Bãi Cỏ (LV 1-10)', from: 1, to: 10 },
+    { title: 'Chương 2 Rừng Sâu & Bờ Suối (LV 11-20)', from: 11, to: 20 },
+    { title: 'Chương 3 Chinh Phục Đèo Cao (LV 21-35)', from: 21, to: 35 },
+    { title: 'Chương 4 Đỉnh Tuyết Huyền Thoại (LV 36-45)', from: 36, to: 45 }
 ];
 
 function openWorldMap(currentLv, onSelectLevel) {
@@ -762,46 +773,58 @@ function openWorldMap(currentLv, onSelectLevel) {
     var unlockAll = SAVE.settings && SAVE.settings.unlockAllLevels;
 
     var chaptersHtml = '';
-    CHAPTERS.forEach(function (ch) {
-        var nodesHtml = '';
+    CHAPTERS.forEach(function (ch, chIdx) {
+        var isChUnlocked = unlockAll || ch.from <= SAVE.maxLevel;
+        chaptersHtml += '<div class="chapter-title">' + ch.title + '</div>';
+
+        if (!isChUnlocked) {
+            chaptersHtml += '<div class="chapter-locked-card">' +
+                '<img src="assets/images/ui/icon_lock.png" class="card-lock-icon" alt="">' +
+                '<span>Hoàn thành Chương ' + chIdx + ' để mở khóa</span>' +
+            '</div>';
+            return;
+        }
+
+        var cardsHtml = '';
         for (var lv = ch.from; lv <= ch.to; lv++) {
             var cfg = getLevelConfig(lv);
             var st = SAVE.stars[lv] || 0;
             var unlocked = unlockAll || lv <= SAVE.maxLevel;
             var isCur = lv === currentLv;
-            var cls = 'map-node' + (unlocked ? ' unlocked' : ' locked') + (isCur ? ' current' : '');
-            var starStr = '★'.repeat(st) + '☆'.repeat(3 - st);
-            var badge = cfg.spreadEvery ? '<span class="map-badge" title="Mạng nhện lan">🕷️</span>' : (cfg.bonus ? '<span class="map-badge" title="Hộp tiếp tế">🎁</span>' : '');
+            var cls = 'level-card' + (unlocked ? ' unlocked' : ' locked') + (isCur ? ' current' : '');
             var bgUrl = (typeof getLevelBackground === 'function') ? getLevelBackground(lv) : 'assets/images/ui/bg_01.jpg';
-            var lvPrefix = isCur ? '🏕️ ' : (!unlocked ? '🔒 ' : '');
 
-            nodesHtml += '<button class="' + cls + '" data-lv="' + lv + '" title="Level ' + lv + ': ' + cfg.name + '" style="background-image:url(\'' + bgUrl + '\')">' +
-                '<div class="map-node-top">' +
-                    '<span class="map-lv-num">' + lvPrefix + 'Lv.' + lv + '</span>' +
-                    '<span class="map-lv-stars ' + (st > 0 ? 'has-star' : '') + '">' + starStr + badge + '</span>' +
+            var starsImgHtml = '';
+            for (var sIdx = 1; sIdx <= 3; sIdx++) {
+                var isStarOn = sIdx <= st;
+                starsImgHtml += '<img src="assets/images/ui/icon_star.png" class="card-star-img' + (isStarOn ? '' : ' off') + '" alt="">';
+            }
+
+            var lockMaskHtml = !unlocked ? (
+                '<div class="card-locked-mask">' +
+                    '<img src="assets/images/ui/icon_lock.png" class="card-lock-icon" alt="">' +
+                '</div>'
+            ) : '';
+
+            cardsHtml += '<div class="' + cls + '" data-lv="' + lv + '">' +
+                '<div class="card-tag">' + cfg.name + '</div>' +
+                '<div class="card-thumb" style="background-image:url(\'' + bgUrl + '\')">' +
+                    '<span class="card-lv-badge">LV.' + lv + '</span>' +
+                    '<div class="card-stars">' + starsImgHtml + '</div>' +
+                    lockMaskHtml +
                 '</div>' +
-                '<div class="map-node-bottom">' +
-                    '<div class="map-lv-name">' + cfg.name + '</div>' +
-                '</div>' +
-            '</button>';
+            '</div>';
         }
-        chaptersHtml += '<div class="map-chapter" style="background:' + ch.bg + '">' +
-            '<div class="map-chapter-title">' + ch.title + '</div>' +
-            '<div class="map-grid">' + nodesHtml + '</div>' +
-        '</div>';
+        chaptersHtml += '<div class="map-grid-2col">' + cardsHtml + '</div>';
     });
 
     var overlay = createModal(
-        '<div class="modal-title">🗺️ BẢN ĐỒ HÀNH TRÌNH</div>' +
-        '<div class="modal-sub">Tổng số sao: <b>' + totalStars + ' / ' + (RAW_LEVELS.length * 3) + ' ★</b> &nbsp;|&nbsp; Mở khóa: <b>Lv.' + SAVE.maxLevel + '/45</b></div>' +
-        '<div class="book-scroll map-scroll">' + chaptersHtml + '</div>' +
-        '<div class="modal-buttons">' +
-            '<button class="modal-btn primary" id="mb-close">Đóng</button>' +
-        '</div>',
-        'book-box'
+        '<div class="map-scroll-area">' + chaptersHtml + '</div>',
+        'map-popup-box',
+        'BẢN ĐỒ HÀNH TRÌNH'
     );
 
-    overlay.querySelectorAll('.map-node').forEach(function (btn) {
+    overlay.querySelectorAll('.level-card').forEach(function (btn) {
         btn.onclick = function () {
             var lv = parseInt(btn.dataset.lv);
             var unlocked = (SAVE.settings && SAVE.settings.unlockAllLevels) || lv <= SAVE.maxLevel;
@@ -814,115 +837,98 @@ function openWorldMap(currentLv, onSelectLevel) {
         };
     });
 
-    var curNode = overlay.querySelector('.map-node.current');
+    var curNode = overlay.querySelector('.level-card.current');
     if (curNode) {
         setTimeout(function () {
             curNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }, 50);
     }
-
-    overlay.querySelector('#mb-close').onclick = closeModal;
 }
 
 // ---------- 7. MÀN HÌNH CÀI ĐẶT & CHỌN MÀN NHANH ----------
 // opts: { currentLevel, onSelectLevel, isAuto, onToggleAuto, onUnlockChanged, onRestartLevel, onResetAll }
 function openSettingsModal(opts) {
-    var s = SAVE.settings;
-    var unlockAll = s && s.unlockAllLevels;
-    var curLv = opts.currentLevel || SAVE.level || 1;
-
-    var levelOptionsHtml = '';
-    RAW_LEVELS.forEach(function (r) {
-        var lv = r[0];
-        var st = SAVE.stars[lv] || 0;
-        var mark = st ? (' ' + '★'.repeat(st)) : ((!unlockAll && lv > SAVE.maxLevel) ? ' 🔒' : '');
-        var selectedAttr = (lv === curLv) ? ' selected' : '';
-        levelOptionsHtml += '<option value="' + lv + '"' + selectedAttr + '>Lv.' + lv + ': ' + r[1] + mark + '</option>';
-    });
+    var s = SAVE.settings || {};
+    var unlockAll = s.unlockAllLevels;
+    var isAuto = opts.isAuto;
 
     var overlay = createModal(
-        '<div class="modal-title">⚙️ CÀI ĐẶT TRÒ CHƠI</div>' +
-        '<div class="modal-sub">Tùy chỉnh âm thanh, chọn màn chơi và dữ liệu</div>' +
-        '<div class="settings-list">' +
-            '<div class="setting-row">' +
-                '<div class="setting-level-picker">' +
-                    '<button class="modal-btn" id="st-prev-lv" title="Màn trước">◀</button>' +
-                    '<select id="st-level-select" class="setting-level-select">' + levelOptionsHtml + '</select>' +
-                    '<button class="modal-btn" id="st-next-lv" title="Màn tiếp">▶</button>' +
+        '<div class="popup-sub">Cài đặt màn chơi và dữ liệu</div>' +
+        '<div class="st-rows">' +
+            '<!-- Ngôn ngữ -->' +
+            '<div class="lang-selector" id="st-lang-btn">' +
+                '<div class="st-row-left">' +
+                    '<img src="assets/images/ui/icon_ngonngu.png" class="st-icon" alt="">' +
+                    '<span class="st-label">Tiếng Việt</span>' +
                 '</div>' +
+                '<img src="assets/images/ui/icon_down.png" class="lang-arrow" alt="">' +
             '</div>' +
-            '<div class="setting-row">' +
-                '<span>🎵 Nhạc nền cắm trại (BGM)</span>' +
-                '<button class="modal-btn ' + (s.bgm !== false ? 'primary' : '') + '" id="st-bgm">' + (s.bgm !== false ? 'ĐANG BẬT' : 'ĐANG TẮT') + '</button>' +
+
+            '<!-- Nhạc nền cắm trại -->' +
+            '<div class="st-row">' +
+                '<div class="st-row-left">' +
+                    '<img src="assets/images/ui/icon_amthanh.png" class="st-icon" alt="">' +
+                    '<span class="st-label">Nhạc nền cắm trại</span>' +
+                '</div>' +
+                '<button class="toggle-btn ' + (s.bgm !== false ? 'on' : 'off') + '" id="st-bgm">' +
+                    (s.bgm !== false ? 'BẬT' : 'TẮT') +
+                '</button>' +
             '</div>' +
-            '<div class="setting-row">' +
-                '<span>🔊 Âm thanh hiệu ứng</span>' +
-                '<button class="modal-btn ' + (s.sound ? 'primary' : '') + '" id="st-sound">' + (s.sound ? 'ĐANG BẬT' : 'ĐANG TẮT') + '</button>' +
+
+            '<!-- Âm thanh hiệu ứng -->' +
+            '<div class="st-row">' +
+                '<div class="st-row-left">' +
+                    '<img src="assets/images/ui/icon_mussic.png" class="st-icon" alt="">' +
+                    '<span class="st-label">Âm thanh hiệu ứng</span>' +
+                '</div>' +
+                '<button class="toggle-btn ' + (s.sound ? 'on' : 'off') + '" id="st-sound">' +
+                    (s.sound ? 'BẬT' : 'TẮT') +
+                '</button>' +
             '</div>' +
-            '<div class="setting-row">' +
-                '<span>📳 Rung phản hồi khi ghép</span>' +
-                '<button class="modal-btn ' + (s.vibrate ? 'primary' : '') + '" id="st-vib">' + (s.vibrate ? 'ĐANG BẬT' : 'ĐANG TẮT') + '</button>' +
+
+            '<!-- Mở khóa 45 level -->' +
+            '<div class="st-row">' +
+                '<div class="st-row-left">' +
+                    '<img src="assets/images/ui/icon_lock.png" class="st-icon" alt="">' +
+                    '<span class="st-label">Mở khóa 45 level</span>' +
+                '</div>' +
+                '<button class="toggle-btn ' + (s.unlockAllLevels ? 'on' : 'off') + '" id="st-unlock">' +
+                    (s.unlockAllLevels ? 'BẬT' : 'TẮT') +
+                '</button>' +
             '</div>' +
-            '<div class="setting-row">' +
-                '<span>🔓 Mở khóa toàn bộ 45 màn (Test)</span>' +
-                '<button class="modal-btn ' + (s.unlockAllLevels ? 'primary' : '') + '" id="st-unlock">' + (s.unlockAllLevels ? 'ĐANG BẬT' : 'ĐANG TẮT') + '</button>' +
-            '</div>' +
-            '<div class="setting-row">' +
-                '<span>⚡ Tự động đổ đầy bàn (Debug Auto)</span>' +
-                '<button class="modal-btn ' + (opts.isAuto ? 'primary' : '') + '" id="st-auto">' + (opts.isAuto ? 'ĐANG BẬT' : 'ĐANG TẮT') + '</button>' +
+
+            '<!-- Tự động đổ đầy bàn -->' +
+            '<div class="st-row">' +
+                '<div class="st-row-left">' +
+                    '<img src="assets/images/ui/icon_auto.png" class="st-icon" alt="">' +
+                    '<span class="st-label">Tự động đổ đầy bàn</span>' +
+                '</div>' +
+                '<button class="toggle-btn ' + (isAuto ? 'on' : 'off') + '" id="st-auto">' +
+                    (isAuto ? 'BẬT' : 'TẮT') +
+                '</button>' +
             '</div>' +
         '</div>' +
+
         '<div id="reset-confirm-area" class="reset-confirm-area" style="display:none">' +
-            '<p>⚠️ Bạn chắc chắn muốn xóa toàn bộ tiến trình, sao, vàng và cẩm nang về ban đầu?</p>' +
-            '<div class="modal-buttons">' +
-                '<button class="modal-btn danger-btn" id="st-confirm-reset">Xác nhận xóa hết</button>' +
-                '<button class="modal-btn" id="st-cancel-reset">Hủy</button>' +
+            '<p style="margin-bottom:12px;">⚠️ Bạn chắc chắn muốn xóa toàn bộ tiến trình, sao, vàng và cẩm nang về ban đầu?</p>' +
+            '<div class="st-actions">' +
+                '<button class="modal-btn danger-btn" id="st-confirm-reset" style="flex:1">Xác nhận xóa hết</button>' +
+                '<button class="modal-btn" id="st-cancel-reset" style="flex:1">Hủy</button>' +
             '</div>' +
         '</div>' +
-        '<div class="modal-buttons" id="st-main-btns">' +
-            '<button class="modal-btn" id="st-restart">🔄 Chơi lại màn này</button>' +
-            '<button class="modal-btn danger-btn" id="st-reset">🗑️ Xóa dữ liệu</button>' +
-            '<button class="modal-btn primary" id="mb-close">Đóng</button>' +
-        '</div>'
+
+        '<div class="st-actions" id="st-main-btns">' +
+            '<button class="st-act-btn green" id="st-restart">Chơi lại</button>' +
+            '<button class="st-act-btn blue" id="st-reset">Xóa dữ liệu</button>' +
+        '</div>',
+        'settings-popup-box',
+        'CÀI ĐẶT'
     );
 
-    var stSelect = overlay.querySelector('#st-level-select');
-    if (stSelect) {
-        stSelect.onchange = function (e) {
-            var targetLv = parseInt(e.target.value);
-            var canPlay = (SAVE.settings && SAVE.settings.unlockAllLevels) || targetLv <= SAVE.maxLevel;
-            if (!canPlay) {
-                showToast('🔒 Màn này chưa mở! Bật "Mở khóa 45 màn" ngay bên dưới nếu muốn test.', '#c62828');
-                stSelect.value = curLv;
-                return;
-            }
-            closeModal();
-            if (opts.onSelectLevel) opts.onSelectLevel(targetLv);
-        };
-    }
-
-    var stPrev = overlay.querySelector('#st-prev-lv');
-    if (stPrev) {
-        stPrev.onclick = function () {
-            if (curLv > 1) {
-                closeModal();
-                if (opts.onSelectLevel) opts.onSelectLevel(curLv - 1);
-            }
-        };
-    }
-
-    var stNext = overlay.querySelector('#st-next-lv');
-    if (stNext) {
-        stNext.onclick = function () {
-            if (curLv < RAW_LEVELS.length) {
-                var canPlay = (SAVE.settings && SAVE.settings.unlockAllLevels) || (curLv + 1 <= SAVE.maxLevel);
-                if (!canPlay) {
-                    showToast('🔒 Hãy vượt qua màn hiện tại hoặc bật "Mở khóa 45 màn" bên dưới!', '#c62828');
-                    return;
-                }
-                closeModal();
-                if (opts.onSelectLevel) opts.onSelectLevel(curLv + 1);
-            }
+    var langBtn = overlay.querySelector('#st-lang-btn');
+    if (langBtn) {
+        langBtn.onclick = function () {
+            showToast('🇻🇳 Hiện tại trò chơi hỗ trợ giao diện Tiếng Việt');
         };
     }
 
@@ -934,11 +940,6 @@ function openSettingsModal(opts) {
     };
     overlay.querySelector('#st-sound').onclick = function () {
         s.sound = !s.sound;
-        saveGame();
-        openSettingsModal(opts);
-    };
-    overlay.querySelector('#st-vib').onclick = function () {
-        s.vibrate = !s.vibrate;
         saveGame();
         openSettingsModal(opts);
     };
@@ -969,5 +970,4 @@ function openSettingsModal(opts) {
         closeModal();
         opts.onResetAll();
     };
-    overlay.querySelector('#mb-close').onclick = closeModal;
 }
