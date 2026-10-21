@@ -285,7 +285,7 @@ var ITEM_CHAINS = [
 function getItemDisplayName(id) {
     if (!id) return '';
     if (id === 'generator_backpack') return 'Ba Lô Dã Ngoại';
-    if (id === 'generator_cooler') return 'Thùng Giữ Nhiệt';
+    if (id === 'generator_cooler') return 'Xe Kéo Dã Ngoại';
     if (id === 'generator_crate') return 'Thùng Dụng Cụ';
     var parts = String(id).split('_lv');
     var line = parts[0], lv = parseInt(parts[1]) || 1;
@@ -295,24 +295,24 @@ function getItemDisplayName(id) {
 }
 
 function getChainGenerator(line) {
-    if (line === 'an' || line === 'ban' || line === 'cafe') {
+    if (line === 'ban' || line === 'ghe' || line === 'trai') {
         return {
             id: 'generator_cooler',
-            name: 'Thùng Giữ Nhiệt',
+            name: 'Xe Kéo',
             icon: 'assets/images/items/generator_cooler.png'
         };
     }
-    if (line === 'trai' || line === 'tham' || line === 'ghe') {
+    if (line === 'tham' || line === 'antoan' || line === 'bep') {
         return {
-            id: 'generator_backpack',
-            name: 'Ba Lô',
-            icon: 'assets/images/items/generator_backpack.png'
+            id: 'generator_crate',
+            name: 'Thùng Dụng Cụ',
+            icon: 'assets/images/items/generator_crate.png'
         };
     }
     return {
-        id: 'generator_crate',
-        name: 'Thùng Dụng Cụ',
-        icon: 'assets/images/items/generator_crate.png'
+        id: 'generator_backpack',
+        name: 'Ba Lô',
+        icon: 'assets/images/items/generator_backpack.png'
     };
 }
 
@@ -353,50 +353,50 @@ function countUnclaimedBookRewards() {
 
 // ---------- KHU CẮM TRẠI (45 VẬT PHẨM LƯỚI BÀN CHƠI) ----------
 var CAMP_DECORS = [
-    [1,  'an_lv1',             'Quả Táo Đỏ'],
-    [2,  'trai_lv1',           'Cọc Ghim Lều Kim Loại'],
-    [3,  'bep_lv1',            'Nhánh Củi Khô'],
-    [4,  'cafe_lv1',           'Hạt Cà Phê Robusta'],
-    [5,  'generator_backpack', 'Ba Lô Dã Ngoại'],
-    [6,  'ban_lv1',            'Bàn Nhôm Vuông Mini'],
-    [7,  'congcu_lv1',         'Túi Vệ Sinh Cá Nhân'],
-    [8,  'tham_lv1',           'Bạt Trải Đất Dã Ngoại'],
-    [9,  'ghe_lv1',            'Ghế Đôn Xếp Mini'],
-    [10, 'antoan_lv1',         'Chai Xịt Côn Trùng'],
-    [11, 'an_lv2',             'Ổ Bánh Mì Dài'],
-    [12, 'trai_lv2',           'Cuộn Dây Dù Căng Lều'],
-    [13, 'bep_lv2',            'Khúc Gỗ Tròn'],
-    [14, 'cafe_lv2',           'Cối Xay Cà Phê Tay Gỗ'],
-    [15, 'ban_lv2',            'Bàn Vải Gấp Dã Ngoại'],
-    [16, 'congcu_lv2',         'Can Nước Dã Ngoại'],
-    [17, 'tham_lv2',           'Thảm Xốp Cuộn Cách Nhiệt'],
-    [18, 'ghe_lv2',            'Ghế Xếp Tựa Lưng Xanh'],
-    [19, 'antoan_lv2',         'Tuýp Kem Chống Nắng'],
-    [20, 'generator_cooler',   'Thùng Giữ Nhiệt'],
-    [21, 'an_lv3',             'Bánh Sandwich Kẹp'],
-    [22, 'trai_lv3',           'Bộ Khung Cọc Chống Lều'],
-    [23, 'bep_lv3',            'Bó Củi Buộc Dây'],
-    [24, 'cafe_lv3',           'Ấm Rót Cổ Ngỗng'],
-    [25, 'ban_lv3',            'Bàn Trà Dã Ngoại'],
+    [1,  'an_lv2',             'Ổ Bánh Mì Dài'],
+    [2,  'an_lv3',             'Bánh Sandwich Kẹp'],
+    [3,  'an_lv4',             'Tô Mì Sợi Nóng'],
+    [4,  'an_lv5',             'Đĩa Trái Cây Tươi'],
+    [5,  'an_lv6',             'Tô Hoa Quả Thập Cẩm'],
+    [6,  'an_lv8',             'Đại Tiệc BBQ Xiên Nướng'],
+    [7,  'antoan_lv1',         'Chai Xịt Côn Trùng'],
+    [8,  'antoan_lv2',         'Tuýp Kem Chống Nắng'],
+    [9,  'antoan_lv4',         'Xẻng Sinh Tồn Dã Ngoại'],
+    [10, 'antoan_lv5',         'Pin Sạc Dự Phòng'],
+    [11, 'antoan_lv7',         'Bộ Đàm Loa Rừng Già'],
+    [12, 'antoan_lv8',         'Trạm Điện Di Động Dã Ngoại'],
+    [13, 'ban_lv8',            'Trạm Bếp Nấu Ăn Glamping'],
+    [14, 'ban_lv2',            'Bàn Vải Gấp Dã Ngoại'],
+    [15, 'ban_lv4',            'Bàn Gỗ Cuộn Dã Ngoại'],
+    [16, 'ban_lv7',            'Bàn Chiến Thuật IGT'],
+    [17, 'bep_lv6',            'Lửa Trại Rực Hồng'],
+    [18, 'bep_lv8',            'Bếp Nướng BBQ Chữ Nhật'],
+    [19, 'cafe_lv1',           'Hạt Cà Phê Robusta'],
+    [20, 'cafe_lv3',           'Ấm Rót Cổ Ngỗng'],
+    [21, 'cafe_lv5',           'Gói Cà Phê Specialty'],
+    [22, 'cafe_lv6',           'Cối Xay Cầm Tay Inox'],
+    [23, 'cafe_lv7',           'Ấm Pha Moka Pot Ý'],
+    [24, 'cafe_lv8',           'Cốc Cà Phê Men Đỏ'],
+    [25, 'congcu_lv1',         'Túi Vệ Sinh Cá Nhân'],
     [26, 'congcu_lv3',         'Bộ Bát Đĩa Dã Ngoại'],
-    [27, 'tham_lv3',           'Thảm Thổ Cẩm Dã Ngoại'],
-    [28, 'ghe_lv3',            'Ghế Xếp Dã Ngoại Màu Cát'],
-    [29, 'antoan_lv3',         'Hộp Sơ Cứu Khẩn Cấp'],
-    [30, 'generator_crate',    'Thùng Dụng Cụ'],
-    [31, 'an_lv4',             'Tô Mì Sợi Nóng'],
-    [32, 'trai_lv4',           'Bạt Tăng Che Mưa Nắng'],
-    [33, 'bep_lv4',            'Hố Đá Xếp Lửa'],
-    [34, 'cafe_lv4',           'Tách Cà Phê Nóng'],
-    [35, 'ban_lv4',            'Bàn Gỗ Cuộn Dã Ngoại'],
-    [36, 'congcu_lv4',         'Đầu Khò Lửa Cầm Tay'],
-    [37, 'tham_lv4',           'Chăn Đệm Gấp Ấm Áp'],
-    [38, 'ghe_lv4',            'Ghế Xếp Có Tay Vịn'],
-    [39, 'antoan_lv4',         'Xẻng Sinh Tồn Dã Ngoại'],
-    [40, 'an_lv5',             'Đĩa Trái Cây Tươi'],
-    [41, 'trai_lv5',           'Lều Vòm Cắm Trại 2 Người'],
-    [42, 'bep_lv5',            'Đống Củi Trại Vòng Đá'],
-    [43, 'cafe_lv5',           'Gói Cà Phê Specialty'],
-    [44, 'ban_lv5',            'Bàn Dã Ngoại Kèm Giá Lưới'],
+    [27, 'congcu_lv5',         'Bếp Gas Dã Ngoại Mini'],
+    [28, 'congcu_lv6',         'Dây Đèn Led Lung Linh'],
+    [29, 'congcu_lv7',         'Đèn Cắm Trại 3 Chân'],
+    [30, 'congcu_lv8',         'Đèn Bão Cổ Điển'],
+    [31, 'generator_backpack', 'Ba Lô Dã Ngoại'],
+    [32, 'generator_cooler',   'Xe Kéo Dã Ngoại'],
+    [33, 'generator_crate',    'Thùng Dụng Cụ'],
+    [34, 'ghe_lv3',            'Ghế Xếp Dã Ngoại Màu Cát'],
+    [35, 'ghe_lv5',            'Ghế Câu Cá Có Khay'],
+    [36, 'ghe_lv6',            'Ghế Mặt Trăng Moon Chair'],
+    [37, 'ghe_lv8',            'Ghế Đạo Diễn Cao Cấp'],
+    [38, 'tham_lv2',           'Thảm Xốp Cuộn Cách Nhiệt'],
+    [39, 'tham_lv3',           'Thảm Thổ Cẩm Dã Ngoại'],
+    [40, 'tham_lv6',           'Võng Dù Giữa Rừng'],
+    [41, 'tham_lv7',           'Sofa Hơi Dã Ngoại'],
+    [42, 'tham_lv8',           'Đệm Hơi Đôi Cao Cấp'],
+    [43, 'trai_lv2',           'Cuộn Dây Dù Căng Lều'],
+    [44, 'trai_lv7',           'Lều Kim Tự Tháp Glamping'],
     [45, 'trai_lv8',           'Biệt Thự Lều Glamping']
 ];
 
@@ -407,10 +407,8 @@ function getCampDecor(level) {
 function isCampDecorUnlocked(d) {
     if (!d) return false;
     var lv = d[0];
-    var id = d[1];
     if (SAVE && SAVE.settings && SAVE.settings.unlockAllLevels) return true;
     if (SAVE && SAVE.stars && SAVE.stars[lv]) return true;
-    if (SAVE && SAVE.discovered && SAVE.discovered[id]) return true;
     return false;
 }
 

@@ -22,7 +22,7 @@ vm.runInContext(fs.readFileSync('js/progress.js', 'utf8'), ctx);
 function simulateOneGame(lvNum, maxEnergyCap) {
     const level = ctx.getLevelConfig(lvNum);
     const board = ctx.buildBoard(level);
-    const orderIds = ctx.tuneOrders(level.rawOrders, lvNum);
+    const orderIds = ctx.tuneOrders(level.rawOrders, lvNum, level);
     const orders = orderIds.map(id => ({ id, done: false }));
 
     const gens = [];
@@ -165,7 +165,7 @@ console.log('---|---------------------------|----------------|------|------|----
 for (let lv = 1; lv <= ctx.RAW_LEVELS.length; lv++) {
     const level = ctx.getLevelConfig(lv);
     const board0 = ctx.buildBoard(level);
-    const orderIds = ctx.tuneOrders(level.rawOrders, lv);
+    const orderIds = ctx.tuneOrders(level.rawOrders, lv, level);
     const budget = ctx.computeEnergyBudget(board0, orderIds, level);
 
     const usedList = [];

@@ -1125,8 +1125,8 @@ body {
     transition: transform 0.15s ease-out;
 }
 
-.camp-cell.locked {
-    opacity: 0.9;
+.camp-cell.locked img {
+    filter: brightness(0) opacity(0.22);
 }
 
 .camp-cell-num {

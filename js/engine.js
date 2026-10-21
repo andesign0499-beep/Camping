@@ -11,9 +11,9 @@ var BONUS_MIN_LV = 4; // ghép ra cấp này trở lên mới có quà (level c�
 var BONUS_CHANCE = 0.55; // xác suất nổ quà tiếp tế khi ghép ra item Lv4+
 
 var GENERATORS = {
-    'generator_backpack': ['trai_lv1', 'tham_lv1', 'ghe_lv1'],
-    'generator_crate': ['bep_lv1', 'congcu_lv1', 'antoan_lv1'],
-    'generator_cooler': ['an_lv1', 'ban_lv1', 'cafe_lv1']
+    'generator_backpack': ['an_lv1', 'cafe_lv1', 'congcu_lv1'],
+    'generator_cooler': ['ban_lv1', 'ghe_lv1', 'trai_lv1'],
+    'generator_crate': ['tham_lv1', 'antoan_lv1', 'bep_lv1']
 };
 
 var PATTERNS = {

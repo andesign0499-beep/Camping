@@ -183,11 +183,7 @@ function openCamp(highlightLevel, onBack) {
         var c = idx % 5;
         var bgCls = (r + c) % 2 === 0 ? 'bg-light' : 'bg-dark';
         var imgPath = id === 'ban_lv8' ? 'assets/images/items/ban_level8.png' : ('assets/images/items/' + id + '.png');
-
-        var itemContent = '';
-        if (unlocked) {
-            itemContent = '<img src="' + imgPath + '" class="item-img" alt="' + name + '">';
-        }
+        var itemContent = '<img src="' + imgPath + '" class="item-img" alt="' + name + '">';
 
         var isHighlighted = (lv === highlightLevel && unlocked);
         var extraCls = isHighlighted ? ' highlighted' : '';
