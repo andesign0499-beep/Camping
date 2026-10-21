@@ -18,7 +18,7 @@
             <header id="game-header">
                 <button id="btn-world-map" class="hud-icon-btn map-hud-btn" title="Mở Bản Đồ Hành Trình 45 Màn">
                     <img src="assets/images/ui/icon_map.png" alt="Bản đồ">
-                    <span id="current-lv-badge" class="lv-map-badge">LV1</span>
+                    <span id="current-lv-badge" class="lv-map-badge">1</span>
                 </button>
 
                 <div class="hud-stats-group">
@@ -58,40 +58,6 @@
                     </div>
                     <div id="orders-container"></div>
                 </div>
-
-                <button id="btn-lucky-drop" class="lucky-drop-btn" title="Hộp Tiếp Tế May Mắn (Xem Ads nhận quà)">
-                    <svg class="lucky-gift-svg" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="boxGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#ff5252"/>
-                                <stop offset="100%" stop-color="#c62828"/>
-                            </linearGradient>
-                            <linearGradient id="lidGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="#ff7979"/>
-                                <stop offset="100%" stop-color="#d32f2f"/>
-                            </linearGradient>
-                            <linearGradient id="goldRibbon" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0%" stop-color="#fff176"/>
-                                <stop offset="50%" stop-color="#ffd54f"/>
-                                <stop offset="100%" stop-color="#ffa000"/>
-                            </linearGradient>
-                        </defs>
-                        <!-- Thân hộp quà -->
-                        <rect x="5.5" y="12" width="21" height="15" rx="3" fill="url(#boxGrad)"/>
-                        <!-- Nắp hộp quà -->
-                        <rect x="4" y="9" width="24" height="5" rx="2" fill="url(#lidGrad)"/>
-                        <!-- Ruy băng vàng dọc -->
-                        <rect x="13.5" y="9" width="5" height="18" fill="url(#goldRibbon)"/>
-                        <!-- Ruy băng vàng ngang nắp -->
-                        <rect x="4" y="10.5" width="24" height="2" fill="#ffb300" opacity="0.35"/>
-                        <!-- Nơ ruy băng trái -->
-                        <path d="M16 9 C13 3, 6 4, 9.5 8 C11.5 9.5, 15 9, 16 9 Z" fill="url(#goldRibbon)"/>
-                        <!-- Nơ ruy băng phải -->
-                        <path d="M16 9 C19 3, 26 4, 22.5 8 C20.5 9.5, 17 9, 16 9 Z" fill="url(#goldRibbon)"/>
-                        <!-- Nút thắt tâm nơ -->
-                        <circle cx="16" cy="8.8" r="2" fill="#fff59d"/>
-                    </svg>
-                </button>
             </div>
         </section>
 
@@ -110,7 +76,6 @@
                 </button>
                 <button id="btn-book" class="footer-img-btn btn-book-ui">
                     <span class="footer-btn-label">CẨM NANG</span>
-                    <span id="book-badge" class="badge-dot" style="display:none">0</span>
                 </button>
                 <button id="btn-sell" class="footer-img-btn btn-sell-ui disabled">
                     <span id="sell-btn-text" class="footer-btn-label">BÁN</span>

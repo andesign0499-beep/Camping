@@ -246,49 +246,74 @@ function calcStars(energyLeft, budget) {
 var ITEM_CHAINS = [
     {
         line: 'an', icon: '🍔', title: 'Ẩm Thực Dã Ngoại',
-        names: ['Bánh Mì Lát', 'Trứng Ốp La', 'Sandwich Kẹp', 'Xúc Xích Nướng', 'Burger Lửa Trại', 'Pizza Nướng Củi', 'Gà Quay Mật Ong', 'Đại Tiệc BBQ Thượng Hạng']
+        names: ['Quả Táo Đỏ', 'Ổ Bánh Mì Dài', 'Bánh Sandwich Kẹp', 'Tô Mì Sợi Nóng', 'Đĩa Trái Cây Tươi', 'Tô Hoa Quả Thập Cẩm', 'Đĩa Bánh Quy Nướng', 'Đại Tiệc BBQ Xiên Nướng']
     },
     {
         line: 'ban', icon: '🪑', title: 'Bàn Dã Ngoại',
-        names: ['Khăn Trải Nhỏ', 'Khay Gỗ Mini', 'Bàn Xếp Vải Dù', 'Bàn Gỗ Thông', 'Bàn Nhôm Gấp Gọn', 'Bàn Đôi Cắm Trại', 'Bàn Chiến Thuật IGT', 'Bàn Đại Tiệc Glamping']
+        names: ['Bàn Nhôm Vuông Mini', 'Bàn Vải Gấp Dã Ngoại', 'Bàn Trà Dã Ngoại', 'Bàn Gỗ Cuộn Dã Ngoại', 'Bàn Dã Ngoại Kèm Giá Lưới', 'Bàn Cắm Trại Đa Năng', 'Bàn Chiến Thuật IGT', 'Trạm Bếp Nấu Ăn Glamping']
     },
     {
         line: 'cafe', icon: '☕', title: 'Cà Phê Sương Sớm',
-        names: ['Hạt Robusta', 'Túi Cà Phê Rang', 'Cối Xay Tay Gỗ', 'Phin Pha Truyền Thống', 'Ca Tráng Men Ấm', 'Ấm Pha Moka Ý', 'Bộ Syphon Cổ Điển', 'Trạm Espresso Rừng Già']
+        names: ['Hạt Cà Phê Robusta', 'Cối Xay Cà Phê Tay Gỗ', 'Ấm Rót Cổ Ngỗng', 'Tách Cà Phê Nóng', 'Gói Cà Phê Specialty', 'Cối Xay Cầm Tay Inox', 'Ấm Pha Moka Pot Ý', 'Cốc Cà Phê Men Đỏ']
     },
     {
         line: 'trai', icon: '⛺', title: 'Lều Trại Trú Ngụ',
-        names: ['Cọc Ghim Đất', 'Dây Dù Căng Bạt', 'Tấm Tăng Che Mưa', 'Lều Đơn Chữ A', 'Lều Vòm 2 Người', 'Lều Gia Đình Chống Bão', 'Lều Chuông Glamping', 'Biệt Thự Lều Đỉnh Tuyết']
+        names: ['Cọc Ghim Lều Kim Loại', 'Cuộn Dây Dù Căng Lều', 'Bộ Khung Cọc Chống Lều', 'Bạt Tăng Che Mưa Nắng', 'Lều Vòm Cắm Trại 2 Người', 'Lều Gia Đình Chống Gió', 'Lều Kim Tự Tháp Glamping', 'Biệt Thự Lều Glamping']
     },
     {
         line: 'tham', icon: '🛏️', title: 'Chỗ Ngủ Êm Ái',
-        names: ['Chiếu Cói Mỏng', 'Tấm Cách Nhiệt Bạc', 'Thảm Xốp Gấp', 'Túi Ngủ Mùa Thu', 'Võng Dù Mắc Cây', 'Đệm Hơi Tự Phồng', 'Túi Ngủ Lông Vũ', 'Giường Hơi Hoàng Gia']
+        names: ['Bạt Trải Đất Dã Ngoại', 'Thảm Xốp Cuộn Cách Nhiệt', 'Thảm Thổ Cẩm Dã Ngoại', 'Chăn Đệm Gấp Ấm Áp', 'Túi Ngủ Dã Ngoại', 'Võng Dù Giữa Rừng', 'Sofa Hơi Dã Ngoại', 'Đệm Hơi Đôi Cao Cấp']
     },
     {
         line: 'ghe', icon: '🛋️', title: 'Ghế Nghỉ Ngơi',
-        names: ['Đôn Gỗ Nhỏ', 'Ghế Đẩu Xếp', 'Ghế Vải Dù Mini', 'Ghế Tựa Lưng Thấp', 'Ghế Đạo Diễn Có Khay', 'Ghế Bập Bênh Gỗ', 'Ghế Thư Giãn Moon Chair', 'Sofa Đôi Thiên Nhiên']
+        names: ['Ghế Đôn Xếp Mini', 'Ghế Xếp Tựa Lưng Xanh', 'Ghế Xếp Dã Ngoại Màu Cát', 'Ghế Xếp Có Tay Vịn', 'Ghế Câu Cá Có Khay', 'Ghế Mặt Trăng Moon Chair', 'Ghế Tựa Lưng Cao Có Gối', 'Ghế Đạo Diễn Cao Cấp']
     },
     {
         line: 'bep', icon: '🔥', title: 'Lửa & Bếp Trại',
-        names: ['Bùi Nhùi Khô', 'Bó Củi Thông', 'Đống Lửa Trại', 'Bếp Cồn Mini', 'Bếp Củi Xếp Gọn', 'Bếp Gas Dã Ngoại', 'Lò Nướng Than Hoa', 'Bếp Gang Đúc Đại Ngàn']
+        names: ['Nhánh Củi Khô', 'Khúc Gỗ Tròn', 'Bó Củi Buộc Dây', 'Hố Đá Xếp Lửa', 'Đống Củi Trại Vòng Đá', 'Lửa Trại Rực Hồng', 'Lò Nướng Than Hoa Tròn', 'Bếp Nướng BBQ Chữ Nhật']
     },
     {
         line: 'congcu', icon: '🔦', title: 'Dụng Cụ Sinh Tồn',
-        names: ['Dây Thừng Bện', 'Dao Gấp Đa Năng', 'Rìu Bổ Củi', 'Xẻng Quân Dụng', 'Đèn Pin Siêu Sáng', 'Đèn Dây Lung Linh', 'Đèn Bão Cổ Điển', 'Trạm Điện Mặt Trời']
+        names: ['Túi Vệ Sinh Cá Nhân', 'Can Nước Dã Ngoại', 'Bộ Bát Đĩa Dã Ngoại', 'Đầu Khò Lửa Cầm Tay', 'Bếp Gas Dã Ngoại Mini', 'Dây Đèn Led Lung Linh', 'Đèn Cắm Trại 3 Chân', 'Đèn Bão Cổ Điển']
     },
     {
         line: 'antoan', icon: '🧰', title: 'Y Tế & An Toàn',
-        names: ['Băng Cá Nhân', 'Cuộn Gạc Y Tế', 'Còi Cứu Hộ', 'La Bàn Định Hướng', 'Túi Sơ Cứu Cá Nhân', 'Hộp Y Tế Chuyên Dụng', 'Bộ Đàm Xuyên Rừng', 'Trạm Tín Hiệu Vệ Tinh']
+        names: ['Chai Xịt Côn Trùng', 'Tuýp Kem Chống Nắng', 'Hộp Sơ Cứu Khẩn Cấp', 'Xẻng Sinh Tồn Dã Ngoại', 'Pin Sạc Dự Phòng', 'Lều Trú Ẩn Khẩn Cấp', 'Bộ Đàm Loa Rừng Già', 'Trạm Điện Di Động Dã Ngoại']
     }
 ];
 
 function getItemDisplayName(id) {
     if (!id) return '';
+    if (id === 'generator_backpack') return 'Ba Lô Dã Ngoại';
+    if (id === 'generator_cooler') return 'Thùng Giữ Nhiệt';
+    if (id === 'generator_crate') return 'Thùng Dụng Cụ';
     var parts = String(id).split('_lv');
     var line = parts[0], lv = parseInt(parts[1]) || 1;
     var chain = ITEM_CHAINS.find(function (c) { return c.line === line; });
     if (!chain) return id;
     return (chain.names[lv - 1] || id) + ' (Lv.' + lv + ')';
+}
+
+function getChainGenerator(line) {
+    if (line === 'an' || line === 'ban' || line === 'cafe') {
+        return {
+            id: 'generator_cooler',
+            name: 'Thùng Giữ Nhiệt',
+            icon: 'assets/images/items/generator_cooler.png'
+        };
+    }
+    if (line === 'trai' || line === 'tham' || line === 'ghe') {
+        return {
+            id: 'generator_backpack',
+            name: 'Ba Lô',
+            icon: 'assets/images/items/generator_backpack.png'
+        };
+    }
+    return {
+        id: 'generator_crate',
+        name: 'Thùng Dụng Cụ',
+        icon: 'assets/images/items/generator_crate.png'
+    };
 }
 
 // Thưởng khi mở khóa lần đầu trong Cẩm Nang: trả về { coins, gems }
@@ -326,59 +351,69 @@ function countUnclaimedBookRewards() {
     return count;
 }
 
-// ---------- KHU CẮM TRẠI (D13 - MỞ RỘNG 45 VẬT TRANG TRÍ) ----------
+// ---------- KHU CẮM TRẠI (45 VẬT PHẨM LƯỚI BÀN CHƠI) ----------
 var CAMP_DECORS = [
-    [1,  '🍳', 'Bữa sáng',          22, 88, 7],
-    [2,  '⛺', 'Lều cắm trại',      50, 64, 16],
-    [3,  '🔥', 'Lửa trại',          50, 84, 10],
-    [4,  '☕', 'Cà phê sương sớm',   33, 84, 7],
-    [5,  '🎒', 'Ba lô hành trang',   68, 84, 8],
-    [6,  '🫖', 'Bộ trà',            14, 76, 7],
-    [7,  '🌿', 'Bãi cỏ',            86, 90, 7],
-    [8,  '🧺', 'Giỏ dã ngoại',      40, 92, 7],
-    [9,  '🛏️', 'Chỗ ngủ êm ái',     66, 74, 8],
-    [10, '🪵', 'Củi lửa',           58, 90, 7],
-    [11, '🎐', 'Chuông gió',        78, 50, 7],
-    [12, '🫘', 'Hạt Robusta',        6, 90, 6],
-    [13, '🌊', 'Suối nhỏ',          93, 76, 9],
-    [14, '🧰', 'Hộp sơ cứu',        26, 94, 6],
-    [15, '🍎', 'Tiệc trái cây',     76, 94, 6],
-    [16, '🪢', 'Võng giữa rừng',    10, 62, 8],
-    [17, '💡', 'Đèn dây',           36, 54, 7],
-    [18, '🪑', 'Bàn gỗ xếp',        86, 66, 8],
-    [19, '☔', 'Mái che mưa',       22, 42, 8],
-    [20, '🏕️', 'Lều lửa rực hồng',   80, 58, 8],
-    [21, '🧊', 'Thùng đá',           4, 78, 6],
-    [22, '🎧', 'Góc chill',         64, 62, 6],
-    [23, '📻', 'Radio rừng',        30, 70, 6],
-    [24, '🍖', 'Bếp nướng',         92, 90, 7],
-    [25, '🛋️', 'Sofa thiên nhiên',   12, 92, 8],
-    [26, '🎲', 'Bàn chiến thuật',   46, 74, 6],
-    [27, '🔦', 'Đèn bão',           58, 66, 6],
-    [28, '🔋', 'Trạm điện',         18, 66, 6],
-    [29, '✨', 'Glamping',          50, 42, 10],
-    [30, '🏔️', 'Đỉnh núi BBQ',      35, 30, 14],
-    [31, '🌤️', 'Biển mây sớm',       18, 16, 10],
-    [32, '🔭', 'Kính thiên văn',    72, 38, 7],
-    [33, '🕸️', 'Hang cổ thụ',        8, 48, 7],
-    [34, '♨️', 'Suối nước nóng',    88, 82, 8],
-    [35, '🌉', 'Cầu tre vượt thác',  92, 60, 8],
-    [36, '🪴', 'Vườn thảo mộc',     28, 78, 6],
-    [37, '🌫️', 'Sương mù núi cao',   62, 22, 9],
-    [38, '❄️', 'Trại bão tuyết',    48, 18, 7],
-    [39, '🐟', 'Cá nướng bên thác', 82, 74, 6],
-    [40, '🚩', 'Cờ trại đại ngàn',  54, 48, 7],
-    [41, '🧭', 'La bàn kiểm lâm',   38, 64, 6],
-    [42, '🏡', 'Quán cà phê cây',   26, 52, 8],
-    [43, '🎆', 'Pháo hoa cuối mùa', 76, 14, 10],
-    [44, '🌌', 'Bắc cực quang',     34, 12, 11],
-    [45, '👑', 'Vương miện Vua Trại', 50, 52, 8]
+    [1,  'an_lv1',             'Quả Táo Đỏ'],
+    [2,  'trai_lv1',           'Cọc Ghim Lều Kim Loại'],
+    [3,  'bep_lv1',            'Nhánh Củi Khô'],
+    [4,  'cafe_lv1',           'Hạt Cà Phê Robusta'],
+    [5,  'generator_backpack', 'Ba Lô Dã Ngoại'],
+    [6,  'ban_lv1',            'Bàn Nhôm Vuông Mini'],
+    [7,  'congcu_lv1',         'Túi Vệ Sinh Cá Nhân'],
+    [8,  'tham_lv1',           'Bạt Trải Đất Dã Ngoại'],
+    [9,  'ghe_lv1',            'Ghế Đôn Xếp Mini'],
+    [10, 'antoan_lv1',         'Chai Xịt Côn Trùng'],
+    [11, 'an_lv2',             'Ổ Bánh Mì Dài'],
+    [12, 'trai_lv2',           'Cuộn Dây Dù Căng Lều'],
+    [13, 'bep_lv2',            'Khúc Gỗ Tròn'],
+    [14, 'cafe_lv2',           'Cối Xay Cà Phê Tay Gỗ'],
+    [15, 'ban_lv2',            'Bàn Vải Gấp Dã Ngoại'],
+    [16, 'congcu_lv2',         'Can Nước Dã Ngoại'],
+    [17, 'tham_lv2',           'Thảm Xốp Cuộn Cách Nhiệt'],
+    [18, 'ghe_lv2',            'Ghế Xếp Tựa Lưng Xanh'],
+    [19, 'antoan_lv2',         'Tuýp Kem Chống Nắng'],
+    [20, 'generator_cooler',   'Thùng Giữ Nhiệt'],
+    [21, 'an_lv3',             'Bánh Sandwich Kẹp'],
+    [22, 'trai_lv3',           'Bộ Khung Cọc Chống Lều'],
+    [23, 'bep_lv3',            'Bó Củi Buộc Dây'],
+    [24, 'cafe_lv3',           'Ấm Rót Cổ Ngỗng'],
+    [25, 'ban_lv3',            'Bàn Trà Dã Ngoại'],
+    [26, 'congcu_lv3',         'Bộ Bát Đĩa Dã Ngoại'],
+    [27, 'tham_lv3',           'Thảm Thổ Cẩm Dã Ngoại'],
+    [28, 'ghe_lv3',            'Ghế Xếp Dã Ngoại Màu Cát'],
+    [29, 'antoan_lv3',         'Hộp Sơ Cứu Khẩn Cấp'],
+    [30, 'generator_crate',    'Thùng Dụng Cụ'],
+    [31, 'an_lv4',             'Tô Mì Sợi Nóng'],
+    [32, 'trai_lv4',           'Bạt Tăng Che Mưa Nắng'],
+    [33, 'bep_lv4',            'Hố Đá Xếp Lửa'],
+    [34, 'cafe_lv4',           'Tách Cà Phê Nóng'],
+    [35, 'ban_lv4',            'Bàn Gỗ Cuộn Dã Ngoại'],
+    [36, 'congcu_lv4',         'Đầu Khò Lửa Cầm Tay'],
+    [37, 'tham_lv4',           'Chăn Đệm Gấp Ấm Áp'],
+    [38, 'ghe_lv4',            'Ghế Xếp Có Tay Vịn'],
+    [39, 'antoan_lv4',         'Xẻng Sinh Tồn Dã Ngoại'],
+    [40, 'an_lv5',             'Đĩa Trái Cây Tươi'],
+    [41, 'trai_lv5',           'Lều Vòm Cắm Trại 2 Người'],
+    [42, 'bep_lv5',            'Đống Củi Trại Vòng Đá'],
+    [43, 'cafe_lv5',           'Gói Cà Phê Specialty'],
+    [44, 'ban_lv5',            'Bàn Dã Ngoại Kèm Giá Lưới'],
+    [45, 'trai_lv8',           'Biệt Thự Lều Glamping']
 ];
 
 function getCampDecor(level) {
     return CAMP_DECORS.find(function (d) { return d[0] === level; });
 }
 
+function isCampDecorUnlocked(d) {
+    if (!d) return false;
+    var lv = d[0];
+    var id = d[1];
+    if (SAVE && SAVE.settings && SAVE.settings.unlockAllLevels) return true;
+    if (SAVE && SAVE.stars && SAVE.stars[lv]) return true;
+    if (SAVE && SAVE.discovered && SAVE.discovered[id]) return true;
+    return false;
+}
+
 function countUnlockedDecors() {
-    return CAMP_DECORS.filter(function (d) { return SAVE.stars[d[0]]; }).length;
+    return CAMP_DECORS.filter(function (d) { return isCampDecorUnlocked(d); }).length;
 }

@@ -931,13 +931,7 @@ function fillBoardInstantly() {
 
 function updateBookBadge() {
     if (!bookBadgeUI) return;
-    var n = countUnclaimedBookRewards();
-    if (n > 0) {
-        bookBadgeUI.innerText = n;
-        bookBadgeUI.style.display = 'inline-block';
-    } else {
-        bookBadgeUI.style.display = 'none';
-    }
+    bookBadgeUI.style.display = 'none';
 }
 
 function renderBoard() {
@@ -1099,7 +1093,7 @@ function updateUIStats() {
     if (energyUI) energyUI.innerText = playerEnergy.toLocaleString('vi-VN');
     if (coinUI) coinUI.innerText = playerCoins.toLocaleString('vi-VN');
     if (gemUI) gemUI.innerText = playerGems.toLocaleString('vi-VN');
-    if (currentLvBadgeUI) currentLvBadgeUI.innerText = 'LV' + currentLevel;
+    if (currentLvBadgeUI) currentLvBadgeUI.innerText = currentLevel;
     SAVE.coins = playerCoins;
     SAVE.gems = playerGems;
     SAVE.level = currentLevel;
