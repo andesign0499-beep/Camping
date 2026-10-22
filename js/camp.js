@@ -29,22 +29,14 @@ function createModal(innerHtml, extraClass, titleText) {
     overlay.id = 'modal-overlay';
 
     var ribbonHtml = titleText ? ('<div class="popup-ribbon"><span>' + titleText + '</span></div>') : '';
-    var bg9Html = 
-        '<div class="bg-9slice-frame" aria-hidden="true">' +
-            '<img src="assets/images/ui/bg_popup_top_l.png" class="bg9-p" alt="">' +
-            '<img src="assets/images/ui/bg_popup_top_c.png" class="bg9-p" alt="">' +
-            '<img src="assets/images/ui/bg_popup_top_r.png" class="bg9-p" alt="">' +
-            '<img src="assets/images/ui/bg_popup_center_l.png" class="bg9-p" alt="">' +
-            '<img src="assets/images/ui/bg_popup_center_c.png" class="bg9-p" alt="">' +
-            '<img src="assets/images/ui/bg_popup_center_r.png" class="bg9-p" alt="">' +
-            '<img src="assets/images/ui/bg_popup_bottom_l.png" class="bg9-p" alt="">' +
-            '<img src="assets/images/ui/bg_popup_bottom_c.png" class="bg9-p" alt="">' +
-            '<img src="assets/images/ui/bg_popup_bottom_r.png" class="bg9-p" alt="">' +
-        '</div>';
 
     overlay.innerHTML = '<div class="modal-box ' + (extraClass || '') + '">' +
-        bg9Html +
         ribbonHtml +
+        '<div class="popup-bg-3slice" aria-hidden="true">' +
+            '<div class="p3-top"></div>' +
+            '<div class="p3-mid"></div>' +
+            '<div class="p3-bot"></div>' +
+        '</div>' +
         '<div class="modal-content-wrap">' + innerHtml + '</div>' +
     '</div>';
 

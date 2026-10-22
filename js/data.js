@@ -6,13 +6,15 @@
 // - Lv 36 - 45: Mở khóa trọn bộ 9 vật phẩm tối thượng Lv.8
 // ==========================================
 
-// Danh sách ảnh nền màn chơi & bản đồ (Tự động lặp tuần hoàn 1..N; khi thêm ảnh nền mới chỉ cần nối tiếp vào mảng này)
+// Danh sách ảnh nền màn chơi & bản đồ (Tự động lặp tuần hoàn 1..N theo thứ tự)
 var LEVEL_BACKGROUNDS = [
     'assets/images/ui/bg_01.jpg',
     'assets/images/ui/bg_02.jpg',
     'assets/images/ui/bg_03.jpg',
     'assets/images/ui/bg04.jpg',
-    'assets/images/ui/bg05.jpg'
+    'assets/images/ui/bg05.jpg',
+    'assets/images/ui/bg06.jpg',
+    'assets/images/ui/bg07.jpg'
 ];
 
 function getLevelBackground(lvNum) {
@@ -20,6 +22,66 @@ function getLevelBackground(lvNum) {
     var idx = (Math.max(1, parseInt(lvNum, 10) || 1) - 1) % LEVEL_BACKGROUNDS.length;
     return LEVEL_BACKGROUNDS[idx];
 }
+
+// Tự động quét và phát hiện các ảnh nền mới (bg08, bg09, bg10... hoặc bg_08, bg_09...)
+// Khi người dùng thêm file ảnh nền mới vào assets/images/ui/, hàm này sẽ tự động nhận diện và cập nhật danh sách tuần hoàn
+(function autoScanBackgrounds() {
+    if (typeof window === 'undefined') return;
+    var scanned = [];
+    var maxProbe = 50;
+    var consecutiveMisses = 0;
+
+    function probe(num) {
+        if (num > maxProbe || consecutiveMisses >= 3) {
+            if (scanned.length >= 3) {
+                LEVEL_BACKGROUNDS = scanned;
+                if (typeof currentLevel !== 'undefined') {
+                    var topSceneEl = document.getElementById('top-scene');
+                    if (topSceneEl && typeof getLevelBackground === 'function') {
+                        topSceneEl.style.backgroundImage = "url('" + getLevelBackground(currentLevel) + "')";
+                    }
+                }
+            }
+            return;
+        }
+
+        var s2 = String(num).padStart(2, '0');
+        var candidates = [
+            'assets/images/ui/bg' + s2 + '.jpg',
+            'assets/images/ui/bg_' + s2 + '.jpg',
+            'assets/images/ui/bg' + num + '.jpg',
+            'assets/images/ui/bg_' + num + '.jpg',
+            'assets/images/ui/bg' + s2 + '.png',
+            'assets/images/ui/bg_' + s2 + '.png'
+        ];
+
+        function tryCandidate(cIdx) {
+            if (cIdx >= candidates.length) {
+                consecutiveMisses++;
+                probe(num + 1);
+                return;
+            }
+            var testUrl = candidates[cIdx];
+            var img = new Image();
+            img.onload = function () {
+                scanned.push(testUrl);
+                consecutiveMisses = 0;
+                probe(num + 1);
+            };
+            img.onerror = function () {
+                tryCandidate(cIdx + 1);
+            };
+            img.src = testUrl;
+        }
+
+        tryCandidate(0);
+    }
+
+    // Chạy ngầm sau khi trang tải xong
+    setTimeout(function () {
+        probe(1);
+    }, 100);
+})();
 
 var RAW_LEVELS = [
     // --- CHƯƠNG 1: KHỞI ĐẦU BÃI CỎ (Lv 1 - 10: Đơn hàng Lv.3 - Lv.5) ---

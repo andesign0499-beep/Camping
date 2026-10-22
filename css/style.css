@@ -1,39 +1,45 @@
 /* ================== HỆ THỐNG LƯỚI 4PT / 8PT (CHUẨN MOBILE TỐI ĐA 420PX) ================== */
-:root {
-    /* Spacing Scale (Bội số của 4pt / 8pt) */
-    --sp-1: 4px;
-    --sp-2: 8px;
-    --sp-3: 12px;
-    --sp-4: 16px;
-    --sp-5: 20px;
-    --sp-6: 24px;
-    --sp-8: 32px;
+html {
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
 
-    /* Border Radius Scale (Bội số của 4pt / 8pt) */
+:root {
+    /* Khoảng cách xung quanh chữ (Padding, Margin): Dùng rem để co giãn tỷ lệ thuận với cỡ chữ */
+    --sp-1: 0.25rem;  /* ~4px */
+    --sp-2: 0.5rem;   /* ~8px */
+    --sp-3: 0.75rem;  /* ~12px */
+    --sp-4: 1rem;     /* ~16px */
+    --sp-5: 1.25rem;  /* ~20px */
+    --sp-6: 1.5rem;   /* ~24px */
+    --sp-8: 2rem;     /* ~32px */
+
+    /* Độ bo góc (border-radius): Giữ cố định px để góc bo luôn sắc nét, không bị biến dạng khi phóng to chữ */
     --rad-sm: 4px;
     --rad-md: 8px;
     --rad-lg: 12px;
     --rad-xl: 16px;
-    --rad-pill: 20px;
+    --rad-pill: 9999px;
 
-    /* Typography Scale (Font-size & Line-height tuân thủ tuyệt đối lưới 4pt/8pt) */
-    --fs-xs: 8px;
-    --lh-xs: 12px;
+    /* Kích thước chữ (font-size & line-height): Toàn bộ chuyển sang rem để tự động thích ứng với cỡ chữ hệ thống */
+    --fs-xs: 0.5rem;     /* ~8px */
+    --lh-xs: 0.75rem;    /* ~12px */
 
-    --fs-sm: 12px;
-    --lh-sm: 16px;
+    --fs-sm: 0.75rem;    /* ~12px */
+    --lh-sm: 1rem;       /* ~16px */
 
-    --fs-md: 12px;
-    --lh-md: 16px;
+    --fs-md: 0.875rem;   /* ~14px */
+    --lh-md: 1.125rem;   /* ~18px */
 
-    --fs-lg: 16px;
-    --lh-lg: 24px;
+    --fs-lg: 1rem;       /* ~16px */
+    --lh-lg: 1.375rem;   /* ~22px */
 
-    --fs-xl: 20px;
-    --lh-xl: 28px;
+    --fs-xl: 1.25rem;    /* ~20px */
+    --lh-xl: 1.625rem;   /* ~26px */
 
-    --fs-hero: 48px;
-    --lh-hero: 48px;
+    --fs-hero: 2.75rem;  /* ~44px */
+    --lh-hero: 3rem;     /* ~48px */
 
     /* Kích thước thành phần theo lưới 4pt / 8pt (Màn hình tối đa 420px) */
     --app-max-w: 420px;
@@ -90,7 +96,10 @@ body {
     min-height: var(--top-scene-min-h);
     width: 100%;
     position: relative;
-    background: url('../assets/images/ui/bg_01.jpg') center bottom / cover no-repeat;
+    background: url('../assets/images/ui/bg_01.jpg') center center / cover no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -152,7 +161,7 @@ body {
     border: none;
     border-radius: 50%;
     font-family: 'Baloo 2', 'Nunito', sans-serif;
-    font-size: 12px;
+    font-size: 0.75rem;
     line-height: 1;
     font-weight: 800;
     display: flex;
@@ -257,8 +266,8 @@ body {
 .hud-stat-val {
     font-family: 'Baloo 2', 'Nunito', sans-serif;
     font-weight: 800;
-    font-size: 11px;
-    line-height: 20px;
+    font-size: 0.6875rem;
+    line-height: 1.25rem;
     color: #3e220c;
     white-space: nowrap;
     text-align: left;
@@ -341,42 +350,59 @@ body {
     z-index: 8;
 }
 
-/* Hộp thoại gợi ý tự vẽ bằng CSS, co giãn tự nhiên theo độ dài chữ và có mũi tên trỏ về phía nhân vật */
+/* Hộp thoại gợi ý 3 mảnh (talk_bg_left, talk_bg_center, talk_bg_right), co giãn tự nhiên theo chiều ngang */
 .npc-speech-bubble {
     position: relative;
+    left: -12px;
+    top: 12px;
     width: fit-content;
-    max-width: calc(100% - 40px);
-    background: linear-gradient(180deg, #fffef9 0%, #f7ebd3 100%);
-    border: 1.5px solid #c49358;
-    border-radius: 8px;
-    padding: 3px 8px;
+    max-width: calc(100% - 8px);
+    background: transparent;
+    border: none;
+    padding: 0;
     display: flex;
     align-items: center;
     cursor: pointer;
-    box-shadow: 0 3px 8px rgba(42, 24, 12, 0.2);
     transition: transform 0.15s;
+    min-height: 40px;
 }
 
-.npc-speech-bubble::before {
-    content: '';
-    position: absolute;
-    left: -7px;
-    top: 50%;
-    transform: translateY(-50%);
-    border-width: 5px 7px 5px 0;
-    border-style: solid;
-    border-color: transparent #c49358 transparent transparent;
-}
-
+.npc-speech-bubble::before,
 .npc-speech-bubble::after {
-    content: '';
+    display: none !important;
+}
+
+.talk-bg-3slice {
     position: absolute;
-    left: -5px;
-    top: 50%;
-    transform: translateY(-50%);
-    border-width: 4px 5.5px 4px 0;
-    border-style: solid;
-    border-color: transparent #fbf4e4 transparent transparent;
+    inset: 0;
+    display: flex;
+    flex-direction: row;
+    pointer-events: none;
+    z-index: 0;
+    filter: drop-shadow(0 3px 6px rgba(42, 24, 12, 0.22));
+}
+
+.t3-left {
+    height: 100%;
+    aspect-ratio: 101 / 185;
+    background: url('../assets/images/ui/talk_bg_left.png') left center / 100% 100% no-repeat;
+    flex-shrink: 0;
+}
+
+.t3-mid {
+    height: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: -1px;
+    margin-right: -1px;
+    background: url('../assets/images/ui/talk_bg_center.png') center / 100% 100% no-repeat;
+}
+
+.t3-right {
+    height: 100%;
+    aspect-ratio: 71 / 185;
+    background: url('../assets/images/ui/talk_bg_right.png') right center / 100% 100% no-repeat;
+    flex-shrink: 0;
 }
 
 .npc-speech-bubble:active {
@@ -384,11 +410,15 @@ body {
 }
 
 .npc-speech-text {
-    font-size: 10px;
-    line-height: 13px;
+    position: relative;
+    z-index: 1;
+    font-family: 'Baloo 2', 'Nunito', -apple-system, sans-serif;
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
     font-weight: 700;
     color: #4a2c11;
     word-break: break-word;
+    padding: 0.4375rem 1rem 0.4375rem 1.5rem;
 }
 
 #orders-container {
@@ -455,8 +485,8 @@ body {
     transform: translateX(-50%);
     background: #27ae60;
     color: #ffffff;
-    font-size: 9px;
-    line-height: 12px;
+    font-size: 0.5625rem;
+    line-height: 0.75rem;
     font-weight: 900;
     padding: 1px 6px;
     border-radius: 8px;
@@ -498,8 +528,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
-    line-height: 32px;
+    font-size: 1.75rem;
+    line-height: 2rem;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
     user-select: none;
 }
@@ -637,8 +667,8 @@ body {
     right: 2px;
     background: #27ae60;
     color: #fff;
-    font-size: 10px;
-    line-height: 14px;
+    font-size: 0.625rem;
+    line-height: 0.875rem;
     font-weight: 900;
     width: 16px;
     height: 16px;
@@ -864,9 +894,8 @@ body {
     position: relative;
     width: var(--modal-w);
     max-height: min(750px, 88dvh);
-    border: none;
     background: transparent;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+    border: none;
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -884,49 +913,65 @@ body {
 }
 
 .modal-box.settings-popup-box,
-.modal-box.win-box {
+.modal-box.win-box,
+.modal-box.lucky-drop-box {
     height: auto;
     max-height: min(750px, 88dvh);
 }
 
-.bg-9slice-frame {
+.popup-bg-3slice {
     position: absolute;
     inset: 0;
-    display: grid;
-    /* Tỉ lệ 9-slice chuẩn xác theo kích thước gốc 900x1278 của bg_popup:
-       Góc trái 180px (20%), góc phải 180px (20%), giữa 1fr (60%).
-       Hàng trên 257px, hàng dưới 206px, giữa 1fr. */
-    grid-template-columns: calc(var(--modal-w) * 180 / 900) 1fr calc(var(--modal-w) * 180 / 900);
-    grid-template-rows: calc(var(--modal-w) * 257 / 900) 1fr calc(var(--modal-w) * 206 / 900);
     pointer-events: none;
     z-index: 0;
-    overflow: hidden;
+    filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.45));
 }
 
-.bg9-p {
-    display: block;
+.p3-top {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
-    object-fit: fill;
-    user-select: none;
-    -webkit-user-drag: none;
+    height: calc(var(--modal-w) * 148 / 800);
+    background: url('../assets/images/ui/bg_popup_top.png') center top / 100% 100% no-repeat;
+    z-index: 1;
+}
+
+.p3-bot {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: calc(var(--modal-w) * 108 / 800);
+    background: url('../assets/images/ui/bg_popup_bottom.png') center bottom / 100% 100% no-repeat;
+    z-index: 1;
+}
+
+.p3-mid {
+    position: absolute;
+    top: calc(var(--modal-w) * 148 / 800 - 1.5px);
+    bottom: calc(var(--modal-w) * 108 / 800 - 1.5px);
+    left: 0;
+    width: 100%;
+    background: url('../assets/images/ui/bg_popup_center.png') center / 100% 100% no-repeat;
+    z-index: 1;
+}
+
+.bg-9slice-frame {
+    display: none !important;
 }
 
 .modal-content-wrap {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     box-sizing: border-box;
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    margin-top: calc(var(--modal-w) * 78 / 900);
-    margin-bottom: calc(var(--modal-w) * 72 / 900);
-    margin-left: calc(var(--modal-w) * 24 / 900);
-    margin-right: calc(var(--modal-w) * 26 / 900);
-    border-radius: calc(var(--modal-w) * 44 / 900);
+    margin: 0;
+    padding: calc(var(--modal-w) * 80 / 800) calc(var(--modal-w) * 36 / 800) calc(var(--modal-w) * 58 / 800) calc(var(--modal-w) * 36 / 800);
     overflow: hidden;
-    padding: 16px 10px 10px 10px;
 }
 
 .modal-content-wrap::-webkit-scrollbar {
@@ -948,7 +993,7 @@ body {
     justify-content: center;
     color: #fffef0;
     font-family: 'Baloo 2', sans-serif;
-    font-size: 19px;
+    font-size: 1.1875rem;
     font-weight: 800;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
     letter-spacing: 0.5px;
@@ -960,14 +1005,29 @@ body {
     display: none !important;
 }
 
-.popup-sub {
-    font-family: 'Baloo 2', 'Nunito', sans-serif;
-    font-size: 14px;
-    line-height: 20px;
+.popup-sub,
+.modal-sub {
+    font-family: 'Baloo 2', 'Nunito', -apple-system, sans-serif;
+    font-size: 0.90625rem;
+    line-height: 1.25rem;
     font-weight: 800;
     color: #6d4520;
-    margin: 0 0 14px 0;
+    margin: 0.875rem 0 0.75rem 0;
     text-align: center;
+}
+
+.popup-sub b,
+.modal-sub b {
+    color: #4a2810;
+    font-weight: 800;
+}
+
+.modal-sub small {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #8d5e32;
+    margin-top: 0.125rem;
 }
 
 @keyframes modalPop { from { transform: scale(0.6); } to { transform: scale(1); } }
@@ -975,13 +1035,6 @@ body {
 .modal-title {
     font-size: var(--fs-xl);
     line-height: var(--lh-xl);
-    font-weight: 800;
-}
-.modal-sub {
-    font-size: 14px;
-    line-height: 20px;
-    margin: 4px 0 12px 0;
-    color: #7a5229;
     font-weight: 800;
 }
 .win-stars {
@@ -1068,7 +1121,7 @@ body {
 .win-buttons-system .win-btn-double {
     width: 100%;
     height: 48px;
-    font-size: 15px;
+    font-size: 0.9375rem;
 }
 
 .win-buttons-system .win-btn-row {
@@ -1083,7 +1136,7 @@ body {
     min-width: 0;
     width: auto;
     height: 48px;
-    font-size: 15px;
+    font-size: 0.9375rem;
 }
 .modal-buttons {
     display: flex;
@@ -1103,11 +1156,11 @@ body {
     border-image: url('../assets/images/ui/bt_none.png') 0 62 0 62 fill / 0 28px stretch;
     border-radius: 0;
     background: transparent;
-    padding: 0 16px 2px 16px;
+    padding: 0 1rem 0.125rem 1rem;
     font-family: 'Baloo 2', 'Nunito', sans-serif;
     font-weight: 800;
-    font-size: 15px;
-    line-height: 20px;
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
     color: #4a3422;
     cursor: pointer;
     min-width: 96px;
@@ -1224,8 +1277,8 @@ body {
     position: absolute;
     bottom: 2px;
     right: 3px;
-    font-size: 10px;
-    line-height: 12px;
+    font-size: 0.625rem;
+    line-height: 0.75rem;
     font-weight: 800;
     color: rgba(78, 52, 46, 0.55);
     pointer-events: none;
@@ -1321,7 +1374,7 @@ body {
     max-width: 96px;
     height: 42px;
     padding: 0 4px 2px 4px;
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     font-weight: 800;
     flex-shrink: 0;
     white-space: nowrap;
@@ -1378,8 +1431,8 @@ body {
     position: absolute;
     top: -9px;
     left: 12px;
-    font-size: 10px;
-    line-height: 12px;
+    font-size: 0.625rem;
+    line-height: 0.75rem;
     font-weight: 900;
     padding: 2px 8px;
     border-radius: 10px;
@@ -1436,9 +1489,9 @@ body {
     padding: var(--sp-3);
 }
 
-.modal-box.ad-sim-box .bg-9slice-frame,
-.modal-box.iap-box .bg-9slice-frame {
-    display: none;
+.modal-box.ad-sim-box .popup-bg-3slice,
+.modal-box.iap-box .popup-bg-3slice {
+    display: none !important;
 }
 
 .ad-sim-topbar {
@@ -1468,7 +1521,7 @@ body {
 }
 
 .ad-sim-badge {
-    font-size: 11px;
+    font-size: 0.6875rem;
     letter-spacing: 1px;
     color: #81d4fa;
     font-weight: 900;
@@ -1476,7 +1529,7 @@ body {
 }
 
 .ad-sim-icon-glow {
-    font-size: 42px;
+    font-size: 2.625rem;
     line-height: 1;
     margin: var(--sp-2) 0;
     filter: drop-shadow(0 0 16px #4fc3f7);
@@ -1531,7 +1584,7 @@ body {
 
 .iap-store-badge {
     display: inline-block;
-    font-size: 11px;
+    font-size: 0.6875rem;
     font-weight: 700;
     color: #546e7a;
     background: #eceff1;
@@ -1558,7 +1611,7 @@ body {
 }
 
 .iap-pack-badge {
-    font-size: 10px;
+    font-size: 0.625rem;
     font-weight: 900;
     padding: 2px 6px;
     border-radius: 6px;
@@ -1595,13 +1648,13 @@ body {
 
 .iap-price-val {
     color: #c2185b;
-    font-size: 18px;
+    font-size: 1.125rem;
 }
 
 .iap-mock-notice {
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: #78909c;
-    line-height: 14px;
+    line-height: 0.875rem;
     margin: var(--sp-2) 0;
     text-align: center;
 }
@@ -1654,7 +1707,7 @@ body {
 }
 
 .lucky-drop-visual {
-    font-size: 48px;
+    font-size: 3rem;
     line-height: 1;
     margin: var(--sp-2) 0;
     animation: luckyBob 1.8s infinite ease-in-out;
@@ -1699,7 +1752,7 @@ body {
     flex: 1 1 0 !important;
     min-width: 0 !important;
     height: 48px !important;
-    font-size: 15px !important;
+    font-size: 0.9375rem !important;
     font-weight: 800 !important;
     padding: 0 8px 2px 8px !important;
 }
@@ -1760,7 +1813,7 @@ body {
     flex-shrink: 0;
 }
 .book-chain-title {
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 800;
     color: #4e342e;
     letter-spacing: -0.2px;
@@ -1769,7 +1822,7 @@ body {
 .book-chest-tag {
     display: inline-flex;
     align-items: center;
-    font-size: 9.5px;
+    font-size: 0.5938rem;
     font-weight: 800;
     color: #795548;
     background: #f0e6d6;
@@ -1777,11 +1830,11 @@ body {
     border-radius: 8px;
     padding: 1px 5px;
     white-space: nowrap;
-    line-height: 13px;
+    line-height: 0.8125rem;
     flex-shrink: 0;
 }
 .book-chain-count {
-    font-size: 11.5px;
+    font-size: 0.7188rem;
     font-weight: 800;
     color: #5d4037;
     background: #f5ebe0;
@@ -1858,7 +1911,7 @@ body {
     min-width: 0;
     max-width: 150px;
     height: 48px;
-    font-size: 15px;
+    font-size: 0.9375rem;
 }
 
 .modal-buttons.book-buttons .modal-btn:only-child {
@@ -1937,7 +1990,7 @@ body {
     font-family: 'Baloo 2', 'Nunito', sans-serif;
     font-weight: 800;
     font-size: var(--fs-xs);
-    line-height: 16px;
+    line-height: 1rem;
     color: #4e342e;
     background: rgba(255, 253, 247, 0.94);
     border: 1.5px solid #d4b483;
@@ -1957,8 +2010,8 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    font-size: 11px;
-    line-height: 16px;
+    font-size: 0.6875rem;
+    line-height: 1rem;
     color: #a1887f;
     background: rgba(255, 253, 247, 0.94);
     border: 1.5px solid #d4b483;
@@ -1992,7 +2045,7 @@ body {
     font-family: 'Nunito', sans-serif;
     font-weight: 800;
     font-size: var(--fs-xs);
-    line-height: 16px;
+    line-height: 1rem;
     color: #3e220c;
     white-space: nowrap;
     overflow: hidden;
@@ -2045,8 +2098,8 @@ body {
 }
 
 .st-label {
-    font-size: 15px;
-    line-height: 20px;
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
     font-weight: 800;
     color: #5d3a1a;
 }
@@ -2078,7 +2131,7 @@ body {
     background: transparent;
     color: #ffffff;
     font-family: 'Baloo 2', 'Nunito', sans-serif;
-    font-size: 13.5px;
+    font-size: 0.8438rem;
     font-weight: 800;
     display: inline-flex;
     align-items: center;
@@ -2119,7 +2172,7 @@ body {
     background: transparent;
     color: #ffffff;
     font-family: 'Baloo 2', 'Nunito', sans-serif;
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 800;
     display: inline-flex;
     align-items: center;
@@ -2146,8 +2199,9 @@ body {
 
 /* ================== BẢN ĐỒ HÀNH TRÌNH CHUẨN MOCKUP ================== */
 .modal-box.map-popup-box .modal-content-wrap {
-    padding-left: 2px;
-    padding-right: 2px;
+    padding-top: calc(var(--modal-w) * 80 / 800 + 12px);
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .map-scroll-area {
@@ -2160,6 +2214,8 @@ body {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
     -webkit-overflow-scrolling: touch;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 14px, black calc(100% - 14px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 14px, black calc(100% - 14px), transparent 100%);
 }
 
 .map-scroll-area::-webkit-scrollbar {
@@ -2171,11 +2227,11 @@ body {
 .chapter-title {
     text-align: center;
     color: #6d4520;
-    font-family: 'Baloo 2', sans-serif;
-    font-size: 16px;
-    line-height: 22px;
+    font-family: 'Baloo 2', 'Nunito', -apple-system, sans-serif;
+    font-size: 1rem;
+    line-height: 1.375rem;
     font-weight: 800;
-    margin: 4px 0 12px 0;
+    margin: 0.5rem 0 0.75rem 0;
 }
 
 .map-grid-2col {
@@ -2223,8 +2279,8 @@ body {
     border-radius: 12px;
     padding: 2px 8px;
     font-family: 'Baloo 2', 'Nunito', sans-serif;
-    font-size: 11px;
-    line-height: 14px;
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
     font-weight: 800;
     color: #ffffff;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -2268,8 +2324,8 @@ body {
     color: #ffffff;
     font-family: 'Baloo 2', sans-serif;
     font-weight: 900;
-    font-size: 12px;
-    line-height: 14px;
+    font-size: 0.75rem;
+    line-height: 0.875rem;
 }
 
 .card-stars {
@@ -2340,7 +2396,7 @@ body {
     justify-content: center;
     color: #8d7b68;
     font-weight: 800;
-    font-size: 13px;
+    font-size: 0.8125rem;
     gap: 8px;
     margin-bottom: 16px;
 }
@@ -2351,8 +2407,8 @@ body {
     border-radius: 16px;
     padding: 16px;
     margin-top: 12px;
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
     color: #b71c1c;
     font-weight: 700;
     text-align: center;
