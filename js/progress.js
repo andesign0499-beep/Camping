@@ -4,16 +4,45 @@
 
 // ---------- LƯU / TẢI (localStorage) ----------
 var SAVE_KEY = 'mergeCamping_save_v1';
+var ECON_VERSION = 3; // Tăng khi cân bằng lại kinh tế để chuyển đổi save cũ (Kinh tế Vàng x10 & Thưởng Combo)
+
+// ---------- NĂNG LƯỢNG DÙNG CHUNG GIỮA CÁC MÀN (PERSISTENT ENERGY) ----------
+// Năng lượng đọc từ js/config.js. Người chơi bắt đầu với startEnergy,
+// đủ chơi liên tục Level 1 → 4; từ Level 5 cần xem quảng cáo, dùng Kim cương hoặc chờ hồi.
+var START_ENERGY = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.startEnergy : 80;
+var MAX_ENERGY_BASE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyBase : 70;
+var MAX_ENERGY_PER_LEVEL = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyPerLevel : 4;
+var MAX_ENERGY_CAP = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyCap : 200;
+var ENERGY_REGEN_SEC = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.regenIntervalSec : 8;
+
+function getMaxEnergy() {
+    var passed = (typeof SAVE !== 'undefined' && SAVE && SAVE.stars) ? Object.keys(SAVE.stars).length : 0;
+    var base = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyBase : MAX_ENERGY_BASE;
+    var perLv = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyPerLevel : MAX_ENERGY_PER_LEVEL;
+    var cap = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyCap : MAX_ENERGY_CAP;
+    return Math.min(cap, base + passed * perLv);
+}
+
+function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
 
 function defaultSave() {
+    var initCoins = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.initialProfile) ? GAME_CONFIG.initialProfile.coins : 1000;
+    var initGems = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.initialProfile) ? GAME_CONFIG.initialProfile.gems : 8;
+    var initEnergy = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.startEnergy : START_ENERGY;
     return {
         level: 1,
         maxLevel: 1,
-        coins: 100,
-        gems: 20,
+        coins: initCoins,
+        gems: initGems,
+        energy: initEnergy,
+        econVer: ECON_VERSION,
         stars: {},
         discovered: {},
         claimedBook: {},
+        ads: { day: todayKey(), energy: 0, gem: 0, coin: 0 },
         settings: {
             sound: true,
             bgm: true,
@@ -33,9 +62,20 @@ function loadSave() {
             if (!s.stars || typeof s.stars !== 'object') s.stars = {};
             if (!s.discovered || typeof s.discovered !== 'object') s.discovered = {};
             if (!s.claimedBook || typeof s.claimedBook !== 'object') s.claimedBook = {};
+            if (!s.ads || typeof s.ads !== 'object') s.ads = defaultSave().ads;
             s.settings = Object.assign(defaultSave().settings, parsed.settings || {});
-            if (typeof s.gems !== 'number') s.gems = 20;
+            if (typeof s.gems !== 'number') s.gems = 8;
             if (typeof s.lastEnergyTs !== 'number') s.lastEnergyTs = Date.now();
+            // Chuyển đổi save sang nền kinh tế Vàng x10
+            if (s.econVer !== ECON_VERSION) {
+                s.econVer = ECON_VERSION;
+                var defCoins = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.initialProfile) ? GAME_CONFIG.initialProfile.coins : 1000;
+                s.coins = Math.max(defCoins, (s.coins || 0) * 10);
+                s.gems = Math.min(Math.max(s.gems || 8, 8), 50);
+                s.energy = START_ENERGY;
+                s.lastEnergyTs = Date.now();
+            }
+            if (typeof s.energy !== 'number' || isNaN(s.energy)) s.energy = START_ENERGY;
             return s;
         }
     } catch (e) { console.log(e); }
@@ -54,7 +94,7 @@ function resetSave() {
 }
 
 // ---------- HỒI NĂNG LƯỢNG THEO THỜI GIAN (IDLE REGEN) ----------
-var ENERGY_REGEN_SEC = 45; // 45 giây hồi +1 năng lượng
+// ENERGY_REGEN_SEC được khai báo ở đầu file (2 phút hồi +1 năng lượng)
 
 function calcIdleEnergyRegen(currentEnergy, maxEnergy) {
     var now = Date.now();
@@ -89,31 +129,116 @@ function itemUnits(id) {
     return Math.pow(2, lv - 1);
 }
 
-// Giá bán hào phóng giúp người chơi thoải mái thu Vàng khi dọn bàn
-function sellPrice(id) { return 5 * itemUnits(id); }
+// ==========================================
+// CÂN BẰNG KINH TẾ (ECON v2) - ĐỌC TỪ js/config.js
+// Người dùng có thể điều chỉnh mọi chỉ số trong js/config.js
+// ==========================================
 
-// Thưởng Vàng dồi dào khi nộp đơn hàng
-function orderReward(id) { return 15 * itemUnits(id); }
+// Giá bán: Tính theo năng lượng để tạo ra (30 Vàng / 1⚡, thu hồi 25% giá trị năng lượng)
+function sellPrice(id) {
+    if (!id || String(id).indexOf('_lv') === -1) return 0;
+    var minLv = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellMinLevel === 'number')
+        ? GAME_CONFIG.gameplay.sellMinLevel : 1;
+    var lv = parseInt(String(id).split('_lv')[1]) || 1;
+    if (lv < minLv) return 0;
 
-// Shop năng lượng
-var ENERGY_PACK = 50;
-var ENERGY_PACK_PRICE = 120;
-var GEM_ENERGY_PACK = 100;
-var GEM_ENERGY_PRICE = 5;
+    var mul = 30;
+    if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellMultiplier === 'number') {
+        mul = GAME_CONFIG.gameplay.sellMultiplier;
+    } else if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.coinPack) {
+        var cost = GAME_CONFIG.energyShop.coinPack.coinCost || 3000;
+        var eng = GAME_CONFIG.energyShop.coinPack.energy || 25;
+        mul = Math.round((cost / eng) * 0.25);
+    }
+    var divisor = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellDivisor === 'number')
+        ? GAME_CONFIG.gameplay.sellDivisor : 1;
+    return Math.floor(itemUnits(id) * mul / divisor);
+}
 
-// B7: Tính toán và mở rộng kịch bản nhiệm vụ (3 đến 5 đơn hàng mỗi level để tạo trải nghiệm chơi liên tục)
+// Thưởng Vàng khi nộp đơn hàng: tăng theo độ khó (cấp) của món hàng (Kinh tế x10, 60 Vàng / 1⚡)
+function orderReward(id) {
+    var mul = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.orderRewardMultiplier === 'number')
+        ? GAME_CONFIG.gameplay.orderRewardMultiplier : 60;
+    return mul * itemUnits(id);
+}
+
+// Thưởng Vàng khi tạo chuỗi Combo ghép liên tiếp
+function getComboReward(comboCount) {
+    var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.combo)
+        ? GAME_CONFIG.gameplay.combo
+        : { enabled: true, baseCoins: 10, stepCoins: 15, maxCoins: 200 };
+    if (!cfg.enabled || comboCount < 2) return 0;
+    var coins = (cfg.baseCoins || 10) + (comboCount - 2) * (cfg.stepCoins || 15);
+    return Math.min(cfg.maxCoins || 200, coins);
+}
+
+// Shop năng lượng (đọc từ GAME_CONFIG.energyShop - Kinh tế x10)
+var ENERGY_PACK = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.coinPack.energy : 25;
+var ENERGY_PACK_PRICE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.coinPack.coinCost : 3000;
+var GEM_ENERGY_PACK = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.gemPack.energy : 50;
+var GEM_ENERGY_PRICE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.gemPack.gemCost : 8;
+
+// Quảng cáo thưởng: giới hạn số lượt mỗi ngày (Kinh tế x10)
+var AD_REWARDS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards) ? GAME_CONFIG.adRewards : {
+    energy: { amount: 25, dailyLimit: 6 },
+    gem: { amount: 4, dailyLimit: 3 },
+    coin: { amount: 1500, dailyLimit: 4 }
+};
+
+function resetAdsIfNewDay() {
+    var key = todayKey();
+    if (!SAVE.ads || SAVE.ads.day !== key) {
+        SAVE.ads = { day: key, energy: 0, gem: 0, coin: 0 };
+    }
+}
+
+function getAdsLeft(type) {
+    resetAdsIfNewDay();
+    var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards) ? GAME_CONFIG.adRewards[type] : AD_REWARDS[type];
+    return cfg ? Math.max(0, cfg.dailyLimit - (SAVE.ads[type] || 0)) : 0;
+}
+
+function consumeAd(type) {
+    resetAdsIfNewDay();
+    SAVE.ads[type] = (SAVE.ads[type] || 0) + 1;
+    saveGame();
+}
+
+// Thưởng mỗi lần ghép: đọc từ GAME_CONFIG.gameplay.mergeRewards (Kinh tế x10)
+function mergeReward(newId) {
+    var lv = parseInt(String(newId).split('_lv')[1]) || 2;
+    var table = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.mergeRewards)
+        ? GAME_CONFIG.gameplay.mergeRewards
+        : { 4: { coins: 20, gems: 0 }, 5: { coins: 50, gems: 0 }, 6: { coins: 120, gems: 0 }, 7: { coins: 250, gems: 1 }, 8: { coins: 600, gems: 2 } };
+    var r = table[lv] || { coins: 0, gems: 0 };
+    return { coins: r.coins || 0, gems: r.gems || 0 };
+}
+
+// Thưởng hoàn thành màn: đọc từ GAME_CONFIG.gameplay.levelClear (Kinh tế x10)
+function levelClearReward(lv, stars, firstTime) {
+    var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.levelClear) ? GAME_CONFIG.gameplay.levelClear : null;
+    var allowReplay = cfg ? cfg.allowReplayReward : false;
+    if (!firstTime && !allowReplay) return { coins: 0, gems: 0 };
+    var baseCoins = cfg ? cfg.baseCoins : 200;
+    var perLevel = cfg ? cfg.perLevelCoins : 40;
+    var perStar = cfg ? cfg.perStarCoins : 80;
+    var gems3 = cfg ? cfg.gems3Stars : 2;
+    var gemsOther = cfg ? cfg.gems1Or2Stars : 1;
+    return {
+        coins: baseCoins + lv * perLevel + stars * perStar,
+        gems: stars === 3 ? gems3 : gemsOther
+    };
+}
+
+// Task 4: Cấu trúc Đơn hàng Kim Tự Tháp (Pyramid Order Generation)
+// Tôn trọng cấu hình đơn hàng chuẩn từ GAME_CONFIG.levels (1 Món Chủ Đạo Cấp Cao + 1 Món Vừa + 1 Món Nhẹ)
+// Giới hạn tổng chi phí năng lượng lý thuyết giai đoạn Lv.3 - Lv.5 tối đa 18 - 20 Thể lực
 function tuneOrders(rawOrders, lvNum, levelCfg) {
+    if (rawOrders && Array.isArray(rawOrders) && rawOrders.length > 0) {
+        return rawOrders.slice();
+    }
     var base = (rawOrders || []).slice();
-    var targetCount = 3;
-    if (lvNum >= 9) {
-        targetCount = 5;
-    } else if (lvNum >= 3) {
-        targetCount = 4;
-    }
-
-    if (base.length >= targetCount) {
-        return base.slice(0, targetCount);
-    }
+    var targetCount = lvNum <= 2 ? 2 : 3;
 
     // Thu thập các dòng item khả dụng từ nguồn phát của màn chơi hiện tại
     var genList = [];
@@ -316,11 +441,15 @@ function getChainGenerator(line) {
     };
 }
 
-// Thưởng khi mở khóa lần đầu trong Cẩm Nang: trả về { coins, gems }
+// Thưởng khi mở khóa lần đầu trong Cẩm Nang: trả về { coins, gems } (đọc từ GAME_CONFIG.discoveryBook)
 function getBookReward(id) {
+    var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.discoveryBook) ? GAME_CONFIG.discoveryBook : null;
     var lv = parseInt(String(id).split('_lv')[1]) || 1;
-    var coins = lv * 25;
-    var gems = lv >= 7 ? 3 : (lv >= 5 ? 1 : 0);
+    var mul = cfg ? cfg.coinsMultiplier : 3;
+    var gemMin = cfg ? cfg.gemUnlockMinLevel : 7;
+    var gemAmt = cfg ? cfg.gemsReward : 1;
+    var coins = lv * mul;
+    var gems = lv >= gemMin ? gemAmt : 0;
     return { coins: coins, gems: gems };
 }
 

@@ -15,6 +15,7 @@ const ctx = {
 };
 vm.createContext(ctx);
 
+vm.runInContext(fs.readFileSync('js/config.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync('js/data.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync('js/engine.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync('js/progress.js', 'utf8'), ctx);

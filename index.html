@@ -23,9 +23,13 @@
 
                 <div class="hud-stats-group">
                     <div class="hud-stat-banner energy-banner" id="btn-refill-energy" title="Bấm để mở Trạm Tiếp Năng Lượng">
-                        <img class="hud-stat-icon" src="assets/images/ui/icon_nangluong.png" alt="Năng lượng">
+                        <div class="energy-icon-wrapper">
+                            <img class="hud-stat-icon" src="assets/images/ui/icon_nangluong.png" alt="Năng lượng">
+                            <div class="sparkle-star star-1"></div>
+                            <div class="sparkle-star star-2"></div>
+                            <div class="sparkle-star star-3"></div>
+                        </div>
                         <span id="energy-val" class="hud-stat-val">100</span>
-                        <small id="energy-timer" class="regen-timer" style="display:none"></small>
                     </div>
 
                     <div class="hud-stat-banner gold-banner" id="btn-coin-shop" title="Vàng tích lũy (Nhận khi ghép đồ, nộp đơn & qua màn)">
@@ -67,7 +71,10 @@
                 <img src="assets/images/ui/thanhgo.png" alt="" class="wood-bar-img">
             </div>
             <main class="board-container">
-                <div id="grid-board"></div>
+                <div class="board-frame-wrapper">
+                    <div id="grid-board"></div>
+                    <img src="assets/images/board/stroke_board.png" class="board-stroke-overlay" alt="" aria-hidden="true">
+                </div>
             </main>
 
             <footer id="game-footer">
@@ -84,6 +91,7 @@
         </section>
     </div>
 
+    <script src="js/config.js"></script>
     <script src="js/data.js"></script>
     <script src="js/engine.js"></script>
     <script src="js/progress.js"></script>

@@ -14,10 +14,12 @@ var selectedIndex = null;
 var levelClicks = 0;
 var isAutoEnabled = false; // AUTO chỉ là chế độ debug, mặc định tắt
 var levelWon = false;
-var levelBudget = 0;
+var levelBudget = 0; // Ngân sách năng lượng chuẩn của màn: chỉ dùng để tính sao
+var isReplayLevel = false; // Màn đã từng thắng -> chơi lại không nhận Vàng/Kim cương
 var regenSecLeft = ENERGY_REGEN_SEC;
 
-var playerEnergy = 50;
+// Năng lượng dùng chung giữa các màn, lưu trong SAVE (không nạp đầy khi vào màn mới)
+var playerEnergy = SAVE.energy;
 var playerCoins = SAVE.coins;
 var playerGems = SAVE.gems;
 
@@ -251,7 +253,10 @@ function playSound(type, itemId) {
         } else if (type === 'merge') {
             // Chuỗi hợp âm Đô Trưởng tuần hoàn lên rồi xuống êm dịu, không gắt tai
             var nowMs = Date.now();
-            if (nowMs - lastMergeAudioTs < 3200) {
+            var windowMs = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.combo && GAME_CONFIG.gameplay.combo.windowSec)
+                ? GAME_CONFIG.gameplay.combo.windowSec * 1000
+                : 3500;
+            if (nowMs - lastMergeAudioTs < windowMs) {
                 mergeComboStep = (mergeComboStep + 1) % FLUTE_CHORD_CYCLE.length;
                 mergeComboCount++;
             } else {
@@ -358,13 +363,20 @@ function showFloatingBadge(cellElement, text, color) {
     setTimeout(() => tag.remove(), 1100);
 }
 
-// Hiệu ứng Combo x2, x3, x4... thị giác nổi bật, tự động đổi màu rực rỡ theo cấp combo
-function triggerComboEffect(cellElement, comboCount) {
+// Hiệu ứng Combo x2, x3, x4... thị giác nổi bật, tự động đổi màu rực rỡ theo cấp combo và hiển thị số Vàng thưởng
+function triggerComboEffect(cellElement, comboCount, comboGold) {
     if (!cellElement) return;
     var rect = cellElement.getBoundingClientRect();
     var comboTag = document.createElement('div');
     comboTag.className = 'combo-popup-badge';
-    comboTag.textContent = '🔥 COMBO x' + comboCount + '!';
+    var html = '🔥 COMBO x' + comboCount + '!';
+    if (comboGold > 0) {
+        html += ' <span style="display:inline-flex;align-items:center;gap:3px;margin-left:4px;color:#fffde7;">(+' + comboGold + ' <img src="assets/images/ui/icon_glod.png" style="width:14px;height:14px;vertical-align:middle;">)</span>';
+    }
+    comboTag.innerHTML = html;
+    if (comboGold > 0) {
+        playCoinChime(comboCount);
+    }
 
     var comboGradients = [
         'linear-gradient(135deg, #ff9800, #f57c00)',
@@ -530,22 +542,40 @@ function getItemImagePath(id) {
 }
 
 // ==========================================
-// HỒI NĂNG LƯỢNG THEO THỜI GIAN (IDLE REGEN)
+// HỒI NĂNG LƯỢNG THEO THỜI GIAN (TỰ ĐỘNG +1 SAU MỖI 8S, CÓ HIỆU ỨNG HẠT TỎA SÁNG)
 // ==========================================
 function tickEnergyRegen() {
-    var res = calcIdleEnergyRegen(playerEnergy, levelBudget);
+    var maxE = getMaxEnergy();
+    var res = calcIdleEnergyRegen(playerEnergy, maxE);
     regenSecLeft = res.secLeft;
     if (res.added > 0) {
         playerEnergy += res.added;
-        if (energyUI) energyUI.innerText = playerEnergy;
-    }
-    if (energyTimerUI) {
-        if (playerEnergy < levelBudget) {
-            energyTimerUI.innerText = '+' + regenSecLeft + 's';
-            energyTimerUI.style.display = 'inline-block';
-        } else {
-            energyTimerUI.style.display = 'none';
+        SAVE.energy = playerEnergy;
+        saveGame();
+        if (energyUI) {
+            energyUI.innerText = playerEnergy;
+            energyUI.animate([
+                { transform: 'scale(1)' },
+                { transform: 'scale(1.25)', color: '#ffb300' },
+                { transform: 'scale(1)' }
+            ], { duration: 320, easing: 'ease-out' });
         }
+        var energyBanner = document.getElementById('btn-refill-energy');
+        if (energyBanner) {
+            triggerParticleBurst(energyBanner, ['#fff700', '#ffd54f', '#ffeb3b', '#ffffff']);
+            var icon = energyBanner.querySelector('.hud-stat-icon');
+            if (icon) {
+                icon.animate([
+                    { transform: 'scale(1)' },
+                    { transform: 'scale(1.3) rotate(-10deg)', filter: 'drop-shadow(0 0 10px #ffe082)' },
+                    { transform: 'scale(1) rotate(0deg)' }
+                ], { duration: 350, easing: 'cubic-bezier(.2,.85,.32,1.2)' });
+            }
+        }
+    }
+    // Không cần bộ đếm giờ countdown
+    if (energyTimerUI) {
+        energyTimerUI.style.display = 'none';
     }
 }
 setInterval(tickEnergyRegen, 1000);
@@ -831,8 +861,7 @@ function loadLevel(lvNum) {
     populateInitialBoardItems();
 
     levelBudget = computeEnergyBudget(boardData, orderIds, currentLevelCfg);
-    playerEnergy = levelBudget;
-    SAVE.lastEnergyTs = Date.now();
+    isReplayLevel = !!SAVE.stars[lvNum];
 
     if (isAutoEnabled) {
         fillBoardInstantly();
@@ -1001,6 +1030,11 @@ function renderBoard() {
                         star.className = 'sparkle-star star-' + (s + 1);
                         cell.appendChild(star);
                     }
+                    var energyBadge = document.createElement('img');
+                    energyBadge.src = 'assets/images/board/icon_nangluong_tao.png';
+                    energyBadge.className = 'generator-energy-badge';
+                    energyBadge.alt = '⚡';
+                    cell.appendChild(energyBadge);
                 }
             }
             cell.appendChild(img);
@@ -1027,7 +1061,7 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
     var cellEl = boardElement && boardElement.children[boardCellIdx];
     var cellImg = cellEl && cellEl.querySelector('.item-img');
     var itemId = boardData[boardCellIdx].id;
-    var rw = orderReward(itemId);
+    var rw = isReplayLevel ? 0 : orderReward(itemId);
 
     if (cellEl && targetCardEl && cellImg) {
         var srcRect = cellEl.getBoundingClientRect();
@@ -1096,6 +1130,7 @@ function updateUIStats() {
     if (currentLvBadgeUI) currentLvBadgeUI.innerText = currentLevel;
     SAVE.coins = playerCoins;
     SAVE.gems = playerGems;
+    SAVE.energy = playerEnergy;
     SAVE.level = currentLevel;
     saveGame();
 }
@@ -1171,22 +1206,24 @@ function executeMoveAndEffects(fromIdx, toIdx) {
         clearedWebs = clearAdjacentWebs(boardData, res.index, currentLevelCfg);
         bonusIdx = bonusDrop(boardData, currentLevelCfg, res.newId);
 
-        // Kịch bản thưởng Vàng & Kim Cương hào phóng trực tiếp mỗi khi ghép thành công:
-        // - Mọi lần ghép (từ Lv.2 trở lên) đều thưởng nhiều Vàng để xu bay lên liên tiếp
-        // - Ghép liên tiếp đạt Combo x2 trở lên: thưởng thêm Vàng lớn (Combo * 10)
-        // - Ghép đạt cấp tối đa (Lv.8): thưởng nóng +2 Kim Cương
-        var mergedLv = 2;
-        if (res.newId && res.newId.indexOf('_lv') !== -1) {
-            mergedLv = parseInt(res.newId.split('_lv')[1]) || 2;
+        // Thưởng khi ghép (ECON v3 - xem mergeReward & getComboReward trong js/progress.js):
+        // - Ghép ra đồ Lv.4+ thưởng Vàng, Lv.7-8 tặng thêm Kim cương
+        // - Màn chơi lại (đã thắng trước đó) không nhận thưởng để tránh farm
+        if (!isReplayLevel) {
+            var mr = mergeReward(res.newId);
+            mergeGoldEarned += mr.coins;
+            mergeRubyEarned += mr.gems;
         }
-        var mergeGoldTable = { 2: 10, 3: 20, 4: 35, 5: 60, 6: 100, 7: 160, 8: 250 };
-        mergeGoldEarned += (mergeGoldTable[mergedLv] || (mergedLv * 10));
-        if (mergeComboCount >= 2) {
-            mergeGoldEarned += mergeComboCount * 10;
+
+        // Thưởng thêm Vàng khi người chơi tạo được chuỗi Combo ghép liên tiếp:
+        var comboGold = 0;
+        if (mergeComboCount >= 2 && typeof getComboReward === 'function') {
+            comboGold = getComboReward(mergeComboCount);
+            if (comboGold > 0) {
+                mergeGoldEarned += comboGold;
+            }
         }
-        if (mergedLv >= 8) {
-            mergeRubyEarned = 2;
-        }
+
         if (mergeGoldEarned > 0 || mergeRubyEarned > 0) {
             playerCoins += mergeGoldEarned;
             playerGems += mergeRubyEarned;
@@ -1200,9 +1237,9 @@ function executeMoveAndEffects(fromIdx, toIdx) {
         var mergedCell = boardElement.children[res.index];
         triggerParticleBurst(mergedCell);
 
-        // Hiển thị hiệu ứng Combo bay bổng khi ghép liên tiếp (Combo x2, x3, x4...)
+        // Hiển thị hiệu ứng Combo bay bổng khi ghép liên tiếp kèm số Vàng thưởng
         if (mergeComboCount >= 2) {
-            triggerComboEffect(mergedCell, mergeComboCount);
+            triggerComboEffect(mergedCell, mergeComboCount, comboGold);
         }
 
         // Hiệu ứng Vàng & Kim cương bay từ ô vừa ghép lên thanh HUD
@@ -1355,22 +1392,35 @@ boardElement.addEventListener('contextmenu', e => { if (dragState) e.preventDefa
 // ==========================================
 // SINH ITEM & CHẠM CHỌN (TAP-TO-MOVE)
 // ==========================================
-// Biến theo dõi nhấp đúp máy sinh đồ (Double-click detection: 1 lần sinh 1 món, 2 lần sinh đầy ô trống)
+// Biến theo dõi số lần bấm liên tiếp máy sinh đồ (Bấm 6 lần liên tục mới kích hoạt xả đầy toàn bộ ô trống)
 var lastGenClickTs = 0;
 var lastGenCellIdx = -1;
+var genClickStreak = 0;
 
 function handleGeneratorClick(gen, cellElement) {
     var now = Date.now();
     var idx = parseInt(cellElement.dataset.index);
-    var isDoubleClick = (now - lastGenClickTs < 450 && lastGenCellIdx === idx);
+    var windowMs = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.generatorClickWindowMs)
+        ? GAME_CONFIG.gameplay.generatorClickWindowMs : 550;
+    var bulkClicksNeeded = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.generatorBulkClicks)
+        ? GAME_CONFIG.gameplay.generatorBulkClicks : 6;
 
-    if (isDoubleClick) {
-        lastGenClickTs = 0; // Reset sau khi đã kích hoạt bulk spawn
+    var isConsecutive = (now - lastGenClickTs < windowMs && lastGenCellIdx === idx);
+    lastGenClickTs = now;
+    lastGenCellIdx = idx;
+
+    if (isConsecutive) {
+        genClickStreak++;
+    } else {
+        genClickStreak = 1;
+    }
+
+    if (genClickStreak >= bulkClicksNeeded) {
+        genClickStreak = 0;
+        lastGenClickTs = 0;
         lastGenCellIdx = -1;
         bulkSpawnFromGenerator(gen, cellElement);
     } else {
-        lastGenClickTs = now;
-        lastGenCellIdx = idx;
         spawnFromGenerator(gen, cellElement);
     }
 }
@@ -1381,7 +1431,7 @@ function spawnFromGenerator(gen, cellElement) {
         openEnergyShop();
         return;
     }
-    var target = spawnItem(boardData, gen.id);
+    var target = spawnItem(boardData, gen.id, currentOrders);
     if (target === -1) {
         renderBoard();
         var best = findBestMerge(boardData, currentOrders, currentLevelCfg);
@@ -1396,7 +1446,7 @@ function spawnFromGenerator(gen, cellElement) {
         }
         return;
     }
-    if (playerEnergy === levelBudget) {
+    if (playerEnergy >= getMaxEnergy()) {
         SAVE.lastEnergyTs = Date.now();
     }
     playerEnergy--;
@@ -1419,7 +1469,7 @@ function spawnFromGenerator(gen, cellElement) {
     }
 }
 
-// Bấm 2 lần liên tục: Xả đồ ra toàn bộ các ô trống trên bàn cờ (tiêu tốn tương ứng với số ô trống và năng lượng hiện có)
+// Bấm 6 lần liên tục: Xả đồ ra toàn bộ các ô trống trên bàn cờ (tiêu tốn tương ứng với số ô trống và năng lượng hiện có)
 function bulkSpawnFromGenerator(gen, cellElement) {
     if (playerEnergy <= 0) {
         openEnergyShop();
@@ -1439,8 +1489,11 @@ function bulkSpawnFromGenerator(gen, cellElement) {
     }
 
     var spawnedTargets = [];
+    if (playerEnergy >= getMaxEnergy()) {
+        SAVE.lastEnergyTs = Date.now();
+    }
     for (var i = 0; i < spawnCount; i++) {
-        var tIdx = spawnItem(boardData, gen.id);
+        var tIdx = spawnItem(boardData, gen.id, currentOrders);
         if (tIdx === -1) break;
         playerEnergy--;
         levelClicks++;
@@ -1532,44 +1585,47 @@ function handleCellClick(e, cellElement) {
 function openEnergyShop() {
     showEnergyShopModal({
         energy: playerEnergy,
-        budget: levelBudget,
+        maxEnergy: getMaxEnergy(),
         coins: playerCoins,
         gems: playerGems,
         secLeft: regenSecLeft,
+        adsLeft: getAdsLeft('energy'),
         onBuyCoins: function () {
             playerCoins -= ENERGY_PACK_PRICE;
             playerEnergy += ENERGY_PACK;
-            levelBudget = Math.max(levelBudget, playerEnergy);
             playSound('bonus');
             updateUIStats();
-            showToast('⚡ Đã nạp +' + ENERGY_PACK + ' năng lượng!', '#2e7d32');
+            showToast('⚡ Đã đổi +' + ENERGY_PACK + ' năng lượng!', '#2e7d32');
         },
         onBuyGems: function () {
             playerGems -= GEM_ENERGY_PRICE;
             playerEnergy += GEM_ENERGY_PACK;
-            levelBudget = Math.max(levelBudget, playerEnergy);
             playSound('bonus');
             updateUIStats();
-            var targetEl = document.getElementById('btn-refill-energy') || document.body;
-            spawnFlyingCurrency(targetEl, 'ruby', 5);
             showToast('💎 Nạp siêu tốc +' + GEM_ENERGY_PACK + ' ⚡ (Bỏ qua thời gian chờ)!', '#1565c0');
         },
         onWatchAd: function () {
-            simulateWatchAd('Tiếp Tế Năng Lượng Khẩn Cấp (+25 ⚡)', function () {
-                playerEnergy += 25;
-                levelBudget = Math.max(levelBudget, playerEnergy);
+            if (getAdsLeft('energy') <= 0) {
+                showToast('🎬 Đã hết lượt xem quảng cáo hôm nay, hãy quay lại vào ngày mai nhé!', '#c62828');
+                return;
+            }
+            var amt = AD_REWARDS.energy.amount;
+            simulateWatchAd('Tiếp Tế Năng Lượng (+' + amt + ' ⚡)', function () {
+                consumeAd('energy');
+                playerEnergy += amt;
                 playSound('bonus');
                 updateUIStats();
-                showToast('🎬 Đã nhận +25 ⚡ miễn phí từ video tài trợ!', '#2e7d32');
+                showToast('🎬 Đã nhận +' + amt + ' ⚡ miễn phí từ video tài trợ!', '#2e7d32');
             });
         },
         onRescue: function () {
-            playerEnergy += 20;
-            levelBudget += 20;
+            var rescueAmt = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.rescue)
+                ? GAME_CONFIG.energyShop.rescue.amount
+                : 20;
+            playerEnergy += rescueAmt;
             playSound('bonus');
             updateUIStats();
-            renderBoard();
-            showToast('🏕️ Kiểm lâm tiếp viện +20 ⚡ miễn phí!', '#2e7d32');
+            showToast('🏕️ Nhận Cứu Trợ Kiểm Lâm +' + rescueAmt + ' ⚡ miễn phí!', '#2e7d32');
         },
         onOpenGemShop: openGemShop
     });
@@ -1580,18 +1636,13 @@ function openGemShop() {
         gems: playerGems,
         coins: playerCoins,
         energy: playerEnergy,
+        adsLeft: getAdsLeft('gem'),
         onBuyIAP: function (pack) {
             simulateBuyIAP(pack, function () {
                 var totalGems = pack.gems + (pack.bonusGems || 0);
                 playerGems += totalGems;
                 if (pack.coins) playerCoins += pack.coins;
-                if (pack.energy) {
-                    playerEnergy += pack.energy;
-                    levelBudget = Math.max(levelBudget, playerEnergy);
-                }
-                if (pack.isStarter) {
-                    SAVE.starterPackBought = true;
-                }
+                if (pack.energy) playerEnergy += pack.energy;
                 updateUIStats();
                 saveGame();
                 playSound('win');
@@ -1604,14 +1655,20 @@ function openGemShop() {
             });
         },
         onWatchAd: function () {
-            simulateWatchAd('Tài Trợ Kim Cương Hàng Ngày (+10 💎)', function () {
-                playerGems += 10;
+            if (getAdsLeft('gem') <= 0) {
+                showToast('🎬 Đã hết lượt nhận Kim cương miễn phí hôm nay!', '#c62828');
+                return;
+            }
+            var amt = AD_REWARDS.gem.amount;
+            simulateWatchAd('Tài Trợ Kim Cương (+' + amt + ' 💎)', function () {
+                consumeAd('gem');
+                playerGems += amt;
                 updateUIStats();
                 saveGame();
                 playSound('win');
                 var targetEl = document.getElementById('btn-gem-shop') || document.body;
-                spawnFlyingCurrency(targetEl, 'ruby', 10);
-                showToast('🎬 Bạn đã nhận +10 💎 miễn phí từ nhà tài trợ!', '#1565c0');
+                spawnFlyingCurrency(targetEl, 'ruby', amt);
+                showToast('🎬 Bạn đã nhận +' + amt + ' 💎 miễn phí từ nhà tài trợ!', '#1565c0');
             });
         }
     });
@@ -1636,14 +1693,20 @@ function openCoinShop() {
             showToast('🪙 Đã đổi +' + pack.coins.toLocaleString('vi-VN') + ' Vàng thành công!', '#2e7d32');
         },
         onWatchAd: function () {
-            simulateWatchAd('Tài Trợ Ngân Hàng Vàng (+500 🪙)', function () {
-                playerCoins += 500;
+            if (getAdsLeft('coin') <= 0) {
+                showToast('🎬 Đã hết lượt nhận Vàng miễn phí hôm nay!', '#c62828');
+                return;
+            }
+            var amt = AD_REWARDS.coin.amount;
+            simulateWatchAd('Tài Trợ Ngân Hàng Vàng (+' + amt + ' 🪙)', function () {
+                consumeAd('coin');
+                playerCoins += amt;
                 updateUIStats();
                 saveGame();
                 playSound('win');
                 var targetEl = document.getElementById('btn-coin-shop') || document.body;
-                spawnFlyingCurrency(targetEl, 'gold', 500);
-                showToast('🎬 Bạn đã nhận +500 🪙 miễn phí từ video tài trợ!', '#2e7d32');
+                spawnFlyingCurrency(targetEl, 'gold', amt);
+                showToast('🎬 Bạn đã nhận +' + amt + ' 🪙 miễn phí từ video tài trợ!', '#2e7d32');
             });
         },
         onOpenGemShop: openGemShop
@@ -1654,7 +1717,6 @@ function openLuckyDrop() {
     showLuckyDropModal(function (roll) {
         if (roll.type === 'energy') {
             playerEnergy += roll.val;
-            levelBudget = Math.max(levelBudget, playerEnergy);
         } else if (roll.type === 'coin') {
             playerCoins += roll.val;
             var coinEl = document.getElementById('btn-coin-shop') || document.body;
@@ -1680,7 +1742,7 @@ function updateSellButton(itemId) {
     } else {
         var p = sellPrice(itemId);
         if (sellPriceUI) sellPriceUI.innerText = p;
-        if (sellBtnTextUI) sellBtnTextUI.innerText = 'BÁN (+' + p + ')';
+        if (sellBtnTextUI) sellBtnTextUI.innerText = p > 0 ? 'BÁN (+' + p + ')' : 'BÁN';
         btnSell.classList.remove('disabled');
     }
 }
@@ -1701,16 +1763,38 @@ function refreshLevelSelect() {
 }
 
 function finishLevel() {
-    var stars = calcStars(playerEnergy, levelBudget);
+    // Sao tính theo năng lượng đã tiêu trong màn này so với ngân sách chuẩn của màn
+    var spent = levelClicks;
+    var stars = calcStars(Math.max(0, levelBudget - spent), levelBudget);
     var firstTime = !SAVE.stars[currentLevel];
-    var base = 150 + currentLevel * 25 + stars * 50;
-    var coins = firstTime ? base : Math.round(base * 0.4);
-    var gems = firstTime ? (stars === 3 ? 3 : 1) : 0;
+    var reward = levelClearReward(currentLevel, stars, firstTime);
+    var coins = reward.coins;
+    var gems = reward.gems;
 
-    playerCoins += coins;
+    // Phương án 1: Tự động thu dọn toàn bộ vật phẩm thừa trên bàn chơi (quy đổi thành Vàng)
+    var sweepCoins = 0;
+    var sweepCount = 0;
+    if (boardData && boardData.length) {
+        boardData.forEach(function (c, idx) {
+            if (c && c.id && !c.isLocked && !c.isRock && !GENERATORS[c.id]) {
+                var p = sellPrice(c.id);
+                if (p > 0) {
+                    sweepCoins += p;
+                    sweepCount++;
+                    boardData[idx] = null;
+                }
+            }
+        });
+        if (sweepCount > 0) {
+            renderBoard();
+        }
+    }
+
+    var totalCoins = coins + sweepCoins;
+    playerCoins += totalCoins;
     playerGems += gems;
-    if (boardElement && coins > 0) {
-        spawnFlyingCurrency(boardElement, 'gold', coins);
+    if (boardElement && totalCoins > 0) {
+        spawnFlyingCurrency(boardElement, 'gold', totalCoins);
     }
     SAVE.stars[currentLevel] = Math.max(SAVE.stars[currentLevel] || 0, stars);
     if (currentLevel + 1 > SAVE.maxLevel && currentLevel < RAW_LEVELS.length) SAVE.maxLevel = currentLevel + 1;
@@ -1724,6 +1808,8 @@ function finishLevel() {
         name: currentLevelCfg ? currentLevelCfg.name : '',
         stars: stars,
         coins: coins,
+        sweepCoins: sweepCoins,
+        sweepCount: sweepCount,
         gems: gems,
         firstTime: firstTime,
         decor: getCampDecor(currentLevel),
@@ -1783,6 +1869,7 @@ function initGame() {
                 resetSave();
                 playerCoins = SAVE.coins;
                 playerGems = SAVE.gems;
+                playerEnergy = SAVE.energy;
                 refreshLevelSelect();
                 loadLevel(1);
                 showToast('🔄 Đã đặt lại toàn bộ dữ liệu về ban đầu!', '#2e7d32');
@@ -1830,6 +1917,7 @@ function initGame() {
     }
     document.addEventListener('pointerdown', onFirstUserGesture);
     document.addEventListener('keydown', onFirstUserGesture);
+    window.executeMoveAndEffects = executeMoveAndEffects;
 }
 
 initGame();

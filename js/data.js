@@ -73,8 +73,41 @@ var RAW_LEVELS = [
     [45,"Huyền Thoại Vua Cắm Trại","open",[[30,"generator_cooler"],[31,"generator_backpack"],[32,"generator_crate"]],[[23,"an_lv6"],[24,"trai_lv6"],[25,"bep_lv6"]],[[1,"an_lv6"],[2,"an_lv5"],[3,"cafe_lv3"],[5,"trai_lv6"],[7,"trai_lv5"],[13,"ghe_lv3"],[14,"bep_lv6"],[20,"bep_lv5"],[42,"antoan_lv3"],[48,"an_lv4"],[49,"trai_lv4"],[55,"bep_lv4"],[57,"ghe_lv3"],[59,"congcu_lv3"],[61,"ban_lv3"]],["an_lv8","trai_lv8","bep_lv8"],{"adjWeb":true,"bonus":true,"spreadEvery":11}]
 ];
 
+// Tự động đồng bộ từ GAME_CONFIG.levels nếu có (chỉnh sửa toàn bộ level tại js/config.js)
+if (typeof GAME_CONFIG !== 'undefined' && Array.isArray(GAME_CONFIG.levels) && GAME_CONFIG.levels.length > 0) {
+    RAW_LEVELS = GAME_CONFIG.levels.map(function(l) {
+        return [
+            l.level,
+            l.name,
+            l.pattern,
+            l.generators || [],
+            l.freeItems || [],
+            l.webItems || [],
+            l.orders || [],
+            l.mechanics || {}
+        ];
+    });
+}
+
 function getLevelConfig(lvNum) {
-    var row = RAW_LEVELS.find(r => r[0] === lvNum) || RAW_LEVELS[0];
+    if (typeof GAME_CONFIG !== 'undefined' && Array.isArray(GAME_CONFIG.levels) && GAME_CONFIG.levels.length > 0) {
+        var cfg = GAME_CONFIG.levels.find(function(l) { return l.level === lvNum; }) || GAME_CONFIG.levels[0];
+        var mech = cfg.mechanics || {};
+        return {
+            num: cfg.level,
+            name: cfg.name,
+            pattern: cfg.pattern,
+            gens: cfg.generators || [],
+            generators: cfg.generators || [],
+            free: cfg.freeItems || [],
+            webs: cfg.webItems || [],
+            rawOrders: cfg.orders || [],
+            adjWeb: mech.adjWeb !== undefined ? mech.adjWeb : (cfg.level >= 3),
+            bonus: !!mech.bonus,
+            spreadEvery: mech.spreadEvery || 0
+        };
+    }
+    var row = RAW_LEVELS.find(function(r) { return r[0] === lvNum; }) || RAW_LEVELS[0];
     var mech = row[7] || {};
     return {
         num: row[0],
@@ -85,7 +118,7 @@ function getLevelConfig(lvNum) {
         free: row[4],
         webs: row[5],
         rawOrders: row[6],
-        adjWeb: mech.adjWeb !== undefined ? mech.adjWeb : (row[0] >= 5),
+        adjWeb: mech.adjWeb !== undefined ? mech.adjWeb : (row[0] >= 3),
         bonus: !!mech.bonus,
         spreadEvery: mech.spreadEvery || 0
     };
@@ -171,3 +204,12 @@ var LEVEL_STORY_DIALOGUES = {
     44: { npc: 'cao', text: 'Nhìn lên bầu trời kìa: Bình Minh Bắc Cực Quang! Hãy trải tấm Thảm Tối Thượng Lv.8 và dựng Lều Lv.8 để chiêm ngưỡng kỳ quan này!' },
     45: { npc: 'gau', text: '🏆 Màn Cuối 45: Huyền Thoại Vua Cắm Trại! Cả 3 tụi mình — Gấu, Cáo và Dế — cùng bạn chinh phục 3 đại đơn hàng Lv.8 cuối cùng!' }
 };
+
+// Đồng bộ lời thoại từ GAME_CONFIG.levels nếu có
+if (typeof GAME_CONFIG !== 'undefined' && Array.isArray(GAME_CONFIG.levels)) {
+    GAME_CONFIG.levels.forEach(function(l) {
+        if (l.dialogue && l.level) {
+            LEVEL_STORY_DIALOGUES[l.level] = l.dialogue;
+        }
+    });
+}

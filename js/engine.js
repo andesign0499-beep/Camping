@@ -84,11 +84,52 @@ function clearAdjacentWebs(board, toIdx, level) {
 }
 
 // Sinh 1 item từ nguồn phát vào ô trống ngẫu nhiên. Trả về index ô mới, hoặc -1 nếu bàn đầy
-function spawnItem(board, genId) {
+// Task 2: Thuật toán Rơi Đồ Thông Minh (Smart Drop & Anti-Board Lock)
+// Tăng 35% trọng số (weight = 1.35) cho các nhánh đồ đang nằm trong đơn hàng hoặc ô mạng nhện trên bàn
+function spawnItem(board, genId, activeOrders) {
     var empty = getEmptyIndexes(board);
     if (!empty.length) return -1;
     var list = GENERATORS[genId];
-    var id = list[Math.floor(rand() * list.length)];
+    if (!list || !list.length) return -1;
+
+    // Thu thập các nhánh cần thiết từ đơn hàng và ô mạng nhện trên bàn
+    var neededLines = [];
+    var ordersToCheck = activeOrders || (typeof currentOrders !== 'undefined' ? currentOrders : null);
+    if (ordersToCheck && Array.isArray(ordersToCheck)) {
+        ordersToCheck.forEach(function (o) {
+            var line = typeof o === 'string' ? itemLine(o) : (o && o.id ? itemLine(o.id) : null);
+            if (line && neededLines.indexOf(line) === -1) neededLines.push(line);
+        });
+    }
+    if (board && Array.isArray(board)) {
+        board.forEach(function (c) {
+            if (c && c.isLocked && c.id && !c.isRock) {
+                var line = itemLine(c.id);
+                if (line && neededLines.indexOf(line) === -1) neededLines.push(line);
+            }
+        });
+    }
+
+    var id;
+    if (neededLines.length > 0) {
+        var weights = list.map(function (itemId) {
+            return (neededLines.indexOf(itemLine(itemId)) !== -1) ? 1.35 : 1.0;
+        });
+        var totalWeight = weights.reduce(function (a, b) { return a + b; }, 0);
+        var r = rand() * totalWeight;
+        var acc = 0;
+        id = list[list.length - 1];
+        for (var i = 0; i < list.length; i++) {
+            acc += weights[i];
+            if (r <= acc) {
+                id = list[i];
+                break;
+            }
+        }
+    } else {
+        id = list[Math.floor(rand() * list.length)];
+    }
+
     var target = empty[Math.floor(rand() * empty.length)];
     board[target] = { id: id, isRock: false, isLocked: false };
     return target;

@@ -91,19 +91,28 @@ function showWinModal(info, onReplay, onNext) {
     }
     var gemText = info.gems > 0 ? ' &nbsp;+' + info.gems + ' ' + ICON_RUBY_HTML : '';
 
+    var baseWinCoins = (info.alreadyDoubled ? info.coins * 2 : info.coins);
+    var totalCoinsWithSweep = baseWinCoins + (info.sweepCoins || 0);
+
+    var sweepHtml = '';
+    if (info.sweepCoins > 0) {
+        sweepHtml = '<div class="win-sweep-banner">🧹 Thu dọn <b>' + info.sweepCount + '</b> vật phẩm thừa: <b style="color:#e65100">+' + info.sweepCoins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</b></div>';
+    }
+
     var nextBtnHtml = info.hasNext
         ? '<button class="modal-btn primary" id="mb-next">Màn tiếp</button>'
         : '<button class="modal-btn primary" id="mb-close">Đóng</button>';
 
     var doubleBtnHtml = info.alreadyDoubled
-        ? '<button class="modal-btn disabled-btn win-btn-double" disabled id="mb-double-ad">✅ Đã x2 Thưởng (+' + (info.coins * 2) + ' ' + ICON_GOLD_HTML + ')</button>'
-        : '<button class="modal-btn gem-btn win-btn-double" id="mb-double-ad">🎬 x2 Vàng (+' + info.coins + ' ' + ICON_GOLD_HTML + ')</button>';
+        ? '<button class="modal-btn disabled-btn win-btn-double" disabled id="mb-double-ad">✅ Đã x2 Thưởng (+' + (info.coins * 2).toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + ')</button>'
+        : '<button class="modal-btn gem-btn win-btn-double" id="mb-double-ad">🎬 x2 Vàng Thưởng (+' + info.coins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + ')</button>';
 
     var overlay = createModal(
         '<div class="modal-sub">Level ' + info.level + ': ' + info.name + '</div>' +
         '<div class="win-stars">' + starsHtml + '</div>' +
-        '<div class="win-coins">+' + (info.alreadyDoubled ? info.coins * 2 : info.coins) + ' ' + ICON_GOLD_HTML + gemText +
+        '<div class="win-coins">+' + totalCoinsWithSweep.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + gemText +
             (info.firstTime ? '' : ' <small>(chơi lại)</small>') + '</div>' +
+        sweepHtml +
         decorHtml +
         '<div class="win-buttons-system">' +
             doubleBtnHtml +
@@ -241,91 +250,62 @@ function openCamp(highlightLevel, onBack) {
 
 // ==========================================
 // ĐỊNH NGHĨA KINH TẾ IAP, QUẢNG CÁO & CỬA HÀNG
+// Đọc từ js/config.js (GAME_CONFIG) để người dùng có thể dễ dàng chỉnh sửa
 // ==========================================
-var GEM_IAP_PACKS = [
+var GEM_IAP_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.iapPacks) ? GAME_CONFIG.iapPacks : [
     {
         id: 'gem_tier_1',
         name: 'Túi Kim Cương Nhỏ',
-        gems: 80,
+        gems: 30,
         bonusGems: 0,
-        priceVnd: '25.000 ₫',
+        priceVnd: '5.000 ₫',
         badge: null,
-        desc: 'Hồi nhanh năng lượng khẩn cấp'
+        desc: 'Đủ 3 lần nạp siêu tốc (+120 ⚡)'
     },
     {
         id: 'gem_tier_2',
         name: 'Túi Kim Cương Vừa',
-        gems: 500,
-        bonusGems: 50,
-        priceVnd: '129.000 ₫',
-        badge: '+10% THÊM',
-        desc: 'Tặng thêm +50 💎 khuyến mãi'
+        gems: 60,
+        bonusGems: 10,
+        priceVnd: '10.000 ₫',
+        badge: '+15% THÊM',
+        desc: 'Tặng thêm +10 💎 khuyến mãi'
     },
     {
         id: 'gem_tier_3',
         name: 'Rương Kim Cương',
-        gems: 1200,
-        bonusGems: 200,
-        priceVnd: '249.000 ₫',
-        badge: '⭐ PHỔ BIẾN NHẤT',
+        gems: 90,
+        bonusGems: 25,
+        priceVnd: '15.000 ₫',
+        badge: '⭐ HỜI NHẤT +28%',
         isPopular: true,
-        desc: 'Gói nạp tối ưu chi phí & giá trị'
-    },
-    {
-        id: 'gem_tier_4',
-        name: 'Thùng Châu Báu',
-        gems: 3000,
-        bonusGems: 600,
-        priceVnd: '599.000 ₫',
-        badge: '🔥 SIÊU HỜI +20%',
-        desc: 'Tặng thêm +600 💎 cực lớn'
-    },
-    {
-        id: 'gem_tier_5',
-        name: 'Kho Báu Hoàng Gia',
-        gems: 6500,
-        bonusGems: 1500,
-        priceVnd: '1.199.000 ₫',
-        badge: '👑 VIP WHALE',
-        desc: 'Gói siêu cấp dành cho VIP (+1.500 💎)'
+        desc: 'Tặng thêm +25 💎 khuyến mãi'
     }
 ];
 
-var STARTER_PACK = {
-    id: 'starter_pack',
-    name: 'Gói Tân Thủ Khởi Đầu',
-    gems: 250,
-    coins: 2000,
-    energy: 100,
-    priceVnd: '49.000 ₫',
-    badge: '🔥 GIẢM 80% (CHỈ MUA 1 LẦN)',
-    isStarter: true,
-    desc: 'Bao gồm +250 💎, +2.000 🪙 & +100 ⚡ Năng lượng'
-};
-
-var COIN_PACKS = [
+var COIN_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.coinExchangePacks) ? GAME_CONFIG.coinExchangePacks : [
     {
         id: 'coin_pack_1',
         name: 'Túi Vàng Nhỏ',
-        coins: 1000,
-        gemCost: 10,
-        desc: 'Đổi từ 10 Kim Cương'
+        coins: 300,
+        gemCost: 5,
+        desc: 'Đổi từ 5 Kim Cương'
     },
     {
         id: 'coin_pack_2',
         name: 'Rương Vàng Lớn',
-        coins: 5500,
-        gemCost: 50,
+        coins: 1000,
+        gemCost: 15,
         badge: '⭐ TIẾT KIỆM 10%',
-        desc: 'Đổi từ 50 Kim Cương (Tặng thêm +500 Vàng)'
+        desc: 'Đổi từ 15 Kim Cương'
     },
     {
         id: 'coin_pack_3',
         name: 'Kho Vàng Hoàng Gia',
-        coins: 12000,
-        gemCost: 100,
+        coins: 2200,
+        gemCost: 30,
         badge: '🔥 SIÊU LỜI +20%',
-        desc: 'Đổi từ 100 Kim Cương (Tặng thêm +2.000 Vàng)'
+        desc: 'Đổi từ 30 Kim Cương'
     }
 ];
 
@@ -426,26 +406,32 @@ function simulateBuyIAP(pack, onConfirm) {
 }
 
 // ---------- 4A. CỬA HÀNG NĂNG LƯỢNG & CỨU TRỢ (TRẠM TIẾP NĂNG LƯỢNG) ----------
-// opts: { energy, budget, coins, gems, secLeft, onBuyCoins, onBuyGems, onWatchAd, onRescue, onOpenGemShop }
+// opts: { energy, maxEnergy, coins, gems, secLeft, adsLeft, onBuyCoins, onBuyGems, onWatchAd, onRescue, onOpenGemShop }
 function showEnergyShopModal(opts) {
     var canCoin = opts.coins >= ENERGY_PACK_PRICE;
     var canGem = opts.gems >= GEM_ENERGY_PRICE;
-    var needRescue = opts.energy <= 5;
+    var rescueCfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.rescue)
+        ? GAME_CONFIG.energyShop.rescue
+        : { enabled: false, amount: 15 };
+    var needRescue = rescueCfg.enabled && opts.energy <= 5 && typeof opts.onRescue === 'function';
 
     var rescueHtml = needRescue
         ? '<div class="shop-card rescue-card">' +
             '<div class="shop-card-left">' +
                 '<div class="shop-card-title">🏕️ Cứu Trợ Kiểm Lâm</div>' +
-                '<div class="shop-card-desc">Hỗ trợ khẩn cấp khi bạn cạn năng lượng (+20 ' + ICON_ENERGY_HTML + ')</div>' +
+                '<div class="shop-card-desc">Hỗ trợ khẩn cấp khi cạn kiệt năng lượng (+' + rescueCfg.amount + ' ' + ICON_ENERGY_HTML + ')</div>' +
             '</div>' +
             '<button class="modal-btn primary" id="btn-shop-rescue">MIỄN PHÍ</button>' +
           '</div>'
         : '';
 
+    var adAmt = (typeof AD_REWARDS !== 'undefined' && AD_REWARDS.energy) ? AD_REWARDS.energy.amount : 20;
+    var adLeftText = typeof opts.adsLeft === 'number' ? ' • Còn ' + opts.adsLeft + ' lượt hôm nay' : '';
+
     var overlay = createModal(
         '<div id="shop-status-bar" class="modal-sub">' +
             'Hiện có: <b>' + opts.energy + ' ' + ICON_ENERGY_HTML + '</b> &nbsp;|&nbsp; ' +
-            '<b>' + opts.coins + ' ' + ICON_GOLD_HTML + '</b> &nbsp;|&nbsp; ' +
+            '<b>' + opts.coins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</b> &nbsp;|&nbsp; ' +
             '<b>' + opts.gems + ' ' + ICON_RUBY_HTML + '</b><br>' +
             '<small>⏳ Tự động hồi +1 năng lượng sau mỗi ' + ENERGY_REGEN_SEC + ' giây (còn ' + opts.secLeft + 's)</small>' +
         '</div>' +
@@ -463,18 +449,18 @@ function showEnergyShopModal(opts) {
             '<div class="shop-card has-badge">' +
                 '<span class="shop-badge best">MIỄN PHÍ 🎬</span>' +
                 '<div class="shop-card-left">' +
-                    '<div class="shop-card-title">🎬 Tiếp Tế Nhanh (+25 ' + ICON_ENERGY_HTML + ')</div>' +
-                    '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay 25 năng lượng miễn phí</div>' +
+                    '<div class="shop-card-title">🎬 Tiếp Tế Nhanh (+' + adAmt + ' ' + ICON_ENERGY_HTML + ')</div>' +
+                    '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay ' + adAmt + ' năng lượng miễn phí' + adLeftText + '</div>' +
                 '</div>' +
                 '<button class="modal-btn primary" id="btn-shop-ad">XEM ADS</button>' +
             '</div>' +
             // 3. Đổi Vàng
             '<div class="shop-card">' +
                 '<div class="shop-card-left">' +
-                    '<div class="shop-card-title">' + ICON_ENERGY_HTML + ' Gói Năng Lượng Vừa (+' + ENERGY_PACK + ')</div>' +
+                    '<div class="shop-card-title">' + ICON_ENERGY_HTML + ' Gói Năng Lượng (+' + ENERGY_PACK + ')</div>' +
                     '<div class="shop-card-desc">Dùng Vàng từ ghép đồ, bán đồ hoặc nộp đơn</div>' +
                 '</div>' +
-                '<button class="modal-btn ' + (canCoin ? 'primary' : 'disabled-btn') + '" id="btn-shop-coin">' + ENERGY_PACK_PRICE + ' ' + ICON_GOLD_HTML + '</button>' +
+                '<button class="modal-btn ' + (canCoin ? 'primary' : 'disabled-btn') + '" id="btn-shop-coin">' + ENERGY_PACK_PRICE.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</button>' +
             '</div>' +
             rescueHtml +
         '</div>' +
@@ -488,7 +474,7 @@ function showEnergyShopModal(opts) {
     var shopStatusBar = overlay.querySelector('#shop-status-bar');
     overlay.querySelector('#btn-shop-coin').onclick = function () {
         if (!canCoin) {
-            if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">❌ Chưa đủ ' + ENERGY_PACK_PRICE + ' Vàng! Hãy ghép đồ (Lv.3+), nộp đơn hoặc bán đồ nhé.</b>';
+            if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">❌ Chưa đủ ' + ENERGY_PACK_PRICE.toLocaleString('vi-VN') + ' Vàng! Hãy ghép đồ (Lv.2+), nộp đơn hoặc bán đồ nhé.</b>';
             return;
         }
         closeModal();
@@ -521,18 +507,21 @@ function showEnergyShopModal(opts) {
 
 // ---------- 4B. CỬA HÀNG KIM CƯƠNG IAP (MÔ PHỎNG) ----------
 function showGemShopModal(opts) {
-    var isStarterBought = !!SAVE.starterPackBought;
-
-    var starterHtml = !isStarterBought
+    var starterCfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.starterPack) ? GAME_CONFIG.starterPack : null;
+    var isStarterBought = !!(SAVE && SAVE.starterPackBought);
+    var starterHtml = (starterCfg && !isStarterBought)
         ? '<div class="shop-card starter-card has-badge">' +
-            '<span class="shop-badge best">🔥 GIẢM 80% - CHỈ MUA 1 LẦN</span>' +
+            '<span class="shop-badge best">' + (starterCfg.badge || '🔥 GÓI TÂN THỦ') + '</span>' +
             '<div class="shop-card-left">' +
-                '<div class="shop-card-title">🎒 Gói Tân Thủ Khởi Đầu</div>' +
-                '<div class="shop-card-desc">+250 ' + ICON_RUBY_HTML + ' &nbsp;+2.000 ' + ICON_GOLD_HTML + ' &nbsp;+100 ' + ICON_ENERGY_HTML + '</div>' +
+                '<div class="shop-card-title">🎒 ' + starterCfg.name + '</div>' +
+                '<div class="shop-card-desc">' + starterCfg.desc + '</div>' +
             '</div>' +
-            '<button class="modal-btn danger-btn" id="btn-buy-starter">49.000 ₫</button>' +
+            '<button class="modal-btn danger-btn" id="btn-buy-starter">' + starterCfg.priceVnd + '</button>' +
           '</div>'
         : '';
+
+    var gemAdAmt = (typeof AD_REWARDS !== 'undefined' && AD_REWARDS.gem) ? AD_REWARDS.gem.amount : 3;
+    var gemAdsLeft = typeof opts.adsLeft === 'number' ? ' • Còn ' + opts.adsLeft + ' lượt hôm nay' : '';
 
     var packsHtml = '';
     GEM_IAP_PACKS.forEach(function (p) {
@@ -563,8 +552,8 @@ function showGemShopModal(opts) {
             '<div class="shop-card has-badge">' +
                 '<span class="shop-badge best">MIỄN PHÍ 🎬</span>' +
                 '<div class="shop-card-left">' +
-                    '<div class="shop-card-title">🎁 Quà Nhà Tài Trợ (+10 ' + ICON_RUBY_HTML + ')</div>' +
-                    '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay 10 Kim cương miễn phí</div>' +
+                    '<div class="shop-card-title">🎁 Quà Nhà Tài Trợ (+' + gemAdAmt + ' ' + ICON_RUBY_HTML + ')</div>' +
+                    '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay ' + gemAdAmt + ' Kim Cương miễn phí' + gemAdsLeft + '</div>' +
                 '</div>' +
                 '<button class="modal-btn primary" id="btn-gem-ad">XEM ADS</button>' +
             '</div>' +
@@ -579,10 +568,10 @@ function showGemShopModal(opts) {
     );
 
     var starterBtn = overlay.querySelector('#btn-buy-starter');
-    if (starterBtn) {
+    if (starterBtn && starterCfg) {
         starterBtn.onclick = function () {
             closeModal();
-            opts.onBuyIAP(STARTER_PACK);
+            opts.onBuyIAP(starterCfg);
         };
     }
 
@@ -610,6 +599,9 @@ function showGemShopModal(opts) {
 
 // ---------- 4C. NGÂN HÀNG VÀNG ----------
 function showCoinShopModal(opts) {
+    var coinAdAmt = (typeof AD_REWARDS !== 'undefined' && AD_REWARDS.coin) ? AD_REWARDS.coin.amount : 100;
+    var coinAdsLeft = typeof opts.adsLeft === 'number' ? ' • Còn ' + opts.adsLeft + ' lượt hôm nay' : '';
+
     var packsHtml = '';
     COIN_PACKS.forEach(function (p) {
         var badgeHtml = p.badge ? '<span class="shop-badge best">' + p.badge + '</span>' : '';
@@ -627,14 +619,14 @@ function showCoinShopModal(opts) {
         '<div id="coin-status-bar" class="modal-sub">' +
             'Hiện có: <b>' + opts.coins + ' ' + ICON_GOLD_HTML + '</b> &nbsp;|&nbsp; ' +
             '<b>' + opts.gems + ' ' + ICON_RUBY_HTML + '</b><br>' +
-            '<small>Vàng dùng để mua năng lượng cơ bản (+50 ⚡) & dọn dẹp bàn cờ</small>' +
+            '<small>Vàng dùng để mua gói năng lượng (+' + ENERGY_PACK + ' ⚡) & dọn dẹp bàn cờ</small>' +
         '</div>' +
         '<div class="shop-scroll">' +
             '<div class="shop-card has-badge">' +
                 '<span class="shop-badge best">MIỄN PHÍ 🎬</span>' +
                 '<div class="shop-card-left">' +
-                    '<div class="shop-card-title">🎬 Quà Tài Trợ Video (+500 ' + ICON_GOLD_HTML + ')</div>' +
-                    '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay 500 Vàng miễn phí</div>' +
+                    '<div class="shop-card-title">🎬 Quà Tài Trợ Video (+' + coinAdAmt + ' ' + ICON_GOLD_HTML + ')</div>' +
+                    '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay ' + coinAdAmt + ' Vàng miễn phí' + coinAdsLeft + '</div>' +
                 '</div>' +
                 '<button class="modal-btn primary" id="btn-coin-ad">XEM ADS</button>' +
             '</div>' +
