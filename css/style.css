@@ -170,36 +170,48 @@ body {
     pointer-events: none;
 }
 
-/* Căn giữa 3 thanh chỉ số, cách đều nhau đúng 12pt (var(--sp-3) = 12px) */
+/* Căn giữa 3 thanh chỉ số */
 .hud-stats-group {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: var(--sp-3);
+    gap: 14px; /* Tăng 4px khoảng cách giữa các cụm theo yêu cầu */
     flex: 1;
     min-width: 0;
     padding: 0;
 }
 
-/* Kích thước cố định (width: 74px, icon nhô ra 8px ngoài border-box, margin-left: 8px => tổng mỗi cụm = 82px đồng nhất) */
+/* Kích thước capsule banner */
 .hud-stat-banner {
     position: relative;
-    flex: 0 0 74px;
-    width: 74px;
-    height: 24px;
+    height: 23px; /* Giảm 2px theo yêu cầu để nền ôm gọn hơn */
     display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
-    padding: 0 4px 0 16px; /* Cách mép icon 16px từ mép trái padding-box */
-    margin-left: var(--sp-2);
-    margin-right: 0;
+    justify-content: center;
+    padding: 0;
     cursor: pointer;
     user-select: none;
     transition: transform 0.12s;
     border-style: solid;
-    border-width: 0 12px 0 12px;
-    border-image: url('../assets/images/ui/bg_gold.png') 0 43 0 43 fill / 0px 12px 0px 12px stretch;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    border-width: 0 14px 0 14px;
+    border-image: url('../assets/images/ui/bg_gold.png') 0 43 0 43 fill / 0px 14px 0px 14px stretch;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.22));
+}
+
+/* Năng lượng ngắn hơn vàng và kim cương */
+.hud-stat-banner.energy-banner {
+    width: 68px;
+    flex: 0 0 68px;
+}
+
+.hud-stat-banner.gold-banner {
+    width: 90px;
+    flex: 0 0 90px;
+}
+
+.hud-stat-banner.ruby-banner {
+    width: 80px;
+    flex: 0 0 80px;
 }
 
 .hud-stat-banner:active {
@@ -208,13 +220,14 @@ body {
 
 .energy-icon-wrapper {
     position: absolute;
-    left: -20px;
+    left: -18px; /* Đẩy sang trái để icon che khít góc bo tròn bên trái của nền */
     top: 50%;
     transform: translateY(-50%);
-    width: 32px;
-    height: 32px;
+    width: 29px;
+    height: 29px;
     pointer-events: none;
     overflow: visible;
+    z-index: 3;
 }
 
 .energy-icon-wrapper .hud-stat-icon {
@@ -222,9 +235,9 @@ body {
     left: 0;
     top: 0;
     transform: none;
-    width: 32px;
-    height: 32px;
-    filter: drop-shadow(0 0 6px rgba(255, 235, 59, 0.5));
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 5px rgba(255, 235, 59, 0.5));
 }
 
 .energy-icon-wrapper .sparkle-star.star-1 {
@@ -253,26 +266,48 @@ body {
 
 .hud-stat-icon {
     position: absolute;
-    left: -20px;
+    left: -18px; /* Đẩy sang trái che khít góc bo tròn bên trái của nền */
     top: 50%;
     transform: translateY(-50%);
-    width: 32px;
-    height: 32px;
+    width: 29px;
+    height: 29px;
     object-fit: contain;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
     pointer-events: none;
+    z-index: 3;
 }
 
 .hud-stat-val {
     font-family: 'Baloo 2', 'Nunito', sans-serif;
     font-weight: 800;
-    font-size: 0.6875rem;
-    line-height: 1.25rem;
-    color: #3e220c;
+    font-size: 0.75rem;
+    line-height: 1;
+    color: #492323;
     white-space: nowrap;
-    text-align: left;
+    text-align: center;
     width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
     letter-spacing: -0.2px;
+}
+
+.hud-add-btn {
+    position: absolute;
+    right: -18px; /* Đẩy sang phải che khít góc bo tròn bên phải của nền */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 25px;
+    object-fit: contain;
+    flex-shrink: 0;
+    z-index: 3;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.22));
+    transition: transform 0.12s ease;
+    pointer-events: none;
+}
+
+.hud-stat-banner:active .hud-add-btn {
+    transform: translateY(-50%) scale(0.92);
 }
 
 .regen-timer {
