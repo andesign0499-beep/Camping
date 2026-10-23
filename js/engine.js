@@ -34,6 +34,26 @@ var rand = Math.random;
 
 function itemLine(id) { return id.split('_lv')[0]; }
 function itemLv(id) { return parseInt(id.split('_lv')[1]) || 1; }
+
+// ==========================================
+// BẢNG MÀU NỀN THEO 9 NHÓM HỌ VẬT PHẨM (9 NHÓM + Ô TRỐNG)
+// Dùng chung cho: Bàn chơi (board), Đơn hàng (orders) & Cẩm nang (discovery book)
+// ==========================================
+var ITEM_CELL_BG_MAP = {
+    'an': 'cell-bg-01',     // 1. Ẩm thực dã ngoại
+    'ban': 'cell-bg-02',    // 2. Bàn dã ngoại
+    'cafe': 'cell-bg-03',   // 3. Cà phê sương sớm
+    'trai': 'cell-bg-04',   // 4. Lều trại trú ngụ
+    'tham': 'cell-bg-05',   // 5. Chỗ ngủ êm ái
+    'ghe': 'cell-bg-06',    // 6. Ghế nghỉ ngơi
+    'bep': 'cell-bg-07',    // 7. Lửa & bếp trại
+    'congcu': 'cell-bg-08', // 8. Dụng cụ sinh tồn
+    'antoan': 'cell-bg-09'  // 9. Y tế & an toàn
+};
+
+function getCellBgClass(line) {
+    return (typeof ITEM_CELL_BG_MAP !== 'undefined' && ITEM_CELL_BG_MAP[line]) ? ITEM_CELL_BG_MAP[line] : 'bg-empty';
+}
 function makeEmptyCell() { return { id: null, isRock: false, isLocked: false }; }
 
 // Dựng bàn cờ 63 ô từ cấu hình level (getLevelConfig trong js/data.js)

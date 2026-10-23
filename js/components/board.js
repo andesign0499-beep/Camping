@@ -281,6 +281,13 @@ function playSound(type, itemId) {
             // Hợp âm C5 - G5 êm ái khi nhận hộp tiếp tế hoặc bán đồ
             playFluteNote(523.25, now, 0.12, 0.09, 0.96);
             playFluteNote(783.99, now + 0.06, 0.22, 0.11, 0.96);
+        } else if (type === 'sweep') {
+            // Âm thanh vút quét chổi nhẹ nhàng: lướt 3 nốt nhẹ C5 -> E5 -> G5 mượt mà
+            var sweepNotes = [523.25, 659.25, 783.99];
+            sweepNotes.forEach((freq, idx) => {
+                playFluteNote(freq, now + idx * 0.05, 0.12, 0.10, 0.96);
+            });
+            triggerVibrate(20);
         } else if (type === 'win') {
             // Khúc hòa tấu khải hoàn 5 nốt ngũ cung Đô Trưởng (C5, E5, G5, A5, C6)
             var winNotes = [523.25, 659.25, 783.99, 880.00, 1046.50];
@@ -987,7 +994,19 @@ function renderBoard() {
         cell.dataset.index = i;
 
         var itemData = boardData[i];
-        cell.classList.add(itemData && itemData.isRock ? 'bg-rock' : ((Math.floor(i / COLS) + (i % COLS)) % 2 === 0 ? 'bg-light' : 'bg-dark'));
+        if (itemData && itemData.isRock) {
+            cell.classList.add('bg-rock');
+        } else if (itemData && itemData.id && GENERATORS[itemData.id]) {
+            // Máy sinh đồ (backpack, cooler, crate): mang nền 3 vạch màu tương ứng nhóm đồ nó sinh
+            cell.classList.add('bg-' + itemData.id);
+        } else if (itemData && itemData.id) {
+            var line = itemLine(itemData.id);
+            cell.classList.add(getCellBgClass(line));
+        } else {
+            // Ô trống: dùng nền board_cell_empty.png đồng nhất
+            cell.classList.add('bg-empty');
+        }
+
         if (selectedIndex === i) cell.classList.add('selected');
 
         // Đánh dấu hiệu ứng nổi bật nếu ô này đạt yêu cầu nhiệm vụ
@@ -1143,7 +1162,9 @@ function renderOrders() {
 
     currentOrders.forEach((o) => {
         var card = document.createElement('div');
-        card.className = 'order-card' + (o.done ? ' done' : '');
+        var line = itemLine(o.id);
+        var bgClass = getCellBgClass(line);
+        card.className = 'order-card ' + bgClass + (o.done ? ' done' : '');
         card.title = getItemDisplayName(o.id);
         var img = document.createElement('img');
         img.src = getItemImagePath(o.id);
@@ -1825,6 +1846,117 @@ function toggleAutoDebug() {
     }
 }
 
+// ==========================================
+// TÍNH NĂNG DỌN DẸP BÀN CỜ (CÂY CHỔI DỌN DẸP)
+// Sắp xếp các item cùng họ (cùng màu nền) lại gần nhau
+// Tiêu tốn: 3 Năng lượng
+// ==========================================
+var TIDY_ENERGY_COST = 3;
+var LINE_ORDER = ['an', 'cafe', 'congcu', 'ban', 'ghe', 'trai', 'tham', 'antoan', 'bep'];
+
+function handleTidyBoard() {
+    // 1. Kiểm tra năng lượng của người chơi
+    if (playerEnergy < TIDY_ENERGY_COST) {
+        showToast('⚡ Không đủ năng lượng! (Cần ' + TIDY_ENERGY_COST + ' Năng lượng để dọn dẹp)', '#e74c3c');
+        var broomBtn = document.getElementById('btn-tidy-board');
+        if (broomBtn) {
+            broomBtn.classList.remove('broom-shake-warn');
+            void broomBtn.offsetWidth;
+            broomBtn.classList.add('broom-shake-warn');
+        }
+        return;
+    }
+
+    // 2. Thu thập các vật phẩm có thể di chuyển trên bàn cờ
+    // (Bỏ qua: Đá chướng ngại vật, Ô bị khóa/mạng nhện, Ô máy sinh đồ/thùng chứa)
+    var movableItems = [];
+    var availableSlotIndexes = [];
+
+    boardData.forEach(function (cell, idx) {
+        if (!cell) return;
+        if (cell.isRock) return; // Đá cố định
+        if (cell.isLocked) return; // Mạng nhện cố định
+        if (cell.id && GENERATORS[cell.id]) return; // Thùng chứa đồ cố định
+
+        // Ô này là ô trống hoặc ô chứa vật phẩm tự do
+        availableSlotIndexes.push(idx);
+        if (cell.id) {
+            movableItems.push({
+                id: cell.id,
+                isRock: false,
+                isLocked: false
+            });
+        }
+    });
+
+    if (movableItems.length <= 1) {
+        showToast('Bàn cờ chưa có nhiều vật phẩm cần dọn dẹp!', '#3498db');
+        return;
+    }
+
+    // 3. Trừ 3 năng lượng & lưu dữ liệu
+    playerEnergy -= TIDY_ENERGY_COST;
+    updateUIStats();
+    saveGame();
+
+    // 4. Hiệu ứng âm thanh & hoạt ảnh cho cây chổi
+    playSound('sweep');
+    var broomEl = document.getElementById('btn-tidy-board');
+    if (broomEl) {
+        broomEl.classList.remove('broom-sweeping');
+        void broomEl.offsetWidth;
+        broomEl.classList.add('broom-sweeping');
+
+        // Hiển thị huy hiệu bay "-3 ⚡" từ vị trí cây chổi
+        showFloatingBadge(broomEl, '-' + TIDY_ENERGY_COST + ' ⚡', '#f39c12');
+    }
+
+    // 5. Sắp xếp các vật phẩm:
+    // - Gom nhóm theo họ / màu nền (LINE_ORDER)
+    // - Trong cùng họ: sắp xếp theo cấp độ (level) tăng dần để các item giống nhau nằm sát nhau
+    movableItems.sort(function (a, b) {
+        var lineA = itemLine(a.id);
+        var lineB = itemLine(b.id);
+        var orderA = LINE_ORDER.indexOf(lineA);
+        var orderB = LINE_ORDER.indexOf(lineB);
+        if (orderA === -1) orderA = 999;
+        if (orderB === -1) orderB = 999;
+        if (orderA !== orderB) return orderA - orderB;
+
+        var lvA = itemLv(a.id);
+        var lvB = itemLv(b.id);
+        return lvA - lvB;
+    });
+
+    // 6. Xếp lại các vật phẩm vào các ô hợp lệ theo thứ tự gọn gàng
+    availableSlotIndexes.forEach(function (slotIdx, k) {
+        if (k < movableItems.length) {
+            boardData[slotIdx] = movableItems[k];
+        } else {
+            boardData[slotIdx] = makeEmptyCell();
+        }
+    });
+
+    // Bỏ chọn ô hiện tại nếu có
+    selectedIndex = null;
+    updateSellButton(null);
+
+    // 7. Render lại bàn cờ & kích hoạt hiệu ứng xuất hiện mượt mà cho các item vừa dọn dẹp
+    renderBoard();
+
+    // Hiệu ứng hoạt ảnh gọn gàng cho các ô vừa được xếp
+    availableSlotIndexes.forEach(function (slotIdx, k) {
+        if (k < movableItems.length && boardElement.children[slotIdx]) {
+            var itemImg = boardElement.children[slotIdx].querySelector('.item-img');
+            if (itemImg) {
+                itemImg.classList.add('item-tidy-settle');
+            }
+        }
+    });
+
+    showToast('✨ Đã dọn dẹp bàn cờ gọn gàng!', '#27ae60');
+}
+
 function initGame() {
     refreshLevelSelect();
     if (btnRefillEnergy) btnRefillEnergy.onclick = openEnergyShop;
@@ -1834,6 +1966,11 @@ function initGame() {
     if (btnCoinShop) btnCoinShop.onclick = openCoinShop;
     var btnLuckyDrop = document.getElementById('btn-lucky-drop');
     if (btnLuckyDrop) btnLuckyDrop.onclick = openLuckyDrop;
+
+    var btnTidy = document.getElementById('btn-tidy-board');
+    if (btnTidy) {
+        btnTidy.onclick = handleTidyBoard;
+    }
 
     var btnCamp = document.getElementById('btn-camp');
     if (btnCamp) btnCamp.onclick = () => openCamp(null, null);

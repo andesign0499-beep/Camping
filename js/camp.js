@@ -109,7 +109,7 @@ function showWinModal(info, onReplay, onNext) {
         '<div class="win-buttons-system">' +
             doubleBtnHtml +
             '<div class="win-btn-row">' +
-                '<button class="modal-btn" id="mb-replay">Chơi lại</button>' +
+                '<button class="modal-btn gem-btn" id="mb-replay">Chơi lại</button>' +
                 nextBtnHtml +
             '</div>' +
         '</div>',
@@ -383,7 +383,7 @@ function simulateBuyIAP(pack, onConfirm) {
                 '<small>💡 Đây là giao diện giả lập nạp IAP theo yêu cầu. Nhấn "Thanh Toán" để cộng ngay vật phẩm vào tài khoản!</small>' +
             '</div>' +
             '<div class="modal-buttons">' +
-                '<button class="modal-btn" id="btn-iap-cancel">Hủy Bỏ</button>' +
+                '<button class="modal-btn gem-btn" id="btn-iap-cancel">Hủy Bỏ</button>' +
                 '<button class="modal-btn primary" id="btn-iap-pay">Thanh Toán</button>' +
             '</div>' +
         '</div>',
@@ -702,6 +702,7 @@ function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
     ITEM_CHAINS.forEach(function (ch) {
         var slotsHtml = '';
         var chainDisc = 0;
+        var bgClass = typeof getCellBgClass === 'function' ? getCellBgClass(ch.line) : 'cell-bg-01';
         for (var lv = 1; lv <= 8; lv++) {
             var id = ch.line + '_lv' + lv;
             var imgPath = id === 'ban_lv8' ? 'assets/images/items/ban_level8.png' : ('assets/images/items/' + id + '.png');
@@ -709,7 +710,7 @@ function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
             var isClaimed = !!SAVE.claimedBook[id];
             if (isDisc) chainDisc++;
 
-            var cls = 'book-slot' + (isDisc ? ' discovered' : ' locked') + (isDisc && !isClaimed ? ' claimable' : '');
+            var cls = 'book-slot ' + bgClass + (isDisc ? ' discovered' : ' locked') + (isDisc && !isClaimed ? ' claimable' : '');
             var badge = (isDisc && !isClaimed) ? '<span class="book-claim-tag">NHẬN</span>' : '';
             slotsHtml += '<div class="' + cls + '" data-id="' + id + '" data-name="' + ch.names[lv - 1] + '" data-lv="' + lv + '">' +
                 '<img src="' + imgPath + '" alt="' + id + '">' +
@@ -957,7 +958,7 @@ function openSettingsModal(opts) {
             '<p style="margin-bottom:12px;">⚠️ Bạn chắc chắn muốn xóa toàn bộ tiến trình, sao, vàng và cẩm nang về ban đầu?</p>' +
             '<div class="st-actions">' +
                 '<button class="modal-btn danger-btn" id="st-confirm-reset" style="flex:1">Xác nhận xóa hết</button>' +
-                '<button class="modal-btn" id="st-cancel-reset" style="flex:1">Hủy</button>' +
+                '<button class="modal-btn gem-btn" id="st-cancel-reset" style="flex:1">Hủy</button>' +
             '</div>' +
         '</div>' +
 
