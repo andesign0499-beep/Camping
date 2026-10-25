@@ -170,8 +170,8 @@ function showWinModal(info, onReplay, onNext) {
     });
 }
 
-// ---------- 3. KHU CẮM TRẠI (BẢN ĐỒ LƯỚI BÀN CHƠI 45 Ô) ----------
-function openCamp(highlightLevel, onBack) {
+// ---------- 3. KHU CẮM TRẠI (BẢN ĐỒ LƯỚI BÀN CHƠI 45 Ô & BỘ SƯU TẬP THÚ CƯNG) ----------
+function openCamp(highlightLevel, onBack, initialTab) {
     var unlockedCount = countUnlockedDecors();
     var cellsHtml = '';
 
@@ -196,18 +196,168 @@ function openCamp(highlightLevel, onBack) {
         '</div>';
     });
 
+    var petsList = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS : [
+        { id: 'character01', name: 'Golden', img: 'assets/images/ui/character01.png', price: 0 },
+        { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 30000 },
+        { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 30000 },
+        { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 30000 },
+        { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 30000 },
+        { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 30000 },
+        { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 30000 },
+        { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 30000 },
+        { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 30000 },
+        { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 30000 }
+    ];
+
+    var defaultTab = (initialTab === 'pets') ? 'pets' : 'decor';
+
     var overlay = createModal(
-        '<div class="modal-sub">Đã mở khóa: <b>' + unlockedCount + '/' + CAMP_DECORS.length + '</b> vật phẩm cắm trại</div>' +
-        '<div class="camp-board-wrap">' +
-            '<div class="camp-grid">' +
-                cellsHtml +
+        '<div class="camp-tab-nav">' +
+            '<button class="camp-tab-btn' + (defaultTab === 'decor' ? ' active' : '') + '" id="tab-btn-decor">📦 Vật Phẩm</button>' +
+            '<button class="camp-tab-btn' + (defaultTab === 'pets' ? ' active' : '') + '" id="tab-btn-pets">🐾 Thú Cưng</button>' +
+        '</div>' +
+        '<div id="camp-pane-decor" class="camp-tab-pane" style="' + (defaultTab === 'decor' ? '' : 'display:none;') + '">' +
+            '<div class="modal-sub">Đã mở khóa: <b>' + unlockedCount + '/' + CAMP_DECORS.length + '</b> vật phẩm</div>' +
+            '<div class="camp-board-wrap">' +
+                '<div class="camp-grid">' +
+                    cellsHtml +
+                '</div>' +
+            '</div>' +
+            '<div id="camp-info-bar" class="camp-info-bar">Chạm vào một ô trên bàn cờ để xem chi tiết vật phẩm</div>' +
+        '</div>' +
+        '<div id="camp-pane-pets" class="camp-tab-pane" style="' + (defaultTab === 'pets' ? '' : 'display:none;') + '">' +
+            '<div class="modal-sub" id="pets-unlocked-sub">Bộ sưu tập thú cưng đồng hành</div>' +
+            '<div class="pets-scroll-wrap">' +
+                '<div class="pets-grid" id="pets-grid-container"></div>' +
             '</div>' +
         '</div>' +
-        '<div id="camp-info-bar" class="camp-info-bar">Chạm vào một ô trên bàn cờ để xem chi tiết vật phẩm</div>' +
         '<div class="modal-buttons"><button class="modal-btn primary" id="mb-close">Đóng</button></div>',
         'camp-box',
         'KHU CẮM TRẠI'
     );
+
+    var tabBtnDecor = overlay.querySelector('#tab-btn-decor');
+    var tabBtnPets = overlay.querySelector('#tab-btn-pets');
+    var paneDecor = overlay.querySelector('#camp-pane-decor');
+    var panePets = overlay.querySelector('#camp-pane-pets');
+    var petsGridContainer = overlay.querySelector('#pets-grid-container');
+    var petsSub = overlay.querySelector('#pets-unlocked-sub');
+
+    function switchTab(tab) {
+        if (tab === 'decor') {
+            tabBtnDecor.classList.add('active');
+            tabBtnPets.classList.remove('active');
+            paneDecor.style.display = '';
+            panePets.style.display = 'none';
+        } else {
+            tabBtnPets.classList.add('active');
+            tabBtnDecor.classList.remove('active');
+            panePets.style.display = '';
+            paneDecor.style.display = 'none';
+            renderPetsGrid();
+        }
+    }
+
+    tabBtnDecor.onclick = function () { switchTab('decor'); };
+    tabBtnPets.onclick = function () { switchTab('pets'); };
+
+    function renderPetsGrid() {
+        if (!SAVE.ownedPets || !Array.isArray(SAVE.ownedPets)) SAVE.ownedPets = ['character01'];
+        if (!SAVE.activePet) SAVE.activePet = 'character01';
+
+        var ownedCount = SAVE.ownedPets.length;
+        if (petsSub) {
+            petsSub.innerHTML = 'Đã sở hữu: <b>' + ownedCount + '/' + petsList.length + '</b> thú cưng';
+        }
+
+        var html = '';
+        petsList.forEach(function (pet) {
+            var isOwned = SAVE.ownedPets.includes(pet.id);
+            var isActive = (SAVE.activePet === pet.id);
+            var cardCls = 'pet-card' + (isActive ? ' is-active' : '');
+
+            var priceHtml = '';
+            if (isOwned) {
+                priceHtml = '<div class="pet-price owned">' + (isActive ? '🐾 Đang chọn' : 'Đã sở hữu') + '</div>';
+            } else {
+                var p = (typeof pet.price === 'number') ? pet.price : 30000;
+                priceHtml = '<div class="pet-price">' + p.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</div>';
+            }
+
+            var btnHtml = '';
+            if (isActive) {
+                btnHtml = '<button class="pet-action-btn btn-active" disabled>Đang dùng</button>';
+            } else if (isOwned) {
+                btnHtml = '<button class="pet-action-btn btn-equip" data-id="' + pet.id + '">Sử dụng</button>';
+            } else {
+                btnHtml = '<button class="pet-action-btn btn-buy" data-id="' + pet.id + '">Mua</button>';
+            }
+
+            html += '<div class="' + cardCls + '">' +
+                '<div class="pet-avatar-wrap">' +
+                    '<img src="' + pet.img + '" alt="' + pet.name + '" class="pet-avatar-img">' +
+                '</div>' +
+                '<div class="pet-name">' + pet.name + '</div>' +
+                priceHtml +
+                btnHtml +
+            '</div>';
+        });
+
+        petsGridContainer.innerHTML = html;
+
+        // Gắn sự kiện mua & sử dụng
+        petsGridContainer.querySelectorAll('.btn-buy').forEach(function (btn) {
+            btn.onclick = function () {
+                var petId = btn.dataset.id;
+                var pet = petsList.find(function (p) { return p.id === petId; });
+                if (!pet) return;
+                var cost = (typeof pet.price === 'number') ? pet.price : 30000;
+                var currentCoins = (typeof playerCoins !== 'undefined') ? playerCoins : (SAVE.coins || 0);
+
+                if (currentCoins < cost) {
+                    if (typeof playSound === 'function') playSound('error');
+                    showToast('⚠️ Bạn không đủ Vàng! Cần ' + cost.toLocaleString('vi-VN') + ' Vàng để mua ' + pet.name + '.', '#d32f2f');
+                    return;
+                }
+
+                if (typeof playerCoins !== 'undefined') {
+                    playerCoins -= cost;
+                    SAVE.coins = playerCoins;
+                } else {
+                    SAVE.coins = Math.max(0, (SAVE.coins || 0) - cost);
+                }
+
+                if (!SAVE.ownedPets.includes(petId)) {
+                    SAVE.ownedPets.push(petId);
+                }
+                SAVE.activePet = petId;
+                saveGame();
+
+                if (typeof updateUIStats === 'function') updateUIStats();
+                if (typeof updateCompanionAvatar === 'function') updateCompanionAvatar();
+                if (typeof playSound === 'function') playSound('win');
+                showToast('🎉 Bạn đã mua thành công & chọn ' + pet.name + ' làm bạn đồng hành!', '#2e7d32');
+                renderPetsGrid();
+            };
+        });
+
+        petsGridContainer.querySelectorAll('.btn-equip').forEach(function (btn) {
+            btn.onclick = function () {
+                var petId = btn.dataset.id;
+                var pet = petsList.find(function (p) { return p.id === petId; });
+                if (!pet) return;
+                SAVE.activePet = petId;
+                saveGame();
+
+                if (typeof updateCompanionAvatar === 'function') updateCompanionAvatar();
+                if (typeof playSound === 'function') playSound('tap');
+                showToast('🐾 Đã chọn ' + pet.name + ' làm bạn đồng hành!', '#2e7d32');
+                renderPetsGrid();
+            };
+        });
+    }
+
+    renderPetsGrid();
 
     var infoBar = overlay.querySelector('#camp-info-bar');
     overlay.querySelectorAll('.camp-cell').forEach(function (el) {
@@ -272,6 +422,15 @@ var GEM_IAP_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.iapPacks)
         badge: '⭐ HỜI NHẤT +28%',
         isPopular: true,
         desc: 'Tặng thêm +25 💎 khuyến mãi'
+    },
+    {
+        id: 'gem_tier_4',
+        name: 'Kho Báu Kim Cương',
+        gems: 320,
+        bonusGems: 180,
+        priceVnd: '49.000 ₫',
+        badge: '👑 SIÊU GIÁ TRỊ +56%',
+        desc: 'Gói nạp tối thượng, nhận ngay 500 💎'
     }
 ];
 

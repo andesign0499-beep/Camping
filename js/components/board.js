@@ -603,6 +603,18 @@ var levelIntroShown = false;
 var tutMergeCount = 0;
 var tutDeliveredOnce = false;
 
+function updateCompanionAvatar() {
+    var activeId = (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) ? SAVE.activePet : 'character01';
+    var pet = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS.find(function (p) { return p.id === activeId; }) : null;
+    var imgPath = pet ? pet.img : ('assets/images/ui/' + activeId + '.png');
+    if (!npcAvatarImg) npcAvatarImg = document.getElementById('npc-avatar-img');
+    if (npcAvatarImg) {
+        npcAvatarImg.src = imgPath;
+        if (pet) npcAvatarImg.alt = pet.name;
+    }
+}
+window.updateCompanionAvatar = updateCompanionAvatar;
+
 function getNpcById(npcId) {
     return (typeof NPC_CHARACTERS !== 'undefined' && NPC_CHARACTERS[npcId])
         ? NPC_CHARACTERS[npcId]
@@ -838,6 +850,7 @@ function loadLevel(lvNum) {
     closeModal();
     clearHintVisuals();
     hideNpcBubble();
+    updateCompanionAvatar();
     currentLevel = lvNum;
     currentLevelCfg = getLevelConfig(lvNum);
     var topSceneEl = document.getElementById('top-scene');
@@ -1958,6 +1971,7 @@ function handleTidyBoard() {
 }
 
 function initGame() {
+    updateCompanionAvatar();
     refreshLevelSelect();
     if (btnRefillEnergy) btnRefillEnergy.onclick = openEnergyShop;
     var btnGemShop = document.getElementById('btn-gem-shop');

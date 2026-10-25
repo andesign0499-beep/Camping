@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // CẤU HÌNH THÔNG SỐ & CÂN BẰNG KINH TẾ TRÒ CHƠI (GAME BALANCE CONFIG)
 // Đã được tối ưu hóa theo chuẩn Casual Merge Quốc Tế (Sawtooth Pacing,
 // Instant First-Merge, Anti-Board Lock & Balanced Economy Loop).
@@ -107,6 +107,15 @@ var GAME_CONFIG = {
             badge: '⭐ HỜI NHẤT +42%',
             isPopular: true,
             desc: 'Gói nạp tối ưu chi phí & hời nhất'
+        },
+        {
+            id: 'gem_tier_4',
+            name: 'Kho Báu Kim Cương',
+            gems: 320,
+            bonusGems: 180,     // Tổng nhận 500 Kim Cương
+            priceVnd: '49.000 ₫',
+            badge: '👑 SIÊU GIÁ TRỊ +56%',
+            desc: 'Gói nạp tối thượng, nhận ngay 500 💎'
         }
     ],
 

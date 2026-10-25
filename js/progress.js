@@ -42,6 +42,8 @@ function defaultSave() {
         stars: {},
         discovered: {},
         claimedBook: {},
+        ownedPets: ['character01'],
+        activePet: 'character01',
         ads: { day: todayKey(), energy: 0, gem: 0, coin: 0 },
         settings: {
             sound: true,
@@ -63,6 +65,8 @@ function loadSave() {
             if (!s.discovered || typeof s.discovered !== 'object') s.discovered = {};
             if (!s.claimedBook || typeof s.claimedBook !== 'object') s.claimedBook = {};
             if (!s.ads || typeof s.ads !== 'object') s.ads = defaultSave().ads;
+            if (!Array.isArray(s.ownedPets) || !s.ownedPets.length) s.ownedPets = ['character01'];
+            if (!s.activePet) s.activePet = 'character01';
             s.settings = Object.assign(defaultSave().settings, parsed.settings || {});
             if (typeof s.gems !== 'number') s.gems = 8;
             if (typeof s.lastEnergyTs !== 'number') s.lastEnergyTs = Date.now();
@@ -92,6 +96,21 @@ function resetSave() {
     SAVE = defaultSave();
     saveGame();
 }
+
+// ---------- DANH SÁCH THÚ CƯNG ĐỒNG HÀNH (PETS) ----------
+var PET_PRICE = 30000;
+var PET_CHARACTERS = [
+    { id: 'character01', name: 'Golden', img: 'assets/images/ui/character01.png', price: 0 },
+    { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 30000 },
+    { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 30000 },
+    { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 30000 },
+    { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 30000 },
+    { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 30000 },
+    { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 30000 },
+    { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 30000 },
+    { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 30000 },
+    { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 30000 }
+];
 
 // ---------- HỒI NĂNG LƯỢNG THEO THỜI GIAN (IDLE REGEN) ----------
 // ENERGY_REGEN_SEC được khai báo ở đầu file (2 phút hồi +1 năng lượng)

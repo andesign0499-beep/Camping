@@ -1434,6 +1434,229 @@ body {
     animation: orderItemBounce 1.2s infinite ease-in-out;
 }
 
+/* === TAB NAVIGATION TRONG KHU CẮM TRẠI === */
+.camp-tab-nav {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}
+
+.camp-tab-btn {
+    flex: 1;
+    max-width: 140px;
+    padding: 6px 12px;
+    border: 2px solid #bcaaa4;
+    border-radius: 14px;
+    background: #dfcfb2;
+    color: #5d4037;
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+    transition: all 0.15s ease-out;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.camp-tab-btn:hover {
+    background: #e8dcc4;
+}
+
+.camp-tab-btn.active {
+    background: linear-gradient(180deg, #ffb74d, #f57c00);
+    border-color: #e65100;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 -3px 0 #b35600, 0 3px 6px rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+}
+
+.camp-tab-pane {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+/* === TAB THÚ CƯNG (DANH SÁCH 3 CON 1 HÀNG) === */
+.pets-scroll-wrap {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 4px 10px 4px;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pets-scroll-wrap::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.pets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.pet-card {
+    background: #fff8e7;
+    border: 2px solid #bcaaa4;
+    border-radius: 12px;
+    padding: 6px 4px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+    position: relative;
+    box-sizing: border-box;
+    height: 146px;
+    justify-content: space-between;
+    transition: transform 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+.pet-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.18);
+}
+
+.pet-card.is-active {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px #81c784, 0 4px 8px rgba(76, 175, 80, 0.25);
+    background: #f1f8e9;
+}
+
+.pet-avatar-wrap {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #efebe9;
+    border: 2px solid #d7ccc8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.pet-card.is-active .pet-avatar-wrap {
+    background: #e8f5e9;
+    border-color: #81c784;
+}
+
+.pet-avatar-img {
+    width: 88%;
+    height: 88%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.22));
+    pointer-events: none;
+}
+
+.pet-name {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 0.8125rem;
+    color: #4e342e;
+    height: 18px;
+    line-height: 18px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    flex-shrink: 0;
+}
+
+.pet-price {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #e65100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 18px;
+    line-height: 18px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.pet-price.owned {
+    color: #558b2f;
+    font-size: 0.6875rem;
+    font-weight: 700;
+}
+
+.pet-action-btn {
+    width: 100%;
+    max-width: 82px;
+    height: 28px;
+    padding: 0 2px;
+    border-radius: 8px;
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 28px;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s ease-out, filter 0.1s ease-out;
+}
+
+.pet-action-btn.btn-buy {
+    background: linear-gradient(180deg, #ffb74d, #f57c00);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 -2px 0 #b35600, 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.pet-action-btn.btn-buy:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 -1px 0 #b35600;
+}
+
+.pet-action-btn.btn-equip {
+    background: linear-gradient(180deg, #66bb6a, #388e3c);
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 -2px 0 #1b5e20, 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.pet-action-btn.btn-equip:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 -1px 0 #1b5e20;
+}
+
+.pet-action-btn.btn-active {
+    background: #cfd8dc;
+    color: #546e7a;
+    border: 1px solid #b0bec5;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.92;
+}
+
 /* === HIỆU ỨNG GỢI Ý NƯỚC ĐI (HINT PULSE) === */
 .cell.hint-pulse {
     animation: hintGlow 1.1s infinite ease-in-out;
