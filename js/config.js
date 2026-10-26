@@ -7,6 +7,21 @@
 
 var GAME_CONFIG = {
     // -------------------------------------------------------------------------
+    // 0. CẤU HÌNH GOOGLE FIREBASE CLOUD SYNC (LƯU TRỮ ĐÁM MÂY MIỄN PHÍ)
+    // Lấy thông tin này tại: https://console.firebase.google.com/
+    // (Vào Cài đặt dự án -> Tạo ứng dụng Web -> Dán mã firebaseConfig vào đây)
+    // -------------------------------------------------------------------------
+    firebase: {
+        apiKey: "AIzaSyDUdvkcYYSzuOt4snJHLPhQWbVM-I_emLI",
+        authDomain: "merge-camp-pets.firebaseapp.com",
+        projectId: "merge-camp-pets",
+        storageBucket: "merge-camp-pets.firebasestorage.app",
+        messagingSenderId: "793303900011",
+        appId: "1:793303900011:web:8cad0bb37b64514775b62e",
+        measurementId: "G-GVZ3LWVREF"
+    },
+
+    // -------------------------------------------------------------------------
     // 1. HỆ THỐNG NĂNG LƯỢNG (ENERGY SYSTEM)
     // -------------------------------------------------------------------------
     energy: {

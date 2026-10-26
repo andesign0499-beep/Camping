@@ -28,11 +28,23 @@ function todayKey() {
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
 }
 
+function generatePlayerId() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var code = '';
+    for (var i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return 'CAMP-' + code;
+}
+
 function defaultSave() {
     var initCoins = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.initialProfile) ? GAME_CONFIG.initialProfile.coins : 1000;
     var initGems = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.initialProfile) ? GAME_CONFIG.initialProfile.gems : 8;
     var initEnergy = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.startEnergy : START_ENERGY;
     return {
+        playerId: generatePlayerId(),
+        googleUser: null,
+        currentBoardState: null,
         level: 1,
         maxLevel: 1,
         coins: initCoins,
@@ -44,6 +56,10 @@ function defaultSave() {
         claimedBook: {},
         ownedPets: ['character01'],
         activePet: 'character01',
+        ownedLocations: ['loc_dongdo'],
+        activeLocation: 'loc_dongdo',
+        campItems: [],
+        campItemsMigrated: false,
         ads: { day: todayKey(), energy: 0, gem: 0, coin: 0 },
         settings: {
             sound: true,
@@ -61,12 +77,43 @@ function loadSave() {
         if (raw) {
             var parsed = JSON.parse(raw);
             var s = Object.assign(defaultSave(), parsed);
+            if (!s.playerId) s.playerId = generatePlayerId();
+            if (!s.googleUser || typeof s.googleUser !== 'object') s.googleUser = null;
+            if (s.currentBoardState && typeof s.currentBoardState !== 'object') s.currentBoardState = null;
             if (!s.stars || typeof s.stars !== 'object') s.stars = {};
             if (!s.discovered || typeof s.discovered !== 'object') s.discovered = {};
             if (!s.claimedBook || typeof s.claimedBook !== 'object') s.claimedBook = {};
             if (!s.ads || typeof s.ads !== 'object') s.ads = defaultSave().ads;
             if (!Array.isArray(s.ownedPets) || !s.ownedPets.length) s.ownedPets = ['character01'];
             if (!s.activePet) s.activePet = 'character01';
+            if (!Array.isArray(s.ownedLocations) || !s.ownedLocations.length) s.ownedLocations = ['loc_dongdo'];
+            if (!s.activeLocation) s.activeLocation = 'loc_dongdo';
+            if (!Array.isArray(s.campItems)) s.campItems = [];
+            if (!s.campItemsMigrated) {
+                s.campItemsMigrated = true;
+                if (typeof RAW_LEVELS !== 'undefined' && Array.isArray(RAW_LEVELS)) {
+                    Object.keys(s.stars).forEach(function (lvStr) {
+                        var lvNum = parseInt(lvStr);
+                        if (s.stars[lvStr] > 0) {
+                            var row = RAW_LEVELS.find(function(r) { return r[0] === lvNum; });
+                            if (row && Array.isArray(row[6])) {
+                                row[6].forEach(function(oId) {
+                                    var parts = String(oId).split('_lv');
+                                    var itemLv = parts.length === 2 ? parseInt(parts[1]) || 1 : 1;
+                                    s.campItems.push({
+                                        uid: 'camp_init_' + lvNum + '_' + Math.random().toString(36).substr(2, 7),
+                                        id: oId,
+                                        level: itemLv,
+                                        name: getItemCleanName(oId),
+                                        fromLevel: lvNum,
+                                        addedAt: Date.now()
+                                    });
+                                });
+                            }
+                        }
+                    });
+                }
+            }
             s.settings = Object.assign(defaultSave().settings, parsed.settings || {});
             if (typeof s.gems !== 'number') s.gems = 8;
             if (typeof s.lastEnergyTs !== 'number') s.lastEnergyTs = Date.now();
@@ -90,11 +137,104 @@ var SAVE = loadSave();
 
 function saveGame() {
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) { console.log(e); }
+    if (typeof FIREBASE_SYNC !== 'undefined' && FIREBASE_SYNC.isConfigured() && FIREBASE_SYNC.getCurrentUser()) {
+        FIREBASE_SYNC.debouncedSave(1500);
+    }
 }
 
 function resetSave() {
+    var oldPlayerId = SAVE ? SAVE.playerId : null;
     SAVE = defaultSave();
+    if (oldPlayerId) SAVE.playerId = oldPlayerId; // Giữ nguyên ID người chơi khi reset dữ liệu
     saveGame();
+}
+
+// ---------- ĐỒNG BỘ ĐÁM MÂY & TÀI KHOẢN GOOGLE (CLOUD SYNC) ----------
+var CLOUD_STORAGE_KEY_PREFIX = 'mergeCamping_cloud_';
+
+function syncSaveToCloud(customUser, callback) {
+    var user = customUser || (SAVE && SAVE.googleUser);
+    if (!user || !user.email) return false;
+    try {
+        var cloudKey = CLOUD_STORAGE_KEY_PREFIX + encodeURIComponent(user.email.toLowerCase().trim());
+        var payload = {
+            version: 1,
+            savedAt: Date.now(),
+            playerId: SAVE.playerId,
+            googleUser: user,
+            saveData: JSON.parse(JSON.stringify(SAVE))
+        };
+        localStorage.setItem(cloudKey, JSON.stringify(payload));
+        if (SAVE.googleUser) {
+            SAVE.googleUser.lastSynced = Date.now();
+            try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {}
+        }
+        // Đồng thời đẩy lên Firebase Firestore nếu đã cấu hình
+        if (typeof FIREBASE_SYNC !== 'undefined' && FIREBASE_SYNC.isConfigured() && FIREBASE_SYNC.getCurrentUser()) {
+            FIREBASE_SYNC.save(SAVE, user, callback);
+        } else if (callback) {
+            callback(true);
+        }
+        return true;
+    } catch (e) {
+        console.error('Cloud save failed:', e);
+        if (callback) callback(false, e);
+        return false;
+    }
+}
+
+function restoreSaveFromCloud(email) {
+    if (!email) return null;
+    try {
+        var cloudKey = CLOUD_STORAGE_KEY_PREFIX + encodeURIComponent(email.toLowerCase().trim());
+        var raw = localStorage.getItem(cloudKey);
+        if (!raw) return null;
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.saveData) {
+            return parsed.saveData;
+        }
+    } catch (e) {
+        console.error('Cloud restore failed:', e);
+    }
+    return null;
+}
+
+// Tạo mã sao lưu di động (Export Save Code để copy sang máy khác)
+function exportSyncCode() {
+    try {
+        var cleanSave = JSON.parse(JSON.stringify(SAVE));
+        var str = JSON.stringify(cleanSave);
+        if (typeof btoa !== 'undefined') {
+            return btoa(unescape(encodeURIComponent(str)));
+        } else if (typeof Buffer !== 'undefined') {
+            return Buffer.from(str, 'utf8').toString('base64');
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// Nhập mã sao lưu từ máy khác (Import Save Code)
+function importSyncCode(codeStr) {
+    if (!codeStr || typeof codeStr !== 'string') return false;
+    try {
+        var decoded = '';
+        if (typeof atob !== 'undefined') {
+            decoded = decodeURIComponent(escape(atob(codeStr.trim())));
+        } else if (typeof Buffer !== 'undefined') {
+            decoded = Buffer.from(codeStr.trim(), 'base64').toString('utf8');
+        }
+        var parsed = JSON.parse(decoded);
+        if (parsed && typeof parsed.coins === 'number' && typeof parsed.level === 'number') {
+            SAVE = Object.assign(defaultSave(), parsed);
+            saveGame();
+            return true;
+        }
+    } catch (e) {
+        console.error('Import failed:', e);
+    }
+    return false;
 }
 
 // ---------- DANH SÁCH THÚ CƯNG ĐỒNG HÀNH (PETS) ----------
@@ -438,6 +578,53 @@ function getItemDisplayName(id) {
     return (chain.names[lv - 1] || id) + ' (Lv.' + lv + ')';
 }
 
+function getItemCleanName(id) {
+    if (!id) return '';
+    if (id === 'generator_backpack') return 'Ba Lô Dã Ngoại';
+    if (id === 'generator_cooler') return 'Xe Kéo Dã Ngoại';
+    if (id === 'generator_crate') return 'Thùng Dụng Cụ';
+    var parts = String(id).split('_lv');
+    var line = parts[0], lv = parseInt(parts[1]) || 1;
+    var chain = (typeof ITEM_CHAINS !== 'undefined') ? ITEM_CHAINS.find(function (c) { return c.line === line; }) : null;
+    if (chain && chain.names && chain.names[lv - 1]) return chain.names[lv - 1];
+    return id;
+}
+
+function getItemImagePath(id) {
+    if (!id) return '';
+    return id === 'ban_lv8' ? 'assets/images/items/ban_level8.png' : ('assets/images/items/' + id + '.png');
+}
+
+function addCampItem(itemId, fromLevel) {
+    if (!itemId) return null;
+    if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) SAVE.campItems = [];
+    var parts = String(itemId).split('_lv');
+    var lv = parts.length === 2 ? parseInt(parts[1]) || 1 : 1;
+    var name = getItemCleanName(itemId);
+    var itemObj = {
+        uid: 'camp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7),
+        id: itemId,
+        level: lv,
+        name: name,
+        fromLevel: fromLevel || 1,
+        addedAt: Date.now()
+    };
+    SAVE.campItems.push(itemObj);
+    saveGame();
+    return itemObj;
+}
+
+function removeCampItem(uid) {
+    if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) return false;
+    var idx = SAVE.campItems.findIndex(function(it) { return it.uid === uid; });
+    if (idx !== -1) {
+        SAVE.campItems.splice(idx, 1);
+        saveGame();
+        return true;
+    }
+    return false;
+}
+
 function getChainGenerator(line) {
     if (line === 'ban' || line === 'ghe' || line === 'trai') {
         return {
@@ -561,5 +748,8 @@ function isCampDecorUnlocked(d) {
 }
 
 function countUnlockedDecors() {
+    if (SAVE && Array.isArray(SAVE.campItems) && SAVE.campItems.length > 0) {
+        return SAVE.campItems.length;
+    }
     return CAMP_DECORS.filter(function (d) { return isCampDecorUnlocked(d); }).length;
 }

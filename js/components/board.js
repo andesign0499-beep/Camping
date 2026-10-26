@@ -844,9 +844,32 @@ function showIdleHint(isManualClick) {
 }
 
 // ==========================================
-// TẢI LEVEL & VẼ BÀN CỜ
+// TẢI LEVEL & VẼ BÀN CỜ (CÓ LƯU & KHÔI PHỤC TRẠNG THÁI ĐANG CHƠI)
 // ==========================================
-function loadLevel(lvNum) {
+function persistCurrentBoardState() {
+    if (levelWon) {
+        SAVE.currentBoardState = null;
+    } else if (boardData && boardData.length) {
+        SAVE.currentBoardState = {
+            level: currentLevel,
+            boardData: boardData.map(function (c) {
+                return c ? { id: c.id, isRock: !!c.isRock, isLocked: !!c.isLocked } : makeEmptyCell();
+            }),
+            currentOrders: (currentOrders || []).map(function (o) {
+                return { id: o.id, done: !!o.done };
+            }),
+            levelClicks: levelClicks,
+            levelBudget: levelBudget,
+            isReplayLevel: isReplayLevel,
+            savedAt: Date.now()
+        };
+        SAVE.level = currentLevel;
+    }
+    saveGame();
+}
+
+function loadLevel(lvNum, options) {
+    options = options || {};
     closeModal();
     clearHintVisuals();
     hideNpcBubble();
@@ -873,15 +896,36 @@ function loadLevel(lvNum) {
     selectedIndex = null;
     updateSellButton(null);
 
-    boardData = buildBoard(currentLevelCfg);
-    var orderIds = tuneOrders(currentLevelCfg.rawOrders, lvNum, currentLevelCfg);
-    currentOrders = orderIds.map(id => ({ id: id, done: false }));
+    // Phục hồi nguyên trạng bàn cờ và đơn hàng người chơi đang chơi dở từ localStorage
+    var hasSavedState = !options.forceReset &&
+        SAVE.currentBoardState &&
+        SAVE.currentBoardState.level === lvNum &&
+        Array.isArray(SAVE.currentBoardState.boardData) &&
+        SAVE.currentBoardState.boardData.length === TOTAL_CELLS &&
+        Array.isArray(SAVE.currentBoardState.currentOrders);
 
-    // Tự động đổ kín 100% các ô trên bàn chơi ngay từ đầu, không trừ năng lượng của người chơi
-    populateInitialBoardItems();
+    if (hasSavedState) {
+        boardData = SAVE.currentBoardState.boardData.map(function (c) {
+            return c ? { id: c.id, isRock: !!c.isRock, isLocked: !!c.isLocked } : makeEmptyCell();
+        });
+        currentOrders = SAVE.currentBoardState.currentOrders.map(function (o) {
+            return { id: o.id, done: !!o.done };
+        });
+        levelClicks = SAVE.currentBoardState.levelClicks || 0;
+        levelBudget = SAVE.currentBoardState.levelBudget || computeEnergyBudget(boardData, currentOrders.map(o => o.id), currentLevelCfg);
+        isReplayLevel = SAVE.currentBoardState.isReplayLevel !== undefined ? SAVE.currentBoardState.isReplayLevel : !!SAVE.stars[lvNum];
+    } else {
+        boardData = buildBoard(currentLevelCfg);
+        var orderIds = tuneOrders(currentLevelCfg.rawOrders, lvNum, currentLevelCfg);
+        currentOrders = orderIds.map(id => ({ id: id, done: false }));
 
-    levelBudget = computeEnergyBudget(boardData, orderIds, currentLevelCfg);
-    isReplayLevel = !!SAVE.stars[lvNum];
+        // Tự động đổ kín 100% các ô trên bàn chơi ngay từ đầu khi tạo màn mới
+        populateInitialBoardItems();
+
+        levelBudget = computeEnergyBudget(boardData, orderIds, currentLevelCfg);
+        isReplayLevel = !!SAVE.stars[lvNum];
+        persistCurrentBoardState();
+    }
 
     if (isAutoEnabled) {
         fillBoardInstantly();
@@ -1081,6 +1125,7 @@ function renderBoard() {
     updateUIStats();
     tickEnergyRegen();
     scheduleHint();
+    persistCurrentBoardState();
 }
 
 // Hàm giao đơn hàng kèm hiệu ứng vật phẩm bay từ bàn cờ lên ô nhiệm vụ và bắn tiền thưởng ra
@@ -1137,6 +1182,11 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
             triggerParticleBurst(targetCardEl, ['#2ecc71', '#a8e6cf', '#ffd54f', '#ffffff']);
             showFloatingBadge(targetCardEl, '✨ HOÀN THÀNH!', '#2e7d32');
 
+            // Bê vật phẩm nhiệm vụ đã hoàn thành vào Khu cắm trại
+            if (typeof addCampItem === 'function') {
+                addCampItem(itemId, currentLevel);
+            }
+
             if (isAutoEnabled) fillBoardInstantly();
             hideNpcBubble();
             renderBoard();
@@ -1149,6 +1199,12 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
         updateUIStats();
         selectedIndex = null;
         updateSellButton(null);
+
+        // Bê vật phẩm nhiệm vụ đã hoàn thành vào Khu cắm trại
+        if (typeof addCampItem === 'function') {
+            addCampItem(itemId, currentLevel);
+        }
+
         if (isAutoEnabled) fillBoardInstantly();
         hideNpcBubble();
         renderBoard();
@@ -1832,11 +1888,16 @@ function finishLevel() {
     }
     SAVE.stars[currentLevel] = Math.max(SAVE.stars[currentLevel] || 0, stars);
     if (currentLevel + 1 > SAVE.maxLevel && currentLevel < RAW_LEVELS.length) SAVE.maxLevel = currentLevel + 1;
+    SAVE.currentBoardState = null; // Màn chơi đã hoàn thành, dọn trạng thái dở dang
+    saveGame();
     updateUIStats();
     refreshLevelSelect();
     playSound('win');
 
     var hasNext = currentLevel < RAW_LEVELS.length;
+    var completedList = (currentOrders && currentOrders.length)
+        ? currentOrders.map(function (o) { return o.id; })
+        : (currentLevelCfg && currentLevelCfg.orders ? currentLevelCfg.orders : []);
     showWinModal({
         level: currentLevel,
         name: currentLevelCfg ? currentLevelCfg.name : '',
@@ -1846,9 +1907,10 @@ function finishLevel() {
         sweepCount: sweepCount,
         gems: gems,
         firstTime: firstTime,
+        completedOrders: completedList,
         decor: getCampDecor(currentLevel),
         hasNext: hasNext
-    }, () => loadLevel(currentLevel), () => loadLevel(currentLevel + 1));
+    }, () => loadLevel(currentLevel, { forceReset: true }), () => loadLevel(currentLevel + 1));
 }
 
 function toggleAutoDebug() {
@@ -1991,13 +2053,7 @@ function initGame() {
 
     var btnBook = document.getElementById('btn-book');
     if (btnBook) {
-        btnBook.onclick = () => openDiscoveryBook(function (addCoins, addGems) {
-            playerCoins += addCoins;
-            playerGems += addGems;
-            playSound('bonus');
-            updateUIStats();
-            updateBookBadge();
-        });
+        btnBook.onclick = () => openDiscoveryBook();
     }
 
     var btnMap = document.getElementById('btn-world-map');
@@ -2015,14 +2071,23 @@ function initGame() {
             isAuto: isAutoEnabled,
             onToggleAuto: toggleAutoDebug,
             onUnlockChanged: refreshLevelSelect,
-            onRestartLevel: () => loadLevel(currentLevel),
+            onRestartLevel: () => loadLevel(currentLevel, { forceReset: true }),
+            onCloudRestore: () => {
+                playerCoins = SAVE.coins;
+                playerGems = SAVE.gems;
+                playerEnergy = SAVE.energy;
+                refreshLevelSelect();
+                updateCompanionAvatar();
+                updateUIStats();
+                loadLevel(SAVE.level || 1, { restoreState: true });
+            },
             onResetAll: () => {
                 resetSave();
                 playerCoins = SAVE.coins;
                 playerGems = SAVE.gems;
                 playerEnergy = SAVE.energy;
                 refreshLevelSelect();
-                loadLevel(1);
+                loadLevel(1, { forceReset: true });
                 showToast('🔄 Đã đặt lại toàn bộ dữ liệu về ban đầu!', '#2e7d32');
             }
         });
@@ -2057,7 +2122,7 @@ function initGame() {
     }
 
     var startLv = Math.min(Math.max(SAVE.level || 1, 1), RAW_LEVELS.length);
-    loadLevel(startLv);
+    loadLevel(startLv, { restoreState: true });
 
     // Bắt tương tác đầu tiên của người chơi để kích hoạt BGM nhẹ nhàng (tuân thủ autoplay policy)
     function onFirstUserGesture() {
@@ -2068,6 +2133,13 @@ function initGame() {
     }
     document.addEventListener('pointerdown', onFirstUserGesture);
     document.addEventListener('keydown', onFirstUserGesture);
+
+    // Tự động lưu nguyên trạng bàn cờ đang chơi khi thoát hoặc đổi tab
+    window.addEventListener('beforeunload', persistCurrentBoardState);
+    window.addEventListener('pagehide', persistCurrentBoardState);
+
+    window.loadLevel = loadLevel;
+    window.persistCurrentBoardState = persistCurrentBoardState;
     window.executeMoveAndEffects = executeMoveAndEffects;
 }
 

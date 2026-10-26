@@ -75,11 +75,21 @@ function showWinModal(info, onReplay, onNext) {
             'style="animation-delay:' + (i * 0.16) + 's" alt="">';
     }
     var decorHtml = '';
-    if (info.decor && info.firstTime) {
-        var imgPath = info.decor[1] === 'ban_lv8' ? 'assets/images/items/ban_level8.png' : ('assets/images/items/' + info.decor[1] + '.png');
-        decorHtml = '<div class="win-decor">' +
-            '🎉 Mở khóa vật phẩm mới:' +
-            '<div class="win-decor-item"><img src="' + imgPath + '" style="width:28px;height:28px;object-fit:contain;vertical-align:middle;margin-right:6px"> ' + info.decor[2] + '</div></div>';
+    var completedList = (info.completedOrders && info.completedOrders.length)
+        ? info.completedOrders
+        : (info.decor ? [info.decor[1]] : []);
+    if (completedList.length > 0) {
+        var itemsHtml = completedList.map(function (oId) {
+            var imgPath = getItemImagePath(oId);
+            var itemName = (typeof getItemCleanName === 'function') ? getItemCleanName(oId) : getItemDisplayName(oId);
+            return '<div class="win-decor-item" style="display:inline-flex;align-items:center;margin:3px 4px;padding:3px 8px;background:rgba(255,255,255,0.7);border-radius:8px;border:1px solid #d7ccc8;">' +
+                '<img src="' + imgPath + '" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px" alt=""> ' + itemName +
+            '</div>';
+        }).join('');
+        decorHtml = '<div class="win-decor" style="margin-top:6px;">' +
+            '🏕️ Đã chuyển vào Khu Trại:' +
+            '<div style="margin-top:4px;display:flex;flex-wrap:wrap;justify-content:center;">' + itemsHtml + '</div>' +
+        '</div>';
     }
     var gemText = info.gems > 0 ? ' &nbsp;+' + info.gems + ' ' + ICON_RUBY_HTML : '';
 
@@ -170,31 +180,9 @@ function showWinModal(info, onReplay, onNext) {
     });
 }
 
-// ---------- 3. KHU CẮM TRẠI (BẢN ĐỒ LƯỚI BÀN CHƠI 45 Ô & BỘ SƯU TẬP THÚ CƯNG) ----------
+// ---------- 3. KHU CẮM TRẠI (KHO VẬT PHẨM NHIỆM VỤ, THÚ CƯNG & ĐIỂM ĐẾN) ----------
 function openCamp(highlightLevel, onBack, initialTab) {
-    var unlockedCount = countUnlockedDecors();
-    var cellsHtml = '';
-
-    CAMP_DECORS.forEach(function (d, idx) {
-        var lv = d[0];
-        var id = d[1];
-        var name = d[2];
-        var unlocked = isCampDecorUnlocked(d);
-        var r = Math.floor(idx / 5);
-        var c = idx % 5;
-        var bgCls = (r + c) % 2 === 0 ? 'bg-light' : 'bg-dark';
-        var imgPath = id === 'ban_lv8' ? 'assets/images/items/ban_level8.png' : ('assets/images/items/' + id + '.png');
-        var itemContent = '<img src="' + imgPath + '" class="item-img" alt="' + name + '">';
-
-        var isHighlighted = (lv === highlightLevel && unlocked);
-        var extraCls = isHighlighted ? ' highlighted' : '';
-
-        cellsHtml += '<div class="camp-cell ' + bgCls + (unlocked ? ' unlocked' : ' locked') + extraCls + '" ' +
-            'data-lv="' + lv + '" data-id="' + id + '" data-name="' + name + '">' +
-            itemContent +
-            '<span class="camp-cell-num">' + lv + '</span>' +
-        '</div>';
-    });
+    if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) SAVE.campItems = [];
 
     var petsList = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS : [
         { id: 'character01', name: 'Golden', img: 'assets/images/ui/character01.png', price: 0 },
@@ -209,21 +197,20 @@ function openCamp(highlightLevel, onBack, initialTab) {
         { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 30000 }
     ];
 
-    var defaultTab = (initialTab === 'pets') ? 'pets' : 'decor';
+    var defaultTab = (initialTab === 'pets' || initialTab === 'locations') ? initialTab : 'decor';
 
     var overlay = createModal(
         '<div class="camp-tab-nav">' +
             '<button class="camp-tab-btn' + (defaultTab === 'decor' ? ' active' : '') + '" id="tab-btn-decor">📦 Vật Phẩm</button>' +
             '<button class="camp-tab-btn' + (defaultTab === 'pets' ? ' active' : '') + '" id="tab-btn-pets">🐾 Thú Cưng</button>' +
+            '<button class="camp-tab-btn' + (defaultTab === 'locations' ? ' active' : '') + '" id="tab-btn-locations">🌄 Điểm Đến</button>' +
         '</div>' +
         '<div id="camp-pane-decor" class="camp-tab-pane" style="' + (defaultTab === 'decor' ? '' : 'display:none;') + '">' +
-            '<div class="modal-sub">Đã mở khóa: <b>' + unlockedCount + '/' + CAMP_DECORS.length + '</b> vật phẩm</div>' +
-            '<div class="camp-board-wrap">' +
-                '<div class="camp-grid">' +
-                    cellsHtml +
-                '</div>' +
+            '<div class="modal-sub" id="camp-items-sub">Đã thu thập: <b>' + SAVE.campItems.length + '</b> vật phẩm từ nhiệm vụ</div>' +
+            '<div class="camp-items-wrap">' +
+                '<div class="camp-items-grid" id="camp-items-grid"></div>' +
             '</div>' +
-            '<div id="camp-info-bar" class="camp-info-bar">Chạm vào một ô trên bàn cờ để xem chi tiết vật phẩm</div>' +
+            '<div id="camp-info-bar" class="camp-info-bar">Chạm vào một vật phẩm để xem chi tiết hoặc bán lấy Vàng</div>' +
         '</div>' +
         '<div id="camp-pane-pets" class="camp-tab-pane" style="' + (defaultTab === 'pets' ? '' : 'display:none;') + '">' +
             '<div class="modal-sub" id="pets-unlocked-sub">Bộ sưu tập thú cưng đồng hành</div>' +
@@ -231,35 +218,178 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 '<div class="pets-grid" id="pets-grid-container"></div>' +
             '</div>' +
         '</div>' +
-        '<div class="modal-buttons"><button class="modal-btn primary" id="mb-close">Đóng</button></div>',
+        '<div id="camp-pane-locations" class="camp-tab-pane" style="' + (defaultTab === 'locations' ? '' : 'display:none;') + '">' +
+            '<div class="modal-sub" id="loc-unlocked-sub">Bộ sưu tập bối cảnh điểm đến</div>' +
+            '<div class="locations-scroll-wrap">' +
+                '<div class="locations-list" id="locations-list-container"></div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="modal-buttons" id="camp-modal-buttons">' +
+            '<button class="modal-btn disabled-btn" id="mb-sell-camp-item" disabled style="' + (defaultTab === 'decor' ? '' : 'display:none;') + '">💰 Bán</button>' +
+            '<button class="modal-btn primary" id="mb-close">Đóng</button>' +
+        '</div>',
         'camp-box',
         'KHU CẮM TRẠI'
     );
 
     var tabBtnDecor = overlay.querySelector('#tab-btn-decor');
     var tabBtnPets = overlay.querySelector('#tab-btn-pets');
+    var tabBtnLocations = overlay.querySelector('#tab-btn-locations');
     var paneDecor = overlay.querySelector('#camp-pane-decor');
     var panePets = overlay.querySelector('#camp-pane-pets');
+    var paneLocations = overlay.querySelector('#camp-pane-locations');
     var petsGridContainer = overlay.querySelector('#pets-grid-container');
     var petsSub = overlay.querySelector('#pets-unlocked-sub');
+    var locationsListContainer = overlay.querySelector('#locations-list-container');
+    var locSub = overlay.querySelector('#loc-unlocked-sub');
+    var mbSellBtn = overlay.querySelector('#mb-sell-camp-item');
+    var infoBar = overlay.querySelector('#camp-info-bar');
+    var itemsGrid = overlay.querySelector('#camp-items-grid');
+    var itemsSub = overlay.querySelector('#camp-items-sub');
+
+    var selectedCampItemUid = null;
+
+    function renderCampItems() {
+        if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) SAVE.campItems = [];
+
+        if (itemsSub) {
+            itemsSub.innerHTML = 'Đã thu thập: <b>' + SAVE.campItems.length + '</b> vật phẩm từ nhiệm vụ';
+        }
+
+        var selectedItem = selectedCampItemUid ? SAVE.campItems.find(function (it) { return it.uid === selectedCampItemUid; }) : null;
+        if (!selectedItem) {
+            selectedCampItemUid = null;
+        }
+
+        if (selectedItem) {
+            var price = sellPrice(selectedItem.id) || 10;
+            if (mbSellBtn) {
+                mbSellBtn.disabled = false;
+                mbSellBtn.className = 'modal-btn danger-btn';
+                mbSellBtn.innerHTML = '💰 Bán (+' + price.toLocaleString('vi-VN') + ' Vàng)';
+            }
+            if (infoBar) {
+                var fromInfo = selectedItem.fromLevel ? (' • Hoàn thành từ <b>Màn ' + selectedItem.fromLevel + '</b>') : '';
+                infoBar.innerHTML = '✨ <b>' + selectedItem.name + '</b> (Lv.' + selectedItem.level + ')' + fromInfo + '<br>Giá bán: <b style="color:#e65100">+' + price.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</b>';
+            }
+        } else {
+            if (mbSellBtn) {
+                mbSellBtn.disabled = true;
+                mbSellBtn.className = 'modal-btn disabled-btn';
+                mbSellBtn.innerHTML = '💰 Bán';
+            }
+            if (infoBar) {
+                infoBar.innerHTML = SAVE.campItems.length > 0
+                    ? '💡 Chạm vào một vật phẩm để xem chi tiết hoặc bán lấy Vàng'
+                    : '🏕️ Chưa có vật phẩm nào trong khu trại.';
+            }
+        }
+
+        if (!itemsGrid) return;
+
+        if (SAVE.campItems.length === 0) {
+            itemsGrid.innerHTML = '<div class="camp-empty-state">' +
+                '<div class="camp-empty-icon">🏕️</div>' +
+                '<div class="camp-empty-title">Khu Trại Chưa Có Vật Phẩm</div>' +
+                '<div class="camp-empty-desc">Khi bạn vượt qua các màn chơi và hoàn thành đơn hàng nhiệm vụ, các món đồ đó sẽ được chuyển vào đây để lưu trữ hoặc bán lấy Vàng!</div>' +
+            '</div>';
+            return;
+        }
+
+        var html = '';
+        SAVE.campItems.forEach(function (item, idx) {
+            var isSelected = (item.uid === selectedCampItemUid);
+            var imgPath = getItemImagePath(item.id);
+            var bgCls = (idx % 2 === 0) ? 'bg-light' : 'bg-dark';
+            var fromText = item.fromLevel ? ('Màn ' + item.fromLevel) : '';
+
+            html += '<div class="camp-item-slot ' + bgCls + (isSelected ? ' is-selected' : '') + '" data-uid="' + item.uid + '">' +
+                (fromText ? '<span class="camp-item-origin-tag">' + fromText + '</span>' : '') +
+                '<span class="camp-item-lv-tag">Lv.' + item.level + '</span>' +
+                '<img src="' + imgPath + '" class="camp-item-slot-img" alt="' + item.name + '">' +
+                (isSelected ? '<span class="camp-item-selected-tick">✓</span>' : '') +
+            '</div>';
+        });
+
+        itemsGrid.innerHTML = html;
+
+        itemsGrid.querySelectorAll('.camp-item-slot').forEach(function (slotEl) {
+            slotEl.onclick = function () {
+                var uid = slotEl.dataset.uid;
+                if (selectedCampItemUid === uid) {
+                    var img = slotEl.querySelector('img');
+                    if (img) {
+                        img.animate([
+                            { transform: 'scale(0.85)' },
+                            { transform: 'scale(1.18)' },
+                            { transform: 'scale(1)' }
+                        ], { duration: 240, easing: 'ease-out' });
+                    }
+                } else {
+                    selectedCampItemUid = uid;
+                    if (typeof playSound === 'function') playSound('tap');
+                    renderCampItems();
+                }
+            };
+        });
+    }
+
+    if (mbSellBtn) {
+        mbSellBtn.onclick = function () {
+            if (!selectedCampItemUid) return;
+            var item = SAVE.campItems.find(function (it) { return it.uid === selectedCampItemUid; });
+            if (!item) return;
+
+            var price = sellPrice(item.id) || 10;
+            if (typeof playerCoins !== 'undefined') {
+                playerCoins += price;
+                SAVE.coins = playerCoins;
+            } else {
+                SAVE.coins = (SAVE.coins || 0) + price;
+            }
+
+            removeCampItem(item.uid);
+
+            if (typeof playSound === 'function') playSound('coin');
+            showToast('💰 Đã bán ' + item.name + ' (Lv.' + item.level + ') nhận +' + price.toLocaleString('vi-VN') + ' Vàng!', '#2e7d32');
+
+            var coinEl = document.getElementById('btn-coin-shop') || document.body;
+            if (typeof spawnFlyingCurrency === 'function') {
+                spawnFlyingCurrency(coinEl, 'gold', Math.min(price, 80));
+            }
+
+            if (typeof updateUIStats === 'function') updateUIStats();
+
+            selectedCampItemUid = null;
+            renderCampItems();
+        };
+    }
 
     function switchTab(tab) {
+        tabBtnDecor.classList.toggle('active', tab === 'decor');
+        tabBtnPets.classList.toggle('active', tab === 'pets');
+        tabBtnLocations.classList.toggle('active', tab === 'locations');
+
+        paneDecor.style.display = (tab === 'decor') ? '' : 'none';
+        panePets.style.display = (tab === 'pets') ? '' : 'none';
+        paneLocations.style.display = (tab === 'locations') ? '' : 'none';
+
+        if (mbSellBtn) {
+            mbSellBtn.style.display = (tab === 'decor') ? '' : 'none';
+        }
+
         if (tab === 'decor') {
-            tabBtnDecor.classList.add('active');
-            tabBtnPets.classList.remove('active');
-            paneDecor.style.display = '';
-            panePets.style.display = 'none';
-        } else {
-            tabBtnPets.classList.add('active');
-            tabBtnDecor.classList.remove('active');
-            panePets.style.display = '';
-            paneDecor.style.display = 'none';
+            renderCampItems();
+        } else if (tab === 'pets') {
             renderPetsGrid();
+        } else if (tab === 'locations') {
+            renderLocationsList();
         }
     }
 
     tabBtnDecor.onclick = function () { switchTab('decor'); };
     tabBtnPets.onclick = function () { switchTab('pets'); };
+    tabBtnLocations.onclick = function () { switchTab('locations'); };
 
     function renderPetsGrid() {
         if (!SAVE.ownedPets || !Array.isArray(SAVE.ownedPets)) SAVE.ownedPets = ['character01'];
@@ -357,32 +487,120 @@ function openCamp(highlightLevel, onBack, initialTab) {
         });
     }
 
-    renderPetsGrid();
+    function renderLocationsList() {
+        if (!SAVE.ownedLocations || !Array.isArray(SAVE.ownedLocations)) SAVE.ownedLocations = ['loc_dongdo'];
+        if (!SAVE.activeLocation) SAVE.activeLocation = 'loc_dongdo';
 
-    var infoBar = overlay.querySelector('#camp-info-bar');
-    overlay.querySelectorAll('.camp-cell').forEach(function (el) {
-        el.onclick = function () {
-            var lv = parseInt(el.dataset.lv);
-            var id = el.dataset.id;
-            var name = el.dataset.name;
-            var d = getCampDecor(lv);
-            var unlocked = isCampDecorUnlocked(d);
-            if (unlocked) {
-                var img = el.querySelector('.item-img');
-                if (img) {
-                    img.animate([
-                        { transform: 'scale(0.7)' },
-                        { transform: 'scale(1.2)' },
-                        { transform: 'scale(1)' }
-                    ], { duration: 300, easing: 'ease-out' });
-                }
-                var starInfo = SAVE && SAVE.stars && SAVE.stars[lv] ? (' (' + '★'.repeat(SAVE.stars[lv]) + ')') : '';
-                infoBar.innerHTML = '✨ <b>' + name + '</b> (Ô #' + lv + ')' + starInfo + ' — Đã mở khóa vào khu trại!';
+        var locations = (typeof CAMP_LOCATIONS !== 'undefined') ? CAMP_LOCATIONS : [];
+        var ownedCount = SAVE.ownedLocations.length;
+        if (locSub) {
+            locSub.innerHTML = 'Đã sở hữu: <b>' + ownedCount + '/' + locations.length + '</b> điểm đến cắm trại';
+        }
+
+        var html = '';
+        locations.forEach(function (loc) {
+            var isOwned = SAVE.ownedLocations.includes(loc.id);
+            var isActive = (SAVE.activeLocation === loc.id);
+            var cardCls = 'location-card' + (isActive ? ' is-active' : '');
+
+            var priceHtml = '';
+            if (isOwned) {
+                priceHtml = '<div class="loc-price-status ' + (isActive ? 'active' : 'owned') + '">' +
+                    (isActive ? '⭐ Đang dùng làm cảnh nền' : '✅ Đã sở hữu') +
+                '</div>';
             } else {
-                infoBar.innerHTML = '🔒 <b>Ô #' + lv + ' (' + name + ')</b> — Hãy vượt qua <b>Level ' + lv + '</b> để mở khóa!';
+                var p = (typeof loc.price === 'number') ? loc.price : 30000;
+                priceHtml = '<div class="loc-price">' +
+                    p.toLocaleString('vi-VN') + ' ' + (typeof ICON_GOLD_HTML !== 'undefined' ? ICON_GOLD_HTML : '🪙') +
+                '</div>';
             }
-        };
-    });
+
+            var btnHtml = '';
+            if (isActive) {
+                btnHtml = '<button class="loc-action-btn btn-active" disabled>Đang dùng</button>';
+            } else if (isOwned) {
+                btnHtml = '<button class="loc-action-btn btn-equip" data-id="' + loc.id + '">Sử dụng</button>';
+            } else {
+                btnHtml = '<button class="loc-action-btn btn-buy" data-id="' + loc.id + '">Mua</button>';
+            }
+
+            html += '<div class="' + cardCls + '">' +
+                '<div class="loc-card-img-wrap">' +
+                    '<img src="' + loc.img + '" alt="' + loc.name + '" class="loc-card-img">' +
+                    (isActive ? '<span class="loc-active-badge">⭐ Đang sử dụng</span>' : '') +
+                '</div>' +
+                '<div class="loc-card-footer">' +
+                    '<div class="loc-info-col">' +
+                        '<div class="loc-name">' + loc.name + '</div>' +
+                        priceHtml +
+                    '</div>' +
+                    '<div class="loc-action-col">' +
+                        btnHtml +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        });
+
+        locationsListContainer.innerHTML = html;
+
+        locationsListContainer.querySelectorAll('.btn-buy').forEach(function (btn) {
+            btn.onclick = function () {
+                var locId = btn.dataset.id;
+                var loc = locations.find(function (l) { return l.id === locId; });
+                if (!loc) return;
+                var cost = (typeof loc.price === 'number') ? loc.price : 30000;
+                var currentCoins = (typeof playerCoins !== 'undefined') ? playerCoins : (SAVE.coins || 0);
+
+                if (currentCoins < cost) {
+                    if (typeof playSound === 'function') playSound('error');
+                    showToast('⚠️ Bạn không đủ Vàng! Cần ' + cost.toLocaleString('vi-VN') + ' Vàng để mua điểm đến ' + loc.name + '.', '#d32f2f');
+                    return;
+                }
+
+                if (typeof playerCoins !== 'undefined') {
+                    playerCoins -= cost;
+                    SAVE.coins = playerCoins;
+                } else {
+                    SAVE.coins = Math.max(0, (SAVE.coins || 0) - cost);
+                }
+
+                if (!SAVE.ownedLocations.includes(locId)) {
+                    SAVE.ownedLocations.push(locId);
+                }
+                SAVE.activeLocation = locId;
+                saveGame();
+
+                if (typeof updateUIStats === 'function') updateUIStats();
+                if (typeof updateActiveLocationBackground === 'function') updateActiveLocationBackground();
+                if (typeof playSound === 'function') playSound('win');
+                showToast('🎉 Mở khóa thành công & đặt cảnh nền: ' + loc.name + '!', '#2e7d32');
+                renderLocationsList();
+            };
+        });
+
+        locationsListContainer.querySelectorAll('.btn-equip').forEach(function (btn) {
+            btn.onclick = function () {
+                var locId = btn.dataset.id;
+                var loc = locations.find(function (l) { return l.id === locId; });
+                if (!loc) return;
+                SAVE.activeLocation = locId;
+                saveGame();
+
+                if (typeof updateActiveLocationBackground === 'function') updateActiveLocationBackground();
+                if (typeof playSound === 'function') playSound('tap');
+                showToast('🌄 Đã đổi cảnh nền sang: ' + loc.name + '!', '#2e7d32');
+                renderLocationsList();
+            };
+        });
+    }
+
+    if (defaultTab === 'locations') {
+        renderLocationsList();
+    } else if (defaultTab === 'pets') {
+        renderPetsGrid();
+    } else {
+        renderCampItems();
+    }
 
     overlay.querySelector('#mb-close').onclick = function () {
         closeModal();
@@ -852,10 +1070,9 @@ function showLuckyDropModal(onReward) {
 }
 
 // ---------- 5. CẨM NANG SƯU TẬP 72 VẬT PHẨM ----------
-function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
+function openDiscoveryBook() {
     var totalItems = ITEM_CHAINS.length * 8;
     var discCount = countDiscoveredItems();
-    var unclaimedCount = countUnclaimedBookRewards();
 
     var chainsHtml = '';
     ITEM_CHAINS.forEach(function (ch) {
@@ -866,15 +1083,12 @@ function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
             var id = ch.line + '_lv' + lv;
             var imgPath = id === 'ban_lv8' ? 'assets/images/items/ban_level8.png' : ('assets/images/items/' + id + '.png');
             var isDisc = !!SAVE.discovered[id];
-            var isClaimed = !!SAVE.claimedBook[id];
             if (isDisc) chainDisc++;
 
-            var cls = 'book-slot ' + bgClass + (isDisc ? ' discovered' : ' locked') + (isDisc && !isClaimed ? ' claimable' : '');
-            var badge = (isDisc && !isClaimed) ? '<span class="book-claim-tag">NHẬN</span>' : '';
+            var cls = 'book-slot ' + bgClass + (isDisc ? ' discovered' : ' locked');
             slotsHtml += '<div class="' + cls + '" data-id="' + id + '" data-name="' + ch.names[lv - 1] + '" data-lv="' + lv + '">' +
                 '<img src="' + imgPath + '" alt="' + id + '">' +
                 '<span class="book-lv">Lv.' + lv + '</span>' +
-                badge +
             '</div>';
         }
         var gen = getChainGenerator(ch.line);
@@ -891,68 +1105,40 @@ function openDiscoveryBook(onRewardClaimed, statusMsgHtml) {
         '</div>';
     });
 
-    var claimAllBtn = unclaimedCount > 0
-        ? '<button class="modal-btn gem-btn" id="btn-claim-all">Nhận thưởng</button>'
-        : '';
-
-    var defaultDetail = statusMsgHtml || 'Chạm vào vật phẩm để xem tên & nhận Vàng ' + ICON_GOLD_HTML + ' / Kim cương ' + ICON_RUBY_HTML + ' khám phá lần đầu!';
-
     var overlay = createModal(
         '<div class="modal-sub">Đã khám phá: <b>' + discCount + '/' + totalItems + '</b> vật phẩm cắm trại</div>' +
-        '<div id="book-detail-bar" class="camp-info-bar">' + defaultDetail + '</div>' +
         '<div class="book-scroll">' + chainsHtml + '</div>' +
         '<div class="modal-buttons book-buttons">' +
             '<button class="modal-btn primary" id="mb-close">Đóng</button>' +
-            claimAllBtn +
         '</div>',
         'book-box',
         'CẨM NANG'
     );
-
-    var detailBar = overlay.querySelector('#book-detail-bar');
 
     overlay.querySelectorAll('.book-slot').forEach(function (slot) {
         slot.onclick = function () {
             var id = slot.dataset.id;
             var name = slot.dataset.name;
             var lv = parseInt(slot.dataset.lv);
-            var gen = getChainGenerator(id.split('_lv')[0]);
-            if (!SAVE.discovered[id]) {
-                detailBar.innerHTML = '🔒 <b>??? (Lv.' + lv + ')</b> — Xuất hiện từ <b>' + gen.name + '</b>. Hãy ghép tới cấp ' + lv + ' của dòng này để mở khóa!';
-                return;
+            var isDisc = !!SAVE.discovered[id];
+            var img = slot.querySelector('img');
+            if (img) {
+                img.animate([
+                    { transform: 'scale(0.8)' },
+                    { transform: 'scale(1.18)' },
+                    { transform: 'scale(1)' }
+                ], { duration: 240, easing: 'ease-out' });
             }
-            if (!SAVE.claimedBook[id]) {
-                var rw = getBookReward(id);
-                SAVE.claimedBook[id] = true;
-                saveGame();
-                if (onRewardClaimed) onRewardClaimed(rw.coins, rw.gems);
-                var msg = '🎁 <b style="color:#2e7d32">Đã nhận thưởng ' + name + ': +' + rw.coins + ' ' + ICON_GOLD_HTML + (rw.gems ? ' +' + rw.gems + ' ' + ICON_RUBY_HTML : '') + '!</b>';
-                openDiscoveryBook(onRewardClaimed, msg);
-                return;
+            if (isDisc) {
+                if (typeof playSound === 'function') playSound('tap');
+                showToast('📖 ' + name + ' (Lv.' + lv + ')', '#4e342e');
+            } else {
+                var gen = getChainGenerator(id.split('_lv')[0]);
+                if (typeof playSound === 'function') playSound('tap');
+                showToast('🔒 Hãy ghép từ ' + gen.name + ' để mở khóa Lv.' + lv + '!', '#795548');
             }
-            var rwInfo = getBookReward(id);
-            detailBar.innerHTML = '✅ <b>' + name + ' (Lv.' + lv + ')</b> — Giá bán: ' + sellPrice(id) + ' ' + ICON_GOLD_HTML + ' | Thưởng đơn: ' + orderReward(id) + ' ' + ICON_GOLD_HTML + ' (Đã nhận +' + rwInfo.coins + ' ' + ICON_GOLD_HTML + ')';
         };
     });
-
-    var claimAll = overlay.querySelector('#btn-claim-all');
-    if (claimAll) {
-        claimAll.onclick = function () {
-            var totalC = 0, totalG = 0;
-            Object.keys(SAVE.discovered).forEach(function (id) {
-                if (!SAVE.claimedBook[id]) {
-                    var rw = getBookReward(id);
-                    totalC += rw.coins;
-                    totalG += rw.gems;
-                    SAVE.claimedBook[id] = true;
-                }
-            });
-            saveGame();
-            if (onRewardClaimed) onRewardClaimed(totalC, totalG);
-            var allMsg = '🎉 <b style="color:#2e7d32">Đã nhận tất cả thưởng Cẩm Nang: +' + totalC + ' ' + ICON_GOLD_HTML + (totalG ? ' & +' + totalG + ' ' + ICON_RUBY_HTML : '') + '!</b>';
-            openDiscoveryBook(onRewardClaimed, allMsg);
-        };
-    }
 
     overlay.querySelector('#mb-close').onclick = closeModal;
 }
@@ -970,7 +1156,18 @@ function openWorldMap(currentLv, onSelectLevel) {
     Object.keys(SAVE.stars).forEach(function (k) { totalStars += SAVE.stars[k] || 0; });
     var unlockAll = SAVE.settings && SAVE.settings.unlockAllLevels;
 
-    var chaptersHtml = '';
+    var chaptersHtml =
+        '<div class="map-stats-summary">' +
+            '<div class="map-stat-badge">' +
+                '<img src="assets/images/ui/icon_star.png" class="stat-star-ico" alt="">' +
+                '<span><b>' + totalStars + '</b>/135 Sao</span>' +
+            '</div>' +
+            '<div class="map-stat-badge">' +
+                '<span class="stat-lv-ico">🚩</span>' +
+                '<span>Màn: <b>LV.' + currentLv + '</b>/45</span>' +
+            '</div>' +
+        '</div>';
+
     CHAPTERS.forEach(function (ch, chIdx) {
         var isChUnlocked = unlockAll || ch.from <= SAVE.maxLevel;
         chaptersHtml += '<div class="chapter-title">' + ch.title + '</div>';
@@ -990,7 +1187,6 @@ function openWorldMap(currentLv, onSelectLevel) {
             var unlocked = unlockAll || lv <= SAVE.maxLevel;
             var isCur = lv === currentLv;
             var cls = 'level-card' + (unlocked ? ' unlocked' : ' locked') + (isCur ? ' current' : '');
-            var bgUrl = (typeof getLevelBackground === 'function') ? getLevelBackground(lv) : 'assets/images/ui/bg_01.jpg';
 
             var starsImgHtml = '';
             for (var sIdx = 1; sIdx <= 3; sIdx++) {
@@ -998,19 +1194,14 @@ function openWorldMap(currentLv, onSelectLevel) {
                 starsImgHtml += '<img src="assets/images/ui/icon_star.png" class="card-star-img' + (isStarOn ? '' : ' off') + '" alt="">';
             }
 
-            var lockMaskHtml = !unlocked ? (
-                '<div class="card-locked-mask">' +
-                    '<img src="assets/images/ui/icon_lock.png" class="card-lock-icon" alt="">' +
-                '</div>'
-            ) : '';
-
             cardsHtml += '<div class="' + cls + '" data-lv="' + lv + '">' +
-                '<div class="card-tag">' + cfg.name + '</div>' +
-                '<div class="card-thumb" style="background-image:url(\'' + bgUrl + '\')">' +
-                    '<span class="card-lv-badge">LV.' + lv + '</span>' +
-                    '<div class="card-stars">' + starsImgHtml + '</div>' +
-                    lockMaskHtml +
+                '<div class="level-card-top">' +
+                    '<span class="level-card-badge">LV.' + lv + '</span>' +
+                    (isCur ? '<span class="level-card-cur-tag">Đang chơi</span>' : '') +
+                    (!unlocked ? '<img src="assets/images/ui/icon_lock.png" class="level-card-lock-ico" alt="Khóa">' : '') +
                 '</div>' +
+                '<div class="level-card-name">' + cfg.name + '</div>' +
+                '<div class="level-card-stars">' + starsImgHtml + '</div>' +
             '</div>';
         }
         chaptersHtml += '<div class="map-grid-2col">' + cardsHtml + '</div>';
@@ -1050,15 +1241,72 @@ function openWorldMap(currentLv, onSelectLevel) {
 }
 
 // ---------- 7. MÀN HÌNH CÀI ĐẶT & CHỌN MÀN NHANH ----------
-// opts: { currentLevel, onSelectLevel, isAuto, onToggleAuto, onUnlockChanged, onRestartLevel, onResetAll }
+// opts: { currentLevel, onSelectLevel, isAuto, onToggleAuto, onUnlockChanged, onRestartLevel, onResetAll, onCloudRestore }
 function openSettingsModal(opts) {
     var s = SAVE.settings || {};
     var unlockAll = s.unlockAllLevels;
     var isAuto = opts.isAuto;
+    var pid = SAVE.playerId || generatePlayerId();
+    var gUser = SAVE.googleUser;
+
+    var googleCardHtml = '';
+    if (!gUser) {
+        googleCardHtml =
+            '<div class="st-google-unlinked">' +
+                '<button class="google-auth-btn" id="st-google-login-btn" type="button">' +
+                    '<svg class="google-logo-svg" viewBox="0 0 24 24" width="20" height="20">' +
+                        '<path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>' +
+                        '<path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>' +
+                        '<path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.17 0 9.95 0 12s.45 3.83 1.25 5.42l4.03-3.15z"/>' +
+                        '<path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>' +
+                    '</svg>' +
+                    '<span>Đăng nhập Google</span>' +
+                '</button>' +
+            '</div>';
+    } else {
+        googleCardHtml =
+            '<div class="st-google-linked">' +
+                '<div class="st-google-user-row">' +
+                    '<div class="st-google-avatar-wrap">' +
+                        '<img src="' + (gUser.picture || 'assets/images/ui/character01.png') + '" class="st-google-avatar" alt="">' +
+                    '</div>' +
+                    '<div class="st-google-user-meta">' +
+                        '<div class="st-google-name">' + (gUser.name || 'Người chơi Google') + '</div>' +
+                        '<div class="st-google-email">' + (gUser.email || '') + '</div>' +
+                        '<div class="st-google-status">🟢 Đã liên kết tài khoản Google</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+    }
+
+    var accountCardHtml =
+        '<div class="st-account-card">' +
+            '<div class="st-account-id-row">' +
+                '<div class="st-id-meta">' +
+                    '<span class="st-id-label">ID NGƯỜI CHƠI</span>' +
+                    '<span class="st-id-val" id="st-player-id-val">' + pid + '</span>' +
+                '</div>' +
+                '<div class="st-id-btn-group">' +
+                    '<button class="st-edit-id-btn" id="st-edit-id-btn" type="button" title="Đổi ID người chơi">' +
+                        '<span>✏️ Đổi ID</span>' +
+                    '</button>' +
+                    '<button class="st-copy-btn" id="st-copy-id-btn" type="button" title="Sao chép ID người chơi">' +
+                        '<svg class="st-copy-svg" viewBox="0 0 24 24" width="13" height="13" fill="currentColor">' +
+                            '<path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>' +
+                        '</svg>' +
+                        '<span>Sao chép</span>' +
+                    '</button>' +
+                '</div>' +
+            '</div>' +
+            googleCardHtml +
+        '</div>';
 
     var overlay = createModal(
         '<div class="popup-sub">Cài đặt màn chơi và dữ liệu</div>' +
         '<div class="st-rows">' +
+            '<!-- Khối ID Người Chơi & Đồng Bộ Google -->' +
+            accountCardHtml +
+
             '<!-- Ngôn ngữ -->' +
             '<div class="lang-selector" id="st-lang-btn">' +
                 '<div class="st-row-left">' +
@@ -1132,6 +1380,61 @@ function openSettingsModal(opts) {
     var closeBtn = overlay.querySelector('#st-close');
     if (closeBtn) closeBtn.onclick = closeModal;
 
+    // Đổi ID người chơi
+    var editIdBtn = overlay.querySelector('#st-edit-id-btn');
+    if (editIdBtn) {
+        editIdBtn.onclick = function () {
+            closeModal();
+            showEditPlayerIdModal(opts);
+        };
+    }
+
+    // Sao chép ID người chơi
+    var copyIdBtn = overlay.querySelector('#st-copy-id-btn');
+    if (copyIdBtn) {
+        copyIdBtn.onclick = function () {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(pid).then(function () {
+                    showToast('📋 Đã sao chép ID: ' + pid, '#2e7d32');
+                }).catch(function () {
+                    showToast('ID của bạn: ' + pid, '#2e7d32');
+                });
+            } else {
+                showToast('ID của bạn: ' + pid, '#2e7d32');
+            }
+        };
+    }
+
+    // Đăng nhập Google (Tự động mở cửa sổ chọn tài khoản Google không cần nhập email)
+    var googleLoginBtn = overlay.querySelector('#st-google-login-btn');
+    if (googleLoginBtn) {
+        googleLoginBtn.onclick = function () {
+            if (typeof FIREBASE_SYNC !== 'undefined' && FIREBASE_SYNC.isConfigured()) {
+                FIREBASE_SYNC.loginWithGoogle(function (user) {
+                    showToast('🎉 Đăng nhập Google thành công: ' + (user.displayName || user.email), '#2e7d32');
+                    openSettingsModal(opts);
+                }, function (err) {
+                    console.warn('Google sign-in notice:', err);
+                    var msg = (err && err.message) ? err.message : String(err);
+                    var code = (err && err.code) ? err.code : '';
+                    if (code === 'auth/configuration-not-found' || msg.indexOf('configuration-not-found') !== -1) {
+                        showToast('⚠️ Bạn chưa Bật "Google" trong Firebase Console > Authentication > Sign-in method!', '#c62828');
+                    } else if (code === 'auth/unauthorized-domain' || msg.indexOf('unauthorized-domain') !== -1) {
+                        showToast('⚠️ Vui lòng thêm domain/IP này vào Firebase Console > Authentication > Settings > Authorized domains!', '#c62828');
+                    } else if (code === 'auth/popup-closed-by-user' || msg.indexOf('popup-closed-by-user') !== -1) {
+                        showToast('ℹ️ Bạn đã đóng cửa sổ chọn tài khoản Google.', '#546e7a');
+                    } else if (code === 'auth/popup-blocked' || msg.indexOf('popup-blocked') !== -1) {
+                        showToast('⚠️ Trình duyệt đang chặn cửa sổ Popup. Vui lòng cho phép popup!', '#c62828');
+                    } else {
+                        showToast('⚠️ Đăng nhập Google không thành công: ' + msg, '#c62828');
+                    }
+                });
+            } else {
+                showToast('⚠️ Chưa cấu hình kết nối Firebase Google!', '#c62828');
+            }
+        };
+    }
+
     var langBtn = overlay.querySelector('#st-lang-btn');
     if (langBtn) {
         langBtn.onclick = function () {
@@ -1174,3 +1477,423 @@ function openSettingsModal(opts) {
         opts.onResetAll();
     };
 }
+
+// ---------- MODAL ĐĂNG NHẬP GOOGLE & ĐỒNG BỘ ĐÁM MÂY ----------
+function showGoogleAuthModal(params) {
+    var opts = params.opts || {};
+    var onSuccess = params.onSuccess;
+
+    var overlay = createModal(
+        '<div class="google-auth-dialog">' +
+            '<div class="google-dialog-header">' +
+                '<svg class="google-logo-svg big" viewBox="0 0 24 24" width="36" height="36">' +
+                    '<path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>' +
+                    '<path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>' +
+                    '<path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.17 0 9.95 0 12s.45 3.83 1.25 5.42l4.03-3.15z"/>' +
+                    '<path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>' +
+                '</svg>' +
+                '<div class="google-dialog-title">Đăng Nhập Tài Khoản Google</div>' +
+            '</div>' +
+            '<div class="google-dialog-desc">' +
+                'Liên kết Gmail của bạn để tự động lưu tiến trình (Level, Vàng, Cẩm Nang và Màn hình đang chơi dở) giúp bạn tiếp tục chơi trên bất kỳ máy tính hoặc điện thoại nào.' +
+            '</div>' +
+
+            '<div class="g-input-group">' +
+                '<label class="g-input-label" for="g-email-input">Địa chỉ Email Google (Gmail):</label>' +
+                '<input type="email" id="g-email-input" class="g-modal-input" placeholder="ví dụ: camping.player@gmail.com" value="' + (SAVE.googleUser ? SAVE.googleUser.email : '') + '" autocomplete="email">' +
+            '</div>' +
+
+            '<div id="g-cloud-found-notice" class="g-cloud-found-notice" style="display:none;"></div>' +
+
+            '<div class="modal-buttons" style="margin-top:14px;flex-direction:column;gap:8px;">' +
+                '<button class="modal-btn primary" id="g-submit-btn" style="width:100%;height:44px;">Đăng Nhập & Đồng Bộ Đám Mây</button>' +
+                '<button class="modal-btn" id="g-open-fb-btn" style="width:100%;height:38px;font-size:0.8125rem;background:#fff3e0;border:1.5px solid #ffcc80;color:#e65100;">🔥 Cấu hình Google Firebase (100% Miễn phí)</button>' +
+                '<button class="modal-btn gem-btn" id="g-open-import-btn" style="width:100%;height:40px;font-size:0.875rem;">Nhập mã sao lưu từ máy khác</button>' +
+                '<button class="modal-btn" id="g-cancel-btn" style="width:100%;height:40px;">Quay lại</button>' +
+            '</div>' +
+        '</div>',
+        'google-auth-box',
+        'LƯU ĐÁM MÂY'
+    );
+
+    var emailInput = overlay.querySelector('#g-email-input');
+    var submitBtn = overlay.querySelector('#g-submit-btn');
+    var openFbBtn = overlay.querySelector('#g-open-fb-btn');
+    var importBtn = overlay.querySelector('#g-open-import-btn');
+    var cancelBtn = overlay.querySelector('#g-cancel-btn');
+    var noticeBox = overlay.querySelector('#g-cloud-found-notice');
+
+    if (cancelBtn) {
+        cancelBtn.onclick = function () {
+            closeModal();
+            openSettingsModal(opts);
+        };
+    }
+
+    if (openFbBtn) {
+        openFbBtn.onclick = function () {
+            closeModal();
+            showFirebaseSetupModal(opts);
+        };
+    }
+
+    if (importBtn) {
+        importBtn.onclick = function () {
+            closeModal();
+            showImportSyncModal(opts);
+        };
+    }
+
+    if (submitBtn && emailInput) {
+        submitBtn.onclick = function () {
+            var email = (emailInput.value || '').trim();
+            if (!email || email.indexOf('@') === -1 || email.indexOf('.') === -1) {
+                showToast('⚠️ Vui lòng nhập đúng định dạng email (ví dụ: ten@gmail.com)', '#c62828');
+                emailInput.focus();
+                return;
+            }
+
+            // Kiểm tra xem đã có dữ liệu đám mây của tài khoản này chưa
+            var existingCloud = restoreSaveFromCloud(email);
+            if (existingCloud && (!SAVE.googleUser || SAVE.googleUser.email !== email)) {
+                // Tìm thấy dữ liệu đám mây từ trước
+                var cloudLv = existingCloud.level || 1;
+                var cloudCoins = (existingCloud.coins || 0).toLocaleString('vi-VN');
+                var cloudStars = existingCloud.stars ? Object.keys(existingCloud.stars).length : 0;
+
+                noticeBox.style.display = 'block';
+                noticeBox.innerHTML =
+                    '<b>💡 Tìm thấy dữ liệu Đám Mây của tài khoản này:</b><br>' +
+                    '• Màn hiện tại: <b>Level ' + cloudLv + '</b> (' + cloudStars + ' màn đạt sao)<br>' +
+                    '• Kho Vàng: <b>' + cloudCoins + ' 🪙</b><br>' +
+                    '<div style="margin-top:8px;display:flex;gap:6px;">' +
+                        '<button class="modal-btn primary" id="g-apply-cloud-btn" style="flex:1;height:36px;font-size:0.8125rem;">Nạp dữ liệu từ Đám Mây</button>' +
+                        '<button class="modal-btn danger-btn" id="g-overwrite-cloud-btn" style="flex:1;height:36px;font-size:0.8125rem;">Ghi đè bằng máy này</button>' +
+                    '</div>';
+
+                var applyBtn = noticeBox.querySelector('#g-apply-cloud-btn');
+                var overwriteBtn = noticeBox.querySelector('#g-overwrite-cloud-btn');
+
+                if (applyBtn) {
+                    applyBtn.onclick = function () {
+                        SAVE = Object.assign(defaultSave(), existingCloud);
+                        SAVE.googleUser = {
+                            email: email,
+                            name: email.split('@')[0],
+                            picture: 'assets/images/ui/character01.png',
+                            lastSynced: Date.now()
+                        };
+                        saveGame();
+                        if (opts.onCloudRestore) opts.onCloudRestore();
+                        closeModal();
+                        showToast('🎉 Đã đồng bộ thành công dữ liệu từ tài khoản Google!', '#2e7d32');
+                        if (onSuccess) onSuccess();
+                    };
+                }
+
+                if (overwriteBtn) {
+                    overwriteBtn.onclick = function () {
+                        SAVE.googleUser = {
+                            email: email,
+                            name: email.split('@')[0],
+                            picture: 'assets/images/ui/character01.png',
+                            lastSynced: Date.now()
+                        };
+                        syncSaveToCloud();
+                        closeModal();
+                        showToast('☁️ Đã ghi đè và sao lưu tiến trình máy này lên Google!', '#2e7d32');
+                        if (onSuccess) onSuccess();
+                    };
+                }
+                return;
+            }
+
+            // Chưa có dữ liệu cũ -> liên kết và sao lưu tiến trình hiện tại ngay lập tức
+            SAVE.googleUser = {
+                email: email,
+                name: email.split('@')[0],
+                picture: 'assets/images/ui/character01.png',
+                lastSynced: Date.now()
+            };
+            syncSaveToCloud();
+            closeModal();
+            showToast('🎉 Đã liên kết tài khoản Google & lưu lên Đám Mây thành công!', '#2e7d32');
+            if (onSuccess) onSuccess();
+        };
+    }
+}
+
+// ---------- MODAL NHẬP MÃ ĐỒNG BỘ CHUYỂN MÁY ----------
+function showImportSyncModal(opts) {
+    var overlay = createModal(
+        '<div class="google-auth-dialog">' +
+            '<div class="google-dialog-header">' +
+                '<div style="font-size:2rem;line-height:1;margin-bottom:6px;">📋</div>' +
+                '<div class="google-dialog-title">Nhập Mã Sao Lưu Chuyển Máy</div>' +
+            '</div>' +
+            '<div class="google-dialog-desc">' +
+                'Dán Mã Đồng Bộ bạn đã bấm "Sao chép" từ máy tính hoặc điện thoại cũ vào ô bên dưới để khôi phục toàn bộ tiến trình trên máy này.' +
+            '</div>' +
+
+            '<div class="g-input-group">' +
+                '<textarea id="g-import-code-area" class="g-modal-textarea" rows="4" placeholder="Dán mã sao lưu vào đây..."></textarea>' +
+            '</div>' +
+
+            '<div class="modal-buttons" style="margin-top:14px;flex-direction:column;gap:8px;">' +
+                '<button class="modal-btn primary" id="g-do-import-btn" style="width:100%;height:44px;">Đồng Bộ Vào Máy Này</button>' +
+                '<button class="modal-btn" id="g-cancel-import-btn" style="width:100%;height:40px;">Quay lại</button>' +
+            '</div>' +
+        '</div>',
+        'google-auth-box',
+        'ĐỒNG BỘ MÁY'
+    );
+
+    var codeArea = overlay.querySelector('#g-import-code-area');
+    var doImportBtn = overlay.querySelector('#g-do-import-btn');
+    var cancelBtn = overlay.querySelector('#g-cancel-import-btn');
+
+    if (cancelBtn) {
+        cancelBtn.onclick = function () {
+            closeModal();
+            openSettingsModal(opts);
+        };
+    }
+
+    if (doImportBtn && codeArea) {
+        doImportBtn.onclick = function () {
+            var code = (codeArea.value || '').trim();
+            if (!code) {
+                showToast('⚠️ Vui lòng dán mã sao lưu vào ô!', '#c62828');
+                codeArea.focus();
+                return;
+            }
+
+            var ok = importSyncCode(code);
+            if (ok) {
+                if (opts.onCloudRestore) opts.onCloudRestore();
+                closeModal();
+                showToast('🎉 Đã đồng bộ tiến trình thành công từ thiết bị cũ!', '#2e7d32');
+            } else {
+                showToast('❌ Mã sao lưu không hợp lệ hoặc bị lỗi!', '#c62828');
+            }
+        };
+    }
+}
+
+// ---------- MODAL HƯỚNG DẪN & CẤU HÌNH GOOGLE FIREBASE MIỄN PHÍ ----------
+function showFirebaseSetupModal(opts) {
+    var curCfg = (typeof FIREBASE_SYNC !== 'undefined') ? FIREBASE_SYNC.getActiveConfig() : null;
+    var isLinked = !!curCfg;
+    var overlay = createModal(
+        '<div class="fb-guide-dialog">' +
+            '<div class="fb-guide-header">' +
+                '<span style="font-size:1.75rem;">🔥</span>' +
+                '<div>' +
+                    '<h3 class="fb-guide-title">Lưu Trữ Google Firebase Miễn Phí</h3>' +
+                    '<div style="font-size:0.75rem;color:#795548;">Spark Plan: 50.000 lượt đọc / 20.000 lượt ghi / ngày (100% Free)</div>' +
+                '</div>' +
+            '</div>' +
+
+            '<div class="fb-step-list">' +
+                '<div class="fb-step-item">' +
+                    '<span class="fb-step-num">1</span>' +
+                    '<div class="fb-step-text">' +
+                        'Truy cập <b>Firebase Console</b> và tạo dự án mới (đặt tên ví dụ: <code>merge-camping-game</code>):<br>' +
+                        '<a href="https://console.firebase.google.com/" target="_blank" class="fb-link-btn" rel="noreferrer">Mở Firebase Console ↗</a>' +
+                    '</div>' +
+                '</div>' +
+
+                '<div class="fb-step-item">' +
+                    '<span class="fb-step-num">2</span>' +
+                    '<div class="fb-step-text">' +
+                        'Vào menu <b>Authentication</b> -> Thẻ <b>Sign-in method</b> -> Chọn <b>Google</b> và bật <b>Enable</b>.' +
+                    '</div>' +
+                '</div>' +
+
+                '<div class="fb-step-item">' +
+                    '<span class="fb-step-num">3</span>' +
+                    '<div class="fb-step-text">' +
+                        'Vào menu <b>Firestore Database</b> -> Bấm <b>Create database</b> -> Chọn chế độ <b>Start in test mode</b>.' +
+                    '</div>' +
+                '</div>' +
+
+                '<div class="fb-step-item">' +
+                    '<span class="fb-step-num">4</span>' +
+                    '<div class="fb-step-text">' +
+                        'Bấm vào biểu tượng <b>Cài đặt dự án ⚙️</b> (Project settings) -> Cuộn xuống mục <b>Your apps</b> -> Chọn Web <b>&lt;/&gt;</b> -> Sao chép đoạn <code>firebaseConfig = { ... }</code>.' +
+                    '</div>' +
+                '</div>' +
+
+                '<div class="fb-step-item">' +
+                    '<span class="fb-step-num">5</span>' +
+                    '<div class="fb-step-text">' +
+                        'Dán mã cấu hình của bạn vào ô dưới đây (hoặc dán trực tiếp vào file <code>js/config.js</code>):' +
+                        '<textarea id="fb-config-input" class="g-modal-textarea" rows="3" placeholder="Dán đoạn firebaseConfig = { apiKey: &quot;...&quot;, projectId: &quot;...&quot; } vào đây...">' +
+                            (curCfg ? JSON.stringify(curCfg, null, 2) : '') +
+                        '</textarea>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+
+        '<div class="modal-buttons" style="flex-direction:row;gap:8px;margin-top:8px;flex-shrink:0;">' +
+            '<button class="modal-btn primary" id="fb-apply-cfg-btn" style="flex:2;height:42px;font-size:0.875rem;">Kích Hoạt</button>' +
+            (isLinked ? '<button class="modal-btn danger-btn" id="fb-clear-cfg-btn" style="flex:1;height:42px;font-size:0.8125rem;">Hủy</button>' : '') +
+            '<button class="modal-btn" id="fb-close-guide-btn" style="flex:1;height:42px;font-size:0.875rem;">Đóng</button>' +
+        '</div>',
+        'google-auth-box',
+        'FIREBASE CLOUD'
+    );
+
+    var configInput = overlay.querySelector('#fb-config-input');
+    var applyBtn = overlay.querySelector('#fb-apply-cfg-btn');
+    var clearBtn = overlay.querySelector('#fb-clear-cfg-btn');
+    var closeBtn = overlay.querySelector('#fb-close-guide-btn');
+
+    if (closeBtn) {
+        closeBtn.onclick = function () {
+            closeModal();
+            openSettingsModal(opts);
+        };
+    }
+
+    if (clearBtn) {
+        clearBtn.onclick = function () {
+            if (typeof FIREBASE_SYNC !== 'undefined') {
+                FIREBASE_SYNC.clearConfig();
+                showToast('Đã xóa cấu hình Firebase.', '#546e7a');
+                closeModal();
+                openSettingsModal(opts);
+            }
+        };
+    }
+
+    if (applyBtn && configInput) {
+        applyBtn.onclick = function () {
+            var rawText = (configInput.value || '').trim();
+            if (!rawText) {
+                showToast('⚠️ Vui lòng dán mã cấu hình Firebase vào ô!', '#c62828');
+                configInput.focus();
+                return;
+            }
+
+            if (typeof FIREBASE_SYNC !== 'undefined') {
+                var res = FIREBASE_SYNC.saveConfig(rawText);
+                if (res.success) {
+                    showToast('🎉 Đã kích hoạt kết nối Google Firebase thành công!', '#2e7d32');
+                    closeModal();
+                    openSettingsModal(opts);
+                } else {
+                    showToast('❌ ' + (res.message || 'Cấu hình không hợp lệ!'), '#c62828');
+                }
+            }
+        };
+    }
+}
+
+// ---------- MODAL ĐỔI ID NGƯỜI CHƠI & ĐỒNG BỘ ĐÁM MÂY ----------
+function showEditPlayerIdModal(opts) {
+    var curId = SAVE.playerId || generatePlayerId();
+    var overlay = createModal(
+        '<div class="popup-sub" style="margin-bottom:8px;">Đặt ID dễ nhớ cho tài khoản của bạn</div>' +
+        '<div class="edit-id-dialog">' +
+            '<div class="edit-id-desc">' +
+                'Hệ thống sẽ kiểm tra và cập nhật trên <b>Đám Mây</b> nếu tên này chưa có ai sử dụng.' +
+            '</div>' +
+
+            '<div class="g-input-group">' +
+                '<label class="g-input-label" for="new-player-id-input">ID Người Chơi Mới (3 - 16 ký tự):</label>' +
+                '<input type="text" id="new-player-id-input" class="g-modal-input" maxlength="16" placeholder="ví dụ: CAMP-QUOCBAO" value="' + curId + '" style="text-transform:uppercase;font-weight:900;letter-spacing:1px;">' +
+            '</div>' +
+
+            '<div id="edit-id-msg-box" style="display:none;font-size:0.7813rem;font-weight:800;padding:6px 10px;border-radius:8px;margin-bottom:4px;"></div>' +
+
+            '<div class="st-actions" style="margin-top:8px;">' +
+                '<button class="st-act-btn green" id="btn-save-new-id">Lưu & Đồng Bộ</button>' +
+                '<button class="st-act-btn blue" id="btn-cancel-edit-id">Quay lại</button>' +
+            '</div>' +
+        '</div>',
+        'settings-popup-box',
+        'ĐỔI ID'
+    );
+
+    var input = overlay.querySelector('#new-player-id-input');
+    var saveBtn = overlay.querySelector('#btn-save-new-id');
+    var cancelBtn = overlay.querySelector('#btn-cancel-edit-id');
+    var msgBox = overlay.querySelector('#edit-id-msg-box');
+
+    if (cancelBtn) {
+        cancelBtn.onclick = function () {
+            closeModal();
+            openSettingsModal(opts);
+        };
+    }
+
+    if (input) {
+        setTimeout(function () { input.focus(); }, 150);
+        input.addEventListener('input', function () {
+            input.value = input.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+        });
+    }
+
+    if (saveBtn && input) {
+        saveBtn.onclick = function () {
+            var newId = (input.value || '').trim().toUpperCase();
+            if (!newId || newId.length < 3) {
+                msgBox.style.display = 'block';
+                msgBox.style.background = '#ffebee';
+                msgBox.style.color = '#c62828';
+                msgBox.innerText = '⚠️ ID phải có ít nhất 3 ký tự!';
+                input.focus();
+                return;
+            }
+
+            if (!/^[A-Z0-9_-]{3,16}$/.test(newId)) {
+                msgBox.style.display = 'block';
+                msgBox.style.background = '#ffebee';
+                msgBox.style.color = '#c62828';
+                msgBox.innerText = '⚠️ ID chỉ được chứa chữ cái, số và dấu gạch (-)!';
+                input.focus();
+                return;
+            }
+
+            if (newId === curId) {
+                closeModal();
+                openSettingsModal(opts);
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Đang kiểm tra...';
+
+            if (typeof FIREBASE_SYNC !== 'undefined' && FIREBASE_SYNC.isConfigured()) {
+                FIREBASE_SYNC.claimPlayerId(newId, curId, function (success, resultOrMsg) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = 'Lưu & Đồng Bộ';
+                    if (success) {
+                        SAVE.playerId = newId;
+                        saveGame();
+                        if (FIREBASE_SYNC.getCurrentUser()) {
+                            FIREBASE_SYNC.save(SAVE);
+                        }
+                        showToast('🎉 Đã đổi ID thành công: ' + newId, '#2e7d32');
+                        closeModal();
+                        openSettingsModal(opts);
+                    } else {
+                        msgBox.style.display = 'block';
+                        msgBox.style.background = '#ffebee';
+                        msgBox.style.color = '#c62828';
+                        msgBox.innerText = '❌ ' + resultOrMsg;
+                    }
+                });
+            } else {
+                SAVE.playerId = newId;
+                saveGame();
+                showToast('🎉 Đã đổi ID thành công: ' + newId, '#2e7d32');
+                closeModal();
+                openSettingsModal(opts);
+            }
+        };
+    }
+}
+

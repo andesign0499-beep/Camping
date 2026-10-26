@@ -6,7 +6,7 @@
 // - Lv 36 - 45: Mở khóa trọn bộ 9 vật phẩm tối thượng Lv.8
 // ==========================================
 
-// Danh sách ảnh nền màn chơi & bản đồ (Tự động lặp tuần hoàn 1..N theo thứ tự)
+// Danh sách ảnh nền màn chơi (Tự động lặp tuần hoàn 1..N theo thứ tự mặc định)
 var LEVEL_BACKGROUNDS = [
     'assets/images/ui/bg_01.jpg',
     'assets/images/ui/bg_02.jpg',
@@ -17,7 +17,39 @@ var LEVEL_BACKGROUNDS = [
     'assets/images/ui/bg07.jpg'
 ];
 
+// Danh sách Điểm Đến cắm trại bán trong Khu Trại (Giá 30.000 Vàng)
+var CAMP_LOCATIONS = [
+    { id: 'loc_dongdo', name: 'Hồ Đồng Đò', img: 'assets/images/ui/bg_01.jpg', price: 0 },
+    { id: 'loc_matthan', name: 'Núi Mắt Thần', img: 'assets/images/ui/bg07.jpg', price: 30000 },
+    { id: 'loc_pudao', name: 'Bản Pú Đao', img: 'assets/images/ui/bg06.jpg', price: 30000 },
+    { id: 'loc_bangioc', name: 'Thác Bản Giốc', img: 'assets/images/ui/bg05.jpg', price: 30000 },
+    { id: 'loc_taxua', name: 'Tà Xùa', img: 'assets/images/ui/bg_02.jpg', price: 30000 },
+    { id: 'loc_yty', name: 'Y Tý Đại Ngàn', img: 'assets/images/ui/bg04.jpg', price: 30000 },
+    { id: 'loc_doibu', name: 'Đồi Bù', img: 'assets/images/ui/bg_03.jpg', price: 30000 }
+];
+
+function getActiveLocationBackground() {
+    if (typeof SAVE !== 'undefined' && SAVE && SAVE.activeLocation && typeof CAMP_LOCATIONS !== 'undefined') {
+        var found = CAMP_LOCATIONS.find(function (l) { return l.id === SAVE.activeLocation; });
+        if (found && found.img) return found.img;
+    }
+    return null;
+}
+
+function updateActiveLocationBackground() {
+    var topSceneEl = document.getElementById('top-scene');
+    if (!topSceneEl) return;
+    var customBg = getActiveLocationBackground();
+    if (customBg) {
+        topSceneEl.style.backgroundImage = "url('" + customBg + "')";
+    } else if (typeof currentLevel !== 'undefined') {
+        topSceneEl.style.backgroundImage = "url('" + getLevelBackground(currentLevel) + "')";
+    }
+}
+
 function getLevelBackground(lvNum) {
+    var customBg = getActiveLocationBackground();
+    if (customBg) return customBg;
     if (!LEVEL_BACKGROUNDS || !LEVEL_BACKGROUNDS.length) return 'assets/images/ui/bg_01.jpg';
     var idx = (Math.max(1, parseInt(lvNum, 10) || 1) - 1) % LEVEL_BACKGROUNDS.length;
     return LEVEL_BACKGROUNDS[idx];
