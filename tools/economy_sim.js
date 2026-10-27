@@ -10,17 +10,17 @@ const vm = require('vm');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const ctx = { localStorage: { getItem: () => null, setItem: () => {} }, console, Date, Math };
-vm.createContext(ctx);
+global.localStorage = { getItem: () => null, setItem: () => {} };
 ['js/config.js', 'js/data.js', 'js/engine.js', 'js/progress.js'].forEach(f =>
-    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx)
+    vm.runInThisContext(fs.readFileSync(path.join(ROOT, f), 'utf8'))
 );
+const ctx = global;
 
-const RUNS = parseInt(process.argv[2]) || 120;
+const RUNS = parseInt(process.argv[2]) || 100;
 const MAX_LV = parseInt(process.argv[3]) || ctx.RAW_LEVELS.length;
 
-// Sao chép logic populateInitialBoardItems() trong board.js (đổ đầy bàn miễn phí)
-function populateInitial(board, orderIds) {
+// Đồng bộ logic populateInitialBoardItems() trong board.js (rải tối đa 2 cặp = 4 món Lv.1)
+function populateInitial(board) {
     const lines = [];
     board.forEach(c => {
         if (c && ctx.GENERATORS[c.id] && !c.isLocked) {
@@ -32,20 +32,17 @@ function populateInitial(board, orderIds) {
     });
     if (!lines.length) return;
     const empties = ctx.getEmptyIndexes(board);
-    const active = new Set(orderIds);
-    const items = [];
-    while (items.length < empties.length) {
-        const line = lines[Math.floor(Math.random() * lines.length)];
-        let id = line + '_lv' + (Math.random() < 0.25 ? 2 : 1);
-        if (active.has(id)) id = line + '_lv1';
-        items.push(id);
-        if (items.length < empties.length) items.push(id);
+    const pairCount = Math.min(2, Math.floor(empties.length / 6));
+    for (let p = 0; p < pairCount; p++) {
+        const line = lines[p % lines.length];
+        const itemId = line + '_lv1';
+        for (let k = 0; k < 2; k++) {
+            const curEmpties = ctx.getEmptyIndexes(board);
+            if (!curEmpties.length) break;
+            const pick = curEmpties[Math.floor(Math.random() * curEmpties.length)];
+            board[pick] = { id: itemId, isRock: false, isLocked: false };
+        }
     }
-    for (let i = items.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [items[i], items[j]] = [items[j], items[i]];
-    }
-    empties.forEach((idx, i) => { board[idx] = { id: items[i], isRock: false, isLocked: false }; });
 }
 
 function simulate(lvNum) {
@@ -53,14 +50,14 @@ function simulate(lvNum) {
     const board = ctx.buildBoard(level);
     const orderIds = ctx.tuneOrders(level.rawOrders, lvNum, level);
     const orders = orderIds.map(id => ({ id, done: false }));
-    populateInitial(board, orderIds);
+    populateInitial(board);
     const budget = ctx.computeEnergyBudget(board, orderIds, level);
 
     const gens = [];
     board.forEach(c => { if (c && ctx.GENERATORS[c.id] && !c.isLocked) gens.push(c.id); });
 
     let energy = 0, gold = 0, gems = 0, steps = 0;
-    while (steps++ < 4000) {
+    while (steps++ < 3000) {
         let submitted = false;
         for (const o of orders) {
             if (o.done) continue;
@@ -86,7 +83,7 @@ function simulate(lvNum) {
         }
         const merge = ctx.findBestMerge(board, orders, level);
         const empties = ctx.getEmptyIndexes(board);
-        if (merge && (merge.score > 1 || empties.length <= 2)) {
+        if (merge) {
             const res = ctx.doMove(board, merge.from, merge.to);
             if (res.type === 'merge') {
                 ctx.clearAdjacentWebs(board, res.index, level);
@@ -116,7 +113,7 @@ function simulate(lvNum) {
             ctx.GENERATORS[g].forEach(l => { const n = need[ctx.itemLine(l)]; if (n) w += Math.pow(2, n); });
             if (w > bestW) { bestW = w; bestGen = g; }
         }
-        ctx.spawnItem(board, bestGen);
+        ctx.spawnItem(board, bestGen, orders);
         energy++;
         if (level.spreadEvery && energy % level.spreadEvery === 0) ctx.spreadWeb(board);
     }
@@ -150,7 +147,7 @@ console.log(`\nTổng Vàng TB: ${cumGold} | Tổng 💎 TB: ${cumGems.toFixed(1
 
 // ---- HÀNH TRÌNH NGƯỜI CHƠI MỚI (không xem QC, không nạp) ----
 // Giả định: mỗi lần bấm nguồn phát + ghép tốn ~6 giây chơi, mỗi màn thêm 40 giây đọc thoại/giao đơn.
-function journey(useP) {
+function journey(useP, spendCurrencyOnEnergy) {
     const defSave = ctx.defaultSave();
     let energy = ctx.START_ENERGY, gold = defSave.coins, gems = defSave.gems, passed = 0, timeSec = 0;
     for (const L of perLevel) {
@@ -160,16 +157,19 @@ function journey(useP) {
         // Hồi năng lượng trong lúc chơi
         const regen = Math.floor(playSec / ctx.ENERGY_REGEN_SEC);
         let avail = Math.min(maxE(), energy + regen);
-        while (avail < need && gold >= ctx.ENERGY_PACK_PRICE) { gold -= ctx.ENERGY_PACK_PRICE; avail += ctx.ENERGY_PACK; }
-        while (avail < need && gems >= ctx.GEM_ENERGY_PRICE) { gems -= ctx.GEM_ENERGY_PRICE; avail += ctx.GEM_ENERGY_PACK; }
+        if (spendCurrencyOnEnergy) {
+            while (avail < need && gold >= ctx.ENERGY_PACK_PRICE) { gold -= ctx.ENERGY_PACK_PRICE; avail += ctx.ENERGY_PACK; }
+            while (avail < need && gems >= ctx.GEM_ENERGY_PRICE) { gems -= ctx.GEM_ENERGY_PRICE; avail += ctx.GEM_ENERGY_PACK; }
+        }
         if (avail < need) {
             const short = need - avail;
-            return `P${useP}: chơi liên tục qua Level ${passed}, bị chặn giữa Level ${L.lv} (thiếu ${short}⚡ ≈ chờ ${Math.ceil(short * ctx.ENERGY_REGEN_SEC / 60)} phút, hoặc ${Math.ceil(short / ctx.AD_REWARDS.energy.amount)} QC, hoặc ${Math.ceil(short / ctx.GEM_ENERGY_PACK) * ctx.GEM_ENERGY_PRICE}💎). Thời gian chơi ~${Math.round(timeSec / 60)} phút. Còn ${gold} Vàng, ${gems}💎`;
+            return `P${useP} (${spendCurrencyOnEnergy ? 'dùng Vàng/💎 mua ⚡' : 'giữ Vàng mua Pet/Điểm đến'}): chơi liên tục qua Level ${passed}, cần tiếp sức ở Level ${L.lv} (thiếu ${short}⚡ ≈ chờ ${Math.ceil(short * ctx.ENERGY_REGEN_SEC / 60)} phút, hoặc ${Math.ceil(short / ctx.AD_REWARDS.energy.amount)} QC). Thời gian chơi ~${Math.round(timeSec / 60)} phút. Tích lũy: ${gold} Vàng, ${gems}💎`;
         }
         energy = avail - need; gold += L.gold; gems += Math.round(L.gems); passed++; timeSec += playSec;
     }
-    return `P${useP}: chơi hết ${passed} level không bị chặn`;
+    return `P${useP} (${spendCurrencyOnEnergy ? 'dùng Vàng/💎 mua ⚡' : 'giữ Vàng mua Pet/Điểm đến'}): chơi hết ${passed} level (còn dư ${gold} Vàng, ${gems}💎 để sưu tập Pet/Điểm đến)`;
 }
-console.log('\n=== HÀNH TRÌNH NGƯỜI CHƠI MỚI (không QC, không nạp, có dùng Vàng/💎 sẵn có) ===');
-console.log(journey(50));
-console.log(journey(75));
+console.log('\n=== HÀNH TRÌNH NGƯỜI CHƠI MỚI ===');
+console.log(journey(50, false));
+console.log(journey(75, false));
+console.log(journey(50, true));

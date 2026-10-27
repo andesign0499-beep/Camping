@@ -13,14 +13,29 @@ var START_ENERGY = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? 
 var MAX_ENERGY_BASE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyBase : 70;
 var MAX_ENERGY_PER_LEVEL = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyPerLevel : 4;
 var MAX_ENERGY_CAP = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyCap : 200;
-var ENERGY_REGEN_SEC = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.regenIntervalSec : 8;
+var ENERGY_REGEN_SEC = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.regenIntervalSec : 30;
+
+function getTotalStars() {
+    var totalStars = 0;
+    if (typeof SAVE !== 'undefined' && SAVE && SAVE.stars) {
+        Object.keys(SAVE.stars).forEach(function (k) { totalStars += SAVE.stars[k] || 0; });
+    }
+    return totalStars;
+}
+
+function getEnergyRegenSec() {
+    var baseSec = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.regenIntervalSec : ENERGY_REGEN_SEC;
+    return getTotalStars() >= 60 ? Math.max(15, baseSec - 2) : baseSec;
+}
 
 function getMaxEnergy() {
     var passed = (typeof SAVE !== 'undefined' && SAVE && SAVE.stars) ? Object.keys(SAVE.stars).length : 0;
     var base = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyBase : MAX_ENERGY_BASE;
     var perLv = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyPerLevel : MAX_ENERGY_PER_LEVEL;
     var cap = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyCap : MAX_ENERGY_CAP;
-    return Math.min(cap, base + passed * perLv);
+    var totalStars = getTotalStars();
+    var starBonus = totalStars >= 30 ? 5 : 0;
+    return Math.min(cap, base + passed * perLv + starBonus);
 }
 
 function todayKey() {
@@ -60,6 +75,8 @@ function defaultSave() {
         activeLocation: 'loc_dongdo',
         campItems: [],
         campItemsMigrated: false,
+        claimedStarChests: [],
+        starterPackBought: false,
         ads: { day: todayKey(), energy: 0, gem: 0, coin: 0 },
         settings: {
             sound: true,
@@ -89,6 +106,7 @@ function loadSave() {
             if (!Array.isArray(s.ownedLocations) || !s.ownedLocations.length) s.ownedLocations = ['loc_dongdo'];
             if (!s.activeLocation) s.activeLocation = 'loc_dongdo';
             if (!Array.isArray(s.campItems)) s.campItems = [];
+            if (!Array.isArray(s.claimedStarChests)) s.claimedStarChests = [];
             if (!s.campItemsMigrated) {
                 s.campItemsMigrated = true;
                 if (typeof RAW_LEVELS !== 'undefined' && Array.isArray(RAW_LEVELS)) {
@@ -238,47 +256,25 @@ function importSyncCode(codeStr) {
 }
 
 // ---------- DANH SÁCH THÚ CƯNG ĐỒNG HÀNH (PETS) ----------
-var PET_PRICE = 30000;
+var PET_PRICE = 12000;
 var PET_CHARACTERS = [
     { id: 'character01', name: 'Golden', img: 'assets/images/ui/character01.png', price: 0 },
-    { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 30000 },
-    { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 30000 },
-    { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 30000 },
-    { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 30000 },
-    { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 30000 },
-    { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 30000 },
-    { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 30000 },
-    { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 30000 },
-    { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 30000 }
+    { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 12000 },
+    { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 15000 },
+    { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 22000 },
+    { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 28000 },
+    { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 35000 },
+    { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 42000 },
+    { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 50000 },
+    { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 58000 },
+    { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 65000 }
 ];
 
-// ---------- HỒI NĂNG LƯỢNG THEO THỜI GIAN (IDLE REGEN) ----------
-// ENERGY_REGEN_SEC được khai báo ở đầu file (2 phút hồi +1 năng lượng)
-
+// ---------- HỒI NĂNG LƯỢNG THEO TƯƠNG TÁC (ACTIVE INTERACTION REGEN) ----------
+// Năng lượng chỉ hồi khi người chơi tương tác với game (30 giây / 1⚡, hoặc 28 giây khi đạt 60 ⭐).
+// Nếu sau thời gian đó người chơi không tương tác hoặc rời game, bộ đếm dừng lại chờ tương tác tiếp theo.
 function calcIdleEnergyRegen(currentEnergy, maxEnergy) {
-    var now = Date.now();
-    if (currentEnergy >= maxEnergy) {
-        SAVE.lastEnergyTs = now;
-        return { added: 0, secLeft: ENERGY_REGEN_SEC };
-    }
-    var elapsedSec = Math.floor((now - (SAVE.lastEnergyTs || now)) / 1000);
-    if (elapsedSec < 0) {
-        SAVE.lastEnergyTs = now;
-        return { added: 0, secLeft: ENERGY_REGEN_SEC };
-    }
-    var ticks = Math.floor(elapsedSec / ENERGY_REGEN_SEC);
-    var added = 0;
-    if (ticks > 0) {
-        added = Math.min(ticks, maxEnergy - currentEnergy);
-        if (currentEnergy + added >= maxEnergy) {
-            SAVE.lastEnergyTs = now;
-        } else {
-            SAVE.lastEnergyTs += ticks * ENERGY_REGEN_SEC * 1000;
-        }
-        saveGame();
-    }
-    var rem = ENERGY_REGEN_SEC - Math.floor((now - SAVE.lastEnergyTs) / 1000);
-    return { added: added, secLeft: Math.max(1, Math.min(ENERGY_REGEN_SEC, rem)) };
+    return { added: 0, secLeft: getEnergyRegenSec() };
 }
 
 // ---------- KINH TẾ ----------
@@ -293,7 +289,7 @@ function itemUnits(id) {
 // Người dùng có thể điều chỉnh mọi chỉ số trong js/config.js
 // ==========================================
 
-// Giá bán: Tính theo năng lượng để tạo ra (30 Vàng / 1⚡, thu hồi 25% giá trị năng lượng)
+// Giá bán: Tính theo năng lượng để tạo ra (15 Vàng / 1⚡, thu hồi 12.5% giá trị năng lượng)
 function sellPrice(id) {
     if (!id || String(id).indexOf('_lv') === -1) return 0;
     var minLv = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellMinLevel === 'number')
@@ -301,24 +297,28 @@ function sellPrice(id) {
     var lv = parseInt(String(id).split('_lv')[1]) || 1;
     if (lv < minLv) return 0;
 
-    var mul = 30;
+    var mul = 15;
     if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellMultiplier === 'number') {
         mul = GAME_CONFIG.gameplay.sellMultiplier;
     } else if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.coinPack) {
         var cost = GAME_CONFIG.energyShop.coinPack.coinCost || 3000;
         var eng = GAME_CONFIG.energyShop.coinPack.energy || 25;
-        mul = Math.round((cost / eng) * 0.25);
+        mul = Math.round((cost / eng) * 0.125);
     }
     var divisor = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellDivisor === 'number')
         ? GAME_CONFIG.gameplay.sellDivisor : 1;
     return Math.floor(itemUnits(id) * mul / divisor);
 }
 
-// Thưởng Vàng khi nộp đơn hàng: tăng theo độ khó (cấp) của món hàng (Kinh tế x10, 60 Vàng / 1⚡)
+// Thưởng Vàng khi nộp đơn hàng: tăng theo độ khó (cấp) của món hàng (24 Vàng / 1⚡, +10% khi đạt 90 ⭐)
 function orderReward(id) {
     var mul = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.orderRewardMultiplier === 'number')
-        ? GAME_CONFIG.gameplay.orderRewardMultiplier : 60;
-    return mul * itemUnits(id);
+        ? GAME_CONFIG.gameplay.orderRewardMultiplier : 24;
+    var base = mul * itemUnits(id);
+    if (getTotalStars() >= 90) {
+        return Math.round(base * 1.1);
+    }
+    return base;
 }
 
 // Thưởng Vàng khi tạo chuỗi Combo ghép liên tiếp
@@ -373,14 +373,14 @@ function mergeReward(newId) {
     return { coins: r.coins || 0, gems: r.gems || 0 };
 }
 
-// Thưởng hoàn thành màn: đọc từ GAME_CONFIG.gameplay.levelClear (Kinh tế x10)
+// Thưởng hoàn thành màn: đọc từ GAME_CONFIG.gameplay.levelClear
 function levelClearReward(lv, stars, firstTime) {
     var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.levelClear) ? GAME_CONFIG.gameplay.levelClear : null;
     var allowReplay = cfg ? cfg.allowReplayReward : false;
     if (!firstTime && !allowReplay) return { coins: 0, gems: 0 };
-    var baseCoins = cfg ? cfg.baseCoins : 200;
-    var perLevel = cfg ? cfg.perLevelCoins : 40;
-    var perStar = cfg ? cfg.perStarCoins : 80;
+    var baseCoins = cfg ? cfg.baseCoins : 150;
+    var perLevel = cfg ? cfg.perLevelCoins : 25;
+    var perStar = cfg ? cfg.perStarCoins : 50;
     var gems3 = cfg ? cfg.gems3Stars : 2;
     var gemsOther = cfg ? cfg.gems1Or2Stars : 1;
     return {
@@ -472,7 +472,7 @@ function tuneOrders(rawOrders, lvNum, levelCfg) {
     return base.slice(0, targetCount);
 }
 
-// B5: ngân sách năng lượng riêng cho mỗi level, đã hiệu chỉnh tương ứng với 3 - 5 đơn hàng
+// B5: ngân sách năng lượng riêng cho mỗi level, đã hiệu chỉnh chặt chẽ để đạt 3 sao thực sự thử thách
 function computeEnergyBudget(board, orderIds, level) {
     var existing = {};
     var webCount = 0;
@@ -490,7 +490,7 @@ function computeEnergyBudget(board, orderIds, level) {
         var line = id.split('_lv')[0];
         var u = itemUnits(id);
         var have = existing[line] || 0;
-        var use = Math.min(u, have * 0.75);
+        var use = Math.min(u, have * 0.94);
         existing[line] = have - use;
         var net = Math.max(0, u - use);
 
@@ -506,18 +506,23 @@ function computeEnergyBudget(board, orderIds, level) {
     Object.keys(genNeedMax).forEach(function (gKey) {
         var maxLine = genNeedMax[gKey];
         var otherLines = genNeedSum[gKey] - maxLine;
-        baseSpawns += maxLine * 3.0 + otherLines * 0.45;
+        baseSpawns += maxLine * 2.15 + otherLines * 0.35;
     });
 
     var adjWeb = !level || level.adjWeb !== false;
-    var webSpawns = webCount * (adjWeb ? 1.5 : 4.0);
+    var webSpawns = webCount * (adjWeb ? 0.65 : 1.3);
 
     var raw = baseSpawns + webSpawns;
-    if (level && level.bonus) raw *= 0.85;
+    if (level && level.bonus) raw *= 0.94;
     if (level && level.spreadEvery) raw *= 1.12;
 
-    var budget = Math.round((raw * 1.35) / 5) * 5;
-    return Math.max(50, Math.min(450, budget));
+    var lvNum = (level && level.num) ? level.num : 1;
+    var mult = lvNum <= 4 ? 0.96 : (lvNum <= 10 ? 1.15 : (lvNum <= 25 ? 1.05 : 1.18));
+    var budget = lvNum <= 10
+        ? Math.round(raw * mult)
+        : Math.round((raw * mult) / 5) * 5;
+    var minB = lvNum === 1 ? 8 : (lvNum <= 4 ? 12 : (lvNum <= 10 ? 28 : 38));
+    return Math.max(minB, Math.min(340, budget));
 }
 
 // Số sao theo phần trăm năng lượng còn lại

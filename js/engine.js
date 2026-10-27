@@ -7,8 +7,8 @@ var COLS = 7;
 var ROWS = 9;
 var TOTAL_CELLS = COLS * ROWS;
 var MAX_ITEM_LV = 8;
-var BONUS_MIN_LV = 4; // ghép ra cấp này trở lên mới có quà (level có cờ bonus)
-var BONUS_CHANCE = 0.55; // xác suất nổ quà tiếp tế khi ghép ra item Lv4+
+var BONUS_MIN_LV = 5; // ghép ra cấp này trở lên mới có quà (level có cờ bonus)
+var BONUS_CHANCE = 0.55; // xác suất nổ quà tiếp tế khi ghép ra item Lv5+
 
 var GENERATORS = {
     'generator_backpack': ['an_lv1', 'cafe_lv1', 'congcu_lv1'],

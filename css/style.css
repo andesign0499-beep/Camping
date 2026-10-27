@@ -384,6 +384,7 @@ body {
     padding-bottom: 18px;
     padding-right: 64px; /* Chừa khoảng trống bên phải cho cây chổi dọn dẹp */
     z-index: 8;
+    transform: translate(-4px, 4px); /* Dịch cụm nhiệm vụ & hint hướng dẫn xuống dưới và sang trái 4px để gần thú cưng hơn */
 }
 
 /* ================== NÚT CÂY CHỔI DỌN DẸP BÀN CỜ ================== */
@@ -553,6 +554,16 @@ body {
 }
 #orders-container::-webkit-scrollbar {
     display: none;
+}
+#orders-container:empty {
+    min-height: 0;
+    padding: 0;
+}
+
+.order-card-flying-away {
+    pointer-events: none !important;
+    user-select: none;
+    z-index: 180010 !important;
 }
 
 .order-card {
@@ -866,51 +877,26 @@ body {
     flex: 0 0 auto;
     width: 116px;
     height: 44px;
-    border-style: solid;
-    border-width: 0 26px;
-    border-radius: 0;
-    background-color: transparent;
-    cursor: pointer;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 8px 2px 8px;
-    transition: transform 0.1s;
-    filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.16));
-}
-
-.footer-img-btn:active {
-    transform: translateY(2px) scale(0.98);
-}
-
-.btn-camp-ui {
-    border-image: url('../assets/images/ui/bt01.png') 0 62 0 62 fill / 0 26px stretch;
-}
-
-.btn-book-ui {
-    border-image: url('../assets/images/ui/bt02.png') 0 62 0 62 fill / 0 26px stretch;
-}
-
-.btn-sell-ui {
-    border-image: url('../assets/images/ui/bt03.png') 0 62 0 62 fill / 0 26px stretch;
-}
-
-.btn-sell-ui.disabled {
-    border-image: url('../assets/images/ui/bt_none.png') 0 62 0 62 fill / 0 26px stretch;
-    cursor: not-allowed;
-    transform: none;
 }
 
 .footer-btn-label {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
     font-family: 'Baloo 2', 'Nunito', sans-serif;
     color: #ffffff;
     font-weight: 800;
     font-size: var(--fs-md);
     line-height: var(--lh-md);
-    text-shadow: 0 2px 2px rgba(0, 0, 0, 0.45), 0 0 4px rgba(0, 0, 0, 0.25);
+    text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.45), 0 0 4px rgba(0, 0, 0, 0.25);
     white-space: nowrap;
     user-select: none;
+    pointer-events: none;
 }
 
 .badge-dot {
@@ -1049,12 +1035,12 @@ body {
 
 .modal-box.map-popup-box,
 .modal-box.book-box,
-.modal-box.shop-box,
 .modal-box.camp-box,
 .modal-box.google-auth-box {
     height: min(750px, 88dvh);
 }
 
+.modal-box.shop-box,
 .modal-box.settings-popup-box,
 .modal-box.win-box,
 .modal-box.lucky-drop-box {
@@ -1291,67 +1277,240 @@ body {
     flex-shrink: 0;
 }
 
-/* Kỹ thuật cắt 9-slice chuẩn tỉ lệ cho bộ Button (335x124px):
-   Cắt giữ nguyên 2 đầu bo tròn 62px, co giãn ngang 100% không biến dạng góc bo và bóng bóng lóa */
-.modal-btn {
-    border-style: solid;
-    border-width: 0 28px;
-    border-image: url('../assets/images/ui/bt02.png') 0 62 0 62 fill / 0 28px stretch;
-    border-radius: 0;
-    background: transparent;
-    padding: 0 1rem 0.125rem 1rem;
-    font-family: 'Baloo 2', 'Nunito', sans-serif;
-    font-weight: 800;
-    font-size: 0.9375rem;
-    line-height: 1.25rem;
-    color: #ffffff;
-    text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.45);
-    cursor: pointer;
-    min-width: 96px;
-    height: 48px;
+/* Đồng nhất kích thước các nút Đóng khi đứng 1 mình dài bằng button Khu Trại (116px x 44px) */
+.modal-buttons > .modal-btn:only-child,
+.modal-buttons > .modal-btn:first-child:last-child {
+    width: 116px !important;
+    min-width: 116px !important;
+    max-width: 116px !important;
+    height: 44px !important;
+    flex: 0 0 116px !important;
+}
+
+/* ================== HỆ THỐNG NÚT BẤM 3-MẢNH (3-SLICE BUTTON SYSTEM) ==================
+   Giữ nguyên tỷ lệ 2 đầu Left & Right (aspect-ratio: 60/124), chỉ co giãn ngang phần giữa Center.
+   Hỗ trợ 4 màu (Green, Blue, Orange-Red, Gray) và 5 kích thước chuẩn 4/8pt (24, 28, 32, 44, 48px). */
+.btn-3s,
+.modal-btn,
+.footer-img-btn,
+.pet-action-btn,
+.loc-action-btn,
+.st-act-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    cursor: pointer;
     box-sizing: border-box;
-    white-space: nowrap;
-    transition: transform 0.1s;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
     user-select: none;
-    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.2));
+    transition: transform 0.08s ease;
+    vertical-align: middle;
+    outline: none;
 }
 
-.modal-btn:active {
-    transform: translateY(2px) scale(0.97);
+.btn-3s:active,
+.modal-btn:active,
+.footer-img-btn:active,
+.pet-action-btn:active,
+.loc-action-btn:active,
+.st-act-btn:active {
+    transform: translateY(2px) scale(0.98);
 }
 
-/* Nút chính / thành công: bt01.png (Xanh lá) */
-.modal-btn.primary {
-    border-image: url('../assets/images/ui/bt01.png') 0 62 0 62 fill / 0 28px stretch;
+.btn-3s-bg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: row;
+    pointer-events: none;
+    z-index: 0;
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.22));
+}
+
+.btn-3s:active .btn-3s-bg,
+.modal-btn:active .btn-3s-bg,
+.footer-img-btn:active .btn-3s-bg,
+.pet-action-btn:active .btn-3s-bg,
+.loc-action-btn:active .btn-3s-bg,
+.st-act-btn:active .btn-3s-bg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.28));
+}
+
+.b3-left {
+    height: 100%;
+    aspect-ratio: 60 / 124;
+    background-position: left center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    flex-shrink: 0;
+}
+
+.b3-mid {
+    height: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: -1px;
+    margin-right: -1px;
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+.b3-right {
+    height: 100%;
+    aspect-ratio: 60 / 124;
+    background-position: right center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    flex-shrink: 0;
+}
+
+.btn-3s-text {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    height: 100%;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-weight: 800;
     color: #ffffff;
     text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.45);
+    white-space: nowrap;
+    box-sizing: border-box;
+    pointer-events: none;
 }
 
-/* Nút thông tin / nạp kim cương / xanh ngọc: bt02.png (Xanh ngọc / Turquoise) */
-.modal-btn.gem-btn {
-    border-image: url('../assets/images/ui/bt02.png') 0 62 0 62 fill / 0 28px stretch;
-    color: #ffffff;
-    text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.45);
+/* --- 4 BỘ MÀU THEO YÊU CẦU --- */
+/* Màu 1: Xanh lá (bt01) */
+.btn-green .b3-left, .btn-primary .b3-left, .modal-btn.primary .b3-left, .btn-camp-ui .b3-left, .btn-equip .b3-left, .st-act-btn.green .b3-left {
+    background-image: url('../assets/images/ui/bt01_left.png');
+}
+.btn-green .b3-mid,  .btn-primary .b3-mid,  .modal-btn.primary .b3-mid,  .btn-camp-ui .b3-mid,  .btn-equip .b3-mid,  .st-act-btn.green .b3-mid {
+    background-image: url('../assets/images/ui/bt01_center.png');
+}
+.btn-green .b3-right, .btn-primary .b3-right, .modal-btn.primary .b3-right, .btn-camp-ui .b3-right, .btn-equip .b3-right, .st-act-btn.green .b3-right {
+    background-image: url('../assets/images/ui/bt01_right.png');
 }
 
-/* Nút bán / cảnh báo: bt03.png (Cam) */
-.modal-btn.danger-btn {
-    border-image: url('../assets/images/ui/bt03.png') 0 62 0 62 fill / 0 28px stretch;
-    color: #ffffff;
-    text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.45);
+/* Màu 2: Xanh dương / Xanh ngọc (bt02) */
+.btn-blue .b3-left, .btn-gem .b3-left, .modal-btn.gem-btn .b3-left, .btn-book-ui .b3-left, .st-act-btn.blue .b3-left, .btn-buy:not(.pet-action-btn):not(.loc-action-btn) .b3-left {
+    background-image: url('../assets/images/ui/bt02_left.png');
+}
+.btn-blue .b3-mid,  .btn-gem .b3-mid,  .modal-btn.gem-btn .b3-mid,  .btn-book-ui .b3-mid,  .st-act-btn.blue .b3-mid,  .btn-buy:not(.pet-action-btn):not(.loc-action-btn) .b3-mid {
+    background-image: url('../assets/images/ui/bt02_center.png');
+}
+.btn-blue .b3-right, .btn-gem .b3-right, .modal-btn.gem-btn .b3-right, .btn-book-ui .b3-right, .st-act-btn.blue .b3-right, .btn-buy:not(.pet-action-btn):not(.loc-action-btn) .b3-right {
+    background-image: url('../assets/images/ui/bt02_right.png');
 }
 
-/* Nút vô hiệu hóa: bt_none.png (Xám chữ trắng dịu) */
-.modal-btn.disabled-btn {
-    border-image: url('../assets/images/ui/bt_none.png') 0 62 0 62 fill / 0 28px stretch;
-    color: rgba(255, 255, 255, 0.85);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-    font-weight: 700;
-    cursor: not-allowed;
+/* Màu 3: Cam đỏ (bt03) */
+.btn-red .b3-left, .btn-danger .b3-left, .modal-btn.danger-btn .b3-left, .btn-sell-ui:not(.disabled) .b3-left, .win-btn-double:not(.disabled-btn) .b3-left, .pet-action-btn.btn-buy .b3-left, .loc-action-btn.btn-buy .b3-left {
+    background-image: url('../assets/images/ui/bt03_left.png');
+}
+.btn-red .b3-mid,  .btn-danger .b3-mid,  .modal-btn.danger-btn .b3-mid,  .btn-sell-ui:not(.disabled) .b3-mid,  .win-btn-double:not(.disabled-btn) .b3-mid,  .pet-action-btn.btn-buy .b3-mid,  .loc-action-btn.btn-buy .b3-mid {
+    background-image: url('../assets/images/ui/bt03_center.png');
+}
+.btn-red .b3-right, .btn-danger .b3-right, .modal-btn.danger-btn .b3-right, .btn-sell-ui:not(.disabled) .b3-right, .win-btn-double:not(.disabled-btn) .b3-right, .pet-action-btn.btn-buy .b3-right, .loc-action-btn.btn-buy .b3-right {
+    background-image: url('../assets/images/ui/bt03_right.png');
+}
+
+/* Màu 4: Xám (bt_none) */
+.btn-gray .b3-left, .btn-disabled .b3-left, .modal-btn.disabled-btn .b3-left, .modal-btn:disabled .b3-left, .btn-active .b3-left, .btn-sell-ui.disabled .b3-left, .win-btn-double.disabled-btn .b3-left, .modal-btn:not(.primary):not(.gem-btn):not(.danger-btn) .b3-left {
+    background-image: url('../assets/images/ui/bt_none_left.png');
+}
+.btn-gray .b3-mid,  .btn-disabled .b3-mid,  .modal-btn.disabled-btn .b3-mid,  .modal-btn:disabled .b3-mid,  .btn-active .b3-mid,  .btn-sell-ui.disabled .b3-mid,  .win-btn-double.disabled-btn .b3-mid,  .modal-btn:not(.primary):not(.gem-btn):not(.danger-btn) .b3-mid {
+    background-image: url('../assets/images/ui/bt_none_center.png');
+}
+.btn-gray .b3-right, .btn-disabled .b3-right, .modal-btn.disabled-btn .b3-right, .modal-btn:disabled .b3-right, .btn-active .b3-right, .btn-sell-ui.disabled .b3-right, .win-btn-double.disabled-btn .b3-right, .modal-btn:not(.primary):not(.gem-btn):not(.danger-btn) .b3-right {
+    background-image: url('../assets/images/ui/bt_none_right.png');
+}
+
+.btn-gray, .btn-disabled, .modal-btn.disabled-btn, .modal-btn:disabled, .btn-sell-ui.disabled, .btn-active {
+    cursor: not-allowed !important;
+    transform: none !important;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12));
+}
+
+.btn-gray .btn-3s-text, .btn-disabled .btn-3s-text, .modal-btn.disabled-btn .btn-3s-text, .modal-btn:disabled .btn-3s-text, .btn-sell-ui.disabled .footer-btn-label, .btn-active .btn-3s-text {
+    color: rgba(255, 255, 255, 0.82) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* --- 5 KÍCH THƯỚC THEO HỆ SỐ 4/8PT: 24px, 28px, 32px, 44px, 48px --- */
+/* Size 24px: Mini */
+.size-24 {
+    height: 24px !important;
+    min-width: 52px;
+}
+.size-24 .btn-3s-text {
+    font-size: 0.6875rem !important;
+    padding: 0 8px 1px 8px !important;
+    line-height: 24px !important;
+}
+
+/* Size 28px: Thẻ Thú cưng / Nút nhỏ gọn */
+.size-28,
+.pet-action-btn {
+    height: 28px !important;
+    min-width: 64px;
+}
+.size-28 .btn-3s-text,
+.pet-action-btn .btn-3s-text {
+    font-size: 0.75rem !important;
+    padding: 0 10px 1px 10px !important;
+    line-height: 28px !important;
+}
+
+/* Size 32px: Thẻ Bối cảnh / Nút trung bình */
+.size-32,
+.loc-action-btn {
+    height: 32px !important;
+    min-width: 76px;
+}
+.size-32 .btn-3s-text,
+.loc-action-btn .btn-3s-text {
+    font-size: 0.8125rem !important;
+    padding: 0 12px 1px 12px !important;
+    line-height: 32px !important;
+}
+
+/* Size 44px: Chuẩn Touch Target di động, Footer & Modals */
+.size-44,
+.modal-btn,
+.footer-img-btn,
+.st-act-btn {
+    height: 44px;
+    min-width: 96px;
+}
+.size-44 .btn-3s-text,
+.modal-btn .btn-3s-text,
+.st-act-btn .btn-3s-text {
+    font-size: 0.9375rem;
+    padding: 0 16px 2px 16px;
+    line-height: 44px;
+}
+
+/* Size 48px: Nút lớn nổi bật / CTA / Chiến thắng x2 / Màn tiếp */
+.size-48,
+.win-btn-double,
+#mb-next {
+    height: 48px !important;
+    min-width: 110px;
+}
+.size-48 .btn-3s-text,
+.win-btn-double .btn-3s-text,
+#mb-next .btn-3s-text {
+    font-size: 1.0625rem !important;
+    padding: 0 20px 2px 20px !important;
+    line-height: 48px !important;
 }
 
 .camp-board-wrap {
@@ -1791,54 +1950,7 @@ body {
     width: 100%;
     max-width: 82px;
     height: 28px;
-    padding: 0 2px;
-    border-radius: 8px;
-    font-family: 'Baloo 2', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 800;
-    border: none;
-    cursor: pointer;
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 28px;
     flex-shrink: 0;
-    -webkit-tap-highlight-color: transparent;
-    transition: transform 0.1s ease-out, filter 0.1s ease-out;
-}
-
-.pet-action-btn.btn-buy {
-    background: linear-gradient(180deg, #ffb74d, #f57c00);
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-    box-shadow: inset 0 -2px 0 #b35600, 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.pet-action-btn.btn-buy:active {
-    transform: translateY(1px);
-    box-shadow: inset 0 -1px 0 #b35600;
-}
-
-.pet-action-btn.btn-equip {
-    background: linear-gradient(180deg, #66bb6a, #388e3c);
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-    box-shadow: inset 0 -2px 0 #1b5e20, 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.pet-action-btn.btn-equip:active {
-    transform: translateY(1px);
-    box-shadow: inset 0 -1px 0 #1b5e20;
-}
-
-.pet-action-btn.btn-active {
-    background: #cfd8dc;
-    color: #546e7a;
-    border: 1px solid #b0bec5;
-    cursor: not-allowed;
-    box-shadow: none;
-    opacity: 0.92;
 }
 
 /* === TAB ĐIỂM ĐẾN (DANH SÁCH 1 BỐI CẢNH 1 HÀNG) === */
@@ -1987,50 +2099,9 @@ body {
 }
 
 .loc-action-btn {
-    font-family: 'Baloo 2', sans-serif;
-    font-weight: 800;
-    font-size: 0.8125rem;
-    padding: 5px 14px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    min-width: 82px;
+    min-width: 84px;
     height: 32px;
-    transition: all 0.12s ease-out;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.loc-action-btn.btn-buy {
-    background: linear-gradient(180deg, #ffb300, #f57c00);
-    color: #ffffff;
-    box-shadow: inset 0 -2px 0 #b35600, 0 2px 4px rgba(0, 0, 0, 0.18);
-}
-
-.loc-action-btn.btn-buy:active {
-    transform: scale(0.96);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.loc-action-btn.btn-equip {
-    background: linear-gradient(180deg, #42a5f5, #1976d2);
-    color: #ffffff;
-    box-shadow: inset 0 -2px 0 #0d47a1, 0 2px 4px rgba(0, 0, 0, 0.18);
-}
-
-.loc-action-btn.btn-equip:active {
-    transform: scale(0.96);
-}
-
-.loc-action-btn.btn-active {
-    background: #c8e6c9;
-    color: #2e7d32;
-    border: 1.5px solid #81c784;
-    cursor: not-allowed;
-    text-shadow: none;
-    box-shadow: none;
+    flex-shrink: 0;
 }
 
 
@@ -2110,20 +2181,15 @@ body {
     background: #fff;
     border: 2px solid #e0cfa9;
     border-radius: var(--rad-lg);
-    padding: 10px 12px;
+    padding: 8px 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.shop-card:has(.shop-badge),
-.shop-card.has-badge {
-    padding-top: 18px; /* Đẩy nội dung bên trong xuống 8px để không bị badge che/cắt */
 }
 
 .shop-card .modal-btn {
     width: 96px;
     min-width: 96px;
     max-width: 96px;
-    height: 42px;
+    height: 44px;
     padding: 0 4px 2px 4px;
     font-size: 0.84375rem;
     font-weight: 800;
@@ -2134,13 +2200,14 @@ body {
 .shop-scroll {
     flex: 1 1 auto;
     min-height: 0;
+    max-height: min(460px, 60dvh);
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: 16px; /* Các ô cách đều nhau 16px */
-    padding: var(--sp-1) 2px 14px 2px;
-    margin: var(--sp-1) 0 4px;
+    gap: 8px; /* Các gói trên dưới cách nhau chuẩn 8px */
+    padding: 2px 2px 8px 2px;
+    margin: 4px 0;
     text-align: left;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
@@ -2666,7 +2733,7 @@ body {
     flex: 1 1 0;
     min-width: 0;
     max-width: 150px;
-    height: 48px;
+    height: 44px;
     font-size: 0.9375rem;
 }
 
@@ -2922,35 +2989,8 @@ body {
 
 .st-act-btn {
     flex: 1;
-    height: 48px;
-    border-style: solid;
-    border-width: 0 28px;
-    background: transparent;
-    color: #ffffff;
-    font-family: 'Baloo 2', 'Nunito', sans-serif;
-    font-size: 1rem;
-    font-weight: 800;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.45);
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-    transition: transform 0.08s;
-    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.18));
-}
-
-.st-act-btn:active {
-    transform: translateY(2px) scale(0.97);
-}
-
-.st-act-btn.green {
-    border-image: url('../assets/images/ui/bt01.png') 0 62 0 62 fill / 0 28px stretch;
-}
-
-.st-act-btn.blue {
-    border-image: url('../assets/images/ui/bt02.png') 0 62 0 62 fill / 0 28px stretch;
+    height: 44px;
+    min-width: 96px;
 }
 
 /* ================== BẢN ĐỒ HÀNH TRÌNH CHUẨN MOCKUP ================== */
@@ -2980,40 +3020,191 @@ body {
     height: 0 !important;
 }
 
-/* === BẢN ĐỒ HÀNH TRÌNH 45 MÀN (REDESIGNED) === */
-.map-stats-summary {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 4px 0 10px 0;
-    width: 100%;
+/* === BẢN ĐỒ HÀNH TRÌNH 45 MÀN (REDESIGNED STAR PROGRESSION) === */
+.map-star-tracker {
+    background: linear-gradient(180deg, #ecd5b8 0%, #dfc6a3 100%);
+    border: 2px solid #c9b18f;
+    border-radius: 16px;
+    padding: 10px 12px 8px;
+    margin-bottom: 10px;
+    box-shadow: inset 0 -1.5px 0 rgba(0, 0, 0, 0.12), 0 3px 6px rgba(0, 0, 0, 0.08);
 }
 
-.map-stat-badge {
-    background: #dfcfb2;
-    border: 1.5px solid #bcaaa4;
-    border-radius: 12px;
-    padding: 4px 12px;
+.star-tracker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.scout-rank-badge {
+    background: #5d4037;
+    color: #ffffff;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 0.78rem;
+    padding: 3px 10px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
+}
+
+.star-counter-pill {
+    background: #ffffff;
+    border: 1.5px solid #d7ccc8;
+    border-radius: 10px;
+    padding: 2px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-family: 'Baloo 2', sans-serif;
-    font-size: 0.8125rem;
+    font-size: 0.82rem;
     font-weight: 800;
-    color: #5d4037;
-    box-shadow: inset 0 -1.5px 0 rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.08);
+    color: #e65100;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .stat-star-ico {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
     object-fit: contain;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
-.stat-lv-ico {
-    font-size: 0.875rem;
+.star-milestone-track {
+    position: relative;
+    margin: 12px 4px 4px 4px;
+    padding-bottom: 22px;
+}
+
+.star-progress-bar-bg {
+    height: 8px;
+    background: #cbb497;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.star-progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffb300, #ff8f00);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.star-milestone-nodes {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: -19px;
+    padding: 0 2px;
+}
+
+.milestone-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    width: 52px;
+}
+
+.milestone-node:hover {
+    transform: translateY(-2px);
+}
+
+.milestone-node:active {
+    transform: scale(0.95);
+}
+
+.milestone-icon-wrap {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #bcaaa4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    line-height: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.milestone-node.can-claim .milestone-icon-wrap {
+    border-color: #ff9800;
+    background: #fff8e1;
+    box-shadow: 0 0 0 2px #ffe082, 0 0 10px #ff9800;
+    animation: chestPulse 1.2s infinite ease-in-out;
+}
+
+.milestone-node.claimed .milestone-icon-wrap {
+    border-color: #81c784;
+    background: #e8f5e9;
+    opacity: 0.9;
+}
+
+.milestone-node.locked .milestone-icon-wrap {
+    opacity: 0.7;
+    filter: grayscale(0.4);
+}
+
+@keyframes chestPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 2px #ffe082, 0 0 6px #ff9800; }
+    50% { transform: scale(1.15); box-shadow: 0 0 0 3px #ffe082, 0 0 14px #ff9800; }
+}
+
+.milestone-claim-btn {
+    margin-top: 4px;
+    padding: 1px 7px;
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 800;
+    height: 20px;
+    line-height: 18px;
+    border-radius: 6px;
+    border: none;
+    background: linear-gradient(180deg, #ff9800, #f57c00);
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(245, 124, 0, 0.4);
+    animation: pulseCurrentTag 1.5s infinite ease-in-out;
+    white-space: nowrap;
+}
+
+.milestone-status-txt {
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 800;
+    margin-top: 4px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.milestone-status-txt.claimed {
+    color: #2e7d32;
+}
+
+.milestone-status-txt.locked {
+    color: #6d4c41;
+}
+
+.star-chest-tip-bar {
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 8px;
+    padding: 5px 8px;
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 0.72rem;
+    color: #4e342e;
+    text-align: center;
+    margin-top: 8px;
+    font-weight: 600;
+    line-height: 1.25;
+    border: 1px solid rgba(196, 171, 137, 0.5);
 }
 
 .chapter-title {
@@ -3079,12 +3270,17 @@ body {
     box-shadow: none;
 }
 
+.level-card.perfect-3star {
+    border-color: #d7ccc8;
+}
+
 .level-card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 100%;
     margin-bottom: 2px;
+    gap: 4px;
 }
 
 .level-card-badge {
@@ -3115,6 +3311,22 @@ body {
     text-transform: uppercase;
     box-shadow: 0 1px 3px rgba(245, 124, 0, 0.4);
     animation: pulseCurrentTag 1.6s infinite ease-in-out;
+}
+
+.level-card-done-ico {
+    font-size: 0.68rem;
+    font-weight: 900;
+    color: #2e7d32;
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    margin-left: auto;
 }
 
 @keyframes pulseCurrentTag {
@@ -3168,20 +3380,163 @@ body {
     filter: grayscale(1);
 }
 
-.chapter-locked-card {
-    background: #f0e6d8;
+/* === THẺ MÀN BOSS CHỐT CHƯƠNG (LV.10, LV.25, LV.35, LV.45) === */
+.boss-level-card {
+    grid-column: 1 / -1;
+    background: linear-gradient(180deg, #fffaf2 0%, #ffeed9 100%);
+    border: 2px solid #e09f5b;
+    box-shadow: 0 4px 10px rgba(181, 93, 20, 0.15);
+    border-radius: 14px;
+    padding: 10px 12px;
+    align-items: stretch;
+    text-align: left;
+}
+
+.boss-level-card.current {
+    border: 2px solid #e65100;
+    background: linear-gradient(180deg, #fffbf0 0%, #ffe0b2 100%);
+    box-shadow: 0 0 0 2px #ffe082, 0 4px 14px rgba(230, 81, 0, 0.4);
+}
+
+.boss-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    width: 100%;
+}
+
+.boss-card-crown {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.boss-card-tag {
+    background: linear-gradient(90deg, #d84315, #f4511e);
+    color: #ffffff;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 0.72rem;
+    line-height: 1;
+    padding: 3px 8px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.boss-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.boss-card-name {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #3e2723;
+    line-height: 1.2;
+}
+
+.boss-card-desc {
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 0.72rem;
+    color: #6d4c41;
+    font-style: italic;
+    line-height: 1.25;
+}
+
+.boss-stars {
+    margin-top: 4px;
+    justify-content: flex-start;
+}
+
+/* === CỔNG KHÓA CHƯƠNG THEO MỐC SAO (STAR GATES) === */
+.chapter-star-gate {
+    background: linear-gradient(180deg, #ece4d8 0%, #dfd5c7 100%);
     border: 2px dashed #bcaaa4;
     border-radius: 14px;
-    padding: 14px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.chapter-star-gate:hover {
+    transform: translateY(-1px);
+    border-color: #8d6e63;
+}
+
+.chapter-star-gate:active {
+    transform: scale(0.98);
+}
+
+.gate-lock-icon-wrap {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    background: #dfcfb2;
+    border: 2px solid #bcaaa4;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    color: #8d6e63;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.gate-lock-img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    opacity: 0.85;
+}
+
+.gate-info {
+    flex: 1;
+    text-align: left;
+}
+
+.gate-title {
     font-family: 'Baloo 2', sans-serif;
     font-weight: 800;
     font-size: 0.85rem;
-    margin-bottom: 14px;
+    color: #4e342e;
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+.gate-desc {
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 0.72rem;
+    color: #6d4c41;
+    margin-bottom: 5px;
+    line-height: 1.2;
+}
+
+.gate-progress-track {
+    height: 6px;
+    background: #cbb497;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 3px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.gate-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff9800, #f57c00);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.gate-progress-text {
+    font-family: 'Baloo 2', sans-serif;
+    font-size: 0.68rem;
+    color: #5d4037;
+    font-weight: 700;
 }
 
 .reset-confirm-area {

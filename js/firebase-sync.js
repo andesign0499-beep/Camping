@@ -22,6 +22,10 @@ var FIREBASE_SYNC = (function () {
         if (stored && stored.apiKey && stored.projectId && stored.apiKey.trim().length > 10) {
             return stored;
         }
+        // Cho phép đọc cấu hình từ file local riêng biệt (không commit lên Git)
+        if (typeof FIREBASE_LOCAL_CONFIG !== 'undefined' && FIREBASE_LOCAL_CONFIG && FIREBASE_LOCAL_CONFIG.apiKey) {
+            return FIREBASE_LOCAL_CONFIG;
+        }
         var cfg = typeof GAME_CONFIG !== 'undefined' ? GAME_CONFIG.firebase : null;
         if (cfg && cfg.apiKey && cfg.apiKey.trim().length > 10 && cfg.projectId) {
             return cfg;

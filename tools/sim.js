@@ -9,22 +9,44 @@
 const fs = require('fs');
 const vm = require('vm');
 
-const ctx = {
-    localStorage: { getItem: () => null, setItem: () => {} },
-    console
-};
-vm.createContext(ctx);
+global.localStorage = { getItem: () => null, setItem: () => {} };
+vm.runInThisContext(fs.readFileSync('js/config.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync('js/data.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync('js/engine.js', 'utf8'));
+vm.runInThisContext(fs.readFileSync('js/progress.js', 'utf8'));
+const ctx = global;
 
-vm.runInContext(fs.readFileSync('js/config.js', 'utf8'), ctx);
-vm.runInContext(fs.readFileSync('js/data.js', 'utf8'), ctx);
-vm.runInContext(fs.readFileSync('js/engine.js', 'utf8'), ctx);
-vm.runInContext(fs.readFileSync('js/progress.js', 'utf8'), ctx);
+function populateInitial(board) {
+    const lines = [];
+    board.forEach(c => {
+        if (c && ctx.GENERATORS[c.id] && !c.isLocked) {
+            ctx.GENERATORS[c.id].forEach(id => {
+                const l = id.split('_lv')[0];
+                if (lines.indexOf(l) === -1) lines.push(l);
+            });
+        }
+    });
+    if (!lines.length) return;
+    const empties = ctx.getEmptyIndexes(board);
+    const pairCount = Math.min(2, Math.floor(empties.length / 6));
+    for (let p = 0; p < pairCount; p++) {
+        const line = lines[p % lines.length];
+        const itemId = line + '_lv1';
+        for (let k = 0; k < 2; k++) {
+            const curEmpties = ctx.getEmptyIndexes(board);
+            if (!curEmpties.length) break;
+            const pick = curEmpties[Math.floor(Math.random() * curEmpties.length)];
+            board[pick] = { id: itemId, isRock: false, isLocked: false };
+        }
+    }
+}
 
 function simulateOneGame(lvNum, maxEnergyCap) {
     const level = ctx.getLevelConfig(lvNum);
     const board = ctx.buildBoard(level);
     const orderIds = ctx.tuneOrders(level.rawOrders, lvNum, level);
     const orders = orderIds.map(id => ({ id, done: false }));
+    populateInitial(board);
 
     const gens = [];
     board.forEach((c, idx) => {
@@ -59,8 +81,8 @@ function simulateOneGame(lvNum, maxEnergyCap) {
         const merge = ctx.findBestMerge(board, orders, level);
         const empties = ctx.getEmptyIndexes(board);
 
-        // Nếu có nước ghép tốt (score > 1) hoặc bàn cờ sắp đầy (<= 2 ô trống) thì ghép ngay
-        if (merge && (merge.score > 1 || empties.length <= 2)) {
+        // Nếu có nước ghép thì ghép ngay
+        if (merge) {
             const res = ctx.doMove(board, merge.from, merge.to);
             if (res.type === 'merge') {
                 ctx.clearAdjacentWebs(board, res.index, level);
@@ -88,15 +110,6 @@ function simulateOneGame(lvNum, maxEnergyCap) {
 
         // 5. Chọn nguồn phát thông minh (ưu tiên nguồn phát chứa dòng item đang cần)
         if (energyUsed >= maxEnergyCap) {
-            // Hết năng lượng nhưng nếu còn nước ghép rác thì thử ghép nốt
-            if (merge) {
-                const res = ctx.doMove(board, merge.from, merge.to);
-                if (res.type === 'merge') {
-                    ctx.clearAdjacentWebs(board, res.index, level);
-                    ctx.bonusDrop(board, level, res.newId);
-                }
-                continue;
-            }
             return { won: false, energyUsed };
         }
 
@@ -115,7 +128,7 @@ function simulateOneGame(lvNum, maxEnergyCap) {
         }
 
         // Nếu chỉ còn nhện mà không có đơn hàng cần dòng đó -> cố gắng đặt item gần nhện để phá nhện liền kề
-        ctx.spawnItem(board, bestGen);
+        ctx.spawnItem(board, bestGen, orders);
         energyUsed++;
 
         if (level.spreadEvery && energyUsed % level.spreadEvery === 0) {
