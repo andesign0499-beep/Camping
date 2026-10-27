@@ -472,57 +472,60 @@ function tuneOrders(rawOrders, lvNum, levelCfg) {
     return base.slice(0, targetCount);
 }
 
-// B5: ngân sách năng lượng riêng cho mỗi level, đã hiệu chỉnh chặt chẽ để đạt 3 sao thực sự thử thách
+// B5: Ngân sách năng lượng chuẩn cho mỗi level, đồng bộ với thuật toán rơi đồ theo thiếu hụt (computeLineDeficits)
+// Sao được chấm trên số lượt bấm hữu ích (effectiveSpent = levelClicks - levelUnwantedClicks):
+// - Chơi chuẩn kỹ thuật (tận dụng đồ mồi/nhện, không bán nhầm, không bấm thừa): luôn đạt 3⭐ công bằng, không sợ đen RNG
+// - Chơi ẩu (bỏ qua mạng nhện, bấm loạn nguồn phát không cần thiết, để nhện lan): tụt xuống 2⭐ hoặc 1⭐
 function computeEnergyBudget(board, orderIds, level) {
-    var existing = {};
+    var lvNum = (level && level.num) ? level.num : 1;
+    var adjWeb = !level || level.adjWeb !== false;
+
+    var totalDeficit = 0;
+    if (typeof computeLineDeficits === 'function') {
+        var deficits = computeLineDeficits(board, orderIds, level);
+        Object.keys(deficits).forEach(function (line) {
+            totalDeficit += deficits[line] || 0;
+        });
+    } else {
+        var existing = {};
+        board.forEach(function (c) {
+            if (!c || !c.id || GENERATORS[c.id]) return;
+            var line = c.id.split('_lv')[0];
+            existing[line] = (existing[line] || 0) + itemUnits(c.id);
+        });
+        orderIds.forEach(function (id) {
+            var line = id.split('_lv')[0];
+            var u = itemUnits(id);
+            var use = Math.min(u, existing[line] || 0);
+            existing[line] = (existing[line] || 0) - use;
+            totalDeficit += Math.max(0, u - use);
+        });
+    }
+
     var webCount = 0;
     board.forEach(function (c) {
-        if (!c || !c.id || GENERATORS[c.id]) return;
-        var line = c.id.split('_lv')[0];
-        var u = itemUnits(c.id);
-        existing[line] = (existing[line] || 0) + u;
-        if (c.isLocked) webCount++;
+        if (c && c.isLocked) webCount++;
     });
 
-    var genNeedMax = {};
-    var genNeedSum = {};
-    orderIds.forEach(function (id) {
-        var line = id.split('_lv')[0];
-        var u = itemUnits(id);
-        var have = existing[line] || 0;
-        var use = Math.min(u, have * 0.94);
-        existing[line] = have - use;
-        var net = Math.max(0, u - use);
+    var expectedEff = Math.max(3, totalDeficit);
+    if (level && level.bonus) {
+        expectedEff *= (lvNum >= 36 ? 0.86 : 0.90);
+    }
+    if (level && level.spreadEvery) {
+        expectedEff *= 1.06;
+    }
+    if (adjWeb && webCount > 0) {
+        expectedEff += Math.min(2, webCount * 0.10);
+    }
 
-        var gKey = line;
-        Object.keys(GENERATORS).forEach(function (gId) {
-            if (GENERATORS[gId].indexOf(line + '_lv1') !== -1) gKey = gId;
-        });
-        genNeedMax[gKey] = Math.max(genNeedMax[gKey] || 0, net);
-        genNeedSum[gKey] = (genNeedSum[gKey] || 0) + net;
-    });
+    // Hạn mức tối đa để đạt 3 sao (effectiveSpent <= budget * 0.70):
+    // Cho phép sai số nhỏ 1-2 lượt ở 10 màn đầu và ~12% ở các màn lớn
+    var skillAllowance = lvNum <= 4 ? 1.0 : (lvNum <= 10 ? 1.5 : Math.max(2.0, expectedEff * 0.12));
+    var target3StarMax = expectedEff + skillAllowance;
+    var budget = Math.ceil(target3StarMax / 0.70);
 
-    var baseSpawns = 0;
-    Object.keys(genNeedMax).forEach(function (gKey) {
-        var maxLine = genNeedMax[gKey];
-        var otherLines = genNeedSum[gKey] - maxLine;
-        baseSpawns += maxLine * 2.15 + otherLines * 0.35;
-    });
-
-    var adjWeb = !level || level.adjWeb !== false;
-    var webSpawns = webCount * (adjWeb ? 0.65 : 1.3);
-
-    var raw = baseSpawns + webSpawns;
-    if (level && level.bonus) raw *= 0.94;
-    if (level && level.spreadEvery) raw *= 1.12;
-
-    var lvNum = (level && level.num) ? level.num : 1;
-    var mult = lvNum <= 4 ? 0.96 : (lvNum <= 10 ? 1.15 : (lvNum <= 25 ? 1.05 : 1.18));
-    var budget = lvNum <= 10
-        ? Math.round(raw * mult)
-        : Math.round((raw * mult) / 5) * 5;
-    var minB = lvNum === 1 ? 8 : (lvNum <= 4 ? 12 : (lvNum <= 10 ? 28 : 38));
-    return Math.max(minB, Math.min(340, budget));
+    var minB = lvNum <= 2 ? 8 : (lvNum <= 4 ? 11 : (lvNum <= 10 ? 15 : 18));
+    return Math.max(minB, Math.min(240, budget));
 }
 
 // Số sao theo phần trăm năng lượng còn lại

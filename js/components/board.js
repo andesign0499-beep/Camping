@@ -12,6 +12,7 @@ var boardData = [];
 var currentOrders = [];
 var selectedIndex = null;
 var levelClicks = 0;
+var levelUnwantedClicks = 0; // Số lượt nguồn phát rơi lệch sang nhánh không cần thiết (được miễn trừ khi tính Sao)
 var isAutoEnabled = false; // AUTO chỉ là chế độ debug, mặc định tắt
 var levelWon = false;
 var levelBudget = 0; // Ngân sách năng lượng chuẩn của màn: chỉ dùng để tính sao
@@ -893,6 +894,7 @@ function persistCurrentBoardState() {
                 return { id: o.id, done: !!o.done };
             }),
             levelClicks: levelClicks,
+            levelUnwantedClicks: levelUnwantedClicks,
             levelBudget: levelBudget,
             isReplayLevel: isReplayLevel,
             savedAt: Date.now()
@@ -915,6 +917,10 @@ function loadLevel(lvNum, options) {
         topSceneEl.style.backgroundImage = "url('" + getLevelBackground(lvNum) + "')";
     }
     levelClicks = 0;
+    levelUnwantedClicks = 0;
+    if (typeof resetGeneratorPity === 'function') {
+        resetGeneratorPity();
+    }
     tutMergeCount = 0;
     tutDeliveredOnce = false;
     levelIntroShown = false;
@@ -946,6 +952,7 @@ function loadLevel(lvNum, options) {
             return { id: o.id, done: !!o.done };
         });
         levelClicks = SAVE.currentBoardState.levelClicks || 0;
+        levelUnwantedClicks = SAVE.currentBoardState.levelUnwantedClicks || 0;
         levelBudget = SAVE.currentBoardState.levelBudget || computeEnergyBudget(boardData, currentOrders.map(o => o.id), currentLevelCfg);
         isReplayLevel = SAVE.currentBoardState.isReplayLevel !== undefined ? SAVE.currentBoardState.isReplayLevel : !!SAVE.stars[lvNum];
     } else {
@@ -953,7 +960,7 @@ function loadLevel(lvNum, options) {
         var orderIds = tuneOrders(currentLevelCfg.rawOrders, lvNum, currentLevelCfg);
         currentOrders = orderIds.map(id => ({ id: id, done: false }));
 
-        // Tự động đổ kín 100% các ô trên bàn chơi ngay từ đầu khi tạo màn mới
+        // Khởi tạo cặp vật phẩm mồi thuộc đúng nhánh đơn hàng đang cần (từ Lv.3 trở đi)
         populateInitialBoardItems();
 
         levelBudget = computeEnergyBudget(boardData, orderIds, currentLevelCfg);
@@ -977,9 +984,13 @@ function loadLevel(lvNum, options) {
     }
 }
 
-// Khởi tạo nhẹ bàn cờ khi bắt đầu màn mới: chỉ rải tối đa 2 cặp (4 món Lv.1)
-// để bàn cờ giữ >80% ô trống thông thoáng, không bao giờ kẹt máy phát hay tự thắng ở 0⚡.
+// Khởi tạo nhẹ bàn cờ khi bắt đầu màn mới:
+// - Lv.1 -> Lv.4 (bàn 5x5 nhỏ) đã có sẵn các món freeItems mồi ngay cạnh mạng nhện nên không rải thêm đồ ngẫu nhiên.
+// - Lv.5 -> Lv.10: rải 1 cặp (2 món Lv.1) ưu tiên đúng dòng sản phẩm nằm trong đơn hàng.
+// - Lv.11+: rải tối đa 2 cặp (4 món Lv.1) ưu tiên đúng các dòng sản phẩm nằm trong đơn hàng của màn chơi.
 function populateInitialBoardItems() {
+    if (currentLevel <= 4) return;
+
     var generators = [];
     boardData.forEach((c, idx) => {
         if (c && GENERATORS[c.id] && !c.isLocked) generators.push(idx);
@@ -990,21 +1001,34 @@ function populateInitialBoardItems() {
     if (!empties.length) return;
 
     // Thu thập các dòng sản phẩm từ các máy sinh đồ trong màn
-    var availableLines = [];
+    var genLines = [];
     generators.forEach(genIdx => {
         var genId = boardData[genIdx].id;
         var list = GENERATORS[genId] || [];
         list.forEach(id => {
             var line = id.split('_lv')[0];
-            if (availableLines.indexOf(line) === -1) {
-                availableLines.push(line);
+            if (genLines.indexOf(line) === -1) {
+                genLines.push(line);
             }
         });
     });
-    if (!availableLines.length) availableLines = ['an', 'ban', 'cafe'];
 
-    // Rải tối đa 2 cặp (4 vật phẩm Lv.1) để mồi nước ghép đầu tiên mà vẫn giữ bàn cờ thông thoáng
-    var pairCount = Math.min(2, Math.floor(empties.length / 6));
+    // Ưu tiên chọn các dòng có trong đơn hàng hiện tại để không bao giờ rải đồ thừa ngoài nhiệm vụ
+    var orderLines = [];
+    if (currentOrders && Array.isArray(currentOrders)) {
+        currentOrders.forEach(function (o) {
+            if (!o || o.done || !o.id) return;
+            var line = itemLine(o.id);
+            if (genLines.indexOf(line) !== -1 && orderLines.indexOf(line) === -1) {
+                orderLines.push(line);
+            }
+        });
+    }
+    var availableLines = orderLines.length > 0 ? orderLines : (genLines.length > 0 ? genLines : ['an', 'ban', 'cafe']);
+
+    // Rải 1 cặp ở Lv.5-10 và tối đa 2 cặp ở Lv.11+ để mồi nước ghép đầu tiên mà vẫn giữ bàn cờ thông thoáng
+    var maxPairs = currentLevel <= 10 ? 1 : 2;
+    var pairCount = Math.min(maxPairs, Math.floor(empties.length / 6));
     for (var p = 0; p < pairCount; p++) {
         var line = availableLines[p % availableLines.length];
         var itemId = line + '_lv1';
@@ -1027,9 +1051,12 @@ function fillBoardInstantly() {
     while (getEmptyIndexes(boardData).length > 0 && playerEnergy > 0) {
         var genIdx = generators[Math.floor(Math.random() * generators.length)];
         var genId = boardData[genIdx].id;
-        if (spawnItem(boardData, genId) === -1) break;
+        if (spawnItem(boardData, genId, currentOrders, currentLevelCfg) === -1) break;
         playerEnergy--;
         levelClicks++;
+        if (typeof wasLastSpawnUnwanted === 'function' && wasLastSpawnUnwanted()) {
+            levelUnwantedClicks++;
+        }
     }
 }
 
@@ -1619,7 +1646,7 @@ function spawnFromGenerator(gen, cellElement) {
         openEnergyShop();
         return;
     }
-    var target = spawnItem(boardData, gen.id, currentOrders);
+    var target = spawnItem(boardData, gen.id, currentOrders, currentLevelCfg);
     if (target === -1) {
         renderBoard();
         var best = findBestMerge(boardData, currentOrders, currentLevelCfg);
@@ -1639,6 +1666,9 @@ function spawnFromGenerator(gen, cellElement) {
     }
     playerEnergy--;
     levelClicks++;
+    if (typeof wasLastSpawnUnwanted === 'function' && wasLastSpawnUnwanted()) {
+        levelUnwantedClicks++;
+    }
 
     var spreadIdx = -1;
     if (currentLevelCfg && currentLevelCfg.spreadEvery && levelClicks % currentLevelCfg.spreadEvery === 0) {
@@ -1681,10 +1711,13 @@ function bulkSpawnFromGenerator(gen, cellElement) {
         SAVE.lastEnergyTs = Date.now();
     }
     for (var i = 0; i < spawnCount; i++) {
-        var tIdx = spawnItem(boardData, gen.id, currentOrders);
+        var tIdx = spawnItem(boardData, gen.id, currentOrders, currentLevelCfg);
         if (tIdx === -1) break;
         playerEnergy--;
         levelClicks++;
+        if (typeof wasLastSpawnUnwanted === 'function' && wasLastSpawnUnwanted()) {
+            levelUnwantedClicks++;
+        }
         spawnedTargets.push(tIdx);
 
         if (currentLevelCfg && currentLevelCfg.spreadEvery && levelClicks % currentLevelCfg.spreadEvery === 0) {
@@ -1962,9 +1995,9 @@ function refreshLevelSelect() {
 }
 
 function finishLevel() {
-    // Sao tính theo năng lượng đã tiêu trong màn này so với ngân sách chuẩn của màn
-    var spent = levelClicks;
-    var stars = calcStars(Math.max(0, levelBudget - spent), levelBudget);
+    // Giải pháp 2: Sao tính theo năng lượng thực tế hữu ích (khấu trừ các lượt nguồn phát rơi lệch RNG ngoài tầm kiểm soát)
+    var effectiveSpent = Math.max(1, levelClicks - (levelUnwantedClicks || 0));
+    var stars = calcStars(Math.max(0, levelBudget - effectiveSpent), levelBudget);
     var oldStars = SAVE.stars[currentLevel] || 0;
     var firstTime = oldStars === 0;
     var reward = levelClearReward(currentLevel, stars, firstTime);

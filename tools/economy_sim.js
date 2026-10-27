@@ -19,20 +19,31 @@ const ctx = global;
 const RUNS = parseInt(process.argv[2]) || 100;
 const MAX_LV = parseInt(process.argv[3]) || ctx.RAW_LEVELS.length;
 
-// Đồng bộ logic populateInitialBoardItems() trong board.js (rải tối đa 2 cặp = 4 món Lv.1)
-function populateInitial(board) {
-    const lines = [];
+// Đồng bộ logic populateInitialBoardItems() trong board.js
+function populateInitial(board, orders, lvNum) {
+    if (lvNum <= 4) return;
+    const genLines = [];
     board.forEach(c => {
         if (c && ctx.GENERATORS[c.id] && !c.isLocked) {
             ctx.GENERATORS[c.id].forEach(id => {
                 const l = id.split('_lv')[0];
-                if (lines.indexOf(l) === -1) lines.push(l);
+                if (genLines.indexOf(l) === -1) genLines.push(l);
             });
         }
     });
-    if (!lines.length) return;
+    if (!genLines.length) return;
+    const orderLines = [];
+    (orders || []).forEach(o => {
+        if (!o || o.done || !o.id) return;
+        const l = ctx.itemLine(o.id);
+        if (genLines.indexOf(l) !== -1 && orderLines.indexOf(l) === -1) {
+            orderLines.push(l);
+        }
+    });
+    const lines = orderLines.length > 0 ? orderLines : genLines;
     const empties = ctx.getEmptyIndexes(board);
-    const pairCount = Math.min(2, Math.floor(empties.length / 6));
+    const maxPairs = lvNum <= 10 ? 1 : 2;
+    const pairCount = Math.min(maxPairs, Math.floor(empties.length / 6));
     for (let p = 0; p < pairCount; p++) {
         const line = lines[p % lines.length];
         const itemId = line + '_lv1';
@@ -50,13 +61,14 @@ function simulate(lvNum) {
     const board = ctx.buildBoard(level);
     const orderIds = ctx.tuneOrders(level.rawOrders, lvNum, level);
     const orders = orderIds.map(id => ({ id, done: false }));
-    populateInitial(board);
+    if (typeof ctx.resetGeneratorPity === 'function') ctx.resetGeneratorPity();
+    populateInitial(board, orders, lvNum);
     const budget = ctx.computeEnergyBudget(board, orderIds, level);
 
     const gens = [];
     board.forEach(c => { if (c && ctx.GENERATORS[c.id] && !c.isLocked) gens.push(c.id); });
 
-    let energy = 0, gold = 0, gems = 0, steps = 0;
+    let energy = 0, unwantedClicks = 0, gold = 0, gems = 0, steps = 0;
     while (steps++ < 3000) {
         let submitted = false;
         for (const o of orders) {
@@ -71,7 +83,8 @@ function simulate(lvNum) {
         }
         if (submitted) continue;
         if (orders.every(o => o.done) && ctx.countWebs(board) === 0) {
-            const stars = ctx.calcStars(Math.max(0, budget - energy), budget);
+            const effectiveSpent = Math.max(1, energy - unwantedClicks);
+            const stars = ctx.calcStars(Math.max(0, budget - effectiveSpent), budget);
             const r = ctx.levelClearReward(lvNum, stars, true);
             gold += r.coins; gems += r.gems;
             board.forEach(c => {
@@ -79,7 +92,7 @@ function simulate(lvNum) {
                     gold += ctx.sellPrice(c.id);
                 }
             });
-            return { won: true, energy, gold, gems, budget, stars };
+            return { won: true, energy, effectiveSpent, gold, gems, budget, stars };
         }
         const merge = ctx.findBestMerge(board, orders, level);
         const empties = ctx.getEmptyIndexes(board);
@@ -106,15 +119,18 @@ function simulate(lvNum) {
             board[sellIdx] = ctx.makeEmptyCell();
             continue;
         }
-        const need = ctx.neededLevels(board, orders);
+        const deficits = ctx.computeLineDeficits(board, orders, level);
         let bestGen = gens[0], bestW = -1;
         for (const g of gens) {
             let w = Math.random() * 0.5;
-            ctx.GENERATORS[g].forEach(l => { const n = need[ctx.itemLine(l)]; if (n) w += Math.pow(2, n); });
+            ctx.GENERATORS[g].forEach(l => { const d = deficits[ctx.itemLine(l)]; if (d) w += d * 10; });
             if (w > bestW) { bestW = w; bestGen = g; }
         }
-        ctx.spawnItem(board, bestGen, orders);
+        ctx.spawnItem(board, bestGen, orders, level);
         energy++;
+        if (typeof ctx.wasLastSpawnUnwanted === 'function' && ctx.wasLastSpawnUnwanted()) {
+            unwantedClicks++;
+        }
         if (level.spreadEvery && energy % level.spreadEvery === 0) ctx.spreadWeb(board);
     }
     return { won: false, energy, gold, gems, budget, stars: 0 };

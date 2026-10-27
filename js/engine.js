@@ -103,55 +103,258 @@ function clearAdjacentWebs(board, toIdx, level) {
     return cleared;
 }
 
-// Sinh 1 item từ nguồn phát vào ô trống ngẫu nhiên. Trả về index ô mới, hoặc -1 nếu bàn đầy
-// Task 2: Thuật toán Rơi Đồ Thông Minh (Smart Drop & Anti-Board Lock)
-// Tăng 35% trọng số (weight = 1.35) cho các nhánh đồ đang nằm trong đơn hàng hoặc ô mạng nhện trên bàn
-function spawnItem(board, genId, activeOrders) {
-    var empty = getEmptyIndexes(board);
-    if (!empty.length) return -1;
-    var list = GENERATORS[genId];
-    if (!list || !list.length) return -1;
+// Bộ đếm bảo hiểm chống rơi lệch (Pity System) cho từng nguồn phát và trạng thái lượt sinh gần nhất
+var genOffOrderStreak = {};
+var lastSpawnResult = { target: -1, id: null, line: null, wasUnwanted: false };
 
-    // Thu thập các nhánh cần thiết từ đơn hàng và ô mạng nhện trên bàn
-    var neededLines = [];
+function resetGeneratorPity() {
+    genOffOrderStreak = {};
+    lastSpawnResult = { target: -1, id: null, line: null, wasUnwanted: false };
+}
+
+function wasLastSpawnUnwanted() {
+    return !!(lastSpawnResult && lastSpawnResult.wasUnwanted);
+}
+
+// Mô phỏng gộp các vật phẩm hiện có trên bàn của 1 nhánh từ Lv.1 -> Lv.8 để tính chính xác lượng đơn vị Lv.1 còn thiếu
+function simulateLineProgress(fByLv, wByLv, orderByLv, canBreakWebByAdj) {
+    var curF = {};
+    var curW = {};
+    var remOrders = {};
+    for (var l = 1; l <= MAX_ITEM_LV; l++) {
+        curF[l] = fByLv[l] || 0;
+        curW[l] = wByLv[l] || 0;
+        remOrders[l] = orderByLv[l] || 0;
+    }
+
+    function hasOrderAbove(lv) {
+        for (var k = lv + 1; k <= MAX_ITEM_LV; k++) {
+            if ((remOrders[k] || 0) > 0) return true;
+        }
+        return false;
+    }
+
+    for (var lv = 1; lv <= MAX_ITEM_LV; lv++) {
+        var needAbove = hasOrderAbove(lv);
+
+        // Nếu không còn đơn ở cấp cao hơn, ưu tiên hoàn thành đơn ngay tại cấp lv trước
+        if (!needAbove && remOrders[lv] > 0 && curF[lv] > 0) {
+            var takeNow = Math.min(curF[lv], remOrders[lv]);
+            curF[lv] -= takeNow;
+            remOrders[lv] -= takeNow;
+        }
+
+        // Ghép 1 đồ tự do + 1 ô mạng nhện cùng cấp -> 1 đồ tự do ở cấp lv+1
+        if (lv < MAX_ITEM_LV && curF[lv] > 0 && curW[lv] > 0) {
+            if (needAbove || !canBreakWebByAdj) {
+                var webMerges = Math.min(curF[lv], curW[lv]);
+                curF[lv] -= webMerges;
+                curW[lv] -= webMerges;
+                curF[lv + 1] = (curF[lv + 1] || 0) + webMerges;
+                needAbove = hasOrderAbove(lv);
+            }
+        }
+
+        // Kiểm tra lại đơn ở cấp lv sau khi đã xử lý nhện
+        if (remOrders[lv] > 0 && curF[lv] > 0) {
+            var takeAfter = Math.min(curF[lv], remOrders[lv]);
+            curF[lv] -= takeAfter;
+            remOrders[lv] -= takeAfter;
+            needAbove = hasOrderAbove(lv);
+        }
+
+        // Ghép 2 đồ tự do cùng cấp -> 1 đồ tự do ở cấp lv+1 nếu vẫn cần lên cấp cao hơn
+        if (lv < MAX_ITEM_LV && needAbove && curF[lv] >= 2) {
+            var pairs = Math.floor(curF[lv] / 2);
+            curF[lv] -= pairs * 2;
+            curF[lv + 1] = (curF[lv + 1] || 0) + pairs;
+        }
+    }
+
+    var missingOrderUnits = 0;
+    var maxUnfinishedLv = 0;
+    for (var m = 1; m <= MAX_ITEM_LV; m++) {
+        if (remOrders[m] > 0) {
+            missingOrderUnits += remOrders[m] * Math.pow(2, m - 1);
+            maxUnfinishedLv = Math.max(maxUnfinishedLv, m);
+        }
+    }
+
+    var netDeficit = 0;
+    if (missingOrderUnits > 0) {
+        var carryUnits = 0;
+        var freeOnlyUnits = 0;
+        for (var n = 1; n < maxUnfinishedLv; n++) {
+            var fu = (curF[n] || 0) * Math.pow(2, n - 1);
+            var wu = (curW[n] || 0) * Math.pow(2, n - 1);
+            freeOnlyUnits += fu;
+            carryUnits += fu + wu;
+        }
+        netDeficit = Math.max(0, missingOrderUnits - carryUnits);
+        // Nếu tổng (free + web) đủ trên lý thuyết nhưng bị kẹt do các ô còn lại đều nằm trong nhện chưa có đồ tự do mồi
+        if (netDeficit === 0) {
+            netDeficit = Math.max(1, missingOrderUnits - freeOnlyUnits);
+        }
+    }
+
+    return {
+        deficit: netDeficit,
+        remainingWebs: curW,
+        remainingFree: curF
+    };
+}
+
+// Tính lượng đơn vị (Lv.1 units) còn thiếu thực tế của từng nhánh vật phẩm trên bàn cờ
+function computeLineDeficits(board, activeOrders, levelCfg) {
+    var deficits = {};
     var ordersToCheck = activeOrders || (typeof currentOrders !== 'undefined' ? currentOrders : null);
+    var lvl = levelCfg || (typeof currentLevelCfg !== 'undefined' ? currentLevelCfg : null);
+    var adjWeb = !lvl || lvl.adjWeb !== false;
+
+    var orderByLineLv = {};
+    var uncompletedCount = 0;
     if (ordersToCheck && Array.isArray(ordersToCheck)) {
         ordersToCheck.forEach(function (o) {
-            var line = typeof o === 'string' ? itemLine(o) : (o && o.id ? itemLine(o.id) : null);
-            if (line && neededLines.indexOf(line) === -1) neededLines.push(line);
+            if (!o) return;
+            if (typeof o === 'object' && o.done) return; // Bỏ qua đơn hàng đã hoàn thành
+            var id = typeof o === 'string' ? o : o.id;
+            if (!id) return;
+            var line = itemLine(id);
+            var lv = itemLv(id);
+            if (!orderByLineLv[line]) orderByLineLv[line] = {};
+            orderByLineLv[line][lv] = (orderByLineLv[line][lv] || 0) + 1;
+            uncompletedCount++;
         });
     }
+
+    var freeByLineLv = {};
+    var webByLineLv = {};
+
     if (board && Array.isArray(board)) {
         board.forEach(function (c) {
-            if (c && c.isLocked && c.id && !c.isRock) {
-                var line = itemLine(c.id);
-                if (line && neededLines.indexOf(line) === -1) neededLines.push(line);
+            if (!c || !c.id || c.isRock || GENERATORS[c.id]) return;
+            var line = itemLine(c.id);
+            var lv = itemLv(c.id);
+            if (!c.isLocked) {
+                if (!freeByLineLv[line]) freeByLineLv[line] = {};
+                freeByLineLv[line][lv] = (freeByLineLv[line][lv] || 0) + 1;
+            } else {
+                if (!webByLineLv[line]) webByLineLv[line] = {};
+                webByLineLv[line][lv] = (webByLineLv[line][lv] || 0) + 1;
             }
         });
     }
 
+    var allLines = {};
+    Object.keys(orderByLineLv).forEach(function (l) { allLines[l] = true; });
+    Object.keys(webByLineLv).forEach(function (l) { allLines[l] = true; });
+
+    var allOrdersDone = uncompletedCount === 0;
+
+    Object.keys(allLines).forEach(function (line) {
+        var sim = simulateLineProgress(
+            freeByLineLv[line] || {},
+            webByLineLv[line] || {},
+            orderByLineLv[line] || {},
+            adjWeb
+        );
+        var d = sim.deficit;
+
+        // Nếu màn chơi không có phá nhện liền kề (adjWeb = false) HOẶC đã xong hết đơn mà còn sót nhện:
+        if (!adjWeb || allOrdersDone) {
+            var remW = sim.remainingWebs;
+            var remF = sim.remainingFree;
+            for (var lv = 1; lv <= MAX_ITEM_LV; lv++) {
+                var wNeed = remW[lv] || 0;
+                if (wNeed > 0) {
+                    var carryBelow = 0;
+                    for (var b = 1; b < lv; b++) {
+                        carryBelow += (remF[b] || 0) * Math.pow(2, b - 1);
+                    }
+                    d += Math.max(1, Math.pow(2, lv - 1) - carryBelow);
+                }
+            }
+        }
+
+        if (d > 0) {
+            deficits[line] = d;
+        }
+    });
+
+    return deficits;
+}
+
+// Sinh 1 item từ nguồn phát vào ô trống ngẫu nhiên. Trả về index ô mới, hoặc -1 nếu bàn đầy
+// Giải pháp 1: Thuật toán Rơi Đồ Thông Minh Theo Thiếu Hụt Thực Tế (Deficit-Driven) & Bảo Hiểm Pity
+function spawnItem(board, genId, activeOrders, levelCfg) {
+    var empty = getEmptyIndexes(board);
+    if (!empty.length) {
+        lastSpawnResult = { target: -1, id: null, line: null, wasUnwanted: false };
+        return -1;
+    }
+    var list = GENERATORS[genId];
+    if (!list || !list.length) {
+        lastSpawnResult = { target: -1, id: null, line: null, wasUnwanted: false };
+        return -1;
+    }
+
+    var deficits = computeLineDeficits(board, activeOrders, levelCfg);
+    var lineDeficits = list.map(function (itemId) {
+        return deficits[itemLine(itemId)] || 0;
+    });
+    var hasNeededInGen = lineDeficits.some(function (d) { return d > 0; });
+
     var id;
-    if (neededLines.length > 0) {
-        var weights = list.map(function (itemId) {
-            return (neededLines.indexOf(itemLine(itemId)) !== -1) ? 1.35 : 1.0;
+    var wasUnwanted = false;
+
+    if (hasNeededInGen) {
+        var streak = genOffOrderStreak[genId] || 0;
+        // Bảo hiểm Pity: Nếu lần bấm trước trên nguồn phát này đã rơi lệch dòng (streak >= 1),
+        // lần bấm tiếp theo chắc chắn 100% rơi vào nhánh đang thiếu!
+        var forceNeeded = streak >= 1;
+
+        var weights = list.map(function (itemId, idx) {
+            var d = lineDeficits[idx];
+            if (d > 0) {
+                return 3.5 + Math.min(6.5, d * 0.55);
+            }
+            return forceNeeded ? 0 : 0.45;
         });
+
         var totalWeight = weights.reduce(function (a, b) { return a + b; }, 0);
         var r = rand() * totalWeight;
         var acc = 0;
         id = list[list.length - 1];
         for (var i = 0; i < list.length; i++) {
             acc += weights[i];
-            if (r <= acc) {
+            if (r <= acc && weights[i] > 0) {
                 id = list[i];
                 break;
             }
         }
+
+        var pickedLine = itemLine(id);
+        var pickedDeficit = deficits[pickedLine] || 0;
+        if (pickedDeficit <= 0) {
+            genOffOrderStreak[genId] = streak + 1;
+            wasUnwanted = true;
+        } else {
+            genOffOrderStreak[genId] = 0;
+            wasUnwanted = false;
+        }
     } else {
         id = list[Math.floor(rand() * list.length)];
+        wasUnwanted = false;
     }
 
     var target = empty[Math.floor(rand() * empty.length)];
     board[target] = { id: id, isRock: false, isLocked: false };
+    lastSpawnResult = {
+        target: target,
+        id: id,
+        line: itemLine(id),
+        wasUnwanted: wasUnwanted
+    };
     return target;
 }
 

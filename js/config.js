@@ -540,7 +540,7 @@ var GAME_CONFIG = {
             pattern: "box5x5",
             generators: [[31,"generator_cooler"]],
             freeItems: [[23,"trai_lv1"],[25,"ghe_lv1"]],
-            webItems: [[15,"trai_lv1"],[17,"ghe_lv1"],[19,"ban_lv1"],[37,"ghe_lv1"],[39,"trai_lv2"]],
+            webItems: [[15,"trai_lv1"],[17,"ghe_lv1"],[37,"ghe_lv1"],[39,"trai_lv2"]],
             orders: ["trai_lv4","ghe_lv3"],
             mechanics: {"adjWeb":false,"bonus":false,"spreadEvery":0},
             dialogue: {"npc":"cao","text":"Trời nắng đẹp quá! Giúp mình ghép Lều và Ghế từ Xe Kéo để dựng góc chụp ảnh cắm trại đầu tiên nhé!"}
