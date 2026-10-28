@@ -791,7 +791,7 @@ function updateLevel1Tutorial() {
                 ? getItemCleanName(boardData[genIdx].id)
                 : 'Ba Lô Dã Ngoại';
             var msg = levelClicks === 0
-                ? 'Chào mừng tới Bữa Sáng Khởi Đầu! Chạm vào ' + genName + ' trên bàn cờ để lấy nguyên liệu nhé!'
+                ? 'Chào mừng tới khu cắm trại! Chạm vào ' + genName + ' trên bàn cờ để lấy nguyên liệu nhé!'
                 : 'Chạm thêm 1 lần vào ' + genName + ' để có đủ cặp ghép nhé!';
             setNpcState('gau', '👆', msg, 0);
             return true;
@@ -816,7 +816,7 @@ function scheduleHint() {
     hintTimer = setTimeout(() => showIdleHint(false), HINT_DELAY_MS);
 }
 
-function buildCharacterHintText(npcId, actionType, itemName, lvName) {
+function buildCharacterHintText(npcId, actionType, itemName) {
     if (actionType === 'deliver') {
         return 'Đơn hàng đã hoàn thành! Chạm vào ô NỘP viền xanh ngay bên dưới để nhận Vàng thưởng nhé!';
     }
@@ -824,7 +824,7 @@ function buildCharacterHintText(npcId, actionType, itemName, lvName) {
         return 'Thử kéo ' + itemName + ' đè lên ô Mạng Nhện cùng loại đang sáng để phá nhện nhé!';
     }
     if (actionType === 'merge_free') {
-        return 'Mình thấy 2 ' + itemName + ' giống nhau kìa, ghép chúng lại để chuẩn bị đơn hàng cho "' + lvName + '" nhé!';
+        return 'Mình thấy 2 ' + itemName + ' giống nhau kìa, ghép chúng lại để hoàn thành nhiệm vụ Màn ' + currentLevel + ' nhé!';
     }
     if (actionType === 'spawn') {
         return 'Bàn cờ hết cặp ghép rồi, chạm vào Nguồn phát đang lấp lánh để lấy thêm nguyên liệu nhé!';
@@ -836,13 +836,12 @@ function showIdleHint(isManualClick) {
     if (levelWon || dragState || document.getElementById('modal-overlay')) return;
     clearHintVisuals();
 
-    var lvName = (currentLevelCfg && currentLevelCfg.name) ? currentLevelCfg.name : ('Màn ' + currentLevel);
     var speakerId = getNextNpcId();
 
     var readyCard = ordersContainer ? ordersContainer.querySelector('.order-card.ready') : null;
     if (readyCard) {
         showTutorialHandTap(readyCard);
-        setNpcState(speakerId, '❗', buildCharacterHintText(speakerId, 'deliver', '', lvName), 4500);
+        setNpcState(speakerId, '❗', buildCharacterHintText(speakerId, 'deliver', ''), 4500);
         return;
     }
 
@@ -854,7 +853,7 @@ function showIdleHint(isManualClick) {
         if (cTo) cTo.classList.add('hint-pulse');
         var itemName = getItemDisplayName(boardData[best.from].id);
         var isWeb = boardData[best.to] && boardData[best.to].isLocked;
-        setNpcState(speakerId, '💡', buildCharacterHintText(speakerId, isWeb ? 'merge_web' : 'merge_free', itemName, lvName), 4500);
+        setNpcState(speakerId, '💡', buildCharacterHintText(speakerId, isWeb ? 'merge_web' : 'merge_free', itemName), 4500);
         return;
     }
 
@@ -865,7 +864,7 @@ function showIdleHint(isManualClick) {
                 boardElement.children[idx].classList.add('hint-pulse');
             }
         });
-        setNpcState(speakerId, '⚡', buildCharacterHintText(speakerId, 'spawn', '', lvName), 4500);
+        setNpcState(speakerId, '⚡', buildCharacterHintText(speakerId, 'spawn', ''), 4500);
         return;
     }
 
@@ -1068,10 +1067,13 @@ function updateBookBadge() {
 function renderBoard() {
     boardElement.innerHTML = '';
 
-    // Tìm các ô trên bàn cờ đáp ứng đơn hàng hiện tại (chưa hoàn thành)
+    // Tìm các ô trên bàn cờ đáp ứng tối đa 4 đơn hàng đang hiển thị (chưa hoàn thành)
     var activeOrderMap = {};
     if (currentOrders) {
-        currentOrders.forEach(o => {
+        var visibleOrders = (typeof getVisibleOrders === 'function')
+            ? getVisibleOrders(currentOrders)
+            : currentOrders.filter(o => !o.done).slice(0, 4);
+        visibleOrders.forEach(o => {
             if (!o.done) activeOrderMap[o.id] = (activeOrderMap[o.id] || 0) + 1;
         });
     }
@@ -1162,6 +1164,7 @@ function renderBoard() {
     renderOrders();
     updateUIStats();
     tickEnergyRegen();
+    syncBoardFooterWidth();
     scheduleHint();
     persistCurrentBoardState();
 }
@@ -1297,9 +1300,10 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
             if (isAutoEnabled) fillBoardInstantly();
             hideNpcBubble();
 
-            // Thẻ nhiệm vụ hoàn thành bay sang chú chó rồi mất đi để người chơi ngắm cảnh
+            // Thẻ nhiệm vụ hoàn thành bay sang chú chó rồi mất đi, đồng thời lộ diện nhiệm vụ tiếp theo trong hàng đợi
             flyCompletedOrderToPet(targetCardEl, function () {
                 renderBoard();
+                checkAutoDeliverRevealedOrders();
             });
         };
     } else {
@@ -1322,18 +1326,109 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
         if (targetCardEl) {
             flyCompletedOrderToPet(targetCardEl, function () {
                 renderBoard();
+                checkAutoDeliverRevealedOrders();
             });
         } else {
             renderBoard();
+            checkAutoDeliverRevealedOrders();
         }
     }
+}
+
+// Khi 1 nhiệm vụ hoàn thành làm lộ nhiệm vụ tiếp theo (vốn đang ẩn sau 4 ô đầu),
+// nếu trên bàn cờ đã có sẵn vật phẩm khớp với nhiệm vụ mới lộ ra thì tự động bay lên giao luôn
+function checkAutoDeliverRevealedOrders() {
+    if (currentLevel <= 1 || levelWon || !currentOrders || !ordersContainer) return;
+    var maxVis = (typeof MAX_VISIBLE_ORDERS === 'number') ? MAX_VISIBLE_ORDERS : 4;
+    var visCount = 0;
+    for (var i = 0; i < currentOrders.length; i++) {
+        var o = currentOrders[i];
+        if (o.done) continue;
+        if (visCount >= maxVis) break;
+        visCount++;
+        var matchIdx = findOrderMatch(boardData, o.id);
+        if (matchIdx !== -1) {
+            var cardEl = ordersContainer.querySelector('.order-card[data-order-idx="' + i + '"]');
+            if (cardEl) {
+                (function (ord, mIdx, cEl) {
+                    setTimeout(function () {
+                        if (!ord.done && boardData[mIdx] && boardData[mIdx].id === ord.id) {
+                            deliverReadyOrderWithFlight(ord, mIdx, cEl);
+                        }
+                    }, 220);
+                })(o, matchIdx, cardEl);
+                break;
+            }
+        }
+    }
+}
+
+// Tính phần trăm tiến độ màn chơi (0 -> 100%) theo số nhiệm vụ đã hoàn thành & cấp vật phẩm đang chế tạo trên bàn
+function computeLevelProgressPct() {
+    if (!currentOrders || !currentOrders.length) return 0;
+    if (levelWon) return 100;
+
+    var totalOrders = currentOrders.length;
+    var doneOrders = 0;
+    var totalUnits = 0;
+    var doneUnits = 0;
+    var activeNeedByLine = {};
+
+    currentOrders.forEach(function (o) {
+        var w = itemUnits(o.id);
+        totalUnits += w;
+        if (o.done) {
+            doneOrders++;
+            doneUnits += w;
+        } else {
+            var ln = itemLine(o.id);
+            activeNeedByLine[ln] = (activeNeedByLine[ln] || 0) + w;
+        }
+    });
+
+    if (totalUnits <= 0) return 0;
+    if (doneOrders >= totalOrders) return 100;
+
+    // Thu thập tổng đơn vị các vật phẩm cấp >= 2 đang có trên bàn cờ thuộc các nhánh nhiệm vụ chưa hoàn thành
+    var boardUnitsByLine = {};
+    if (boardData && boardData.length) {
+        boardData.forEach(function (c) {
+            if (!c || !c.id || c.isRock || c.isLocked || GENERATORS[c.id]) return;
+            var lv = itemLv(c.id);
+            if (lv >= 2) {
+                var ln = itemLine(c.id);
+                boardUnitsByLine[ln] = (boardUnitsByLine[ln] || 0) + itemUnits(c.id);
+            }
+        });
+    }
+
+    var craftedRemainingUnits = 0;
+    var totalRemainingUnits = Math.max(1, totalUnits - doneUnits);
+    Object.keys(activeNeedByLine).forEach(function (ln) {
+        var need = activeNeedByLine[ln];
+        var have = boardUnitsByLine[ln] || 0;
+        // Giới hạn tối đa 85% trọng số của nhánh chưa nộp để chỉ chạm 100% khi nộp xong nhiệm vụ
+        craftedRemainingUnits += Math.min(need * 0.85, have);
+    });
+
+    // Kết hợp tiến độ số lượng nhiệm vụ đã nộp (50%) + tiến độ cấp vật phẩm chế tạo (50%)
+    var orderRatio = doneOrders / totalOrders;
+    var unitRatio = (doneUnits + craftedRemainingUnits) / totalUnits;
+    var combinedPct = Math.round(((orderRatio * 0.45) + (unitRatio * 0.55)) * 100);
+    return Math.max(0, Math.min(100, combinedPct));
 }
 
 function updateUIStats() {
     if (energyUI) energyUI.innerText = playerEnergy.toLocaleString('vi-VN');
     if (coinUI) coinUI.innerText = playerCoins.toLocaleString('vi-VN');
     if (gemUI) gemUI.innerText = playerGems.toLocaleString('vi-VN');
-    if (currentLvBadgeUI) currentLvBadgeUI.innerText = currentLevel;
+    if (currentLvBadgeUI) {
+        var numEl = currentLvBadgeUI.querySelector('.lv-map-num');
+        if (numEl) numEl.innerText = currentLevel;
+        else currentLvBadgeUI.innerText = currentLevel;
+        var progPct = computeLevelProgressPct();
+        currentLvBadgeUI.style.setProperty('--lv-prog', progPct);
+    }
     SAVE.coins = playerCoins;
     SAVE.gems = playerGems;
     SAVE.energy = playerEnergy;
@@ -1347,9 +1442,15 @@ function renderOrders() {
     var webs = countWebs(boardData);
     if (webCountUI) webCountUI.innerText = `${webs}`;
 
+    // Hiển thị tối đa 4 vật phẩm nhiệm vụ chưa hoàn thành; ẩn các nhiệm vụ còn lại trong hàng đợi.
+    // Khi người chơi hoàn thành 1 nhiệm vụ, nhiệm vụ tiếp theo tự động xuất hiện.
+    var maxVisible = (typeof MAX_VISIBLE_ORDERS === 'number') ? MAX_VISIBLE_ORDERS : 4;
+    var visibleCount = 0;
+
     currentOrders.forEach((o, idx) => {
-        // Nhiệm vụ đã hoàn thành sẽ không còn ở lại trên giao diện để người chơi ngắm cảnh
         if (o.done) return;
+        if (visibleCount >= maxVisible) return;
+        visibleCount++;
 
         var card = document.createElement('div');
         var line = itemLine(o.id);
@@ -1473,14 +1574,24 @@ function executeMoveAndEffects(fromIdx, toIdx) {
             showFloatingBadge(bCell, '🎁 +1 Tiếp tế!', '#f57c00');
         }
 
-        // Tự động giao đơn hàng khi ghép ra đúng món nhiệm vụ đang cần
-        var matchingOrderIdx = currentOrders.findIndex(o => !o.done && o.id === res.newId);
+        // Tự động giao đơn hàng khi ghép ra đúng món nhiệm vụ đang hiển thị (trong tối đa 4 ô nhiệm vụ hiện tại)
+        var maxVis = (typeof MAX_VISIBLE_ORDERS === 'number') ? MAX_VISIBLE_ORDERS : 4;
+        var visCount = 0;
+        var matchingOrderIdx = -1;
+        for (var oi = 0; oi < currentOrders.length; oi++) {
+            if (currentOrders[oi].done) continue;
+            if (visCount < maxVis && currentOrders[oi].id === res.newId) {
+                matchingOrderIdx = oi;
+                break;
+            }
+            visCount++;
+            if (visCount >= maxVis) break;
+        }
         if (matchingOrderIdx !== -1) {
             var matchingOrder = currentOrders[matchingOrderIdx];
             var targetOrderCard = ordersContainer && (
                 ordersContainer.querySelector('.order-card[data-order-idx="' + matchingOrderIdx + '"]') ||
-                ordersContainer.querySelector('.order-card[data-order-id="' + matchingOrder.id + '"]') ||
-                ordersContainer.children[matchingOrderIdx]
+                ordersContainer.querySelector('.order-card[data-order-id="' + matchingOrder.id + '"]')
             );
             var finalIndex = res.index;
             // Delay 260ms để người chơi nhìn thấy rõ món mới được ghép thành công trên bàn cờ trước khi bay vút lên
@@ -1982,13 +2093,17 @@ function updateSellButton(itemId) {
 function refreshLevelSelect() {
     if (!levelSelect) return;
     var unlockAll = SAVE.settings && SAVE.settings.unlockAllLevels;
+    var maxKnownLv = Math.max(RAW_LEVELS.length, SAVE.maxLevel || 1);
+    for (var lv = RAW_LEVELS.length + 1; lv <= maxKnownLv; lv++) {
+        getLevelConfig(lv);
+    }
     levelSelect.innerHTML = '';
     RAW_LEVELS.forEach(r => {
         var opt = document.createElement('option');
         opt.value = r[0];
         var st = SAVE.stars[r[0]] || 0;
         var mark = st ? ' ' + '★'.repeat(st) : ((!unlockAll && r[0] > SAVE.maxLevel) ? ' 🔒' : '');
-        opt.textContent = `Lv.${r[0]}: ${r[1]}${mark}`;
+        opt.textContent = `Lv.${r[0]}${mark}`;
         levelSelect.appendChild(opt);
     });
     levelSelect.value = currentLevel;
@@ -2041,20 +2156,22 @@ function finishLevel() {
         spawnFlyingCurrency(boardElement, 'gold', totalCoins);
     }
     SAVE.stars[currentLevel] = Math.max(SAVE.stars[currentLevel] || 0, stars);
-    if (currentLevel + 1 > SAVE.maxLevel && currentLevel < RAW_LEVELS.length) SAVE.maxLevel = currentLevel + 1;
+    if (currentLevel + 1 > SAVE.maxLevel) {
+        SAVE.maxLevel = currentLevel + 1;
+        getLevelConfig(SAVE.maxLevel);
+    }
     SAVE.currentBoardState = null; // Màn chơi đã hoàn thành, dọn trạng thái dở dang
     saveGame();
     updateUIStats();
     refreshLevelSelect();
     playSound('win');
 
-    var hasNext = currentLevel < RAW_LEVELS.length;
+    var hasNext = true;
     var completedList = (currentOrders && currentOrders.length)
         ? currentOrders.map(function (o) { return o.id; })
         : (currentLevelCfg && currentLevelCfg.orders ? currentLevelCfg.orders : []);
     showWinModal({
         level: currentLevel,
-        name: currentLevelCfg ? currentLevelCfg.name : '',
         stars: stars,
         coins: coins,
         sweepCoins: sweepCoins,
@@ -2186,9 +2303,36 @@ function handleTidyBoard() {
     showToast('✨ Đã dọn dẹp bàn cờ gọn gàng!', '#27ae60');
 }
 
+// Đồng bộ chiều rộng và vị trí khung bàn chơi lên biến CSS ở cả 2 khoảng (<=600px và >600px)
+function syncBoardFooterWidth() {
+    var frameEl = document.querySelector('.board-frame-wrapper');
+    if (!frameEl) return;
+    var rect = frameEl.getBoundingClientRect();
+    if (rect.width > 0) {
+        document.documentElement.style.setProperty('--board-actual-w', Math.round(rect.width) + 'px');
+        document.documentElement.style.setProperty('--board-actual-left', Math.round(rect.left) + 'px');
+        document.documentElement.style.setProperty('--board-actual-top', Math.round(rect.top) + 'px');
+        document.documentElement.style.setProperty('--board-actual-h', Math.round(rect.height) + 'px');
+    }
+}
+
 function initGame() {
     updateCompanionAvatar();
     refreshLevelSelect();
+    syncBoardFooterWidth();
+    var frameWrapEl = document.querySelector('.board-frame-wrapper');
+    if (frameWrapEl && typeof ResizeObserver !== 'undefined') {
+        var ro = new ResizeObserver(function () {
+            syncBoardFooterWidth();
+        });
+        ro.observe(frameWrapEl);
+    }
+    window.addEventListener('resize', function () {
+        syncBoardFooterWidth();
+        if (document.getElementById('tutorial-hand')) {
+            scheduleHint();
+        }
+    });
     if (btnRefillEnergy) btnRefillEnergy.onclick = openEnergyShop;
     var btnGemShop = document.getElementById('btn-gem-shop');
     if (btnGemShop) btnGemShop.onclick = openGemShop;
@@ -2275,7 +2419,8 @@ function initGame() {
         };
     }
 
-    var startLv = Math.min(Math.max(SAVE.level || 1, 1), RAW_LEVELS.length);
+    var startLv = Math.max(SAVE.level || 1, 1);
+    getLevelConfig(startLv);
     loadLevel(startLv, { restoreState: true });
 
     // Bắt tương tác đầu tiên của người chơi để kích hoạt BGM nhẹ nhàng (tuân thủ autoplay policy)

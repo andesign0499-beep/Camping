@@ -10,24 +10,47 @@ var MAX_ITEM_LV = 8;
 var BONUS_MIN_LV = 5; // ghép ra cấp này trở lên mới có quà (level có cờ bonus)
 var BONUS_CHANCE = 0.55; // xác suất nổ quà tiếp tế khi ghép ra item Lv5+
 
+var MAX_VISIBLE_ORDERS = 4; // Tối đa 4 vật phẩm nhiệm vụ hiển thị đồng thời trên màn chơi
+
 var GENERATORS = {
     'generator_backpack': ['an_lv1', 'cafe_lv1', 'congcu_lv1'],
     'generator_cooler': ['ban_lv1', 'ghe_lv1', 'trai_lv1'],
     'generator_crate': ['tham_lv1', 'antoan_lv1', 'bep_lv1']
 };
 
+// Hệ thống địa hình tự nhiên bất đối xứng (tránh hoàn toàn kiểu khung hình chữ nhật đều 5x5, 5x6, 5x7)
 var PATTERNS = {
-    box5x5: (r, c) => (c === 0 || c === 6 || r <= 1 || r >= 7),
-    box5x7: (r, c) => (c === 0 || c === 6 || r === 0 || r === 8),
-    rounded: (r, c) => (r === 0 || r === 8 || ((r === 1 || r === 7) && (c === 0 || c === 6))),
-    cross: (r, c) => ((r <= 1 || r >= 7) && (c <= 1 || c >= 5)),
-    hourglass: (r, c) => (r === 0 || r === 8 || (r >= 3 && r <= 5 && (c === 0 || c === 6)) || (r === 4 && (c === 1 || c === 5))),
-    pillars: (r, c) => (r === 0 || r === 8 || ((r === 2 || r === 6) && (c === 2 || c === 4))),
-    valley: (r, c) => (c === 0 || c === 6 || ((c === 1 || c === 5) && (r === 0 || r === 4 || r === 8))),
-    islands: (r, c) => (r === 0 || r === 8 || (r === 4 && c !== 3)),
-    fortress: (r, c) => (c === 0 || c === 6 || r === 0 || r === 8 || (r === 4 && c === 3)),
-    open: (r, c) => ((r === 0 || r === 8) && (c === 0 || c === 6))
+    creek_bend: (r, c) => (r === 0 || r === 8 || (r === 1 && (c <= 1 || c >= 5)) || (r === 2 && (c === 0 || c === 6)) || (r === 3 && c === 0) || (r === 5 && c === 6) || (r === 6 && (c === 0 || c === 6)) || (r === 7 && (c <= 1 || c >= 5)) || (r === 2 && c === 4) || (r === 6 && c === 2)),
+    pine_alcove: (r, c) => ((r === 0 && c !== 3) || (r === 8 && c !== 3) || (r === 1 && (c === 0 || c >= 5)) || (r === 2 && c === 6) || (r === 3 && c === 1) || (r === 4 && (c === 0 || c === 6)) || (r === 5 && c === 5) || (r === 6 && c === 0) || (r === 7 && (c <= 1 || c === 6))),
+    stepping_glade: (r, c) => ((r === 0 && (c <= 2 || c >= 5)) || (r === 1 && (c <= 1 || c === 6)) || (r === 2 && c === 0) || (r === 6 && c === 6) || (r === 7 && (c === 0 || c >= 5)) || (r === 8 && (c <= 1 || c >= 4)) || (r === 3 && c === 5) || (r === 5 && c === 1)),
+    boulder_trail: (r, c) => ((r === 0 && c !== 2 && c !== 3) || (r === 8 && c !== 3 && c !== 4) || (c === 0 && (r <= 2 || r >= 6)) || (c === 6 && (r <= 2 || r >= 6)) || (r === 2 && c === 2) || (r === 4 && c === 5) || (r === 6 && c === 4)),
+    zigzag: (r, c) => ((r === 0 && c <= 4) || (r === 1 && c <= 1) || (r === 3 && c === 6) || (r === 4 && c === 0) || (r === 5 && c === 6) || (r === 7 && c >= 5) || (r === 8 && c >= 2) || (r === 2 && c === 4) || (r === 6 && c === 2)),
+    cross: (r, c) => (((r <= 1 || r >= 7) && (c <= 1 || c >= 5)) || (r === 0 && c === 3) || (r === 8 && c === 3) || (r === 3 && c === 1) || (r === 5 && c === 5)),
+    hourglass: (r, c) => ((r === 0 && c !== 3) || (r === 8 && c !== 3) || (r >= 3 && r <= 5 && (c === 0 || c === 6)) || (r === 4 && (c === 1 || c === 5)) || (r === 1 && c === 0) || (r === 7 && c === 6)),
+    pillars: (r, c) => ((r === 0 && (c <= 1 || c >= 5)) || (r === 8 && (c <= 1 || c >= 5)) || ((r === 2 || r === 6) && (c === 2 || c === 4)) || (r === 4 && (c === 0 || c === 6))),
+    valley: (r, c) => ((c === 0 && r !== 3 && r !== 4) || (c === 6 && r !== 4 && r !== 5) || (r === 0 && (c <= 2 || c >= 5)) || (r === 8 && (c <= 1 || c >= 4)) || (r === 2 && c === 4) || (r === 6 && c === 2)),
+    islands: (r, c) => ((r === 0 && c !== 2) || (r === 8 && c !== 4) || (r === 4 && c !== 2 && c !== 4) || (r === 2 && c === 0) || (r === 6 && c === 6)),
+    fortress: (r, c) => ((r === 0 && c !== 3) || (r === 8 && c !== 3) || (c === 0 && r !== 4) || (c === 6 && r !== 4) || (r === 2 && c === 2) || (r === 6 && c === 4) || (r === 4 && c === 3)),
+    open: (r, c) => (((r === 0 || r === 8) && (c <= 1 || c >= 5)) || ((r === 1 || r === 7) && (c === 0 || c === 6)) || (r === 2 && c === 1) || (r === 6 && c === 5) || (r === 3 && c === 5) || (r === 5 && c === 1))
 };
+// Ánh xạ tương thích ngược các tên cũ sang địa hình tự nhiên bất đối xứng
+PATTERNS.box5x5 = PATTERNS.creek_bend;
+PATTERNS.box5x7 = PATTERNS.stepping_glade;
+PATTERNS.rounded = PATTERNS.pine_alcove;
+
+// Lấy tối đa 4 nhiệm vụ chưa hoàn thành đang hiển thị trên màn hình
+function getVisibleOrders(orders) {
+    if (!orders || !Array.isArray(orders)) return [];
+    var out = [];
+    for (var i = 0; i < orders.length; i++) {
+        var o = orders[i];
+        if (!o) continue;
+        if (typeof o === 'object' && o.done) continue;
+        out.push(o);
+        if (out.length >= MAX_VISIBLE_ORDERS) break;
+    }
+    return out;
+}
 
 // Hàm random có thể bị thay thế (bot mô phỏng dùng random có seed)
 var rand = Math.random;
@@ -60,8 +83,11 @@ function makeEmptyCell() { return { id: null, isRock: false, isLocked: false }; 
 function buildBoard(level) {
     var patFn = PATTERNS[level.pattern] || PATTERNS.box5x5;
     var board = new Array(TOTAL_CELLS);
+    var hasExplicitRocks = Array.isArray(level.rocks);
+    var rockSet = hasExplicitRocks ? new Set(level.rocks) : null;
     for (var i = 0; i < TOTAL_CELLS; i++) {
-        board[i] = { id: null, isRock: patFn(Math.floor(i / COLS), i % COLS), isLocked: false };
+        var isRock = rockSet ? rockSet.has(i) : patFn(Math.floor(i / COLS), i % COLS);
+        board[i] = { id: null, isRock: isRock, isLocked: false };
     }
     level.gens.forEach(g => { board[g[0]] = { id: g[1], isRock: false, isLocked: false }; });
     level.free.forEach(f => { board[f[0]] = { id: f[1], isRock: false, isLocked: false }; });
@@ -205,83 +231,96 @@ function simulateLineProgress(fByLv, wByLv, orderByLv, canBreakWebByAdj) {
 }
 
 // Tính lượng đơn vị (Lv.1 units) còn thiếu thực tế của từng nhánh vật phẩm trên bàn cờ
-function computeLineDeficits(board, activeOrders, levelCfg) {
-    var deficits = {};
+function computeLineDeficits(board, activeOrders, levelCfg, includeAllOrders) {
     var ordersToCheck = activeOrders || (typeof currentOrders !== 'undefined' ? currentOrders : null);
     var lvl = levelCfg || (typeof currentLevelCfg !== 'undefined' ? currentLevelCfg : null);
     var adjWeb = !lvl || lvl.adjWeb !== false;
 
-    var orderByLineLv = {};
-    var uncompletedCount = 0;
-    if (ordersToCheck && Array.isArray(ordersToCheck)) {
-        ordersToCheck.forEach(function (o) {
-            if (!o) return;
-            if (typeof o === 'object' && o.done) return; // Bỏ qua đơn hàng đã hoàn thành
-            var id = typeof o === 'string' ? o : o.id;
-            if (!id) return;
-            var line = itemLine(id);
-            var lv = itemLv(id);
-            if (!orderByLineLv[line]) orderByLineLv[line] = {};
-            orderByLineLv[line][lv] = (orderByLineLv[line][lv] || 0) + 1;
-            uncompletedCount++;
-        });
-    }
+    // Khi đang chơi (includeAllOrders = false): ưu tiên tính thiếu hụt cho tối đa 4 đơn hàng đang hiển thị.
+    // Nếu 4 đơn đang hiển thị đã đủ nguyên liệu trên bàn mà vẫn còn đơn ẩn trong hàng đợi, tự động xét tiếp hàng đợi.
+    var subsetOrders = (!includeAllOrders && ordersToCheck && Array.isArray(ordersToCheck))
+        ? getVisibleOrders(ordersToCheck)
+        : ordersToCheck;
 
-    var freeByLineLv = {};
-    var webByLineLv = {};
+    function runDeficitPass(orderList) {
+        var deficits = {};
+        var orderByLineLv = {};
+        var uncompletedCount = 0;
+        if (orderList && Array.isArray(orderList)) {
+            orderList.forEach(function (o) {
+                if (!o) return;
+                if (typeof o === 'object' && o.done) return;
+                var id = typeof o === 'string' ? o : o.id;
+                if (!id) return;
+                var line = itemLine(id);
+                var lv = itemLv(id);
+                if (!orderByLineLv[line]) orderByLineLv[line] = {};
+                orderByLineLv[line][lv] = (orderByLineLv[line][lv] || 0) + 1;
+                uncompletedCount++;
+            });
+        }
 
-    if (board && Array.isArray(board)) {
-        board.forEach(function (c) {
-            if (!c || !c.id || c.isRock || GENERATORS[c.id]) return;
-            var line = itemLine(c.id);
-            var lv = itemLv(c.id);
-            if (!c.isLocked) {
-                if (!freeByLineLv[line]) freeByLineLv[line] = {};
-                freeByLineLv[line][lv] = (freeByLineLv[line][lv] || 0) + 1;
-            } else {
-                if (!webByLineLv[line]) webByLineLv[line] = {};
-                webByLineLv[line][lv] = (webByLineLv[line][lv] || 0) + 1;
-            }
-        });
-    }
+        var freeByLineLv = {};
+        var webByLineLv = {};
 
-    var allLines = {};
-    Object.keys(orderByLineLv).forEach(function (l) { allLines[l] = true; });
-    Object.keys(webByLineLv).forEach(function (l) { allLines[l] = true; });
+        if (board && Array.isArray(board)) {
+            board.forEach(function (c) {
+                if (!c || !c.id || c.isRock || GENERATORS[c.id]) return;
+                var line = itemLine(c.id);
+                var lv = itemLv(c.id);
+                if (!c.isLocked) {
+                    if (!freeByLineLv[line]) freeByLineLv[line] = {};
+                    freeByLineLv[line][lv] = (freeByLineLv[line][lv] || 0) + 1;
+                } else {
+                    if (!webByLineLv[line]) webByLineLv[line] = {};
+                    webByLineLv[line][lv] = (webByLineLv[line][lv] || 0) + 1;
+                }
+            });
+        }
 
-    var allOrdersDone = uncompletedCount === 0;
+        var allLines = {};
+        Object.keys(orderByLineLv).forEach(function (l) { allLines[l] = true; });
+        Object.keys(webByLineLv).forEach(function (l) { allLines[l] = true; });
 
-    Object.keys(allLines).forEach(function (line) {
-        var sim = simulateLineProgress(
-            freeByLineLv[line] || {},
-            webByLineLv[line] || {},
-            orderByLineLv[line] || {},
-            adjWeb
-        );
-        var d = sim.deficit;
+        var allOrdersDone = uncompletedCount === 0;
 
-        // Nếu màn chơi không có phá nhện liền kề (adjWeb = false) HOẶC đã xong hết đơn mà còn sót nhện:
-        if (!adjWeb || allOrdersDone) {
-            var remW = sim.remainingWebs;
-            var remF = sim.remainingFree;
-            for (var lv = 1; lv <= MAX_ITEM_LV; lv++) {
-                var wNeed = remW[lv] || 0;
-                if (wNeed > 0) {
-                    var carryBelow = 0;
-                    for (var b = 1; b < lv; b++) {
-                        carryBelow += (remF[b] || 0) * Math.pow(2, b - 1);
+        Object.keys(allLines).forEach(function (line) {
+            var sim = simulateLineProgress(
+                freeByLineLv[line] || {},
+                webByLineLv[line] || {},
+                orderByLineLv[line] || {},
+                adjWeb
+            );
+            var d = sim.deficit;
+
+            if (!adjWeb || allOrdersDone) {
+                var remW = sim.remainingWebs;
+                var remF = sim.remainingFree;
+                for (var lv = 1; lv <= MAX_ITEM_LV; lv++) {
+                    var wNeed = remW[lv] || 0;
+                    if (wNeed > 0) {
+                        var carryBelow = 0;
+                        for (var b = 1; b < lv; b++) {
+                            carryBelow += (remF[b] || 0) * Math.pow(2, b - 1);
+                        }
+                        d += Math.max(1, Math.pow(2, lv - 1) - carryBelow);
                     }
-                    d += Math.max(1, Math.pow(2, lv - 1) - carryBelow);
                 }
             }
-        }
 
-        if (d > 0) {
-            deficits[line] = d;
-        }
-    });
+            if (d > 0) {
+                deficits[line] = d;
+            }
+        });
 
-    return deficits;
+        return deficits;
+    }
+
+    var primaryDeficits = runDeficitPass(subsetOrders);
+    if (!includeAllOrders && Object.keys(primaryDeficits).length === 0 && ordersToCheck && subsetOrders && subsetOrders.length < ordersToCheck.length) {
+        return runDeficitPass(ordersToCheck);
+    }
+    return primaryDeficits;
 }
 
 // Sinh 1 item từ nguồn phát vào ô trống ngẫu nhiên. Trả về index ô mới, hoặc -1 nếu bàn đầy
@@ -421,13 +460,17 @@ function spreadWeb(board) {
     return idx;
 }
 
-// Cấp cao nhất cần cho mỗi dòng item (từ đơn hàng chưa xong + item đang bị nhện khóa)
+// Cấp cao nhất cần cho mỗi dòng item (ưu tiên tối đa 4 đơn hàng đang hiển thị + item đang bị nhện khóa)
 function neededLevels(board, orders) {
     var need = {};
-    orders.forEach(o => {
-        if (o.done) return;
-        var l = itemLine(o.id);
-        need[l] = Math.max(need[l] || 0, itemLv(o.id));
+    var vis = getVisibleOrders(orders);
+    var listToUse = vis.length > 0 ? vis : (orders || []);
+    listToUse.forEach(o => {
+        if (!o || o.done) return;
+        var id = typeof o === 'string' ? o : o.id;
+        if (!id) return;
+        var l = itemLine(id);
+        need[l] = Math.max(need[l] || 0, itemLv(id));
     });
     board.forEach(c => {
         if (c && c.id && c.isLocked) {

@@ -202,7 +202,7 @@ function showWinModal(info, onReplay, onNext) {
         : '<button class="modal-btn gem-btn win-btn-double" id="mb-double-ad">🎬 x2 Vàng Thưởng (+' + info.coins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + ')</button>';
 
     var overlay = createModal(
-        '<div class="modal-sub">Level ' + info.level + ': ' + info.name + '</div>' +
+        '<div class="modal-sub">Level ' + info.level + '</div>' +
         '<div class="win-stars">' + starsHtml + '</div>' +
         '<div class="win-coins">+' + totalCoinsWithSweep.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + gemText +
             (info.firstTime ? '' : ' <small>(chơi lại)</small>') + '</div>' +
@@ -1252,26 +1252,28 @@ function openDiscoveryBook() {
     overlay.querySelector('#mb-close').onclick = closeModal;
 }
 
-// ---------- 6. BẢN ĐỒ HÀNH TRÌNH 45 LEVEL (WORLD MAP) ----------
+// ---------- 6. BẢN ĐỒ HÀNH TRÌNH (WORLD MAP - COMPACT 5-COLUMN GRID) ----------
 var STAR_CHEST_REWARDS = [
-    { stars: 15, name: 'Rương Tiếp Tế', icon: '🎁', coins: 500, energy: 15, gems: 0, desc: '500 Vàng + 15 NL' },
-    { stars: 30, name: 'Ba Lô Dã Ngoại', icon: '🎒', coins: 1500, energy: 0, gems: 5, desc: '1.500 Vàng + 5 KC' },
-    { stars: 60, name: 'Trại Rừng Già', icon: '🏕️', coins: 4000, energy: 0, gems: 15, desc: '4.000 Vàng + 15 KC' },
-    { stars: 90, name: 'La Bàn Sinh Tồn', icon: '🧭', coins: 8000, energy: 50, gems: 25, desc: '8.000 Vàng + 25 KC + 50 NL' },
-    { stars: 135, name: 'Vương Miện Cắm Trại', icon: '👑', coins: 20000, energy: 100, gems: 50, desc: '20.000 Vàng + 50 KC + 100 NL' }
+    { stars: 30,  name: 'Rương Tiếp Tế',     icon: '🎁', coins: 1000,  energy: 20,  gems: 0,   desc: '1.000 Vàng + 20 NL' },
+    { stars: 90,  name: 'Ba Lô Dã Ngoại',    icon: '🎒', coins: 3000,  energy: 0,   gems: 10,  desc: '3.000 Vàng + 10 KC' },
+    { stars: 180, name: 'Trại Rừng Già',     icon: '🏕️', coins: 8000,  energy: 0,   gems: 25,  desc: '8.000 Vàng + 25 KC' },
+    { stars: 270, name: 'La Bàn Sinh Tồn',   icon: '🧭', coins: 15000, energy: 60,  gems: 40,  desc: '15.000 Vàng + 40 KC + 60 NL' },
+    { stars: 360, name: 'Vương Miện Cắm Trại', icon: '👑', coins: 35000, energy: 120, gems: 100, desc: '35.000 Vàng + 100 KC + 120 NL' }
 ];
 
-var CHAPTERS = [
-    { id: 1, title: 'Chương 1: Khởi Đầu Bãi Cỏ (LV 1-10)', from: 1, to: 10, starReq: 0, bossLv: 10, bossDesc: 'Đêm Lửa Trại đầu tiên quây quần bên cả 3 người bạn!' },
-    { id: 2, title: 'Chương 2: Rừng Sâu & Bờ Suối (LV 11-25)', from: 11, to: 25, starReq: 20, bossLv: 25, prevChName: 'Chương 1', bossDesc: 'Sofa giữa thiên nhiên - Hoàn thành bộ ảnh bìa tạp chí!' },
-    { id: 3, title: 'Chương 3: Chinh Phục Đèo Cao (LV 26-35)', from: 26, to: 35, starReq: 55, bossLv: 35, prevChName: 'Chương 2', bossDesc: 'Cầu Tre Vượt Thác - Chinh phục thác nước hiểm trở lên Đỉnh Tuyết!' },
-    { id: 4, title: 'Chương 4: Đỉnh Tuyết Huyền Thoại (LV 36-45)', from: 36, to: 45, starReq: 85, bossLv: 45, prevChName: 'Chương 3', bossDesc: 'Huyền Thoại Vua Cắm Trại - Chinh phục 3 đại đơn hàng Lv.8 tối thượng!' }
+var STAGE_THEMES = [
+    { icon: '🏕️', label: 'Chặng 1' },
+    { icon: '🌲', label: 'Chặng 2' },
+    { icon: '🏞️', label: 'Chặng 3' },
+    { icon: '⛰️', label: 'Chặng 4' },
+    { icon: '❄️', label: 'Chặng 5' },
+    { icon: '👑', label: 'Chặng 6' }
 ];
 
 function getScoutRank(totalStars) {
-    if (totalStars >= 135) return { title: '👑 Vua Cắm Trại', desc: 'Vương miện danh dự tối thượng' };
-    if (totalStars >= 90)  return { title: '🧭 Chuyên Gia Sinh Tồn', desc: '+10% Vàng nộp đơn' };
-    if (totalStars >= 60)  return { title: '📷 Thợ Săn Ảnh', desc: 'Tốc độ hồi NL 28s' };
+    if (totalStars >= 300) return { title: '👑 Vua Cắm Trại', desc: 'Vương miện danh dự tối thượng' };
+    if (totalStars >= 180) return { title: '🧭 Chuyên Gia Sinh Tồn', desc: '+10% Vàng nộp đơn' };
+    if (totalStars >= 90)  return { title: '📷 Thợ Săn Ảnh', desc: 'Tốc độ hồi NL 28s' };
     if (totalStars >= 30)  return { title: '🌲 Hướng Đạo Sinh', desc: '+5 Trần Năng Lượng' };
     return { title: '🏕️ Tân Thủ Cắm Trại', desc: 'Khởi đầu chuyến dã ngoại' };
 }
@@ -1282,6 +1284,17 @@ function openWorldMap(currentLv, onSelectLevel) {
     var unlockAll = SAVE.settings && SAVE.settings.unlockAllLevels;
     if (!SAVE.claimedStarChests || !Array.isArray(SAVE.claimedStarChests)) SAVE.claimedStarChests = [];
 
+    // Đảm bảo danh sách màn chơi hỗ trợ tối thiểu 120 level hiện tại và tự động mở rộng khi người chơi vượt xa hơn
+    var totalDisplayLevels = Math.max(
+        RAW_LEVELS.length,
+        120,
+        Math.ceil(Math.max(SAVE.maxLevel || 1, currentLv || 1) / 20) * 20
+    );
+    for (var genLv = RAW_LEVELS.length + 1; genLv <= totalDisplayLevels; genLv++) {
+        getLevelConfig(genLv);
+    }
+    var maxPossibleStars = totalDisplayLevels * 3;
+
     var rank = getScoutRank(totalStars);
 
     // Tính mốc rương kế tiếp và phần trăm tiến trình
@@ -1289,7 +1302,7 @@ function openWorldMap(currentLv, onSelectLevel) {
         return SAVE.claimedStarChests.indexOf(c.stars) === -1;
     });
 
-    var progressPct = Math.min(100, Math.round((totalStars / 135) * 100));
+    var progressPct = Math.min(100, Math.round((totalStars / 360) * 100));
 
     // Xây dựng các node mốc rương sao
     var milestonesHtml = '';
@@ -1300,9 +1313,9 @@ function openWorldMap(currentLv, onSelectLevel) {
 
         var statusBtnHtml = '';
         if (isClaimed) {
-            statusBtnHtml = '<span class="milestone-status-txt claimed">✓ Đã nhận</span>';
+            statusBtnHtml = '<span class="milestone-status-txt claimed">✓</span>';
         } else if (canClaim) {
-            statusBtnHtml = '<button class="milestone-claim-btn" data-stars="' + m.stars + '">🎁 Nhận</button>';
+            statusBtnHtml = '<button class="milestone-claim-btn" data-stars="' + m.stars + '">Nhận</button>';
         } else {
             statusBtnHtml = '<span class="milestone-status-txt locked">' + m.stars + '⭐</span>';
         }
@@ -1317,12 +1330,12 @@ function openWorldMap(currentLv, onSelectLevel) {
 
     var tipText = '';
     if (!nextChest) {
-        tipText = '🎉 Tuyệt vời! Bạn đã mở toàn bộ rương mốc sao của hành trình!';
+        tipText = '🎉 Đã mở toàn bộ rương mốc sao!';
     } else if (totalStars >= nextChest.stars) {
-        tipText = '🎁 Chạm nút "Nhận" ở trên để mở <b>' + nextChest.name + '</b> (' + nextChest.desc + ')!';
+        tipText = '🎁 Chạm "Nhận" để mở <b>' + nextChest.name + '</b> (' + nextChest.desc + ')!';
     } else {
         var needed = nextChest.stars - totalStars;
-        tipText = 'Mốc kế: <b>' + nextChest.name + ' (' + nextChest.stars + ' ⭐)</b> • Thưởng: ' + nextChest.desc + ' <i>(còn thiếu ' + needed + ' ⭐)</i>';
+        tipText = 'Mốc kế: <b>' + nextChest.name + ' (' + nextChest.stars + '⭐)</b> • ' + nextChest.desc + ' <i>(thiếu ' + needed + '⭐)</i>';
     }
 
     var starTrackerHtml =
@@ -1333,7 +1346,7 @@ function openWorldMap(currentLv, onSelectLevel) {
                 '</div>' +
                 '<div class="star-counter-pill">' +
                     '<img src="assets/images/ui/icon_star.png" class="stat-star-ico" alt="">' +
-                    '<span><b>' + totalStars + '</b>/135 Sao</span>' +
+                    '<span><b>' + totalStars + '</b>/' + maxPossibleStars + '</span>' +
                 '</div>' +
             '</div>' +
             '<div class="star-milestone-track">' +
@@ -1345,91 +1358,68 @@ function openWorldMap(currentLv, onSelectLevel) {
             '<div class="star-chest-tip-bar" id="star-chest-tip-bar">' + tipText + '</div>' +
         '</div>';
 
-    var chaptersHtml = '';
-    CHAPTERS.forEach(function (ch) {
-        var isPrevPassed = ch.id === 1 || ch.from <= SAVE.maxLevel;
-        var hasStars = totalStars >= ch.starReq;
-        var isChUnlocked = unlockAll || (isPrevPassed && hasStars);
+    // Chia gọn gàng thành các Chặng (mỗi chặng 20 level, hiển thị dạng lưới 5 cột x 4 hàng siêu gọn)
+    var stagesHtml = '';
+    var stageSize = 20;
+    var stageCount = Math.ceil(totalDisplayLevels / stageSize);
 
-        chaptersHtml += '<div class="chapter-title">' + ch.title + '</div>';
+    for (var s = 0; s < stageCount; s++) {
+        var fromLv = s * stageSize + 1;
+        var toLv = Math.min(totalDisplayLevels, (s + 1) * stageSize);
+        var theme = STAGE_THEMES[s % STAGE_THEMES.length];
+        var stageTitle = theme.icon + ' Chặng ' + (s + 1) + ' • Màn ' + fromLv + ' – ' + toLv;
 
-        if (!isChUnlocked) {
-            var gateDesc = !isPrevPassed
-                ? '🚩 Vượt qua Màn ' + (ch.from - 1) + ' của ' + ch.prevChName + ' để mở cổng'
-                : '⭐ Cần tích lũy tối thiểu <b>' + ch.starReq + ' Sao</b> để qua cổng (hiện có: ' + totalStars + '/' + ch.starReq + ' ⭐)';
-            var gatePct = Math.min(100, Math.round((totalStars / (ch.starReq || 1)) * 100));
+        var stageStars = 0;
+        var stageMaxStars = (toLv - fromLv + 1) * 3;
+        var nodesHtml = '';
 
-            chaptersHtml += '<div class="chapter-star-gate" data-chid="' + ch.id + '">' +
-                '<div class="gate-lock-icon-wrap">' +
-                    '<img src="assets/images/ui/icon_lock.png" class="gate-lock-img" alt="Khóa">' +
-                '</div>' +
-                '<div class="gate-info">' +
-                    '<div class="gate-title">CỔNG KHÓA: ' + ch.title + '</div>' +
-                    '<div class="gate-desc">' + gateDesc + '</div>' +
-                    '<div class="gate-progress-track">' +
-                        '<div class="gate-progress-bar" style="width:' + gatePct + '%"></div>' +
-                    '</div>' +
-                    '<div class="gate-progress-text">Tiến độ sao: <b>' + totalStars + '</b>/' + ch.starReq + ' ⭐ (' + gatePct + '%)</div>' +
-                '</div>' +
-            '</div>';
-            return;
-        }
-
-        var cardsHtml = '';
-        for (var lv = ch.from; lv <= ch.to; lv++) {
-            var cfg = getLevelConfig(lv);
+        for (var lv = fromLv; lv <= toLv; lv++) {
             var st = SAVE.stars[lv] || 0;
+            stageStars += st;
             var unlocked = unlockAll || lv <= SAVE.maxLevel;
             var isCur = lv === currentLv;
-            var isBoss = lv === ch.bossLv;
+            var isMilestone = (lv % 10 === 0);
 
-            var starsImgHtml = '';
-            for (var sIdx = 1; sIdx <= 3; sIdx++) {
-                var isStarOn = sIdx <= st;
-                starsImgHtml += '<img src="assets/images/ui/icon_star.png" class="card-star-img' + (isStarOn ? '' : ' off') + '" alt="">';
-            }
+            var nodeCls = 'level-card compact-lv-node' +
+                (unlocked ? ' unlocked' : ' locked') +
+                (isCur ? ' current' : '') +
+                (st === 3 ? ' perfect-3star' : '') +
+                (isMilestone ? ' milestone-lv' : '');
 
-            var checkIco = st === 3 ? '<span class="level-card-done-ico" title="Đạt 3 sao hoàn hảo!">✓</span>' : '';
-            var curTag = isCur ? '<span class="level-card-cur-tag">▶ Tiếp tục</span>' : '';
-            var lockIco = !unlocked ? '<img src="assets/images/ui/icon_lock.png" class="level-card-lock-ico" alt="Khóa">' : '';
-
-            if (isBoss) {
-                // Thẻ Màn Boss chốt chương (trải rộng full hàng)
-                cardsHtml += '<div class="level-card boss-level-card' + (unlocked ? ' unlocked' : ' locked') + (isCur ? ' current' : '') + (st === 3 ? ' perfect-3star' : '') + '" data-lv="' + lv + '">' +
-                    '<div class="boss-card-header">' +
-                        '<span class="boss-card-crown">👑</span>' +
-                        '<span class="boss-card-tag">MÀN BOSS LV.' + lv + '</span>' +
-                        curTag +
-                        lockIco +
-                        checkIco +
-                    '</div>' +
-                    '<div class="boss-card-body">' +
-                        '<div class="boss-card-name">' + cfg.name + '</div>' +
-                        '<div class="boss-card-desc">' + ch.bossDesc + '</div>' +
-                        '<div class="level-card-stars boss-stars">' + starsImgHtml + '</div>' +
-                    '</div>' +
-                '</div>';
+            var bottomHtml = '';
+            if (!unlocked) {
+                bottomHtml = '<img src="assets/images/ui/icon_lock.png" class="compact-lock-ico" alt="🔒">';
             } else {
-                // Thẻ màn chơi thông thường (2 cột)
-                cardsHtml += '<div class="level-card' + (unlocked ? ' unlocked' : ' locked') + (isCur ? ' current' : '') + (st === 3 ? ' perfect-3star' : '') + '" data-lv="' + lv + '">' +
-                    '<div class="level-card-top">' +
-                        '<span class="level-card-badge">LV.' + lv + '</span>' +
-                        curTag +
-                        lockIco +
-                        checkIco +
-                    '</div>' +
-                    '<div class="level-card-name">' + cfg.name + '</div>' +
-                    '<div class="level-card-stars">' + starsImgHtml + '</div>' +
-                '</div>';
+                var starsSpan = '';
+                for (var sIdx = 1; sIdx <= 3; sIdx++) {
+                    var onCls = sIdx <= st ? '' : ' off';
+                    starsSpan += '<img src="assets/images/ui/icon_star.png" class="compact-star-img' + onCls + '" alt="">';
+                }
+                bottomHtml = '<div class="compact-lv-stars">' + starsSpan + '</div>';
             }
+
+            var crownBadge = isMilestone ? '<span class="compact-crown-badge">👑</span>' : '';
+
+            nodesHtml += '<div class="' + nodeCls + '" data-lv="' + lv + '">' +
+                crownBadge +
+                '<span class="compact-lv-num">' + lv + '</span>' +
+                bottomHtml +
+            '</div>';
         }
-        chaptersHtml += '<div class="map-grid-2col">' + cardsHtml + '</div>';
-    });
+
+        stagesHtml += '<div class="map-stage-block">' +
+            '<div class="map-stage-header">' +
+                '<span class="map-stage-title">' + stageTitle + '</span>' +
+                '<span class="map-stage-stars">★ ' + stageStars + '/' + stageMaxStars + '</span>' +
+            '</div>' +
+            '<div class="map-grid-5col">' + nodesHtml + '</div>' +
+        '</div>';
+    }
 
     var overlay = createModal(
         '<div class="map-scroll-area">' +
             starTrackerHtml +
-            chaptersHtml +
+            stagesHtml +
         '</div>' +
         '<div class="modal-buttons" style="margin-top:8px;flex-shrink:0">' +
             '<button class="modal-btn primary" id="mb-close">Đóng</button>' +
@@ -1465,7 +1455,7 @@ function openWorldMap(currentLv, onSelectLevel) {
             saveGame();
             updateUIStats();
             playSound('win');
-            var targetEl = document.getElementById('btn-map') || document.body;
+            var targetEl = document.getElementById('btn-world-map') || document.body;
             spawnFlyingCurrency(targetEl, 'gold', Math.min(chest.coins, 60));
             showToast('🎉 Nhận thành công ' + chest.name + ': ' + chest.desc + '!', '#2e7d32');
 
@@ -1483,26 +1473,11 @@ function openWorldMap(currentLv, onSelectLevel) {
             var tipEl = overlay.querySelector('#star-chest-tip-bar');
             var isClaimed = SAVE.claimedStarChests && SAVE.claimedStarChests.indexOf(chest.stars) !== -1;
             if (isClaimed) {
-                if (tipEl) tipEl.innerHTML = '✓ <b>' + chest.name + ' (' + chest.stars + ' ⭐)</b>: Đã nhận (' + chest.desc + ')';
+                if (tipEl) tipEl.innerHTML = '✓ <b>' + chest.name + ' (' + chest.stars + '⭐)</b>: Đã nhận (' + chest.desc + ')';
             } else if (totalStars >= chest.stars) {
-                if (tipEl) tipEl.innerHTML = '🎁 <b>' + chest.name + ' (' + chest.stars + ' ⭐)</b>: Đã mở khóa! Bấm nút "Nhận" để lấy: ' + chest.desc;
+                if (tipEl) tipEl.innerHTML = '🎁 <b>' + chest.name + ' (' + chest.stars + '⭐)</b>: Bấm "Nhận" để lấy: ' + chest.desc;
             } else {
-                if (tipEl) tipEl.innerHTML = '🔒 <b>' + chest.name + ' (' + chest.stars + ' ⭐)</b>: Thưởng ' + chest.desc + ' (còn thiếu ' + (chest.stars - totalStars) + ' ⭐)';
-            }
-        };
-    });
-
-    // Xử lý chạm vào Cổng Chương đang bị khóa
-    overlay.querySelectorAll('.chapter-star-gate').forEach(function (gate) {
-        gate.onclick = function () {
-            var chId = parseInt(gate.dataset.chid, 10);
-            var ch = CHAPTERS.find(function (c) { return c.id === chId; });
-            if (!ch) return;
-            var isPrevPassed = ch.from <= SAVE.maxLevel;
-            if (!isPrevPassed) {
-                showToast('🔒 Hãy hoàn thành ' + ch.prevChName + ' trước nhé!', '#c62828');
-            } else {
-                showToast('⭐ Cần thêm ' + (ch.starReq - totalStars) + ' Sao để mở khóa ' + ch.title + '! Hãy chơi lại các màn 1-2 sao trước nhé.', '#f57c00');
+                if (tipEl) tipEl.innerHTML = '🔒 <b>' + chest.name + ' (' + chest.stars + '⭐)</b>: Thưởng ' + chest.desc + ' (thiếu ' + (chest.stars - totalStars) + '⭐)';
             }
         };
     });
@@ -1524,7 +1499,7 @@ function openWorldMap(currentLv, onSelectLevel) {
     var curNode = overlay.querySelector('.level-card.current');
     if (curNode) {
         setTimeout(function () {
-            curNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            curNode.scrollIntoView({ block: 'center', behavior: 'smooth' });
         }, 60);
     }
 }
@@ -1627,11 +1602,11 @@ function openSettingsModal(opts) {
                 '</button>' +
             '</div>' +
 
-            '<!-- Mở khóa 45 level -->' +
+            '<!-- Mở khóa tất cả level -->' +
             '<div class="st-row">' +
                 '<div class="st-row-left">' +
                     '<img src="assets/images/ui/icon_lock.png" class="st-icon" alt="">' +
-                    '<span class="st-label">Mở khóa 45 level</span>' +
+                    '<span class="st-label">Mở khóa tất cả level</span>' +
                 '</div>' +
                 '<button class="toggle-btn ' + (s.unlockAllLevels ? 'on' : 'off') + '" id="st-unlock">' +
                     (s.unlockAllLevels ? 'BẬT' : 'TẮT') +

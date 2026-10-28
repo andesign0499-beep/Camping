@@ -69,10 +69,11 @@ function simulateOneGame(lvNum, maxEnergyCap) {
     let unwantedClicks = 0;
     let steps = 0;
 
-    while (steps++ < 3000) {
-        // 1. Nộp ngay đơn hàng nếu đã có sẵn trên bàn
+    while (steps++ < 5000) {
+        // 1. Nộp ngay đơn hàng nếu đã có sẵn trên bàn (chỉ trong tối đa 4 đơn hàng đang hiển thị)
         let submitted = false;
-        for (const o of orders) {
+        const visibleOrders = ctx.getVisibleOrders ? ctx.getVisibleOrders(orders) : orders.filter(o => !o.done).slice(0, 4);
+        for (const o of visibleOrders) {
             if (!o.done) {
                 const mIdx = ctx.findOrderMatch(board, o.id);
                 if (mIdx !== -1) {

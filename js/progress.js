@@ -482,7 +482,7 @@ function computeEnergyBudget(board, orderIds, level) {
 
     var totalDeficit = 0;
     if (typeof computeLineDeficits === 'function') {
-        var deficits = computeLineDeficits(board, orderIds, level);
+        var deficits = computeLineDeficits(board, orderIds, level, true);
         Object.keys(deficits).forEach(function (line) {
             totalDeficit += deficits[line] || 0;
         });
