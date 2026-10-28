@@ -297,23 +297,25 @@ function generateLevelConfig(lvNum) {
             var oLv = parseInt(ordId.split('_lv')[1], 10) || 3;
 
             if (oIdx === 0) {
-                var sub0 = Math.max(1, oLv - 2);
-                freeList.push(oLine + '_lv' + sub0);
-                webList.push(oLine + '_lv' + sub0);
-                webList.push(oLine + '_lv' + sub0);
+                var fLv0 = (oLv >= 5) ? 2 : 1;
+                var wLv0 = Math.max(1, oLv - 2);
+                freeList.push(oLine + '_lv' + fLv0);
+                webList.push(oLine + '_lv' + wLv0);
+                webList.push(oLine + '_lv' + wLv0);
                 if (oLv >= 6) {
                     webList.push(oLine + '_lv' + Math.max(1, oLv - 3));
                 }
             } else if (oIdx === 1) {
-                var sub1 = Math.max(1, oLv - 2);
-                freeList.push(oLine + '_lv' + sub1);
-                webList.push(oLine + '_lv' + sub1);
-                webList.push(oLine + '_lv' + sub1);
+                var fLv1 = 1;
+                var wLv1 = Math.max(1, oLv - 2);
+                freeList.push(oLine + '_lv' + fLv1);
+                webList.push(oLine + '_lv' + wLv1);
+                webList.push(oLine + '_lv' + wLv1);
             } else if (oIdx === 2) {
-                var sub2 = Math.max(1, oLv - 1);
-                webList.push(oLine + '_lv' + sub2);
+                var wLv2 = Math.max(1, oLv - 1);
+                webList.push(oLine + '_lv' + wLv2);
                 if (freeList.length < 3) {
-                    freeList.push(oLine + '_lv' + Math.max(1, oLv - 2));
+                    freeList.push(oLine + '_lv1');
                 }
             } else if (webList.length < 13) {
                 // Trợ lực 50% cho các đơn hàng trong hàng đợi để nhịp độ mở khóa đơn mới luôn hào hứng
@@ -321,6 +323,16 @@ function generateLevelConfig(lvNum) {
                 webList.push(oLine + '_lv' + qSub);
             }
         });
+
+        // BẢO VỆ TUYỆT ĐỐI: Đồ mồi tự do (freeList) chỉ là vật phẩm cấp thấp (Lv.1 - Lv.2) để người chơi có mồi ghép,
+        // TUYỆT ĐỐI KHÔNG BAO GIỜ trùng với bất kỳ đơn hàng nhiệm vụ nào (tránh việc vừa vào ván đã có sẵn đồ nộp ngay).
+        for (var fi = 0; fi < freeList.length; fi++) {
+            var fLine = freeList[fi].split('_lv')[0];
+            var fLv = parseInt(freeList[fi].split('_lv')[1], 10) || 1;
+            if (fLv >= 3 || orders.indexOf(freeList[fi]) !== -1) {
+                freeList[fi] = fLine + '_lv1';
+            }
+        }
     }
 
     // Giới hạn hợp lý số lượng mạng nhện để không gian bàn cờ mở rộng thoáng đãng ở các level cao

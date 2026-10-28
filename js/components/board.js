@@ -1240,8 +1240,22 @@ function flyCompletedOrderToPet(cardEl, onComplete) {
 
 // Hàm giao đơn hàng kèm hiệu ứng vật phẩm bay từ bàn cờ lên ô nhiệm vụ và bắn tiền thưởng ra
 function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
-    if (!orderObj || orderObj.done || boardCellIdx === -1 || !boardData[boardCellIdx]) return;
-    if (boardData[boardCellIdx].id !== orderObj.id) return;
+    if (!orderObj || orderObj.done) return;
+
+    // Tự động tìm lại ô chứa item trên bàn cờ nếu ô truyền vào không khớp (do người chơi di chuyển hoặc thao tác nhanh)
+    if (boardCellIdx === -1 || !boardData[boardCellIdx] || boardData[boardCellIdx].id !== orderObj.id || boardData[boardCellIdx].isLocked) {
+        boardCellIdx = findOrderMatch(boardData, orderObj.id);
+        if (boardCellIdx === -1) return;
+    }
+
+    // Tự động tìm lại thẻ nhiệm vụ tương ứng nếu targetCardEl bị thiếu hoặc không còn gắn trong DOM
+    if (!targetCardEl || !document.body.contains(targetCardEl)) {
+        targetCardEl = ordersContainer && (
+            ordersContainer.querySelector('.order-card[data-order-id="' + orderObj.id + '"]:not(.done)') ||
+            ordersContainer.querySelector('.order-card.ready')
+        );
+    }
+
     orderObj.done = true;
     tutDeliveredOnce = true;
 
@@ -1338,7 +1352,7 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
 // Khi 1 nhiệm vụ hoàn thành làm lộ nhiệm vụ tiếp theo (vốn đang ẩn sau 4 ô đầu),
 // nếu trên bàn cờ đã có sẵn vật phẩm khớp với nhiệm vụ mới lộ ra thì tự động bay lên giao luôn
 function checkAutoDeliverRevealedOrders() {
-    if (currentLevel <= 1 || levelWon || !currentOrders || !ordersContainer) return;
+    if (levelWon || !currentOrders || !ordersContainer) return;
     var maxVis = (typeof MAX_VISIBLE_ORDERS === 'number') ? MAX_VISIBLE_ORDERS : 4;
     var visCount = 0;
     for (var i = 0; i < currentOrders.length; i++) {
@@ -1348,11 +1362,12 @@ function checkAutoDeliverRevealedOrders() {
         visCount++;
         var matchIdx = findOrderMatch(boardData, o.id);
         if (matchIdx !== -1) {
-            var cardEl = ordersContainer.querySelector('.order-card[data-order-idx="' + i + '"]');
+            var cardEl = ordersContainer.querySelector('.order-card[data-order-idx="' + i + '"]') ||
+                         ordersContainer.querySelector('.order-card[data-order-id="' + o.id + '"]:not(.done)');
             if (cardEl) {
                 (function (ord, mIdx, cEl) {
                     setTimeout(function () {
-                        if (!ord.done && boardData[mIdx] && boardData[mIdx].id === ord.id) {
+                        if (!ord.done) {
                             deliverReadyOrderWithFlight(ord, mIdx, cEl);
                         }
                     }, 220);
@@ -1589,14 +1604,20 @@ function executeMoveAndEffects(fromIdx, toIdx) {
         }
         if (matchingOrderIdx !== -1) {
             var matchingOrder = currentOrders[matchingOrderIdx];
-            var targetOrderCard = ordersContainer && (
-                ordersContainer.querySelector('.order-card[data-order-idx="' + matchingOrderIdx + '"]') ||
-                ordersContainer.querySelector('.order-card[data-order-id="' + matchingOrder.id + '"]')
-            );
             var finalIndex = res.index;
             // Delay 260ms để người chơi nhìn thấy rõ món mới được ghép thành công trên bàn cờ trước khi bay vút lên
             setTimeout(function () {
-                deliverReadyOrderWithFlight(matchingOrder, finalIndex, targetOrderCard);
+                var freshCard = ordersContainer && (
+                    ordersContainer.querySelector('.order-card[data-order-idx="' + matchingOrderIdx + '"]') ||
+                    ordersContainer.querySelector('.order-card[data-order-id="' + matchingOrder.id + '"]:not(.done)') ||
+                    ordersContainer.querySelector('.order-card.ready')
+                );
+                deliverReadyOrderWithFlight(matchingOrder, finalIndex, freshCard);
+            }, 260);
+        } else {
+            // Kiểm tra xem có nhiệm vụ nào khác sẵn sàng (ví dụ sau khi phá mạng nhện ra item nhiệm vụ)
+            setTimeout(function () {
+                checkAutoDeliverRevealedOrders();
             }, 260);
         }
     }
@@ -1691,11 +1712,25 @@ function onPointerUp(e) {
     var wasActive = dragState.active;
     var from = dragState.from;
     var target = wasActive ? cellFromPoint(e.clientX, e.clientY) : null;
+    var underPoint = wasActive ? document.elementFromPoint(e.clientX, e.clientY) : null;
+    var draggedCard = underPoint ? underPoint.closest('.order-card') : null;
     endDrag();
 
     if (wasActive) {
         suppressNextClick = true;
         setTimeout(() => { suppressNextClick = false; }, 0);
+        // Kéo thả trực tiếp món đồ vào ô thẻ nhiệm vụ
+        if (draggedCard && ordersContainer && ordersContainer.contains(draggedCard)) {
+            var orderId = draggedCard.dataset.orderId;
+            var fromItem = boardData[from];
+            if (fromItem && fromItem.id && fromItem.id === orderId && !fromItem.isLocked) {
+                var matchingOrder = currentOrders.find(o => o.id === orderId && !o.done);
+                if (matchingOrder) {
+                    deliverReadyOrderWithFlight(matchingOrder, from, draggedCard);
+                    return;
+                }
+            }
+        }
         if (target && boardElement.contains(target)) {
             executeMoveAndEffects(from, parseInt(target.dataset.index));
         } else {
@@ -1796,6 +1831,10 @@ function spawnFromGenerator(gen, cellElement) {
     if (spreadIdx !== -1 && boardElement.children[spreadIdx]) {
         showFloatingBadge(boardElement.children[spreadIdx], '🕸️ Nhện lan!', '#6a1b9a');
     }
+
+    setTimeout(function () {
+        checkAutoDeliverRevealedOrders();
+    }, 280);
 }
 
 // Bấm 6 lần liên tục: Xả đồ ra toàn bộ các ô trống trên bàn cờ (tiêu tốn tương ứng với số ô trống và năng lượng hiện có)
@@ -1868,6 +1907,10 @@ function bulkSpawnFromGenerator(gen, cellElement) {
     if (playerEnergy <= 0) {
         setTimeout(openEnergyShop, 450);
     }
+
+    setTimeout(function () {
+        checkAutoDeliverRevealedOrders();
+    }, 320);
 }
 
 function handleCellClick(e, cellElement) {
