@@ -323,17 +323,43 @@ function computeLineDeficits(board, activeOrders, levelCfg, includeAllOrders) {
     return primaryDeficits;
 }
 
+// Tính toán cấp độ rơi của vật phẩm từ thùng sinh đồ (Lv.1, Lv.2, Lv.3)
+// Màn 1-10: 100% Cấp 1 (Chế độ hướng dẫn)
+// Màn 11+: Mở tỷ lệ rơi Cấp 2 và Cấp 3 tăng dần theo cấp độ màn chơi
+function getGeneratorDropLevel(levelNum) {
+    if (!levelNum || levelNum <= 10) return 1;
+
+    var dropCfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.generatorDrops)
+        ? GAME_CONFIG.gameplay.generatorDrops
+        : null;
+
+    var tiers = (dropCfg && dropCfg.tiers) || [
+        { maxLevel: 10,  lv1: 1.00, lv2: 0.00, lv3: 0.00 },
+        { maxLevel: 20,  lv1: 0.78, lv2: 0.18, lv3: 0.04 },
+        { maxLevel: 40,  lv1: 0.70, lv2: 0.23, lv3: 0.07 },
+        { maxLevel: 60,  lv1: 0.62, lv2: 0.26, lv3: 0.12 },
+        { maxLevel: 90,  lv1: 0.55, lv2: 0.30, lv3: 0.15 },
+        { maxLevel: 120, lv1: 0.50, lv2: 0.32, lv3: 0.18 }
+    ];
+
+    var tier = tiers.find(function (t) { return levelNum <= t.maxLevel; }) || tiers[tiers.length - 1];
+    var r = rand();
+    if (r < (tier.lv3 || 0)) return 3;
+    if (r < (tier.lv3 || 0) + (tier.lv2 || 0)) return 2;
+    return 1;
+}
+
 // Sinh 1 item từ nguồn phát vào ô trống ngẫu nhiên. Trả về index ô mới, hoặc -1 nếu bàn đầy
 // Giải pháp 1: Thuật toán Rơi Đồ Thông Minh Theo Thiếu Hụt Thực Tế (Deficit-Driven) & Bảo Hiểm Pity
 function spawnItem(board, genId, activeOrders, levelCfg) {
     var empty = getEmptyIndexes(board);
     if (!empty.length) {
-        lastSpawnResult = { target: -1, id: null, line: null, wasUnwanted: false };
+        lastSpawnResult = { target: -1, id: null, line: null, itemLv: 1, wasUnwanted: false };
         return -1;
     }
     var list = GENERATORS[genId];
     if (!list || !list.length) {
-        lastSpawnResult = { target: -1, id: null, line: null, wasUnwanted: false };
+        lastSpawnResult = { target: -1, id: null, line: null, itemLv: 1, wasUnwanted: false };
         return -1;
     }
 
@@ -386,12 +412,18 @@ function spawnItem(board, genId, activeOrders, levelCfg) {
         wasUnwanted = false;
     }
 
+    var pickedLine = itemLine(id);
+    var lvNum = (levelCfg && (levelCfg.num || levelCfg.level)) || (typeof currentLevel !== 'undefined' ? currentLevel : 1);
+    var dropLv = getGeneratorDropLevel(lvNum);
+    var finalId = pickedLine + '_lv' + dropLv;
+
     var target = empty[Math.floor(rand() * empty.length)];
-    board[target] = { id: id, isRock: false, isLocked: false };
+    board[target] = { id: finalId, isRock: false, isLocked: false };
     lastSpawnResult = {
         target: target,
-        id: id,
-        line: itemLine(id),
+        id: finalId,
+        line: pickedLine,
+        itemLv: dropLv,
         wasUnwanted: wasUnwanted
     };
     return target;

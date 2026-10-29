@@ -778,6 +778,7 @@ body {
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     overflow: hidden;
+    contain: layout paint;
 }
 .bg-light,
 .bg-dark,
@@ -822,10 +823,12 @@ body {
 }
 .cell.order-ready-item img.item-img {
     animation: orderItemBounce 1.2s infinite ease-in-out;
+    filter: drop-shadow(0 0 8px rgba(46, 204, 113, 0.85));
+    will-change: transform;
 }
 @keyframes orderItemBounce {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(46, 204, 113, 0.9)); }
-    50% { transform: scale(1.12); filter: drop-shadow(0 0 12px rgba(46, 204, 113, 1)); }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
 }
 
 .order-ready-badge {
@@ -943,6 +946,7 @@ body {
     height: 28px;
     object-fit: contain;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+    will-change: transform, opacity;
 }
 
 .inline-ui-icon {
@@ -958,6 +962,20 @@ body {
     position: relative;
     overflow: visible !important;
 }
+/* Trạng thái thùng sinh đồ khi màn chơi đã hoàn thành nhiệm vụ (chống bấm tiêu hao năng lượng lãng phí) */
+.cell.generator-done {
+    filter: brightness(0.92);
+    cursor: default;
+    transition: filter 0.3s ease;
+}
+.cell.generator-done .sparkle-star {
+    display: none !important;
+}
+.cell.generator-done .generator-energy-badge {
+    opacity: 0.25 !important;
+    animation: none !important;
+    transition: opacity 0.3s ease;
+}
 .sparkle-star {
     position: absolute;
     width: 4px;
@@ -968,6 +986,7 @@ body {
     pointer-events: none;
     z-index: 15;
     opacity: 0;
+    will-change: transform, opacity;
 }
 @keyframes floatStar {
     0% { transform: translate(0, 0) scale(0.5); opacity: 0; }
@@ -1002,6 +1021,7 @@ body {
     pointer-events: none;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
     animation: energyBadgeBounce 2.4s ease-in-out infinite;
+    will-change: transform;
 }
 
 @keyframes energyBadgeBounce {
@@ -1741,8 +1761,6 @@ body {
 .camp-item-origin-tag,
 .camp-item-selected-tick {
     display: none !important;
-}
-    z-index: 2;
 }
 
 .camp-empty-state {

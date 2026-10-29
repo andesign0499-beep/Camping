@@ -168,11 +168,165 @@ function generateOrganicRockMask(patternName, patFn, targetRocks, rng) {
 }
 
 // =============================================================================
-// CÔNG THỨC SINH LEVEL TỰ ĐỘNG (PROCEDURAL LEVEL GENERATOR: LV.1 -> 120 & VÔ HẠN)
-// - Tăng dần số lượng nhiệm vụ cần chế tạo (từ 2 -> 10+ nhiệm vụ).
-// - Sắp xếp đá, nguồn phát, mạng nhện và đồ mồi theo địa hình tự nhiên bất đối xứng.
+// CÔNG THỨC SINH LEVEL TỰ ĐỘNG & NHỊP ĐIỆU PHÂN BỔ TUẦN HOÀN (PROCEDURAL LEVEL GENERATOR)
+// - Cân bằng nhịp điệu phân bổ đều toàn bộ các item nhiệm vụ (trừ 9 level hướng dẫn).
+// - Số lượng nhiệm vụ mỗi màn: 2 - 6 nhiệm vụ (bàn chơi hiển thị tối đa 4, ẩn phần còn lại).
+// - Vật phẩm Cấp 8 xuất hiện làm nhiệm vụ từ Level 30.
+// - Đảm bảo tới Level 120 toàn bộ 9 nhánh cắm trại đều xuất hiện đều đặn ở Cấp 8.
+// - Cơ chế Cooldown chống lặp: Không bao giờ lặp cùng 1 vật phẩm ở các màn liền kề.
 // - Không sử dụng tên level.
 // =============================================================================
+
+// Danh sách 9 nhánh vật phẩm cắm trại tương ứng 72 vật phẩm
+var ALL_ITEM_LINES_9 = [
+    'trai',   // 0: Xe Kéo (Cooler)
+    'an',     // 1: Ba Lô (Backpack)
+    'ban',    // 2: Xe Kéo (Cooler)
+    'cafe',   // 3: Ba Lô (Backpack)
+    'tham',   // 4: Thùng Dụng Cụ (Crate)
+    'congcu', // 5: Ba Lô (Backpack)
+    'ghe',    // 6: Xe Kéo (Cooler)
+    'bep',    // 7: Thùng Dụng Cụ (Crate)
+    'antoan'  // 8: Thùng Dụng Cụ (Crate)
+];
+
+// Cấu trúc cấp độ nhiệm vụ tăng tuyến tính mượt mà từ Màn 1 đến Màn 120
+// Ưu tiên lều trại (trai) làm tiêu điểm kết thúc 3 chặng đầu:
+// - Kết thúc Chặng 1 (Màn 20): Món tiêu điểm là trai_lv6 (Lều Gia Đình Chống Gió)
+// - Kết thúc Chặng 2 (Màn 40): Món tiêu điểm là trai_lv7 (Lều Kim Tự Tháp Glamping)
+// - Kết thúc Chặng 3 (Màn 60): Món tiêu điểm là trai_lv8 (Biệt Thự Lều Glamping)
+// - Kết thúc Chặng 6 (Màn 120): Món tiêu điểm là trai_lv8 (Đỉnh Cao Cắm Trại)
+// Loại bỏ lặp trai_lv4 ở Lv 1-10 (chỉ xuất hiện duy nhất 1 lần ở Màn 1)
+function getProceduralTiersForLevel(lv) {
+    if (lv === 1) return [4, 3];
+    if (lv === 2) return [4, 3];
+    if (lv === 3) return [4, 3, 3];
+    if (lv === 4) return [4, 3];
+    if (lv === 5) return [4, 4, 3];
+    if (lv === 6) return [5, 4, 3];
+    if (lv === 7) return [4, 3, 3];
+    if (lv === 8) return [4, 4, 3];
+    if (lv === 9) return [5, 4, 4];
+    if (lv === 10) return [4, 4, 4];
+
+    // Chặng 1: Màn 11 - 20 (Năng lượng: 14⚡ -> 22⚡, kết thúc tại Màn 20 với trai_lv6)
+    if (lv <= 12) return [5, 4, 3, 3];
+    if (lv <= 14) return [5, 4, 4, 3];
+    if (lv <= 16) return [6, 4, 3, 3];
+    if (lv <= 18) return [6, 4, 4, 3];
+    if (lv <= 20) return [6, 5, 4, 3]; // Màn 20: trai_lv6
+
+    // Chặng 2: Màn 21 - 40 (Năng lượng: 24⚡ -> 44⚡, kết thúc tại Màn 40 với trai_lv7)
+    if (lv <= 23) return [6, 5, 4, 4];
+    if (lv <= 26) return [6, 5, 5, 4];
+    if (lv <= 29) return [6, 6, 5, 4];
+    if (lv <= 32) return [7, 5, 4, 3];
+    if (lv <= 35) return [7, 5, 4, 4];
+    if (lv <= 38) return [7, 5, 5, 4];
+    if (lv <= 40) return [7, 6, 4, 4]; // Màn 40: trai_lv7
+
+    // Chặng 3: Màn 41 - 60 (Năng lượng: 46⚡ -> 116⚡, kết thúc tại Màn 60 với trai_lv8)
+    if (lv <= 44) return [7, 6, 5, 4];
+    if (lv <= 48) return [7, 6, 5, 5];
+    if (lv <= 52) return [7, 6, 6, 5];
+    if (lv <= 56) return [7, 6, 6, 5, 4];
+    if (lv <= 59) return [7, 7, 5, 5, 4];
+    if (lv === 60) return [8, 6, 5, 5, 4]; // Màn 60 climax: trai_lv8!
+
+    // Chặng 4: Màn 61 - 80 (Năng lượng: 92⚡ -> 148⚡, Cấp 8 tiếp nối cho các nhánh còn lại)
+    if (lv <= 65) return [8, 6, 5, 4, 3];
+    if (lv <= 70) return [8, 6, 5, 5, 4];
+    if (lv <= 75) return [8, 6, 6, 5, 4];
+    if (lv <= 80) return [8, 7, 5, 5, 4];
+
+    // Chặng 5: Màn 81 - 100 (Năng lượng: 164⚡ -> 204⚡)
+    if (lv <= 85) return [8, 7, 6, 5, 4];
+    if (lv <= 90) return [8, 7, 6, 5, 5];
+    if (lv <= 95) return [8, 7, 6, 6, 5];
+    if (lv <= 100) return [8, 7, 7, 5, 5];
+
+    // Chặng 6: Màn 101 - 120 (Năng lượng: 220⚡ -> 284⚡, Cấp 8 kép và kết thúc tại 120 với trai_lv8)
+    if (lv <= 105) return [8, 7, 7, 6, 5];
+    if (lv <= 110) return [8, 7, 7, 6, 5, 5];
+    if (lv <= 115) return [8, 8, 6, 6, 5, 5];
+    return [8, 8, 7, 6, 5, 5]; // Màn 116 - 120
+}
+
+function getProceduralLeadLine(lv) {
+    if (lv === 20 || lv === 40 || lv === 60 || lv === 120) return 'trai';
+
+    if (lv <= 20) {
+        var lines1 = ['an', 'ban', 'cafe', 'tham', 'congcu', 'ghe', 'bep', 'antoan', 'an'];
+        return lines1[lv - 11];
+    }
+    if (lv < 40) {
+        var lines2 = ['ban', 'cafe', 'tham', 'congcu', 'ghe', 'bep', 'antoan', 'trai', 'an'];
+        return lines2[(lv - 21) % 9];
+    }
+    if (lv < 60) {
+        var lines3 = ['cafe', 'tham', 'congcu', 'ghe', 'bep', 'antoan', 'trai', 'an', 'ban'];
+        return lines3[(lv - 41) % 9];
+    }
+    var lines4 = ['tham', 'congcu', 'ghe', 'bep', 'antoan', 'trai', 'an', 'ban', 'cafe'];
+    if (lv === 119) return 'antoan';
+    return lines4[(lv - 61) % 9];
+}
+
+function buildProceduralOrdersMap() {
+    var table = {};
+    table[1] = ['trai_lv4', 'ghe_lv3'];
+    table[2] = ['ban_lv4', 'ghe_lv3'];
+    table[3] = ['ghe_lv4', 'ban_lv3', 'trai_lv3']; // trai_lv3 thay vì trai_lv4
+    table[4] = ['an_lv4', 'cafe_lv3'];
+    table[5] = ['congcu_lv4', 'an_lv4', 'cafe_lv3'];
+    table[6] = ['an_lv5', 'congcu_lv4', 'cafe_lv3'];
+    table[7] = ['tham_lv4', 'bep_lv3', 'antoan_lv3'];
+    table[8] = ['bep_lv4', 'antoan_lv4', 'tham_lv3'];
+    table[9] = ['bep_lv5', 'tham_lv4', 'antoan_lv4'];
+    table[10] = ['ban_lv4', 'an_lv4', 'bep_lv4']; // ban_lv4 thay vì trai_lv4 (chỉ trai_lv4 duy nhất ở Màn 1)
+
+    var lastSeen = {};
+    for (var l = 1; l <= 10; l++) {
+        table[l].forEach(function (it) { lastSeen[it] = l; });
+    }
+
+    for (var lv = 11; lv <= 120; lv++) {
+        var tiers = getProceduralTiersForLevel(lv);
+        var count = tiers.length;
+        var lead = getProceduralLeadLine(lv);
+        var leadIdx = ALL_ITEM_LINES_9.indexOf(lead);
+
+        var currentOrders = [];
+        for (var k = 0; k < count; k++) {
+            var targetLv = tiers[k];
+
+            // Bước nhảy stride = 4 (nguyên tố cùng nhau với 9) đảm bảo tuần hoàn đủ 9 nhánh không bao giờ trùng
+            var lineIdx = (leadIdx + k * 4) % 9;
+            var line = ALL_ITEM_LINES_9[lineIdx];
+
+            var candidate = line + '_lv' + targetLv;
+
+            // Cooldown chống lặp: Nếu món đồ cùng cấp vừa xuất hiện trong vòng 4 màn, tự động điều chỉnh cấp độ (không chỉnh lead)
+            if (k > 0 && lastSeen[candidate] !== undefined && (lv - lastSeen[candidate]) < 4) {
+                if (targetLv > 3 && currentOrders.indexOf(line + '_lv' + (targetLv - 1)) === -1) {
+                    targetLv = targetLv - 1;
+                } else if (!currentOrders.indexOf(line + '_lv' + (targetLv + 1)) === -1) {
+                    targetLv = targetLv + 1;
+                }
+                candidate = line + '_lv' + targetLv;
+            }
+
+            currentOrders.push(candidate);
+        }
+
+        currentOrders.forEach(function (it) { lastSeen[it] = lv; });
+        table[lv] = currentOrders;
+    }
+    return table;
+}
+
+var PROCEDURAL_LEVEL_ORDERS = buildProceduralOrdersMap();
+
 function generateLevelConfig(lvNum) {
     lvNum = Math.max(1, parseInt(lvNum, 10) || 1);
 
@@ -209,12 +363,10 @@ function generateLevelConfig(lvNum) {
         chosenGenIds = ['generator_backpack'];
     } else if (lvNum <= 9) {
         chosenGenIds = ['generator_crate'];
-    } else if (lvNum === 10 || lvNum % 4 === 0 || lvNum % 5 === 0 || lvNum >= 36) {
-        chosenGenIds = ['generator_cooler', 'generator_backpack', 'generator_crate'];
     } else {
-        var g1 = ALL_GENERATOR_IDS[lvNum % 3];
-        var g2 = ALL_GENERATOR_IDS[(lvNum + 1) % 3];
-        chosenGenIds = [g1, g2];
+        // Từ Level 10 trở đi: Mở khóa cả 3 nguồn phát trên bàn cờ
+        // để hỗ trợ nhịp điệu phân bổ đa dạng toàn bộ 9 nhánh cắm trại
+        chosenGenIds = ['generator_cooler', 'generator_backpack', 'generator_crate'];
     }
 
     // Thu thập các nhánh vật phẩm khả dụng từ nguồn phát của màn
@@ -225,78 +377,11 @@ function generateLevelConfig(lvNum) {
         });
     });
 
-    // 3. Công thức số lượng nhiệm vụ (tăng dần từ 2 lên 10+ nhiệm vụ; bàn chơi hiển thị tối đa 4, ẩn phần còn lại)
-    var orderCount;
-    if (lvNum <= 2) orderCount = 2;
-    else if (lvNum <= 5) orderCount = 3;
-    else if (lvNum <= 12) orderCount = 4;
-    else if (lvNum <= 24) orderCount = 5;
-    else if (lvNum <= 40) orderCount = 6;
-    else if (lvNum <= 60) orderCount = 7;
-    else if (lvNum <= 85) orderCount = 8;
-    else if (lvNum <= 105) orderCount = 9;
-    else if (lvNum <= 120) orderCount = 10;
-    else orderCount = 10 + Math.floor((lvNum - 120) / 20);
-
-    // Cấp độ vật phẩm chủ đạo theo tiến trình
-    var leadLv;
-    if (lvNum <= 4) leadLv = 4;
-    else if (lvNum <= 12) leadLv = 5;
-    else if (lvNum <= 25) leadLv = 6;
-    else if (lvNum <= 35) leadLv = 7;
-    else leadLv = (lvNum <= 45 || lvNum % 2 === 0 || lvNum % 5 === 0) ? 8 : 7;
-
-    var secLv = Math.max(3, leadLv - 1);
-    var thirdLv = lvNum <= 4 ? 3 : Math.max(3, leadLv - 2);
-
-    var orders = [];
-    if (lvNum === 1) {
-        orders = ['trai_lv4', 'ghe_lv3'];
-    } else if (lvNum === 2) {
-        orders = ['ban_lv4', 'ghe_lv3'];
-    } else if (lvNum === 3) {
-        orders = ['trai_lv4', 'ban_lv3', 'ghe_lv3'];
-    } else if (lvNum === 4) {
-        orders = ['an_lv4', 'cafe_lv3'];
-    } else if (lvNum === 5) {
-        orders = ['congcu_lv4', 'an_lv4', 'cafe_lv3'];
-    } else if (lvNum === 6) {
-        orders = ['an_lv5', 'congcu_lv4', 'cafe_lv3'];
-    } else if (lvNum === 7) {
-        orders = ['tham_lv4', 'bep_lv3', 'antoan_lv3'];
-    } else if (lvNum === 8) {
-        orders = ['bep_lv4', 'antoan_lv4', 'tham_lv3'];
-    } else if (lvNum === 9) {
-        orders = ['bep_lv5', 'tham_lv4', 'antoan_lv4', 'bep_lv3'];
-    } else if (lvNum === 10) {
-        orders = ['trai_lv4', 'an_lv4', 'bep_lv4'];
-    } else {
-        var queueLvPattern = [3, 4, Math.min(5, leadLv - 1), 3, 4, Math.min(5, leadLv - 1)];
-        for (var k = 0; k < orderCount; k++) {
-            var targetLv;
-            if (k === 0) targetLv = leadLv;
-            else if (k === 1) targetLv = secLv;
-            else if (k === 2) targetLv = thirdLv;
-            else targetLv = queueLvPattern[(k - 3 + lvNum) % queueLvPattern.length];
-
-            var lineIdx = (lvNum * 4 + k * 2 + Math.floor(k / availLines.length)) % availLines.length;
-            var line = availLines[lineIdx];
-            var candidate = line + '_lv' + targetLv;
-
-            // Tránh trùng lặp y hệt đơn hàng liền kề
-            var tries = 0;
-            while (orders.indexOf(candidate) !== -1 && tries < availLines.length * 3) {
-                tries++;
-                line = availLines[(lineIdx + tries) % availLines.length];
-                var altLv = targetLv;
-                if (tries >= availLines.length) {
-                    altLv = Math.max(2, Math.min(leadLv, targetLv - 1 + (tries % 2)));
-                }
-                candidate = line + '_lv' + altLv;
-            }
-            orders.push(candidate);
-        }
-    }
+    // 3. Danh sách nhiệm vụ theo nhịp điệu phân bổ tuần hoàn (2 - 6 nhiệm vụ/màn, hiển thị tối đa 4)
+    var orders = (PROCEDURAL_LEVEL_ORDERS && PROCEDURAL_LEVEL_ORDERS[lvNum])
+        ? PROCEDURAL_LEVEL_ORDERS[lvNum].slice()
+        : ['trai_lv4', 'an_lv4', 'bep_lv4'];
+    var orderCount = orders.length;
 
     // 4. Tạo danh sách vật phẩm hỗ trợ trong Mạng Nhện (webList) và Đồ Mồi Tự Do (freeList)
     var webList = [];
@@ -309,8 +394,8 @@ function generateLevelConfig(lvNum) {
         freeList = ['ban_lv1', 'ghe_lv1'];
         webList = ['ban_lv1', 'ghe_lv1', 'ghe_lv1', 'ban_lv2'];
     } else if (lvNum === 3) {
-        freeList = ['trai_lv1', 'ban_lv1'];
-        webList = ['trai_lv1', 'ban_lv1', 'ghe_lv1', 'trai_lv2'];
+        freeList = ['ghe_lv1', 'ban_lv1'];
+        webList = ['ghe_lv1', 'ban_lv1', 'trai_lv1', 'ghe_lv2'];
     } else if (lvNum === 4) {
         freeList = ['an_lv1', 'cafe_lv1'];
         webList = ['an_lv1', 'cafe_lv1', 'cafe_lv1', 'an_lv2'];
@@ -330,8 +415,8 @@ function generateLevelConfig(lvNum) {
         freeList = ['bep_lv1', 'tham_lv1'];
         webList = ['bep_lv1', 'tham_lv1', 'antoan_lv1', 'bep_lv2'];
     } else if (lvNum === 10) {
-        freeList = ['trai_lv1', 'an_lv1', 'bep_lv1'];
-        webList = ['trai_lv1', 'an_lv1', 'bep_lv1', 'trai_lv2', 'an_lv2'];
+        freeList = ['ban_lv1', 'an_lv1', 'bep_lv1'];
+        webList = ['ban_lv1', 'an_lv1', 'bep_lv1', 'ban_lv2', 'an_lv2'];
     } else {
         orders.forEach(function (ordId, oIdx) {
             var oLine = ordId.split('_lv')[0];
@@ -764,6 +849,20 @@ var GAME_CONFIG = {
         },
         generatorBulkClicks: 6,
         generatorClickWindowMs: 550,
+        // Tỷ lệ rơi vật phẩm nâng cao từ thùng sinh đồ (Generator Tier Drop Rates)
+        // Màn 1-10: 100% Cấp 1 để người chơi làm quen cơ chế ghép cơ bản
+        // Màn 11+: Mở tỷ lệ rơi Cấp 2 và Cấp 3 để giảm bớt số lần click, tạo cảm giác bất ngờ may mắn
+        generatorDrops: {
+            minLevelForTierDrops: 11,
+            tiers: [
+                { maxLevel: 10,  lv1: 1.00, lv2: 0.00, lv3: 0.00 }, // Màn 1-10: 100% Lv1 (Hướng dẫn)
+                { maxLevel: 20,  lv1: 0.78, lv2: 0.18, lv3: 0.04 }, // Màn 11-20: Mở nhẹ Lv2 (18%) & Lv3 (4%)
+                { maxLevel: 40,  lv1: 0.70, lv2: 0.23, lv3: 0.07 }, // Màn 21-40: Nhiệm vụ Lv6/7 (23% Lv2, 7% Lv3)
+                { maxLevel: 60,  lv1: 0.62, lv2: 0.26, lv3: 0.12 }, // Màn 41-60: Xuất hiện Lv8 (26% Lv2, 12% Lv3)
+                { maxLevel: 90,  lv1: 0.55, lv2: 0.30, lv3: 0.15 }, // Màn 61-90: Cao cấp (30% Lv2, 15% Lv3)
+                { maxLevel: 120, lv1: 0.50, lv2: 0.32, lv3: 0.18 }  // Màn 91-120: Đại kết cục (32% Lv2, 18% Lv3)
+            ]
+        },
         levelClear: {
             baseCoins: 150,
             perLevelCoins: 25,

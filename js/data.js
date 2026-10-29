@@ -153,13 +153,13 @@ if (typeof GAME_CONFIG !== 'undefined' && Array.isArray(GAME_CONFIG.levels) && G
 }
 
 function getLevelConfig(lvNum) {
-    lvNum = Math.max(1, parseInt(lvNum, 10) || 1);
+    var MAX_GAME_LEVEL = 120;
+    lvNum = Math.max(1, Math.min(MAX_GAME_LEVEL, parseInt(lvNum, 10) || 1));
 
-    // Tự động sinh thêm level mới trong tương lai nếu lvNum vượt quá danh sách hiện tại (ví dụ > 120)
     var cfg = null;
     if (typeof GAME_CONFIG !== 'undefined' && Array.isArray(GAME_CONFIG.levels)) {
         cfg = GAME_CONFIG.levels.find(function (l) { return l.level === lvNum; });
-        if (!cfg && typeof generateLevelConfig === 'function') {
+        if (!cfg && typeof generateLevelConfig === 'function' && lvNum <= MAX_GAME_LEVEL) {
             cfg = generateLevelConfig(lvNum);
             GAME_CONFIG.levels.push(cfg);
             RAW_LEVELS.push([

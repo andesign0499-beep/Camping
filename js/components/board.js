@@ -15,6 +15,54 @@ var levelClicks = 0;
 var levelUnwantedClicks = 0; // Số lượt nguồn phát rơi lệch sang nhánh không cần thiết (được miễn trừ khi tính Sao)
 var isAutoEnabled = false; // AUTO chỉ là chế độ debug, mặc định tắt
 var levelWon = false;
+
+// Kiểm tra xem màn chơi đã hoàn thành toàn bộ nhiệm vụ hay chưa (kể cả trong thời gian chờ hoạt ảnh bay và popup chiến thắng)
+function isLevelCompleted() {
+    if (levelWon) return true;
+    if (!currentOrders || !currentOrders.length) return false;
+    var allDone = currentOrders.every(function (o) { return o.done; });
+    if (!allDone) return false;
+    var webs = (typeof countWebs === 'function' && boardData) ? countWebs(boardData) : 0;
+    return webs === 0;
+}
+
+// Thông báo nhắc nhở nhẹ nhàng khi người chơi vẫn bấm vào thùng sinh đồ sau khi đã xong nhiệm vụ
+var lastCompletedGenBadgeTs = 0;
+function notifyLevelDoneOnGenerator(cellElement) {
+    var now = Date.now();
+    if (now - lastCompletedGenBadgeTs > 700) {
+        lastCompletedGenBadgeTs = now;
+        if (cellElement && typeof showFloatingBadge === 'function') {
+            showFloatingBadge(cellElement, '🎉 Đã hoàn thành nhiệm vụ!', '#2e7d32');
+            var img = cellElement.querySelector('.item-img');
+            if (img) {
+                img.animate([
+                    { transform: 'scale(1)' },
+                    { transform: 'scale(1.15)' },
+                    { transform: 'scale(1)' }
+                ], { duration: 220, easing: 'ease-out' });
+            }
+        }
+    }
+}
+
+// Lập tức đánh dấu toàn bộ nguồn phát đồ trên bàn cờ chuyển sang trạng thái đã hoàn thành (ngừng nhấp nháy ⚡, giảm sáng nhẹ)
+function markGeneratorsCompleted() {
+    if (!boardElement || !boardData) return;
+    boardData.forEach(function (c, idx) {
+        if (c && c.id && GENERATORS[c.id]) {
+            var cell = boardElement.children[idx];
+            if (cell) {
+                cell.classList.add('generator-done');
+                var badge = cell.querySelector('.generator-energy-badge');
+                if (badge) {
+                    badge.style.opacity = '0.25';
+                    badge.style.animation = 'none';
+                }
+            }
+        }
+    });
+}
 var levelBudget = 0; // Ngân sách năng lượng chuẩn của màn: chỉ dùng để tính sao
 var isReplayLevel = false; // Màn đã từng thắng -> chơi lại không nhận Vàng/Kim cương
 var regenSecLeft = ENERGY_REGEN_SEC;
@@ -249,8 +297,24 @@ function playSound(type, itemId) {
         var now = audioCtx.currentTime;
 
         if (type === 'spawn') {
-            // Tiếng gõ mộc ấm khi lấy đồ từ nguồn phát (G4 thanh thoát)
-            playFluteNote(392.00, now, 0.08, 0.07, 0.96);
+            // Âm thanh sinh đồ theo cấp:
+            // Cấp 3 (May mắn đặc biệt): Hợp âm đôi C5 -> G5 thanh thoát, rộn ràng
+            // Cấp 2: Nốt C5 trong trẻo cao hơn nốt gõ thường
+            // Cấp 1: Tiếng gõ mộc ấm G4 quen thuộc
+            var spawnLv = 1;
+            if (itemId && typeof itemId === 'string' && itemId.indexOf('_lv') !== -1) {
+                spawnLv = parseInt(itemId.split('_lv')[1]) || 1;
+            }
+            if (spawnLv === 3) {
+                playFluteNote(523.25, now, 0.10, 0.10, 0.96);
+                playFluteNote(783.99, now + 0.05, 0.18, 0.12, 0.96);
+                triggerVibrate([20, 25, 20]);
+            } else if (spawnLv === 2) {
+                playFluteNote(523.25, now, 0.09, 0.09, 0.96);
+                triggerVibrate(15);
+            } else {
+                playFluteNote(392.00, now, 0.08, 0.07, 0.96);
+            }
         } else if (type === 'merge') {
             // Chuỗi hợp âm Đô Trưởng tuần hoàn lên rồi xuống êm dịu, không gắt tai
             var nowMs = Date.now();
@@ -313,26 +377,26 @@ function triggerParticleBurst(cellElement, customColors) {
 
     var ring = document.createElement('div');
     ring.style.cssText = 'position:fixed;pointer-events:none;z-index:99998;border-radius:50%;' +
-        'border:4px solid #fff59d;box-shadow:0 0 20px #ffeb3b;' +
-        'left:' + cx + 'px;top:' + cy + 'px;width:' + rect.width * 0.5 + 'px;height:' + rect.width * 0.5 + 'px;';
+        'border:3px solid #fff59d;' +
+        'left:' + cx + 'px;top:' + cy + 'px;width:' + rect.width * 0.5 + 'px;height:' + rect.width * 0.5 + 'px;will-change:transform,opacity;';
     document.body.appendChild(ring);
     ring.animate([
         { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 1 },
         { transform: 'translate(-50%, -50%) scale(2.2)', opacity: 0 }
-    ], { duration: 450, easing: 'ease-out', fill: 'forwards' }).onfinish = () => ring.remove();
-    setTimeout(() => ring.remove(), 700);
+    ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => ring.remove();
+    setTimeout(() => ring.remove(), 600);
 
-    var count = 24;
+    var count = 10; // Tối ưu GPU: giảm từ 24 xuống 10 hạt nhẹ nhàng, dùng will-change
     for (let i = 0; i < count; i++) {
         var p = document.createElement('div');
-        var size = 6 + Math.random() * 8;
+        var size = 5 + Math.random() * 6;
         p.style.cssText = 'position:fixed;pointer-events:none;z-index:99999;border-radius:50%;' +
             'left:' + cx + 'px;top:' + cy + 'px;width:' + size + 'px;height:' + size + 'px;' +
-            'background:' + colors[i % colors.length] + ';box-shadow:0 0 10px ' + colors[i % colors.length] + ';';
+            'background:' + colors[i % colors.length] + ';will-change:transform,opacity;';
         document.body.appendChild(p);
 
         var angle = (i / count) * Math.PI * 2 + Math.random() * 0.4;
-        var distance = rect.width * (0.7 + Math.random() * 0.9);
+        var distance = rect.width * (0.6 + Math.random() * 0.8);
         var tx = Math.cos(angle) * distance;
         var ty = Math.sin(angle) * distance;
 
@@ -340,18 +404,18 @@ function triggerParticleBurst(cellElement, customColors) {
             { transform: 'translate(-50%, -50%) scale(1.3)', opacity: 1 },
             { transform: 'translate(calc(-50% + ' + tx + 'px), calc(-50% + ' + ty + 'px)) scale(0.1)', opacity: 0 }
         ], {
-            duration: 500 + Math.random() * 300,
+            duration: 450 + Math.random() * 200,
             easing: 'cubic-bezier(0, .9, .57, 1)',
             fill: 'forwards'
         }).onfinish = () => p.remove();
-        setTimeout(() => p.remove(), 1200);
+        setTimeout(() => p.remove(), 750);
     }
 
     var img = cellElement.querySelector('.item-img');
     if (img) {
         img.animate([
             { transform: 'scale(0.6)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }
-        ], { duration: 350, easing: 'ease-out' });
+        ], { duration: 320, easing: 'ease-out' });
     }
 }
 
@@ -468,10 +532,10 @@ function spawnFlyingCurrency(sourceEl, type, amount) {
         : (type === 'energy' ? 'assets/images/ui/icon_nangluong.png' : 'assets/images/ui/icon_glod.png');
     var badgeColor = type === 'ruby' ? '#1e88e5' : (type === 'energy' ? '#2e7d32' : '#f57f17');
 
-    // Số lượng đồng xu bay lên lần lượt (5 - 9 đồng cho Vàng, 2 - 5 viên cho Kim cương, 2 - 5 tia cho Năng lượng)
+    // Số lượng đồng xu bay lên lần lượt (tối đa 5 đồng để tránh giật lag khi chơi liên tục)
     var count = type === 'ruby'
-        ? Math.min(Math.max(2, amount * 2), 5)
-        : (type === 'energy' ? Math.min(Math.max(2, amount), 5) : Math.min(Math.max(5, Math.round(amount / 6)), 9));
+        ? Math.min(Math.max(2, amount * 2), 4)
+        : (type === 'energy' ? Math.min(Math.max(2, amount), 4) : Math.min(Math.max(3, Math.round(amount / 8)), 5));
 
     var basePerPiece = Math.floor(amount / count);
     var remainder = amount - basePerPiece * count;
@@ -930,6 +994,8 @@ function persistCurrentBoardState() {
 
 function loadLevel(lvNum, options) {
     options = options || {};
+    var MAX_GAME_LEVEL = 120;
+    lvNum = Math.max(1, Math.min(MAX_GAME_LEVEL, parseInt(lvNum, 10) || 1));
     closeModal();
     clearHintVisuals();
     hideNpcBubble();
@@ -1070,6 +1136,7 @@ function populateInitialBoardItems() {
 }
 
 function fillBoardInstantly() {
+    if (isLevelCompleted()) return;
     var generators = [];
     boardData.forEach((c, idx) => {
         if (c && GENERATORS[c.id] && !c.isLocked) generators.push(idx);
@@ -1094,9 +1161,18 @@ function updateBookBadge() {
 }
 
 function renderBoard() {
-    boardElement.innerHTML = '';
+    // 1. Nếu boardElement chưa có đủ 49 ô (lần đầu tải), khởi tạo khung 49 ô cố định một lần duy nhất
+    if (boardElement.children.length !== TOTAL_CELLS) {
+        boardElement.innerHTML = '';
+        for (var i = 0; i < TOTAL_CELLS; i++) {
+            var newCell = document.createElement('div');
+            newCell.className = 'cell bg-empty';
+            newCell.dataset.index = i;
+            boardElement.appendChild(newCell);
+        }
+    }
 
-    // Tìm các ô trên bàn cờ đáp ứng tối đa 4 đơn hàng đang hiển thị (chưa hoàn thành)
+    // 2. Tìm các ô trên bàn cờ đáp ứng tối đa 4 đơn hàng đang hiển thị (chưa hoàn thành)
     var activeOrderMap = {};
     if (currentOrders) {
         var visibleOrders = (typeof getVisibleOrders === 'function')
@@ -1114,77 +1190,129 @@ function renderBoard() {
         }
     });
 
+    var isDoneLevel = isLevelCompleted();
+
+    // 3. Tối ưu hóa DOM Reuse: Cập nhật tại chỗ (In-place patch) từng ô mà không phá hủy/tạo lại DOM
     for (var i = 0; i < TOTAL_CELLS; i++) {
-        var cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.index = i;
-
+        var cell = boardElement.children[i];
         var itemData = boardData[i];
+
+        // Xác định class nền
+        var bgClass = 'bg-empty';
         if (itemData && itemData.isRock) {
-            cell.classList.add('bg-rock');
+            bgClass = 'bg-rock';
         } else if (itemData && itemData.id && GENERATORS[itemData.id]) {
-            // Máy sinh đồ (backpack, cooler, crate): mang nền 3 vạch màu tương ứng nhóm đồ nó sinh
-            cell.classList.add('bg-' + itemData.id);
+            bgClass = 'bg-' + itemData.id;
         } else if (itemData && itemData.id) {
-            var line = itemLine(itemData.id);
-            cell.classList.add(getCellBgClass(line));
+            bgClass = getCellBgClass(itemLine(itemData.id));
+        }
+
+        var isSelected = (selectedIndex === i);
+        var isReady = readyCellIndexes.has(i);
+        var isLocked = !!(itemData && itemData.isLocked);
+        var isGen = !!(itemData && itemData.id && GENERATORS[itemData.id]);
+
+        var targetClass = 'cell ' + bgClass +
+            (isSelected ? ' selected' : '') +
+            (isReady ? ' order-ready-item' : '') +
+            (isLocked ? ' locked' : '') +
+            (isGen ? ' generator-wrapper' : '') +
+            (isGen && isDoneLevel ? ' generator-done' : '');
+
+        if (cell.className !== targetClass) {
+            cell.className = targetClass;
+        }
+
+        // Cập nhật nội dung bên trong ô
+        if (!itemData || !itemData.id) {
+            if (cell.firstElementChild) {
+                cell.innerHTML = '';
+            }
         } else {
-            // Ô trống: dùng nền board_cell_empty.png đồng nhất
-            cell.classList.add('bg-empty');
-        }
-
-        if (selectedIndex === i) cell.classList.add('selected');
-
-        // Đánh dấu hiệu ứng nổi bật nếu ô này đạt yêu cầu nhiệm vụ
-        if (readyCellIndexes.has(i)) {
-            cell.classList.add('order-ready-item');
-        }
-
-        cell.addEventListener('click', (e) => {
-            if (suppressNextClick) return;
-            handleCellClick(e, e.currentTarget);
-        });
-
-        if (itemData && itemData.id) {
-            var img = document.createElement('img');
-            img.src = getItemImagePath(itemData.id);
-            img.className = 'item-img';
-            img.dataset.id = itemData.id;
-            img.dataset.index = i;
-
-            if (itemData.isLocked) {
-                cell.classList.add('locked');
-                var web = document.createElement('img');
-                web.src = 'assets/images/board/board_cell_web.png';
-                web.className = 'web-overlay';
-                cell.appendChild(web);
-            } else {
+            // Đảm bảo có img.item-img
+            var img = cell.querySelector('.item-img');
+            var targetSrc = getItemImagePath(itemData.id);
+            if (!img) {
+                img = document.createElement('img');
+                img.className = 'item-img';
                 img.draggable = false;
+                img.dataset.id = itemData.id;
+                img.dataset.index = i;
+                img.src = targetSrc;
+                cell.appendChild(img);
+            } else {
+                if (img.getAttribute('src') !== targetSrc) {
+                    img.src = targetSrc;
+                }
+                img.dataset.id = itemData.id;
+                img.dataset.index = i;
+                if (img.style.visibility) img.style.visibility = '';
+            }
 
-                if (readyCellIndexes.has(i)) {
-                    var chk = document.createElement('div');
+            // Mạng nhện khóa ô
+            var web = cell.querySelector('.web-overlay');
+            if (isLocked) {
+                if (!web) {
+                    web = document.createElement('img');
+                    web.src = 'assets/images/board/board_cell_web.png';
+                    web.className = 'web-overlay';
+                    cell.appendChild(web);
+                }
+            } else if (web) {
+                web.remove();
+            }
+
+            // Dấu tích sẵn sàng nộp đơn
+            var chk = cell.querySelector('.order-ready-badge');
+            if (isReady && !isLocked) {
+                if (!chk) {
+                    chk = document.createElement('div');
                     chk.className = 'order-ready-badge';
                     chk.textContent = '✓';
                     cell.appendChild(chk);
                 }
+            } else if (chk) {
+                chk.remove();
+            }
 
-                if (GENERATORS[itemData.id]) {
-                    cell.classList.add('generator-wrapper');
-                    for (let s = 0; s < 3; s++) {
+            // Máy sinh đồ (ngôi sao lấp lánh & huy hiệu năng lượng)
+            var star1 = cell.querySelector('.sparkle-star');
+            var energyBadge = cell.querySelector('.generator-energy-badge');
+            if (isGen && !isLocked) {
+                if (!star1) {
+                    for (var s = 0; s < 3; s++) {
                         var star = document.createElement('div');
                         star.className = 'sparkle-star star-' + (s + 1);
                         cell.appendChild(star);
                     }
-                    var energyBadge = document.createElement('img');
+                }
+                if (!energyBadge) {
+                    energyBadge = document.createElement('img');
                     energyBadge.src = 'assets/images/board/icon_nangluong_tao.png';
                     energyBadge.className = 'generator-energy-badge';
                     energyBadge.alt = '⚡';
                     cell.appendChild(energyBadge);
                 }
+                if (isDoneLevel) {
+                    if (energyBadge.style.opacity !== '0.25') {
+                        energyBadge.style.opacity = '0.25';
+                        energyBadge.style.animation = 'none';
+                    }
+                } else {
+                    if (energyBadge.style.opacity === '0.25') {
+                        energyBadge.style.opacity = '';
+                        energyBadge.style.animation = '';
+                    }
+                }
+            } else {
+                if (star1) {
+                    cell.querySelectorAll('.sparkle-star').forEach(s => s.remove());
+                }
+                if (energyBadge) {
+                    energyBadge.remove();
+                }
             }
-            cell.appendChild(img);
         }
-        boardElement.appendChild(cell);
     }
 
     // Ghi nhận khám phá sổ tay âm thầm qua chấm đỏ #book-badge, không bắn Toast gây chồng popup khi đang ghép đồ
@@ -1192,8 +1320,6 @@ function renderBoard() {
     updateBookBadge();
     renderOrders();
     updateUIStats();
-    tickEnergyRegen();
-    syncBoardFooterWidth();
     scheduleHint();
     persistCurrentBoardState();
 }
@@ -1287,6 +1413,11 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
 
     orderObj.done = true;
     tutDeliveredOnce = true;
+
+    // Nếu vừa hoàn thành xong nhiệm vụ cuối cùng của màn, lập tức vô hiệu hóa bấm thùng sinh đồ
+    if (isLevelCompleted()) {
+        markGeneratorsCompleted();
+    }
 
     var cellEl = boardElement && boardElement.children[boardCellIdx];
     var cellImg = cellEl && cellEl.querySelector('.item-img');
@@ -1778,6 +1909,13 @@ function onPointerCancel() {
 boardElement.addEventListener('pointerdown', onPointerDown);
 boardElement.addEventListener('dragstart', e => e.preventDefault());
 boardElement.addEventListener('contextmenu', e => { if (dragState) e.preventDefault(); });
+boardElement.addEventListener('click', function (e) {
+    if (suppressNextClick) return;
+    var cell = e.target.closest('.cell');
+    if (cell && boardElement.contains(cell)) {
+        handleCellClick(e, cell);
+    }
+});
 
 // ==========================================
 // SINH ITEM & CHẠM CHỌN (TAP-TO-MOVE)
@@ -1788,6 +1926,10 @@ var lastGenCellIdx = -1;
 var genClickStreak = 0;
 
 function handleGeneratorClick(gen, cellElement) {
+    if (isLevelCompleted()) {
+        notifyLevelDoneOnGenerator(cellElement);
+        return;
+    }
     if (currentLevel <= 10 && !tutNewGenTapped) {
         var targetGens = {
             1: 'generator_cooler',
@@ -1836,6 +1978,7 @@ function handleGeneratorClick(gen, cellElement) {
 
 // Bấm 1 lần: Sinh 1 item từ nguồn phát vào 1 ô trống ngẫu nhiên (tiêu tốn 1 ⚡)
 function spawnFromGenerator(gen, cellElement) {
+    if (isLevelCompleted()) return;
     if (playerEnergy <= 0) {
         openEnergyShop();
         return;
@@ -1869,12 +2012,38 @@ function spawnFromGenerator(gen, cellElement) {
         spreadIdx = spreadWeb(boardData);
     }
 
-    playSound('spawn');
+    var spawnedItem = lastSpawnResult ? lastSpawnResult.id : null;
+    var spawnedLv = (lastSpawnResult && lastSpawnResult.itemLv) || 1;
+    playSound('spawn', spawnedItem);
     renderBoard();
 
     var el = boardElement.children[target];
     var img = el && el.querySelector('.item-img');
-    if (img) img.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.2)' }, { transform: 'scale(1)' }], { duration: 250, easing: 'ease-out' });
+    if (img) {
+        if (spawnedLv === 3) {
+            img.animate([
+                { transform: 'scale(0)' },
+                { transform: 'scale(1.35)' },
+                { transform: 'scale(0.95)' },
+                { transform: 'scale(1)' }
+            ], { duration: 320, easing: 'cubic-bezier(.2,.85,.32,1.2)' });
+        } else if (spawnedLv === 2) {
+            img.animate([
+                { transform: 'scale(0)' },
+                { transform: 'scale(1.25)' },
+                { transform: 'scale(1)' }
+            ], { duration: 270, easing: 'ease-out' });
+        } else {
+            img.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.15)' }, { transform: 'scale(1)' }], { duration: 240, easing: 'ease-out' });
+        }
+    }
+
+    if (spawnedLv === 3 && el) {
+        triggerParticleBurst(el, ['#ffd700', '#ff9800', '#ffffff', '#ffeb3b']);
+        showFloatingBadge(el, '🌟 Lv.3 CỰC MAY MẮN!', '#e65100');
+    } else if (spawnedLv === 2 && el) {
+        showFloatingBadge(el, '✨ Lv.2!', '#1976d2');
+    }
 
     if (spreadIdx !== -1 && boardElement.children[spreadIdx]) {
         showFloatingBadge(boardElement.children[spreadIdx], '🕸️ Nhện lan!', '#6a1b9a');
@@ -1887,6 +2056,7 @@ function spawnFromGenerator(gen, cellElement) {
 
 // Bấm 6 lần liên tục: Xả đồ ra toàn bộ các ô trống trên bàn cờ (tiêu tốn tương ứng với số ô trống và năng lượng hiện có)
 function bulkSpawnFromGenerator(gen, cellElement) {
+    if (isLevelCompleted()) return;
     if (playerEnergy <= 0) {
         openEnergyShop();
         return;
@@ -1905,6 +2075,8 @@ function bulkSpawnFromGenerator(gen, cellElement) {
     }
 
     var spawnedTargets = [];
+    var countLv2 = 0;
+    var countLv3 = 0;
     if (playerEnergy >= getMaxEnergy()) {
         SAVE.lastEnergyTs = Date.now();
     }
@@ -1916,26 +2088,38 @@ function bulkSpawnFromGenerator(gen, cellElement) {
         if (typeof wasLastSpawnUnwanted === 'function' && wasLastSpawnUnwanted()) {
             levelUnwantedClicks++;
         }
-        spawnedTargets.push(tIdx);
+        var sLv = (lastSpawnResult && lastSpawnResult.itemLv) || 1;
+        if (sLv === 2) countLv2++;
+        if (sLv === 3) countLv3++;
+        spawnedTargets.push({ idx: tIdx, lv: sLv });
 
         if (currentLevelCfg && currentLevelCfg.spreadEvery && levelClicks % currentLevelCfg.spreadEvery === 0) {
             spreadWeb(boardData);
         }
     }
 
-    playSound('spawn');
+    var bestSpawnItem = countLv3 > 0 ? 'an_lv3' : (countLv2 > 0 ? 'an_lv2' : 'an_lv1');
+    playSound('spawn', bestSpawnItem);
     updateUIStats();
     renderBoard();
 
     // Hiệu ứng pháo hoa & badge thông báo xả đồ cực đã mắt
     if (cellElement) {
         triggerParticleBurst(cellElement, ['#ffd54f', '#ffb300', '#ffffff', '#4fc3f7']);
-        showFloatingBadge(cellElement, '🚀 XẢ ĐẦY Ô TRỐNG (-' + spawnedTargets.length + ' ⚡)', '#e65100');
+        var bulkMsg = '🚀 XẢ ĐẦY Ô TRỐNG (-' + spawnedTargets.length + ' ⚡)';
+        if (countLv3 > 0 && countLv2 > 0) {
+            bulkMsg = '🚀 XẢ ĐẦY (' + countLv3 + ' món Lv.3 ⭐, ' + countLv2 + ' món Lv.2 ✨)';
+        } else if (countLv3 > 0) {
+            bulkMsg = '🚀 XẢ ĐẦY (' + countLv3 + ' món Lv.3 ⭐ CỰC MAY!)';
+        } else if (countLv2 > 0) {
+            bulkMsg = '🚀 XẢ ĐẦY (' + countLv2 + ' món Lv.2 ✨)';
+        }
+        showFloatingBadge(cellElement, bulkMsg, countLv3 > 0 ? '#e65100' : '#2e7d32');
     }
 
     // Hiệu ứng nảy liên hoàn lượn sóng cho các ô vừa nhận đồ
-    spawnedTargets.forEach(function (idx, seq) {
-        var cEl = boardElement.children[idx];
+    spawnedTargets.forEach(function (sp, seq) {
+        var cEl = boardElement.children[sp.idx];
         if (cEl) {
             var img = cEl.querySelector('.item-img');
             if (img) {
@@ -1943,11 +2127,16 @@ function bulkSpawnFromGenerator(gen, cellElement) {
                 setTimeout(function () {
                     img.animate([
                         { transform: 'scale(0.3)' },
-                        { transform: 'scale(1.2)' },
+                        { transform: sp.lv === 3 ? 'scale(1.35)' : (sp.lv === 2 ? 'scale(1.25)' : 'scale(1.15)') },
                         { transform: 'scale(1)' }
                     ], { duration: 240, easing: 'cubic-bezier(.2,.85,.32,1.2)' });
                     img.style.transform = 'scale(1)';
                 }, Math.min(seq * 20, 240));
+            }
+            if (sp.lv === 3) {
+                showFloatingBadge(cEl, '🌟 Lv.3', '#e65100');
+            } else if (sp.lv === 2) {
+                showFloatingBadge(cEl, '✨ Lv.2', '#1976d2');
             }
         }
     });
@@ -1968,6 +2157,10 @@ function handleCellClick(e, cellElement) {
     if (clickedItem && clickedItem.id && !clickedItem.isLocked && GENERATORS[clickedItem.id] && !isAutoEnabled) {
         selectedIndex = null;
         updateSellButton(null);
+        if (isLevelCompleted()) {
+            notifyLevelDoneOnGenerator(cellElement);
+            return;
+        }
         handleGeneratorClick(clickedItem, cellElement);
         return;
     }
@@ -2183,13 +2376,14 @@ function updateSellButton(itemId) {
 
 function refreshLevelSelect() {
     if (!levelSelect) return;
+    var MAX_GAME_LEVEL = 120;
     var unlockAll = SAVE.settings && SAVE.settings.unlockAllLevels;
-    var maxKnownLv = Math.max(RAW_LEVELS.length, SAVE.maxLevel || 1);
-    for (var lv = RAW_LEVELS.length + 1; lv <= maxKnownLv; lv++) {
-        getLevelConfig(lv);
+    if (SAVE.maxLevel > MAX_GAME_LEVEL) {
+        SAVE.maxLevel = MAX_GAME_LEVEL;
+        saveGame();
     }
     levelSelect.innerHTML = '';
-    RAW_LEVELS.forEach(r => {
+    RAW_LEVELS.filter(r => r[0] <= MAX_GAME_LEVEL).forEach(r => {
         var opt = document.createElement('option');
         opt.value = r[0];
         var st = SAVE.stars[r[0]] || 0;
@@ -2197,7 +2391,7 @@ function refreshLevelSelect() {
         opt.textContent = `Lv.${r[0]}${mark}`;
         levelSelect.appendChild(opt);
     });
-    levelSelect.value = currentLevel;
+    levelSelect.value = Math.min(MAX_GAME_LEVEL, currentLevel);
 }
 
 function finishLevel() {
@@ -2267,21 +2461,34 @@ function finishLevel() {
             spawnFlyingCurrency(boardElement, 'energy', energy);
         }, 320);
     }
+    var MAX_GAME_LEVEL = 120;
     SAVE.stars[currentLevel] = Math.max(SAVE.stars[currentLevel] || 0, stars);
-    if (currentLevel + 1 > SAVE.maxLevel) {
-        SAVE.maxLevel = currentLevel + 1;
-        getLevelConfig(SAVE.maxLevel);
+    if (currentLevel < MAX_GAME_LEVEL) {
+        if (currentLevel + 1 > SAVE.maxLevel) {
+            SAVE.maxLevel = Math.min(MAX_GAME_LEVEL, currentLevel + 1);
+            getLevelConfig(SAVE.maxLevel);
+        }
+    } else {
+        SAVE.maxLevel = MAX_GAME_LEVEL;
     }
     SAVE.currentBoardState = null; // Màn chơi đã hoàn thành, dọn trạng thái dở dang
-    saveGame();
+    saveGame(true);
     updateUIStats();
     refreshLevelSelect();
     playSound('win');
 
-    var hasNext = true;
+    var hasNext = currentLevel < MAX_GAME_LEVEL;
     var completedList = (currentOrders && currentOrders.length)
         ? currentOrders.map(function (o) { return o.id; })
         : (currentLevelCfg && currentLevelCfg.orders ? currentLevelCfg.orders : []);
+
+    var onNextAction = hasNext
+        ? function () { loadLevel(currentLevel + 1); }
+        : function () {
+            showToast('🎉 Chúc mừng bạn đã hoàn thành tất cả 120 màn chơi!', '#2e7d32');
+            loadLevel(currentLevel, { forceReset: true });
+        };
+
     showWinModal({
         level: currentLevel,
         stars: stars,
@@ -2294,7 +2501,7 @@ function finishLevel() {
         completedOrders: completedList,
         decor: getCampDecor(currentLevel),
         hasNext: hasNext
-    }, () => loadLevel(currentLevel, { forceReset: true }), () => loadLevel(currentLevel + 1));
+    }, () => loadLevel(currentLevel, { forceReset: true }), onNextAction);
 }
 
 function toggleAutoDebug() {

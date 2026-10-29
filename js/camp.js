@@ -1259,7 +1259,7 @@ function openWorldMap(currentLv, onSelectLevel) {
     }
 
     // Tự động chuyển tới chặng của màn hiện tại (hoặc maxLevel)
-    var cur = currentLv || SAVE.maxLevel || 1;
+    var cur = Math.min(120, currentLv || SAVE.maxLevel || 1);
     var currentStage = Math.max(1, Math.min(6, Math.ceil(cur / 20)));
 
     var overlay = createModal(

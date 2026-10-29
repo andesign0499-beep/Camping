@@ -145,6 +145,20 @@ function loadSave() {
                 s.lastEnergyTs = Date.now();
             }
             if (typeof s.energy !== 'number' || isNaN(s.energy)) s.energy = START_ENERGY;
+
+            // Giới hạn cấp độ tối đa của game là 120 màn (6 Chặng x 20 màn)
+            var MAX_GAME_LEVEL = 120;
+            if (s.maxLevel > MAX_GAME_LEVEL) s.maxLevel = MAX_GAME_LEVEL;
+            if (s.level > MAX_GAME_LEVEL) s.level = MAX_GAME_LEVEL;
+            if (s.currentBoardState && s.currentBoardState.level > MAX_GAME_LEVEL) {
+                s.currentBoardState.level = MAX_GAME_LEVEL;
+            }
+            if (s.stars && typeof s.stars === 'object') {
+                Object.keys(s.stars).forEach(function (k) {
+                    if (parseInt(k, 10) > MAX_GAME_LEVEL) delete s.stars[k];
+                });
+            }
+
             return s;
         }
     } catch (e) { console.log(e); }
@@ -153,10 +167,55 @@ function loadSave() {
 
 var SAVE = loadSave();
 
-function saveGame() {
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) { console.log(e); }
+// Cơ chế Debounce lưu trữ tối ưu: giữ cập nhật tức thì trên RAM (0ms)
+// và hoãn ghi đĩa localStorage (800ms) để triệt tiêu hiện tượng lag/giật khi bấm liên tục.
+var _saveDebounceTimer = null;
+var _hasPendingSave = false;
+
+function flushSave() {
+    if (_saveDebounceTimer) {
+        clearTimeout(_saveDebounceTimer);
+        _saveDebounceTimer = null;
+    }
+    if (_hasPendingSave && typeof localStorage !== 'undefined') {
+        try {
+            localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE));
+            _hasPendingSave = false;
+        } catch (e) {
+            console.warn('Lỗi ghi saveGame:', e);
+        }
+    }
+}
+
+function saveGame(immediate) {
+    _hasPendingSave = true;
+    if (immediate) {
+        flushSave();
+        if (typeof FIREBASE_SYNC !== 'undefined' && FIREBASE_SYNC.isConfigured() && FIREBASE_SYNC.getCurrentUser()) {
+            FIREBASE_SYNC.debouncedSave(1000);
+        }
+        return;
+    }
+    if (!_saveDebounceTimer) {
+        _saveDebounceTimer = setTimeout(function () {
+            flushSave();
+        }, 800);
+    }
     if (typeof FIREBASE_SYNC !== 'undefined' && FIREBASE_SYNC.isConfigured() && FIREBASE_SYNC.getCurrentUser()) {
         FIREBASE_SYNC.debouncedSave(1500);
+    }
+}
+
+// Tự động ghi ngay lập tức khi người chơi rời khỏi tab hoặc đóng trình duyệt
+if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', flushSave);
+    window.addEventListener('pagehide', flushSave);
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') {
+                flushSave();
+            }
+        });
     }
 }
 
@@ -164,7 +223,7 @@ function resetSave() {
     var oldPlayerId = SAVE ? SAVE.playerId : null;
     SAVE = defaultSave();
     if (oldPlayerId) SAVE.playerId = oldPlayerId; // Giữ nguyên ID người chơi khi reset dữ liệu
-    saveGame();
+    saveGame(true);
 }
 
 // ---------- ĐỒNG BỘ ĐÁM MÂY & TÀI KHOẢN GOOGLE (CLOUD SYNC) ----------
@@ -436,10 +495,10 @@ function tuneOrders(rawOrders, lvNum, levelCfg) {
     // Cấp độ đơn hàng bổ sung: Tối thiểu là Lv.3 để đảm bảo người chơi phải ghép đồ, không bị hoàn thành ngay từ đầu
     // Màn 1-5: Lv.3 - Lv.4
     // Màn 6-15: Lv.4 - Lv.5
-    // Màn 16-35: Lv.5 - Lv.6
-    // Màn 36-45: Lv.6 - Lv.7
-    var subMinLv = lvNum <= 5 ? 3 : (lvNum <= 15 ? 4 : (lvNum <= 35 ? 5 : 6));
-    var subMaxLv = lvNum <= 5 ? 4 : (lvNum <= 15 ? 5 : (lvNum <= 35 ? 6 : 7));
+    // Màn 16-29: Lv.5 - Lv.6
+    // Màn 30+: Lv.6 - Lv.8 (Vật phẩm Cấp 8 làm nhiệm vụ từ Lv.30)
+    var subMinLv = lvNum <= 5 ? 3 : (lvNum <= 15 ? 4 : (lvNum <= 29 ? 5 : 6));
+    var subMaxLv = lvNum <= 5 ? 4 : (lvNum <= 15 ? 5 : (lvNum <= 29 ? 6 : 8));
 
     // Ưu tiên bổ sung các dòng chưa có đơn hàng
     for (var i = 0; i < availableLines.length && base.length < targetCount; i++) {
@@ -528,7 +587,7 @@ function computeEnergyBudget(board, orderIds, level) {
     var budget = Math.ceil(target3StarMax / 0.70);
 
     var minB = lvNum <= 2 ? 8 : (lvNum <= 4 ? 11 : (lvNum <= 10 ? 15 : 18));
-    return Math.max(minB, Math.min(240, budget));
+    return Math.max(minB, Math.min(450, budget));
 }
 
 // Số sao theo phần trăm năng lượng còn lại
