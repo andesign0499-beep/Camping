@@ -38,11 +38,18 @@ var ALL_GENERATOR_IDS = ['generator_backpack', 'generator_cooler', 'generator_cr
 // và mở rộng dần không gian bàn chơi theo số lượng và độ phức tạp của đơn hàng.
 // =============================================================================
 function getTargetEmptyCells(lvNum, orderCount) {
-    if (lvNum === 1) return 16;
-    if (lvNum === 2) return 17;
-    if (lvNum <= 5) return 19 + (lvNum - 3) * 2; // Lv 3: 19, Lv 4: 21, Lv 5: 23
-    if (lvNum <= 12) return Math.min(30, 25 + Math.floor((lvNum - 6) * 5 / 6)); // Lv 6..12: 25..30
-    if (lvNum <= 24) return Math.min(34, 31 + Math.floor((lvNum - 13) * 3 / 11)); // Lv 13..24: 31..34
+    if (lvNum === 1) return 5;
+    if (lvNum === 2) return 6;
+    if (lvNum === 3) return 7;
+    if (lvNum === 4) return 8;
+    if (lvNum === 5) return 9;
+    if (lvNum === 6) return 10;
+    if (lvNum === 7) return 12;
+    if (lvNum === 8) return 14;
+    if (lvNum === 9) return 16;
+    if (lvNum === 10) return 18;
+    if (lvNum <= 15) return 20 + (lvNum - 11) * 2; // Lv 11..15: 20..28
+    if (lvNum <= 24) return Math.min(34, 29 + Math.floor((lvNum - 16) * 5 / 8)); // Lv 16..24: 29..34
     if (lvNum <= 40) return Math.min(38, 35 + Math.floor((lvNum - 25) * 3 / 15)); // Lv 25..40: 35..38
     if (lvNum <= 60) return Math.min(42, 39 + Math.floor((lvNum - 41) * 3 / 19)); // Lv 41..60: 39..42
     if (lvNum <= 85) return Math.min(45, 43 + Math.floor((lvNum - 61) * 2 / 24)); // Lv 61..85: 43..45
@@ -57,7 +64,7 @@ function getTargetEmptyCells(lvNum, orderCount) {
 // - Kiểm tra BFS flood-fill đảm bảo toàn bộ ô trống liên thông hoàn toàn (không bị cô lập).
 // =============================================================================
 function generateOrganicRockMask(patternName, patFn, targetRocks, rng) {
-    targetRocks = Math.max(2, Math.min(42, targetRocks));
+    targetRocks = Math.max(2, Math.min(52, targetRocks));
     var scores = [];
     for (var idx = 0; idx < 63; idx++) {
         var r = Math.floor(idx / 7);
@@ -196,13 +203,13 @@ function generateLevelConfig(lvNum) {
 
     // 2. Chọn số lượng và chủng loại nguồn phát (Generators)
     var chosenGenIds = [];
-    if (lvNum === 1) {
-        chosenGenIds = ['generator_backpack'];
-    } else if (lvNum === 2) {
+    if (lvNum <= 3) {
         chosenGenIds = ['generator_cooler'];
-    } else if (lvNum === 3) {
+    } else if (lvNum <= 6) {
+        chosenGenIds = ['generator_backpack'];
+    } else if (lvNum <= 9) {
         chosenGenIds = ['generator_crate'];
-    } else if (lvNum === 5 || lvNum % 4 === 0 || lvNum % 5 === 0 || lvNum >= 36) {
+    } else if (lvNum === 10 || lvNum % 4 === 0 || lvNum % 5 === 0 || lvNum >= 36) {
         chosenGenIds = ['generator_cooler', 'generator_backpack', 'generator_crate'];
     } else {
         var g1 = ALL_GENERATOR_IDS[lvNum % 3];
@@ -244,9 +251,25 @@ function generateLevelConfig(lvNum) {
 
     var orders = [];
     if (lvNum === 1) {
-        orders = ['an_lv4', 'cafe_lv3'];
-    } else if (lvNum === 2) {
         orders = ['trai_lv4', 'ghe_lv3'];
+    } else if (lvNum === 2) {
+        orders = ['ban_lv4', 'ghe_lv3'];
+    } else if (lvNum === 3) {
+        orders = ['trai_lv4', 'ban_lv3', 'ghe_lv3'];
+    } else if (lvNum === 4) {
+        orders = ['an_lv4', 'cafe_lv3'];
+    } else if (lvNum === 5) {
+        orders = ['congcu_lv4', 'an_lv4', 'cafe_lv3'];
+    } else if (lvNum === 6) {
+        orders = ['an_lv5', 'congcu_lv4', 'cafe_lv3'];
+    } else if (lvNum === 7) {
+        orders = ['tham_lv4', 'bep_lv3', 'antoan_lv3'];
+    } else if (lvNum === 8) {
+        orders = ['bep_lv4', 'antoan_lv4', 'tham_lv3'];
+    } else if (lvNum === 9) {
+        orders = ['bep_lv5', 'tham_lv4', 'antoan_lv4', 'bep_lv3'];
+    } else if (lvNum === 10) {
+        orders = ['trai_lv4', 'an_lv4', 'bep_lv4'];
     } else {
         var queueLvPattern = [3, 4, Math.min(5, leadLv - 1), 3, 4, Math.min(5, leadLv - 1)];
         for (var k = 0; k < orderCount; k++) {
@@ -280,17 +303,35 @@ function generateLevelConfig(lvNum) {
     var freeList = [];
 
     if (lvNum === 1) {
-        freeList = ['an_lv1', 'cafe_lv1'];
-        webList = ['an_lv1', 'cafe_lv1', 'cafe_lv1', 'an_lv2'];
-    } else if (lvNum === 2) {
         freeList = ['trai_lv1', 'ghe_lv1'];
         webList = ['trai_lv1', 'ghe_lv1', 'ghe_lv1', 'trai_lv2'];
-    } else if (lvNum <= 4) {
-        var l0 = orders[0].split('_lv')[0];
-        var l1 = orders[1].split('_lv')[0];
-        var l2 = orders[2].split('_lv')[0];
-        freeList = [l0 + '_lv1', l1 + '_lv1'];
-        webList = [l0 + '_lv1', l0 + '_lv2', l1 + '_lv1', l1 + '_lv2', l2 + '_lv1', l2 + '_lv2'];
+    } else if (lvNum === 2) {
+        freeList = ['ban_lv1', 'ghe_lv1'];
+        webList = ['ban_lv1', 'ghe_lv1', 'ghe_lv1', 'ban_lv2'];
+    } else if (lvNum === 3) {
+        freeList = ['trai_lv1', 'ban_lv1'];
+        webList = ['trai_lv1', 'ban_lv1', 'ghe_lv1', 'trai_lv2'];
+    } else if (lvNum === 4) {
+        freeList = ['an_lv1', 'cafe_lv1'];
+        webList = ['an_lv1', 'cafe_lv1', 'cafe_lv1', 'an_lv2'];
+    } else if (lvNum === 5) {
+        freeList = ['congcu_lv1', 'an_lv1'];
+        webList = ['congcu_lv1', 'an_lv1', 'cafe_lv1', 'congcu_lv2'];
+    } else if (lvNum === 6) {
+        freeList = ['an_lv1', 'congcu_lv1'];
+        webList = ['an_lv1', 'congcu_lv1', 'cafe_lv1', 'an_lv2'];
+    } else if (lvNum === 7) {
+        freeList = ['tham_lv1', 'bep_lv1'];
+        webList = ['tham_lv1', 'bep_lv1', 'antoan_lv1', 'tham_lv2'];
+    } else if (lvNum === 8) {
+        freeList = ['bep_lv1', 'antoan_lv1'];
+        webList = ['bep_lv1', 'antoan_lv1', 'tham_lv1', 'bep_lv2'];
+    } else if (lvNum === 9) {
+        freeList = ['bep_lv1', 'tham_lv1'];
+        webList = ['bep_lv1', 'tham_lv1', 'antoan_lv1', 'bep_lv2'];
+    } else if (lvNum === 10) {
+        freeList = ['trai_lv1', 'an_lv1', 'bep_lv1'];
+        webList = ['trai_lv1', 'an_lv1', 'bep_lv1', 'trai_lv2', 'an_lv2'];
     } else {
         orders.forEach(function (ordId, oIdx) {
             var oLine = ordId.split('_lv')[0];
@@ -343,7 +384,7 @@ function generateLevelConfig(lvNum) {
 
     // 5. Xác định số ô trống tăng dần và tạo mặt nạ đá tự nhiên (Rock Mask)
     var targetEmpty = getTargetEmptyCells(lvNum, orderCount);
-    var targetRocks = Math.max(2, Math.min(42, 63 - (targetEmpty + chosenGenIds.length + webList.length + freeList.length)));
+    var targetRocks = Math.max(2, Math.min(52, 63 - (targetEmpty + chosenGenIds.length + webList.length + freeList.length)));
     var rocks = generateOrganicRockMask(patternName, patFn, targetRocks, rng);
     var rockSet = new Set(rocks);
 
@@ -505,10 +546,26 @@ function generateLevelConfig(lvNum) {
     var npcList = ['gau', 'cao', 'de'];
     var leadNpc = npcList[(lvNum - 1) % 3];
     var defaultText = lvNum === 1
-        ? 'Hãy kéo ghép 2 món có sẵn vào ô mạng nhện rồi chạm vào Ba Lô để chuẩn bị nguyên liệu nhé!'
+        ? 'Chào mừng bạn! Hãy chạm vào Xe Kéo Dã Ngoại để chuẩn bị nguyên liệu làm nhiệm vụ nhé!'
         : (lvNum === 2
-            ? 'Hãy kéo ghép các món có sẵn vào mạng nhện rồi chạm vào Xe Kéo để hoàn thành nhiệm vụ nhé!'
-            : 'Ghép các vật phẩm cùng loại để hoàn thành nhiệm vụ! Khi xong 1 nhiệm vụ, nhiệm vụ tiếp theo sẽ xuất hiện!');
+            ? 'Khám phá thêm các vật dụng cắm trại từ Xe Kéo Dã Ngoại nhé!'
+            : (lvNum === 3
+                ? 'Ghép các món cắm trại nâng cao từ Xe Kéo Dã Ngoại nhé!'
+                : (lvNum === 4
+                    ? 'Ở Màn 4, bạn có Ba Lô Dã Ngoại mới! Chạm vào Ba Lô để lấy nguyên liệu nhé!'
+                    : (lvNum === 5
+                        ? 'Tiếp tục khám phá các món ẩm thực & công cụ từ Ba Lô Dã Ngoại nhé!'
+                        : (lvNum === 6
+                            ? 'Thử thách nâng cao với các vật phẩm từ Ba Lô Dã Ngoại nhé!'
+                            : (lvNum === 7
+                                ? 'Ở Màn 7, bạn có Thùng Dụng Cụ mới! Chạm vào Thùng Dụng Cụ để khám phá nguyên liệu nhé!'
+                                : (lvNum === 8
+                                    ? 'Tiếp tục tạo các vật dụng sinh hoạt & an toàn từ Thùng Dụng Cụ nhé!'
+                                    : (lvNum === 9
+                                        ? 'Thử thách nâng cao với Thùng Dụng Cụ trước khi bước vào màn hội tụ nhé!'
+                                        : (lvNum === 10
+                                            ? 'Màn 10 hội tụ cả 3 nguồn phát! Mỗi thùng đảm nhiệm 1 nhiệm vụ, hãy phối hợp thật nhịp nhàng nhé!'
+                                            : 'Ghép các vật phẩm cùng loại để hoàn thành nhiệm vụ! Khi xong 1 nhiệm vụ, nhiệm vụ tiếp theo sẽ xuất hiện!')))))))));
 
     return {
         level: lvNum,
@@ -713,6 +770,11 @@ var GAME_CONFIG = {
             perStarCoins: 50,
             gems3Stars: 2,
             gems1Or2Stars: 1,
+            energyPerStar: {
+                1: 3,
+                2: 5,
+                3: 7
+            },
             allowReplayReward: false
         }
     },

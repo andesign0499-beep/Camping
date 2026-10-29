@@ -377,7 +377,9 @@ function mergeReward(newId) {
 function levelClearReward(lv, stars, firstTime) {
     var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.levelClear) ? GAME_CONFIG.gameplay.levelClear : null;
     var allowReplay = cfg ? cfg.allowReplayReward : false;
-    if (!firstTime && !allowReplay) return { coins: 0, gems: 0 };
+    var energyMap = (cfg && cfg.energyPerStar) ? cfg.energyPerStar : { 1: 3, 2: 5, 3: 7 };
+    var energyReward = energyMap[stars] || (stars === 1 ? 3 : (stars === 2 ? 5 : 7));
+    if (!firstTime && !allowReplay) return { coins: 0, gems: 0, energy: 0 };
     var baseCoins = cfg ? cfg.baseCoins : 150;
     var perLevel = cfg ? cfg.perLevelCoins : 25;
     var perStar = cfg ? cfg.perStarCoins : 50;
@@ -385,7 +387,8 @@ function levelClearReward(lv, stars, firstTime) {
     var gemsOther = cfg ? cfg.gems1Or2Stars : 1;
     return {
         coins: baseCoins + lv * perLevel + stars * perStar,
-        gems: stars === 3 ? gems3 : gemsOther
+        gems: stars === 3 ? gems3 : gemsOther,
+        energy: energyReward
     };
 }
 

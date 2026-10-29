@@ -445,10 +445,12 @@ function playCoinChime(stepIdx) {
     } catch (e) {}
 }
 
-// Hiệu ứng mưa đồng Vàng (icon_glod.png) & Kim Cương (icon_ruby.png) kèm số tiền bay lần lượt lên thanh HUD
+// Hiệu ứng mưa đồng Vàng (icon_glod.png), Kim Cương (icon_ruby.png) & Năng Lượng (icon_nangluong.png) kèm số tiền bay lần lượt lên thanh HUD
 function spawnFlyingCurrency(sourceEl, type, amount) {
     if (!sourceEl || amount <= 0) return;
-    var targetBanner = document.getElementById(type === 'ruby' ? 'btn-gem-shop' : 'btn-coin-shop');
+    var targetBanner = document.getElementById(
+        type === 'ruby' ? 'btn-gem-shop' : (type === 'energy' ? 'btn-refill-energy' : 'btn-coin-shop')
+    );
     var srcRect = sourceEl.getBoundingClientRect();
     var startX = srcRect.left + srcRect.width / 2;
     var startY = srcRect.top + srcRect.height / 2;
@@ -457,17 +459,19 @@ function spawnFlyingCurrency(sourceEl, type, amount) {
     var endY = 24;
     if (targetBanner) {
         var tgtRect = targetBanner.getBoundingClientRect();
-        endX = tgtRect.left - 4;
+        endX = tgtRect.left + tgtRect.width / 2;
         endY = tgtRect.top + tgtRect.height / 2;
     }
 
-    var iconSrc = type === 'ruby' ? 'assets/images/ui/icon_ruby.png' : 'assets/images/ui/icon_glod.png';
-    var badgeColor = type === 'ruby' ? '#1e88e5' : '#f57f17';
+    var iconSrc = type === 'ruby'
+        ? 'assets/images/ui/icon_ruby.png'
+        : (type === 'energy' ? 'assets/images/ui/icon_nangluong.png' : 'assets/images/ui/icon_glod.png');
+    var badgeColor = type === 'ruby' ? '#1e88e5' : (type === 'energy' ? '#2e7d32' : '#f57f17');
 
-    // Số lượng đồng xu bay lên lần lượt (5 - 9 đồng cho Vàng, 2 - 5 viên cho Kim cương)
+    // Số lượng đồng xu bay lên lần lượt (5 - 9 đồng cho Vàng, 2 - 5 viên cho Kim cương, 2 - 5 tia cho Năng lượng)
     var count = type === 'ruby'
         ? Math.min(Math.max(2, amount * 2), 5)
-        : Math.min(Math.max(5, Math.round(amount / 6)), 9);
+        : (type === 'energy' ? Math.min(Math.max(2, amount), 5) : Math.min(Math.max(5, Math.round(amount / 6)), 9));
 
     var basePerPiece = Math.floor(amount / count);
     var remainder = amount - basePerPiece * count;
@@ -634,6 +638,7 @@ var currentNpcIndex = 0;
 var levelIntroShown = false;
 var tutMergeCount = 0;
 var tutDeliveredOnce = false;
+var tutNewGenTapped = false;
 
 function updateCompanionAvatar() {
     var activeId = (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) ? SAVE.activePet : 'character01';
@@ -748,52 +753,72 @@ function clearHintVisuals() {
     boardElement.querySelectorAll('.hint-pulse').forEach(c => c.classList.remove('hint-pulse'));
 }
 
-function updateLevel1Tutorial() {
-    if (currentLevel !== 1 || levelWon || isAutoEnabled || document.getElementById('modal-overlay')) return false;
+function updateEarlyLevelsTutorial() {
+    if (currentLevel > 10 || levelWon || isAutoEnabled || document.getElementById('modal-overlay')) return false;
 
-    // Bước 3: Chỉ hướng dẫn nộp đơn ở lần đầu tiên có đơn hàng hoàn thành
-    var readyCard = ordersContainer ? ordersContainer.querySelector('.order-card.ready') : null;
-    if (readyCard && !tutDeliveredOnce) {
-        showTutorialHandTap(readyCard);
-        setNpcState('cao', '❗', 'Đủ món rồi! Chạm vào ô NỘP viền xanh bên dưới để giao đơn nhận Vàng nhé!', 0);
-        return true;
-    }
+    // Cấu hình hướng dẫn cho 10 level đầu:
+    // Level 1-3: Chỉ có Xe Kéo Dã Ngoại ('generator_cooler')
+    // Level 4-6: Chỉ có Ba Lô Dã Ngoại ('generator_backpack')
+    // Level 7-9: Chỉ có Thùng Dụng Cụ ('generator_crate')
+    // Level 10: Hội tụ cả 3 thùng sinh đồ
+    var targetGenMap = {
+        1: { id: 'generator_cooler', npc: 'gau', emoji: '🛒', text: 'Chào mừng bạn tới khu cắm trại! Chạm vào Xe Kéo Dã Ngoại để lấy nguyên liệu nhé!' },
+        2: { id: 'generator_cooler', npc: 'gau', emoji: '🛒', text: 'Tiếp tục chạm vào Xe Kéo Dã Ngoại để chuẩn bị vật dụng cắm trại nhé!' },
+        3: { id: 'generator_cooler', npc: 'gau', emoji: '🛒', text: 'Chạm vào Xe Kéo Dã Ngoại để chuẩn bị đầy đủ 3 nhóm vật dụng cắm trại nhé!' },
+        4: { id: 'generator_backpack', npc: 'cao', emoji: '🎒', text: 'Ở Màn 4, bạn có Ba Lô Dã Ngoại mới! Chạm vào Ba Lô để lấy nguyên liệu nhé!' },
+        5: { id: 'generator_backpack', npc: 'cao', emoji: '🎒', text: 'Chạm vào Ba Lô Dã Ngoại để chuẩn bị các món ẩm thực & dụng cụ nhé!' },
+        6: { id: 'generator_backpack', npc: 'cao', emoji: '🎒', text: 'Hoàn thiện các món đồ cao cấp từ Ba Lô Dã Ngoại nhé!' },
+        7: { id: 'generator_crate', npc: 'de', emoji: '🧰', text: 'Ở Màn 7, bạn có Thùng Dụng Cụ mới! Chạm vào Thùng Dụng Cụ để khám phá nguyên liệu nhé!' },
+        8: { id: 'generator_crate', npc: 'de', emoji: '🧰', text: 'Tiếp tục tạo các vật dụng sinh hoạt & an toàn từ Thùng Dụng Cụ nhé!' },
+        9: { id: 'generator_crate', npc: 'de', emoji: '🧰', text: 'Khám phá trọn vẹn 3 nhóm vật phẩm từ Thùng Dụng Cụ nhé!' },
+        10: { id: 'generator_cooler', npc: 'gau', emoji: '✨', text: 'Màn 10 hội tụ cả 3 nguồn phát! Mỗi thùng đảm nhiệm 1 nhiệm vụ, hãy chạm vào thùng nhé!' }
+    };
 
-    // Bước 2: Chỉ hướng dẫn kéo ghép ở lần ghép đầu tiên (tutMergeCount === 0)
-    var best = findBestMerge(boardData, currentOrders, currentLevelCfg);
-    if (best && tutMergeCount === 0) {
-        var cFrom = boardElement.children[best.from];
-        var cTo = boardElement.children[best.to];
-        if (cFrom) cFrom.classList.add('hint-pulse');
-        if (cTo) cTo.classList.add('hint-pulse');
-        showTutorialHandDrag(cFrom, cTo);
-        var isWebTarget = boardData[best.to] && boardData[best.to].isLocked;
-        var itemName = getItemDisplayName(boardData[best.from].id);
-        if (isWebTarget) {
-            setNpcState('de', '🕸️', 'Kéo ' + itemName + ' thả đè lên ô Mạng Nhện cùng loại để phá nhện và nâng cấp nhé!', 0);
-        } else {
-            setNpcState('de', '✨', 'Kéo 2 ' + itemName + ' chồng lên nhau để ghép lên cấp cao hơn nhé!', 0);
+    var cfg = targetGenMap[currentLevel];
+    if (!cfg) return false;
+
+    // Ở Level 1: Sau khi đã chạm nguồn phát ít nhất 1 lần, tiếp tục hướng dẫn người chơi ghép đồ và nộp đơn
+    if (currentLevel === 1) {
+        // Bước 3: Hướng dẫn nộp đơn ở lần đầu tiên có đơn hàng hoàn thành
+        var readyCard = ordersContainer ? ordersContainer.querySelector('.order-card.ready') : null;
+        if (readyCard && !tutDeliveredOnce) {
+            showTutorialHandTap(readyCard);
+            setNpcState('cao', '❗', 'Đủ món rồi! Chạm vào ô NỘP viền xanh bên dưới để giao đơn nhận Vàng nhé!', 0);
+            return true;
         }
-        return true;
+
+        // Bước 2: Hướng dẫn kéo ghép ở lần ghép đầu tiên (tutMergeCount === 0)
+        var best = findBestMerge(boardData, currentOrders, currentLevelCfg);
+        if (best && tutMergeCount === 0 && tutNewGenTapped) {
+            var cFrom = boardElement.children[best.from];
+            var cTo = boardElement.children[best.to];
+            if (cFrom) cFrom.classList.add('hint-pulse');
+            if (cTo) cTo.classList.add('hint-pulse');
+            showTutorialHandDrag(cFrom, cTo);
+            var isWebTarget = boardData[best.to] && boardData[best.to].isLocked;
+            var itemName = getItemDisplayName(boardData[best.from].id);
+            if (isWebTarget) {
+                setNpcState('de', '🕸️', 'Kéo ' + itemName + ' thả đè lên ô Mạng Nhện cùng loại để phá nhện và nâng cấp nhé!', 0);
+            } else {
+                setNpcState('de', '✨', 'Kéo 2 ' + itemName + ' chồng lên nhau để ghép lên cấp cao hơn nhé!', 0);
+            }
+            return true;
+        }
     }
 
-    // Bước 1: Chỉ hướng dẫn bấm nguồn phát khi mới vào màn 1 (levelClicks === 0) hoặc chưa có cặp ghép cho lần ghép đầu
-    if (levelClicks === 0 || (tutMergeCount === 0 && !best)) {
+    // Hướng dẫn bàn tay chỉ vào thùng sinh đồ của màn (khi người chơi chưa bấm vào thùng)
+    if (!tutNewGenTapped) {
         var genIdx = -1;
         boardData.forEach((c, idx) => {
-            if (genIdx === -1 && c && GENERATORS[c.id] && !c.isLocked) genIdx = idx;
+            if (genIdx === -1 && c && c.id === cfg.id && !c.isLocked) {
+                genIdx = idx;
+            }
         });
         if (genIdx !== -1 && boardElement.children[genIdx]) {
             var genCell = boardElement.children[genIdx];
             genCell.classList.add('hint-pulse');
             showTutorialHandTap(genCell);
-            var genName = (typeof getItemCleanName === 'function')
-                ? getItemCleanName(boardData[genIdx].id)
-                : 'Ba Lô Dã Ngoại';
-            var msg = levelClicks === 0
-                ? 'Chào mừng tới khu cắm trại! Chạm vào ' + genName + ' trên bàn cờ để lấy nguyên liệu nhé!'
-                : 'Chạm thêm 1 lần vào ' + genName + ' để có đủ cặp ghép nhé!';
-            setNpcState('gau', '👆', msg, 0);
+            setNpcState(cfg.npc || 'gau', cfg.emoji || '👆', cfg.text, 0);
             return true;
         }
     }
@@ -808,7 +833,7 @@ function scheduleHint() {
         hideNpcBubble();
         return;
     }
-    if (updateLevel1Tutorial()) {
+    if (updateEarlyLevelsTutorial()) {
         return;
     }
 
@@ -922,6 +947,7 @@ function loadLevel(lvNum, options) {
     }
     tutMergeCount = 0;
     tutDeliveredOnce = false;
+    tutNewGenTapped = false;
     levelIntroShown = false;
     levelWon = false;
 
@@ -954,6 +980,9 @@ function loadLevel(lvNum, options) {
         levelUnwantedClicks = SAVE.currentBoardState.levelUnwantedClicks || 0;
         levelBudget = SAVE.currentBoardState.levelBudget || computeEnergyBudget(boardData, currentOrders.map(o => o.id), currentLevelCfg);
         isReplayLevel = SAVE.currentBoardState.isReplayLevel !== undefined ? SAVE.currentBoardState.isReplayLevel : !!SAVE.stars[lvNum];
+        if (levelClicks > 0) {
+            tutNewGenTapped = true;
+        }
     } else {
         boardData = buildBoard(currentLevelCfg);
         var orderIds = tuneOrders(currentLevelCfg.rawOrders, lvNum, currentLevelCfg);
@@ -1759,6 +1788,25 @@ var lastGenCellIdx = -1;
 var genClickStreak = 0;
 
 function handleGeneratorClick(gen, cellElement) {
+    if (currentLevel <= 10 && !tutNewGenTapped) {
+        var targetGens = {
+            1: 'generator_cooler',
+            2: 'generator_cooler',
+            3: 'generator_cooler',
+            4: 'generator_backpack',
+            5: 'generator_backpack',
+            6: 'generator_backpack',
+            7: 'generator_crate',
+            8: 'generator_crate',
+            9: 'generator_crate',
+            10: 'generator_cooler'
+        };
+        if (currentLevel === 10 || (gen && gen.id === targetGens[currentLevel])) {
+            tutNewGenTapped = true;
+            clearHintVisuals();
+            hideNpcBubble();
+        }
+    }
     var now = Date.now();
     var idx = parseInt(cellElement.dataset.index);
     var windowMs = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.generatorClickWindowMs)
@@ -2161,15 +2209,22 @@ function finishLevel() {
     var reward = levelClearReward(currentLevel, stars, firstTime);
     var coins = reward.coins;
     var gems = reward.gems;
+    var energy = reward.energy || 0;
 
     // Nếu chơi lại màn cũ và cải thiện số sao (ví dụ từ 2⭐ lên 3⭐): thưởng phần chênh lệch sao
     if (!firstTime && stars > oldStars) {
         var lcCfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.levelClear)
             ? GAME_CONFIG.gameplay.levelClear
-            : { perStarCoins: 50, gems3Stars: 2, gems1Or2Stars: 1 };
+            : { perStarCoins: 50, gems3Stars: 2, gems1Or2Stars: 1, energyPerStar: { 1: 3, 2: 5, 3: 7 } };
         coins += (stars - oldStars) * (lcCfg.perStarCoins || 50);
         if (stars === 3 && oldStars < 3) {
             gems += Math.max(0, (lcCfg.gems3Stars || 2) - (lcCfg.gems1Or2Stars || 1));
+        }
+        var energyMap = (lcCfg && lcCfg.energyPerStar) ? lcCfg.energyPerStar : { 1: 3, 2: 5, 3: 7 };
+        var oldEnergy = energyMap[oldStars] || 0;
+        var newEnergy = energyMap[stars] || 0;
+        if (newEnergy > oldEnergy) {
+            energy += (newEnergy - oldEnergy);
         }
     }
 
@@ -2195,8 +2250,22 @@ function finishLevel() {
     var totalCoins = coins + sweepCoins;
     playerCoins += totalCoins;
     playerGems += gems;
+    if (energy > 0) {
+        playerEnergy += energy;
+        SAVE.energy = playerEnergy;
+    }
     if (boardElement && totalCoins > 0) {
         spawnFlyingCurrency(boardElement, 'gold', totalCoins);
+    }
+    if (boardElement && gems > 0) {
+        setTimeout(function () {
+            spawnFlyingCurrency(boardElement, 'ruby', gems);
+        }, 160);
+    }
+    if (boardElement && energy > 0) {
+        setTimeout(function () {
+            spawnFlyingCurrency(boardElement, 'energy', energy);
+        }, 320);
     }
     SAVE.stars[currentLevel] = Math.max(SAVE.stars[currentLevel] || 0, stars);
     if (currentLevel + 1 > SAVE.maxLevel) {
@@ -2220,6 +2289,7 @@ function finishLevel() {
         sweepCoins: sweepCoins,
         sweepCount: sweepCount,
         gems: gems,
+        energy: energy,
         firstTime: firstTime,
         completedOrders: completedList,
         decor: getCampDecor(currentLevel),
@@ -2237,8 +2307,11 @@ function toggleAutoDebug() {
 
 // ==========================================
 // TÍNH NĂNG DỌN DẸP BÀN CỜ (CÂY CHỔI DỌN DẸP)
-// Sắp xếp các item cùng họ (cùng màu nền) lại gần nhau
-// Tiêu tốn: 3 Năng lượng
+// ==========================================
+// TÍNH NĂNG DỌN DẸP BÀN CỜ (CÂY CHỔI THẦN KỲ)
+// - Tự động bán tất cả vật phẩm thừa mà màn chơi không yêu cầu
+// - Sắp xếp các vật phẩm cần thiết cùng họ lại gần nhau theo cấp độ tăng dần
+// - Tiêu tốn: 3 Năng lượng
 // ==========================================
 var TIDY_ENERGY_COST = 3;
 var LINE_ORDER = ['an', 'cafe', 'congcu', 'ban', 'ghe', 'trai', 'tham', 'antoan', 'bep'];
@@ -2256,40 +2329,93 @@ function handleTidyBoard() {
         return;
     }
 
-    // 2. Thu thập các vật phẩm có thể di chuyển trên bàn cờ
-    // (Bỏ qua: Đá chướng ngại vật, Ô bị khóa/mạng nhện, Ô máy sinh đồ/thùng chứa)
-    var movableItems = [];
+    // 2. Xác định các nhiệm vụ chưa hoàn thành trong màn chơi
+    var neededMaxLvByLine = {};
+    var activeOrders = (currentOrders || []).filter(function (o) {
+        return o && !o.done && o.id;
+    });
+
+    activeOrders.forEach(function (o) {
+        var line = itemLine(o.id);
+        var lv = itemLv(o.id);
+        if (!neededMaxLvByLine[line] || lv > neededMaxLvByLine[line]) {
+            neededMaxLvByLine[line] = lv;
+        }
+    });
+
+    // Hàm kiểm tra xem 1 vật phẩm có phải là vật phẩm thừa mà màn chơi không yêu cầu hay không
+    function isSurplusItem(itemId) {
+        if (!itemId) return false;
+        var line = itemLine(itemId);
+        var lv = itemLv(itemId);
+        var maxNeeded = neededMaxLvByLine[line];
+        // Nhánh sản phẩm không có trong bất kỳ nhiệm vụ nào còn lại của màn chơi
+        if (!maxNeeded) return true;
+        // Hoặc cấp độ đã vượt quá cấp tối đa của nhiệm vụ yêu cầu (không thể ghép ngược lại để nộp)
+        if (lv > maxNeeded) return true;
+        return false;
+    }
+
+    // 3. Phân loại các vật phẩm trên bàn cờ
+    var surplusItems = []; // Các vật phẩm thừa sẽ tự động bán
+    var movableItems = []; // Các vật phẩm cần giữ lại để sắp xếp
     var availableSlotIndexes = [];
 
     boardData.forEach(function (cell, idx) {
         if (!cell) return;
         if (cell.isRock) return; // Đá cố định
         if (cell.isLocked) return; // Mạng nhện cố định
-        if (cell.id && GENERATORS[cell.id]) return; // Thùng chứa đồ cố định
+        if (cell.id && GENERATORS[cell.id]) return; // Thùng chứa đồ / máy sinh đồ cố định
 
-        // Ô này là ô trống hoặc ô chứa vật phẩm tự do
         availableSlotIndexes.push(idx);
         if (cell.id) {
-            movableItems.push({
-                id: cell.id,
-                isRock: false,
-                isLocked: false
-            });
+            if (isSurplusItem(cell.id)) {
+                surplusItems.push({
+                    idx: idx,
+                    id: cell.id
+                });
+            } else {
+                movableItems.push({
+                    id: cell.id,
+                    isRock: false,
+                    isLocked: false
+                });
+            }
         }
     });
 
-    if (movableItems.length <= 1) {
-        showToast('Bàn cờ chưa có nhiều vật phẩm cần dọn dẹp!', '#3498db');
+    // Nếu không có vật phẩm thừa nào để bán VÀ bàn cờ cũng không có nhiều hơn 1 vật phẩm để sắp xếp
+    if (surplusItems.length === 0 && movableItems.length <= 1) {
+        showToast('Bàn cờ chưa có vật phẩm cần dọn dẹp hoặc bán!', '#3498db');
         return;
     }
 
-    // 3. Trừ 3 năng lượng & lưu dữ liệu
+    // 4. Trừ 3 năng lượng
     playerEnergy -= TIDY_ENERGY_COST;
-    updateUIStats();
-    saveGame();
+    if (SAVE) SAVE.energy = playerEnergy;
 
-    // 4. Hiệu ứng âm thanh & hoạt ảnh cho cây chổi
+    // 5. Tự động bán tất cả các vật phẩm thừa
+    var totalSoldCoins = 0;
+    var soldCount = surplusItems.length;
+    if (soldCount > 0) {
+        surplusItems.forEach(function (item) {
+            var price = sellPrice(item.id);
+            if (price <= 0) price = 10;
+            totalSoldCoins += price;
+        });
+        playerCoins += totalSoldCoins;
+        if (SAVE) SAVE.coins = playerCoins;
+    }
+    updateUIStats();
+
+    // 6. Hiệu ứng âm thanh & hoạt ảnh cho cây chổi & tiền vàng
     playSound('sweep');
+    if (totalSoldCoins > 0) {
+        setTimeout(function () {
+            playSound('bonus');
+        }, 160);
+    }
+
     var broomEl = document.getElementById('btn-tidy-board');
     if (broomEl) {
         broomEl.classList.remove('broom-sweeping');
@@ -2300,9 +2426,15 @@ function handleTidyBoard() {
         showFloatingBadge(broomEl, '-' + TIDY_ENERGY_COST + ' ⚡', '#f39c12');
     }
 
-    // 5. Sắp xếp các vật phẩm:
+    if (totalSoldCoins > 0) {
+        var coinTarget = document.getElementById('coin-count') || broomEl;
+        spawnFlyingCurrency(broomEl || boardElement, 'gold', Math.min(totalSoldCoins, 60));
+        showFloatingBadge(coinTarget, '+' + totalSoldCoins.toLocaleString('vi-VN') + ' 🪙', '#f1c40f');
+    }
+
+    // 7. Sắp xếp các vật phẩm cần giữ lại:
     // - Gom nhóm theo họ / màu nền (LINE_ORDER)
-    // - Trong cùng họ: sắp xếp theo cấp độ (level) tăng dần để các item giống nhau nằm sát nhau
+    // - Trong cùng họ: sắp xếp theo cấp độ tăng dần để các item giống nhau nằm sát nhau
     movableItems.sort(function (a, b) {
         var lineA = itemLine(a.id);
         var lineB = itemLine(b.id);
@@ -2317,7 +2449,7 @@ function handleTidyBoard() {
         return lvA - lvB;
     });
 
-    // 6. Xếp lại các vật phẩm vào các ô hợp lệ theo thứ tự gọn gàng
+    // 8. Xếp lại các vật phẩm vào các ô hợp lệ theo thứ tự gọn gàng
     availableSlotIndexes.forEach(function (slotIdx, k) {
         if (k < movableItems.length) {
             boardData[slotIdx] = movableItems[k];
@@ -2330,7 +2462,8 @@ function handleTidyBoard() {
     selectedIndex = null;
     updateSellButton(null);
 
-    // 7. Render lại bàn cờ & kích hoạt hiệu ứng xuất hiện mượt mà cho các item vừa dọn dẹp
+    // Lưu dữ liệu & render lại bàn cờ
+    persistCurrentBoardState();
     renderBoard();
 
     // Hiệu ứng hoạt ảnh gọn gàng cho các ô vừa được xếp
@@ -2343,7 +2476,12 @@ function handleTidyBoard() {
         }
     });
 
-    showToast('✨ Đã dọn dẹp bàn cờ gọn gàng!', '#27ae60');
+    // Thông báo toast
+    if (soldCount > 0) {
+        showToast('🧹 Đã dọn dẹp & bán ' + soldCount + ' vật phẩm thừa (+' + totalSoldCoins.toLocaleString('vi-VN') + ' vàng)!', '#27ae60');
+    } else {
+        showToast('✨ Đã dọn dẹp bàn cờ gọn gàng!', '#27ae60');
+    }
 }
 
 // Đồng bộ chiều rộng và vị trí khung bàn chơi lên biến CSS ở cả 2 khoảng (<=600px và >600px)
