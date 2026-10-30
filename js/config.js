@@ -732,67 +732,38 @@ var GAME_CONFIG = {
     },
 
     // -------------------------------------------------------------------------
-    // 3. QUẢNG CÁO XEM THƯỞNG (REWARDED ADS)
+    // 3. QUẢNG CÁO XEM THƯỞNG & QUÀ TIẾP TẾ HÀNG NGÀY (REWARDED ADS & GIFTS)
+    // Mô hình Free-to-Play 100% tuân thủ chính sách Google Play Store
     // -------------------------------------------------------------------------
     adRewards: {
         energy: {
-            amount: 25,
+            amount: 30,
             dailyLimit: 6
         },
         gem: {
-            amount: 4,
-            dailyLimit: 3
+            amount: 8,
+            dailyLimit: 6
         },
         coin: {
-            amount: 1500,
-            dailyLimit: 4
+            amount: 2500,
+            dailyLimit: 5
+        },
+        dailyGift: {
+            amount: 5,
+            doubleAmount: 10
+        },
+        mysteryChest: {
+            minGems: 12,
+            maxGems: 25,
+            dailyLimit: 3
         }
     },
 
     // -------------------------------------------------------------------------
-    // 4. GÓI NẠP KIM CƯƠNG IAP (MÔ PHỎNG MUA BẰNG TIỀN THẬT)
+    // 4. GÓI NẠP IAP: ĐÃ LOẠI BỎ (100% FREE-TO-PLAY VỚI QUẢNG CÁO TÀI TRỢ)
     // -------------------------------------------------------------------------
-    iapPacks: [
-        {
-            id: 'gem_tier_1',
-            name: 'Túi Kim Cương Nhỏ',
-            gems: 32,
-            bonusGems: 0,
-            priceVnd: '5.000 ₫',
-            badge: null,
-            desc: 'Đủ 4 lần nạp siêu tốc (+200 Năng lượng)'
-        },
-        {
-            id: 'gem_tier_3',
-            name: 'Rương Kim Cương',
-            gems: 96,
-            bonusGems: 40,
-            priceVnd: '15.000 ₫',
-            badge: 'HỜI NHẤT +42%',
-            isPopular: true,
-            desc: 'Gói nạp tối ưu chi phí & hời nhất'
-        },
-        {
-            id: 'gem_tier_4',
-            name: 'Kho Báu Kim Cương',
-            gems: 320,
-            bonusGems: 180,
-            priceVnd: '49.000 ₫',
-            badge: 'SIÊU GIÁ TRỊ +56%',
-            desc: 'Gói nạp tối thượng, nhận ngay 500 Kim Cương'
-        }
-    ],
-
-    starterPack: {
-        id: 'starter_pack_camping',
-        name: 'Gói Hành Trang Tân Thủ',
-        gems: 40,
-        coins: 4500,
-        energy: 60,
-        priceVnd: '5.000 ₫',
-        badge: 'ƯU ĐÃI 300%',
-        desc: 'Nhận ngay 40 Kim Cương + 4.500 Vàng + 60 Năng lượng (Chỉ 1 lần)'
-    },
+    iapPacks: [],
+    starterPack: null,
 
     // -------------------------------------------------------------------------
     // 5. NGÂN HÀNG ĐỔI VÀNG (ĐỔI KIM CƯƠNG RA VÀNG - KINH TẾ X10)

@@ -2485,8 +2485,15 @@ body {
     background: #fff;
     border: 2px solid #e0cfa9;
     border-radius: var(--rad-lg);
-    padding: 8px 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 10px 12px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Tự động tối ưu giãn dòng & đệm chỉ khi thẻ có huy hiệu (HẰNG NGÀY, PHỔ BIẾN, MAY MẮN...) */
+.shop-card:has(.shop-badge),
+.shop-card.has-badge {
+    margin-top: 8px;
+    padding: 12px 14px;
 }
 
 .shop-card .modal-btn {
@@ -2504,18 +2511,27 @@ body {
 .shop-scroll {
     flex: 1 1 auto;
     min-height: 0;
-    max-height: min(460px, 60dvh);
+    max-height: min(480px, 62dvh);
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Các gói trên dưới cách nhau chuẩn 8px */
-    padding: 2px 2px 8px 2px;
+    gap: 8px; /* Mặc định gọn gàng tự nhiên cho các tab Năng lượng, Tiền vàng */
+    padding: 4px;
     margin: 4px 0;
     text-align: left;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
     -webkit-overflow-scrolling: touch;
+}
+
+/* Riêng Trạm Kim Cương có các thẻ huy hiệu nổi tự động giãn cách thông thoáng */
+.gem-shop-box .shop-scroll {
+    gap: 16px;
+    padding: 10px 4px 12px 4px;
+}
+.gem-shop-box .shop-card:first-child {
+    margin-top: 4px;
 }
 .shop-scroll::-webkit-scrollbar {
     display: none !important;
@@ -2551,18 +2567,18 @@ body {
 
 .shop-badge {
     position: absolute;
-    top: -9px;
-    left: 12px;
-    font-size: 0.625rem;
-    line-height: 0.75rem;
+    top: -10px;
+    left: 14px;
+    font-size: 0.65rem;
+    line-height: 0.8rem;
     font-weight: 900;
-    padding: 2px 8px;
+    padding: 2px 10px;
     border-radius: 10px;
     color: #fff;
     background: #e53935;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
     z-index: 2;
 }
 
@@ -2603,6 +2619,12 @@ body {
     line-height: var(--lh-sm);
     color: #6d4c41;
     margin-top: 2px;
+}
+
+.shop-card:has(.shop-badge) .shop-card-desc,
+.shop-card.has-badge .shop-card-desc {
+    line-height: 1.35;
+    margin-top: 3px;
 }
 
 .shop-card-desc .inline-ui-icon {

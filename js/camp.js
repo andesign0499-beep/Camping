@@ -985,62 +985,32 @@ function openCamp(highlightLevel, onBack, initialTab) {
 }
 
 // ==========================================
-// ĐỊNH NGHĨA KINH TẾ IAP, QUẢNG CÁO & CỬA HÀNG
+// ĐỊNH NGHĨA KINH TẾ QUẢNG CÁO & CỬA HÀNG
 // Đọc từ js/config.js (GAME_CONFIG) để người dùng có thể dễ dàng chỉnh sửa
 // ==========================================
-var GEM_IAP_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.iapPacks) ? GAME_CONFIG.iapPacks : [
-    {
-        id: 'gem_tier_1',
-        name: 'Túi Kim Cương Nhỏ',
-        gems: 30,
-        bonusGems: 0,
-        priceVnd: '5.000 ₫',
-        badge: null,
-        desc: 'Đủ 3 lần nạp siêu tốc (+120 Năng lượng)'
-    },
-    {
-        id: 'gem_tier_3',
-        name: 'Rương Kim Cương',
-        gems: 90,
-        bonusGems: 25,
-        priceVnd: '15.000 ₫',
-        badge: 'HỜI NHẤT +28%',
-        isPopular: true,
-        desc: 'Tặng thêm +25 Kim Cương khuyến mãi'
-    },
-    {
-        id: 'gem_tier_4',
-        name: 'Kho Báu Kim Cương',
-        gems: 320,
-        bonusGems: 180,
-        priceVnd: '49.000 ₫',
-        badge: 'SIÊU GIÁ TRỊ +56%',
-        desc: 'Gói nạp tối thượng, nhận ngay 500 Kim Cương'
-    }
-];
-
 var COIN_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.coinExchangePacks) ? GAME_CONFIG.coinExchangePacks : [
     {
         id: 'coin_pack_1',
         name: 'Túi Vàng Nhỏ',
-        coins: 300,
+        coins: 3500,
         gemCost: 5,
+        badge: null,
         desc: 'Đổi từ 5 Kim Cương'
     },
     {
         id: 'coin_pack_2',
         name: 'Rương Vàng Lớn',
-        coins: 1000,
+        coins: 11000,
         gemCost: 15,
-        badge: 'TIẾT KIỆM 10%',
+        badge: 'TIẾT KIỆM 15%',
         desc: 'Đổi từ 15 Kim Cương'
     },
     {
         id: 'coin_pack_3',
         name: 'Kho Vàng Hoàng Gia',
-        coins: 2200,
+        coins: 25000,
         gemCost: 30,
-        badge: 'SIÊU LỜI +20%',
+        badge: 'SIÊU LỜI +30%',
         desc: 'Đổi từ 30 Kim Cương'
     }
 ];
@@ -1099,46 +1069,9 @@ function simulateWatchAd(title, onReward) {
     }, 800);
 }
 
-// ---------- MÔ PHỎNG MUA IAP (APPLE STORE / GOOGLE PLAY) ----------
+// ---------- MÔ PHỎNG MUA IAP (ĐÃ ĐƯỢC CHUYỂN HOÀN TOÀN SANG QUẢNG CÁO MIỄN PHÍ) ----------
 function simulateBuyIAP(pack, onConfirm) {
-    var overlay = createModal(
-        '<div class="iap-dialog-container">' +
-            '<div class="iap-header">' +
-                '<span class="iap-store-badge"> App Store / Google Play</span>' +
-                '<div class="iap-title">Xác Nhận Mua Gói IAP</div>' +
-            '</div>' +
-            '<div class="iap-pack-banner">' +
-                '<div class="iap-pack-name">' + pack.name + '</div>' +
-                (pack.badge ? '<span class="iap-pack-badge">' + pack.badge + '</span>' : '') +
-            '</div>' +
-            '<div class="iap-body">' +
-                '<div class="iap-row">' +
-                    '<span>Kim cương nhận:</span>' +
-                    '<b style="color:#0288d1">+' + (pack.gems + (pack.bonusGems || 0)).toLocaleString('vi-VN') + ' ' + ICON_RUBY_HTML + '</b>' +
-                '</div>' +
-                (pack.coins ? '<div class="iap-row"><span>Vàng kèm theo:</span> <b style="color:#f57f17">+' + pack.coins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</b></div>' : '') +
-                (pack.energy ? '<div class="iap-row"><span>Năng lượng tức thì:</span> <b style="color:#2e7d32">+' + pack.energy + ' ' + ICON_ENERGY_HTML + '</b></div>' : '') +
-                '<div class="iap-row price-row">' +
-                    '<span>Tổng giá thanh toán:</span>' +
-                    '<b class="iap-price-val">' + pack.priceVnd + '</b>' +
-                '</div>' +
-            '</div>' +
-            '<div class="iap-mock-notice">' +
-                '<small>Đây là giao diện giả lập nạp IAP theo yêu cầu. Nhấn "Thanh Toán" để cộng ngay vật phẩm vào tài khoản!</small>' +
-            '</div>' +
-            '<div class="modal-buttons">' +
-                '<button class="modal-btn gem-btn" id="btn-iap-cancel">Hủy Bỏ</button>' +
-                '<button class="modal-btn primary" id="btn-iap-pay">Thanh Toán</button>' +
-            '</div>' +
-        '</div>',
-        'iap-box'
-    );
-
-    overlay.querySelector('#btn-iap-cancel').onclick = closeModal;
-    overlay.querySelector('#btn-iap-pay').onclick = function () {
-        closeModal();
-        if (onConfirm) onConfirm(pack);
-    };
+    if (onConfirm) onConfirm(pack);
 }
 
 // ---------- 4A. CỬA HÀNG NĂNG LƯỢNG & CỨU TRỢ (TRẠM TIẾP NĂNG LƯỢNG) ----------
@@ -1285,88 +1218,122 @@ function renderWithCurrencyIcons(str) {
 }
 
 function showGemShopModal(opts) {
-    var gemAdAmt = (typeof AD_REWARDS !== 'undefined' && AD_REWARDS.gem) ? AD_REWARDS.gem.amount : 4;
+    var gemAdAmt = (typeof AD_REWARDS !== 'undefined' && AD_REWARDS.gem) ? AD_REWARDS.gem.amount : 8;
     var gemAdsLeft = typeof opts.adsLeft === 'number' ? opts.adsLeft : (typeof getAdsLeft === 'function' ? getAdsLeft('gem') : 0);
-    var gemAdHtml = '<div class="shop-card">' +
+    var mysteryLeft = typeof opts.mysteryLeft === 'number' ? opts.mysteryLeft : (typeof getAdsLeft === 'function' ? getAdsLeft('mystery') : 0);
+    var dailyClaimed = !!opts.dailyGiftClaimed;
+
+    // 1. Quà Tiếp Tế Hàng Ngày (Mỗi ngày 1 lần)
+    var dailyAmt = (typeof AD_REWARDS !== 'undefined' && AD_REWARDS.dailyGift) ? AD_REWARDS.dailyGift.amount : 5;
+    var dailyHtml = '<div class="shop-card starter-card has-badge">' +
+        '<div class="shop-badge">HẰNG NGÀY</div>' +
         '<div class="shop-card-left">' +
-            '<div class="shop-card-title">+' + gemAdAmt + ' ' + ICON_RUBY_HTML + '</div>' +
-            '<div class="shop-card-desc">Xem 1 video ngắn nhận Kim Cương miễn phí • Còn ' + gemAdsLeft + ' lượt hôm nay</div>' +
+            '<div class="shop-card-title">+' + dailyAmt + ' ' + ICON_RUBY_HTML + ' Quà Mỗi Ngày</div>' +
+            '<div class="shop-card-desc">Đăng nhập mỗi ngày để nhận Kim Cương miễn phí</div>' +
         '</div>' +
-        '<button class="modal-btn ' + (gemAdsLeft > 0 ? 'primary' : 'disabled-btn') + '" id="btn-gem-watch-ad">XEM ADS</button>' +
+        (dailyClaimed
+            ? '<button class="modal-btn disabled-btn" disabled>ĐÃ NHẬN</button>'
+            : '<button class="modal-btn primary" id="btn-claim-daily">Nhận Ngay</button>'
+        ) +
     '</div>';
 
-    var starterPack = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.starterPack) ? GAME_CONFIG.starterPack : null;
-    var starterHtml = '';
-    if (starterPack && (!SAVE || !SAVE.starterPackBought)) {
-        starterHtml = '<div class="shop-card rescue-card">' +
-            '<div class="shop-card-left">' +
-                '<div class="shop-card-title">' + renderWithCurrencyIcons(starterPack.name) + '</div>' +
-                '<div class="shop-card-desc">' + renderWithCurrencyIcons(starterPack.desc) + '</div>' +
-            '</div>' +
-            '<button class="modal-btn gem-btn" id="btn-buy-starter-pack">' + starterPack.priceVnd + '</button>' +
-        '</div>';
-    }
+    // 2. Video Quảng Cáo Nhận Kim Cương (+8 Kim Cương)
+    var canWatchGem = gemAdsLeft > 0;
+    var gemAdHtml = '<div class="shop-card popular-card has-badge">' +
+        '<div class="shop-badge" style="background:#0288d1;">PHỔ BIẾN</div>' +
+        '<div class="shop-card-left">' +
+            '<div class="shop-card-title">+' + gemAdAmt + ' ' + ICON_RUBY_HTML + ' Video Thưởng</div>' +
+            '<div class="shop-card-desc">Xem 1 video ngắn nhận ngay ' + gemAdAmt + ' Kim Cương • Còn ' + gemAdsLeft + ' lượt hôm nay</div>' +
+        '</div>' +
+        '<button class="modal-btn ' + (canWatchGem ? 'primary' : 'disabled-btn') + '" id="btn-gem-watch-ad" ' + (canWatchGem ? '' : 'disabled') + '>' +
+            (canWatchGem ? 'XEM ADS' : 'HẾT LƯỢT') +
+        '</button>' +
+    '</div>';
 
-    var packsHtml = '';
-    GEM_IAP_PACKS.forEach(function (p) {
-        var total = p.gems + (p.bonusGems || 0);
-        var bonusHtml = p.bonusGems ? ' (Thưởng +' + p.bonusGems + ' ' + ICON_RUBY_HTML + ')' : '';
-        packsHtml += '<div class="shop-card">' +
-            '<div class="shop-card-left">' +
-                '<div class="shop-card-title">+' + total.toLocaleString('vi-VN') + ' ' + ICON_RUBY_HTML + '</div>' +
-                '<div class="shop-card-desc">' + renderWithCurrencyIcons(p.desc) + bonusHtml + '</div>' +
+    // 3. Rương Tiếp Tế Dã Ngoại (Lucky Mystery Chest)
+    var canOpenMystery = mysteryLeft > 0;
+    var mysteryHtml = '<div class="shop-card rescue-card has-badge">' +
+        '<div class="shop-badge" style="background:#2e7d32;">MAY MẮN</div>' +
+        '<div class="shop-card-left">' +
+            '<div class="shop-card-title">+12 ~ 25 ' + ICON_RUBY_HTML + ' Rương Bí Mật</div>' +
+            '<div class="shop-card-desc">Xem video mở rương kho báu nhận ngẫu nhiên Kim Cương • Còn ' + mysteryLeft + ' lượt hôm nay</div>' +
+        '</div>' +
+        '<button class="modal-btn ' + (canOpenMystery ? 'gem-btn' : 'disabled-btn') + '" id="btn-gem-mystery-chest" ' + (canOpenMystery ? '' : 'disabled') + '>' +
+            (canOpenMystery ? 'MỞ RƯƠNG' : 'HẾT LƯỢT') +
+        '</button>' +
+    '</div>';
+
+    // 4. Gói Test Thử Nghiệm (+500 Kim Cương)
+    var testPackHtml = '<div class="shop-card has-badge" style="background:#f3e5f5;border-color:#ba68c8;">' +
+        '<div class="shop-badge" style="background:#8e24aa;">TEST</div>' +
+        '<div class="shop-card-left">' +
+            '<div class="shop-card-title">+500 ' + ICON_RUBY_HTML + ' Gói Thử Nghiệm</div>' +
+            '<div class="shop-card-desc">Gói nhận nhanh Kim Cương để kiểm tra tính năng</div>' +
+        '</div>' +
+        '<button class="modal-btn primary" id="btn-claim-test-gem" style="background:linear-gradient(180deg,#ab47bc,#7b1fa2);border-color:#6a1b9a;">Nhận Ngay</button>' +
+    '</div>';
+
+    // 5. Mẹo kiếm Kim Cương trong game
+    var tipHtml = '<div class="shop-card" style="background:#fffde7;border:2px dashed #fbc02d;">' +
+        '<div class="shop-card-left">' +
+            '<div class="shop-card-title" style="color:#e65100;font-size:0.875rem;">Mẹo Nhận Thêm Kim Cương Trong Game</div>' +
+            '<div class="shop-card-desc" style="font-size:0.75rem;line-height:1.4;">' +
+                '• Vượt màn đạt 3 sao: <b>+2 ' + ICON_RUBY_HTML + '</b><br>' +
+                '• Khám phá món mới trong Cẩm Nang: <b>+1 ' + ICON_RUBY_HTML + '</b><br>' +
+                '• Ghép vật phẩm Cấp 8 hoàn hảo: <b>+1 ' + ICON_RUBY_HTML + '</b>' +
             '</div>' +
-            '<button class="modal-btn gem-btn btn-buy-pack" data-id="' + p.id + '">' + p.priceVnd + '</button>' +
-        '</div>';
-    });
+        '</div>' +
+    '</div>';
 
     var overlay = createModal(
         '<div id="gem-status-bar" class="modal-sub">' +
             'Số dư: <b>' + opts.gems + ' ' + ICON_RUBY_HTML + '</b> &nbsp;|&nbsp; ' +
             '<b>' + opts.coins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</b> &nbsp;|&nbsp; ' +
             '<b>' + opts.energy + ' ' + ICON_ENERGY_HTML + '</b><br>' +
-            '<small>Kim Cương dùng để nạp năng lượng siêu tốc & các tính năng đặc biệt</small>' +
+            '<small>Kim Cương dùng để nạp năng lượng siêu tốc & đổi sang Vàng</small>' +
         '</div>' +
         '<div class="shop-scroll">' +
-            starterHtml +
+            dailyHtml +
             gemAdHtml +
-            packsHtml +
+            mysteryHtml +
+            testPackHtml +
+            tipHtml +
         '</div>' +
         '<div class="modal-buttons">' +
             '<button class="modal-btn primary" id="mb-close">Đóng</button>' +
         '</div>',
-        'shop-box',
-        'KIM CƯƠNG'
+        'shop-box gem-shop-box',
+        'TRẠM KIM CƯƠNG'
     );
 
+    var dailyBtn = overlay.querySelector('#btn-claim-daily');
+    if (dailyBtn && !dailyClaimed) {
+        dailyBtn.onclick = function () {
+            closeModal();
+            if (opts.onClaimDailyFree) opts.onClaimDailyFree();
+        };
+    }
     var gemAdBtn = overlay.querySelector('#btn-gem-watch-ad');
-    if (gemAdBtn) {
+    if (gemAdBtn && canWatchGem) {
         gemAdBtn.onclick = function () {
             closeModal();
             if (opts.onWatchAd) opts.onWatchAd();
         };
     }
-
-    var starterBtn = overlay.querySelector('#btn-buy-starter-pack');
-    if (starterBtn && starterPack) {
-        starterBtn.onclick = function () {
+    var mysteryBtn = overlay.querySelector('#btn-gem-mystery-chest');
+    if (mysteryBtn && canOpenMystery) {
+        mysteryBtn.onclick = function () {
             closeModal();
-            if (opts.onBuyIAP) {
-                opts.onBuyIAP(starterPack, true);
-            }
+            if (opts.onOpenMysteryChest) opts.onOpenMysteryChest();
         };
     }
-
-    overlay.querySelectorAll('.btn-buy-pack').forEach(function (btn) {
-        btn.onclick = function () {
-            var id = btn.dataset.id;
-            var pack = GEM_IAP_PACKS.find(function (p) { return p.id === id; });
-            if (pack) {
-                closeModal();
-                opts.onBuyIAP(pack, false);
-            }
+    var testBtn = overlay.querySelector('#btn-claim-test-gem');
+    if (testBtn) {
+        testBtn.onclick = function () {
+            closeModal();
+            if (opts.onClaimTestGem) opts.onClaimTestGem();
         };
-    });
+    }
 
     overlay.querySelector('#mb-close').onclick = closeModal;
 }

@@ -2376,32 +2376,33 @@ function openGemShop() {
         coins: playerCoins,
         energy: playerEnergy,
         adsLeft: getAdsLeft('gem'),
-        onBuyIAP: function (pack, isStarter) {
-            simulateBuyIAP(pack, function () {
-                var totalGems = pack.gems + (pack.bonusGems || 0);
-                playerGems += totalGems;
-                if (pack.coins) playerCoins += pack.coins;
-                if (pack.energy) playerEnergy += pack.energy;
-                if (isStarter || pack.id === 'starter_pack_camping') {
-                    SAVE.starterPackBought = true;
-                }
-                updateUIStats();
-                saveGame();
-                playSound('win');
-                var targetEl = document.getElementById('btn-gem-shop') || document.body;
-                spawnFlyingCurrency(targetEl, 'ruby', Math.min(totalGems, 50));
-                if (pack.coins) {
-                    spawnFlyingCurrency(document.getElementById('btn-coin-shop') || document.body, 'gold', Math.min(pack.coins, 100));
-                }
-                showToast('Nạp +' + totalGems.toLocaleString('vi-VN') + ' Kim cương!');
-            });
+        mysteryLeft: getAdsLeft('mystery'),
+        dailyGiftClaimed: !!(SAVE && SAVE.ads && SAVE.ads.dailyGemClaimed),
+        onClaimDailyFree: function () {
+            if (SAVE && SAVE.ads && SAVE.ads.dailyGemClaimed) {
+                showToast('Hôm nay bạn đã nhận quà rồi!');
+                return;
+            }
+            if (!SAVE.ads) SAVE.ads = {};
+            SAVE.ads.dailyGemClaimed = true;
+            var amt = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards && GAME_CONFIG.adRewards.dailyGift)
+                ? GAME_CONFIG.adRewards.dailyGift.amount : 5;
+            playerGems += amt;
+            updateUIStats();
+            saveGame();
+            playSound('coin');
+            var targetEl = document.getElementById('btn-gem-shop') || document.body;
+            spawnFlyingCurrency(targetEl, 'ruby', amt);
+            showToast('Đã nhận +' + amt + ' Kim Cương hằng ngày!');
+            openGemShop();
         },
         onWatchAd: function () {
             if (getAdsLeft('gem') <= 0) {
                 showToast('Hết lượt nhận Kim cương hôm nay!');
                 return;
             }
-            var amt = AD_REWARDS.gem.amount;
+            var amt = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards && GAME_CONFIG.adRewards.gem)
+                ? GAME_CONFIG.adRewards.gem.amount : 8;
             simulateWatchAd('Tài Trợ Kim Cương (+' + amt + ' Kim cương)', function () {
                 consumeAd('gem');
                 playerGems += amt;
@@ -2412,6 +2413,35 @@ function openGemShop() {
                 spawnFlyingCurrency(targetEl, 'ruby', amt);
                 showToast('Nhận +' + amt + ' Kim cương tài trợ!');
             });
+        },
+        onOpenMysteryChest: function () {
+            if (getAdsLeft('mystery') <= 0) {
+                showToast('Hết lượt mở Rương hôm nay!');
+                return;
+            }
+            var minG = 12, maxG = 25;
+            var rewardGems = Math.floor(Math.random() * (maxG - minG + 1)) + minG;
+            simulateWatchAd('Mở Rương Tiếp Tế (+' + rewardGems + ' Kim cương)', function () {
+                consumeAd('mystery');
+                playerGems += rewardGems;
+                updateUIStats();
+                saveGame();
+                playSound('win');
+                var targetEl = document.getElementById('btn-gem-shop') || document.body;
+                spawnFlyingCurrency(targetEl, 'ruby', Math.min(rewardGems, 20));
+                showToast('Rương mở ra: +' + rewardGems + ' Kim Cương!');
+            });
+        },
+        onClaimTestGem: function () {
+            var amt = 500;
+            playerGems += amt;
+            updateUIStats();
+            saveGame();
+            playSound('win');
+            var targetEl = document.getElementById('btn-gem-shop') || document.body;
+            spawnFlyingCurrency(targetEl, 'ruby', 15);
+            showToast('Đã nhận +' + amt + ' Kim Cương thử nghiệm!');
+            openGemShop();
         }
     });
 }

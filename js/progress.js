@@ -77,7 +77,7 @@ function defaultSave() {
         campItemsMigrated: false,
         claimedStarChests: [],
         starterPackBought: false,
-        ads: { day: todayKey(), energy: 0, gem: 0, coin: 0 },
+        ads: { day: todayKey(), energy: 0, gem: 0, coin: 0, mystery: 0, dailyGemClaimed: false },
         settings: {
             sound: true,
             bgm: true,
@@ -412,17 +412,19 @@ var ENERGY_PACK_PRICE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energ
 var GEM_ENERGY_PACK = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.gemPack.energy : 50;
 var GEM_ENERGY_PRICE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.gemPack.gemCost : 8;
 
-// Quảng cáo thưởng: giới hạn số lượt mỗi ngày (Kinh tế x10)
+// Quảng cáo thưởng: giới hạn số lượt mỗi ngày
 var AD_REWARDS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards) ? GAME_CONFIG.adRewards : {
-    energy: { amount: 25, dailyLimit: 6 },
-    gem: { amount: 4, dailyLimit: 3 },
-    coin: { amount: 1500, dailyLimit: 4 }
+    energy: { amount: 30, dailyLimit: 6 },
+    gem: { amount: 8, dailyLimit: 6 },
+    coin: { amount: 2500, dailyLimit: 5 },
+    dailyGift: { amount: 5, doubleAmount: 10 },
+    mysteryChest: { minGems: 12, maxGems: 25, dailyLimit: 3 }
 };
 
 function resetAdsIfNewDay() {
     var key = todayKey();
     if (!SAVE.ads || SAVE.ads.day !== key) {
-        SAVE.ads = { day: key, energy: 0, gem: 0, coin: 0 };
+        SAVE.ads = { day: key, energy: 0, gem: 0, coin: 0, mystery: 0, dailyGemClaimed: false };
     }
 }
 
