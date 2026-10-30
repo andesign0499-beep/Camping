@@ -2376,7 +2376,6 @@ function openGemShop() {
         coins: playerCoins,
         energy: playerEnergy,
         adsLeft: getAdsLeft('gem'),
-        mysteryLeft: getAdsLeft('mystery'),
         dailyGiftClaimed: !!(SAVE && SAVE.ads && SAVE.ads.dailyGemClaimed),
         onClaimDailyFree: function () {
             if (SAVE && SAVE.ads && SAVE.ads.dailyGemClaimed) {
@@ -2412,24 +2411,6 @@ function openGemShop() {
                 var targetEl = document.getElementById('btn-gem-shop') || document.body;
                 spawnFlyingCurrency(targetEl, 'ruby', amt);
                 showToast('Nhận +' + amt + ' Kim cương tài trợ!');
-            });
-        },
-        onOpenMysteryChest: function () {
-            if (getAdsLeft('mystery') <= 0) {
-                showToast('Hết lượt mở Rương hôm nay!');
-                return;
-            }
-            var minG = 12, maxG = 25;
-            var rewardGems = Math.floor(Math.random() * (maxG - minG + 1)) + minG;
-            simulateWatchAd('Mở Rương Tiếp Tế (+' + rewardGems + ' Kim cương)', function () {
-                consumeAd('mystery');
-                playerGems += rewardGems;
-                updateUIStats();
-                saveGame();
-                playSound('win');
-                var targetEl = document.getElementById('btn-gem-shop') || document.body;
-                spawnFlyingCurrency(targetEl, 'ruby', Math.min(rewardGems, 20));
-                showToast('Rương mở ra: +' + rewardGems + ' Kim Cương!');
             });
         },
         onClaimTestGem: function () {

@@ -1220,7 +1220,6 @@ function renderWithCurrencyIcons(str) {
 function showGemShopModal(opts) {
     var gemAdAmt = (typeof AD_REWARDS !== 'undefined' && AD_REWARDS.gem) ? AD_REWARDS.gem.amount : 8;
     var gemAdsLeft = typeof opts.adsLeft === 'number' ? opts.adsLeft : (typeof getAdsLeft === 'function' ? getAdsLeft('gem') : 0);
-    var mysteryLeft = typeof opts.mysteryLeft === 'number' ? opts.mysteryLeft : (typeof getAdsLeft === 'function' ? getAdsLeft('mystery') : 0);
     var dailyClaimed = !!opts.dailyGiftClaimed;
 
     // 1. Quà Tiếp Tế Hàng Ngày (Mỗi ngày 1 lần)
@@ -1250,20 +1249,7 @@ function showGemShopModal(opts) {
         '</button>' +
     '</div>';
 
-    // 3. Rương Tiếp Tế Dã Ngoại (Lucky Mystery Chest)
-    var canOpenMystery = mysteryLeft > 0;
-    var mysteryHtml = '<div class="shop-card rescue-card has-badge">' +
-        '<div class="shop-badge" style="background:#2e7d32;">MAY MẮN</div>' +
-        '<div class="shop-card-left">' +
-            '<div class="shop-card-title">+12 ~ 25 ' + ICON_RUBY_HTML + ' Rương Bí Mật</div>' +
-            '<div class="shop-card-desc">Xem video mở rương kho báu nhận ngẫu nhiên Kim Cương • Còn ' + mysteryLeft + ' lượt hôm nay</div>' +
-        '</div>' +
-        '<button class="modal-btn ' + (canOpenMystery ? 'gem-btn' : 'disabled-btn') + '" id="btn-gem-mystery-chest" ' + (canOpenMystery ? '' : 'disabled') + '>' +
-            (canOpenMystery ? 'MỞ RƯƠNG' : 'HẾT LƯỢT') +
-        '</button>' +
-    '</div>';
-
-    // 4. Gói Test Thử Nghiệm (+500 Kim Cương)
+    // 3. Gói Test Thử Nghiệm (+500 Kim Cương)
     var testPackHtml = '<div class="shop-card has-badge" style="background:#f3e5f5;border-color:#ba68c8;">' +
         '<div class="shop-badge" style="background:#8e24aa;">TEST</div>' +
         '<div class="shop-card-left">' +
@@ -1273,7 +1259,7 @@ function showGemShopModal(opts) {
         '<button class="modal-btn primary" id="btn-claim-test-gem" style="background:linear-gradient(180deg,#ab47bc,#7b1fa2);border-color:#6a1b9a;">Nhận Ngay</button>' +
     '</div>';
 
-    // 5. Mẹo kiếm Kim Cương trong game
+    // 4. Mẹo kiếm Kim Cương trong game
     var tipHtml = '<div class="shop-card" style="background:#fffde7;border:2px dashed #fbc02d;">' +
         '<div class="shop-card-left">' +
             '<div class="shop-card-title" style="color:#e65100;font-size:0.875rem;">Mẹo Nhận Thêm Kim Cương Trong Game</div>' +
@@ -1295,7 +1281,6 @@ function showGemShopModal(opts) {
         '<div class="shop-scroll">' +
             dailyHtml +
             gemAdHtml +
-            mysteryHtml +
             testPackHtml +
             tipHtml +
         '</div>' +
@@ -1318,13 +1303,6 @@ function showGemShopModal(opts) {
         gemAdBtn.onclick = function () {
             closeModal();
             if (opts.onWatchAd) opts.onWatchAd();
-        };
-    }
-    var mysteryBtn = overlay.querySelector('#btn-gem-mystery-chest');
-    if (mysteryBtn && canOpenMystery) {
-        mysteryBtn.onclick = function () {
-            closeModal();
-            if (opts.onOpenMysteryChest) opts.onOpenMysteryChest();
         };
     }
     var testBtn = overlay.querySelector('#btn-claim-test-gem');
