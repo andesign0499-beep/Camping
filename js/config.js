@@ -209,14 +209,14 @@ function getProceduralTiersForLevel(lv) {
     if (lv === 9) return [5, 4, 4];
     if (lv === 10) return [4, 4, 4];
 
-    // Chặng 1: Màn 11 - 20 (Năng lượng: 14⚡ -> 22⚡, kết thúc tại Màn 20 với trai_lv6)
+    // Chặng 1: Màn 11 - 20 (Năng lượng: 14 NL -> 22 NL, kết thúc tại Màn 20 với trai_lv6)
     if (lv <= 12) return [5, 4, 3, 3];
     if (lv <= 14) return [5, 4, 4, 3];
     if (lv <= 16) return [6, 4, 3, 3];
     if (lv <= 18) return [6, 4, 4, 3];
     if (lv <= 20) return [6, 5, 4, 3]; // Màn 20: trai_lv6
 
-    // Chặng 2: Màn 21 - 40 (Năng lượng: 24⚡ -> 44⚡, kết thúc tại Màn 40 với trai_lv7)
+    // Chặng 2: Màn 21 - 40 (Năng lượng: 24 NL -> 44 NL, kết thúc tại Màn 40 với trai_lv7)
     if (lv <= 23) return [6, 5, 4, 4];
     if (lv <= 26) return [6, 5, 5, 4];
     if (lv <= 29) return [6, 6, 5, 4];
@@ -225,7 +225,7 @@ function getProceduralTiersForLevel(lv) {
     if (lv <= 38) return [7, 5, 5, 4];
     if (lv <= 40) return [7, 6, 4, 4]; // Màn 40: trai_lv7
 
-    // Chặng 3: Màn 41 - 60 (Năng lượng: 46⚡ -> 116⚡, kết thúc tại Màn 60 với trai_lv8)
+    // Chặng 3: Màn 41 - 60 (Năng lượng: 46 NL -> 116 NL, kết thúc tại Màn 60 với trai_lv8)
     if (lv <= 44) return [7, 6, 5, 4];
     if (lv <= 48) return [7, 6, 5, 5];
     if (lv <= 52) return [7, 6, 6, 5];
@@ -233,19 +233,19 @@ function getProceduralTiersForLevel(lv) {
     if (lv <= 59) return [7, 7, 5, 5, 4];
     if (lv === 60) return [8, 6, 5, 5, 4]; // Màn 60 climax: trai_lv8!
 
-    // Chặng 4: Màn 61 - 80 (Năng lượng: 92⚡ -> 148⚡, Cấp 8 tiếp nối cho các nhánh còn lại)
+    // Chặng 4: Màn 61 - 80 (Năng lượng: 92 NL -> 148 NL, Cấp 8 tiếp nối cho các nhánh còn lại)
     if (lv <= 65) return [8, 6, 5, 4, 3];
     if (lv <= 70) return [8, 6, 5, 5, 4];
     if (lv <= 75) return [8, 6, 6, 5, 4];
     if (lv <= 80) return [8, 7, 5, 5, 4];
 
-    // Chặng 5: Màn 81 - 100 (Năng lượng: 164⚡ -> 204⚡)
+    // Chặng 5: Màn 81 - 100 (Năng lượng: 164 NL -> 204 NL)
     if (lv <= 85) return [8, 7, 6, 5, 4];
     if (lv <= 90) return [8, 7, 6, 5, 5];
     if (lv <= 95) return [8, 7, 6, 6, 5];
     if (lv <= 100) return [8, 7, 7, 5, 5];
 
-    // Chặng 6: Màn 101 - 120 (Năng lượng: 220⚡ -> 284⚡, Cấp 8 kép và kết thúc tại 120 với trai_lv8)
+    // Chặng 6: Màn 101 - 120 (Năng lượng: 220 NL -> 284 NL, Cấp 8 kép và kết thúc tại 120 với trai_lv8)
     if (lv <= 105) return [8, 7, 7, 6, 5];
     if (lv <= 110) return [8, 7, 7, 6, 5, 5];
     if (lv <= 115) return [8, 8, 6, 6, 5, 5];
@@ -279,10 +279,10 @@ function buildProceduralOrdersMap() {
     table[3] = ['ghe_lv4', 'ban_lv3', 'trai_lv3']; // trai_lv3 thay vì trai_lv4
     table[4] = ['an_lv4', 'cafe_lv3'];
     table[5] = ['congcu_lv4', 'an_lv4', 'cafe_lv3'];
-    table[6] = ['an_lv5', 'congcu_lv4', 'cafe_lv3'];
+    table[6] = ['an_lv5', 'congcu_lv3']; // Giảm gai năng lượng vùng hướng dẫn (19 -> ~14 NL)
     table[7] = ['tham_lv4', 'bep_lv3', 'antoan_lv3'];
     table[8] = ['bep_lv4', 'antoan_lv4', 'tham_lv3'];
-    table[9] = ['bep_lv5', 'tham_lv4', 'antoan_lv4'];
+    table[9] = ['bep_lv5', 'tham_lv4']; // Giảm gai năng lượng vùng hướng dẫn (23 -> ~17 NL)
     table[10] = ['ban_lv4', 'an_lv4', 'bep_lv4']; // ban_lv4 thay vì trai_lv4 (chỉ trai_lv4 duy nhất ở Màn 1)
 
     var lastSeen = {};
@@ -310,7 +310,7 @@ function buildProceduralOrdersMap() {
             if (k > 0 && lastSeen[candidate] !== undefined && (lv - lastSeen[candidate]) < 4) {
                 if (targetLv > 3 && currentOrders.indexOf(line + '_lv' + (targetLv - 1)) === -1) {
                     targetLv = targetLv - 1;
-                } else if (!currentOrders.indexOf(line + '_lv' + (targetLv + 1)) === -1) {
+                } else if (targetLv < 8 && currentOrders.indexOf(line + '_lv' + (targetLv + 1)) === -1) {
                     targetLv = targetLv + 1;
                 }
                 candidate = line + '_lv' + targetLv;
@@ -712,13 +712,14 @@ var GAME_CONFIG = {
     // 2. TRẠM TIẾP NĂNG LƯỢNG (ENERGY SHOP)
     // -------------------------------------------------------------------------
     energyShop: {
+        // Cân bằng: 160 Vàng/1 NL (gói lẻ) - 150 Vàng/1 NL (gói lớn) để Vàng bù ~75-95% năng lượng
         coinPacks: [
-            { energy: 25, coinCost: 3000, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' },
-            { energy: 50, coinCost: 6000, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' }
+            { energy: 25, coinCost: 4000, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' },
+            { energy: 50, coinCost: 7500, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' }
         ],
         coinPack: {
             energy: 25,
-            coinCost: 3000
+            coinCost: 4000
         },
         gemPack: {
             energy: 50,
@@ -759,7 +760,7 @@ var GAME_CONFIG = {
             bonusGems: 0,
             priceVnd: '5.000 ₫',
             badge: null,
-            desc: 'Đủ 4 lần nạp siêu tốc (+200 ⚡)'
+            desc: 'Đủ 4 lần nạp siêu tốc (+200 Năng lượng)'
         },
         {
             id: 'gem_tier_3',
@@ -767,7 +768,7 @@ var GAME_CONFIG = {
             gems: 96,
             bonusGems: 40,
             priceVnd: '15.000 ₫',
-            badge: '⭐ HỜI NHẤT +42%',
+            badge: 'HỜI NHẤT +42%',
             isPopular: true,
             desc: 'Gói nạp tối ưu chi phí & hời nhất'
         },
@@ -777,8 +778,8 @@ var GAME_CONFIG = {
             gems: 320,
             bonusGems: 180,
             priceVnd: '49.000 ₫',
-            badge: '👑 SIÊU GIÁ TRỊ +56%',
-            desc: 'Gói nạp tối thượng, nhận ngay 500 💎'
+            badge: 'SIÊU GIÁ TRỊ +56%',
+            desc: 'Gói nạp tối thượng, nhận ngay 500 Kim Cương'
         }
     ],
 
@@ -789,8 +790,8 @@ var GAME_CONFIG = {
         coins: 4500,
         energy: 60,
         priceVnd: '5.000 ₫',
-        badge: '🎁 ƯU ĐÃI 300%',
-        desc: 'Nhận ngay 40 💎 + 4.500 🪙 + 60 ⚡ (Chỉ 1 lần)'
+        badge: 'ƯU ĐÃI 300%',
+        desc: 'Nhận ngay 40 Kim Cương + 4.500 Vàng + 60 Năng lượng (Chỉ 1 lần)'
     },
 
     // -------------------------------------------------------------------------
@@ -810,7 +811,7 @@ var GAME_CONFIG = {
             name: 'Rương Vàng Lớn',
             coins: 11000,
             gemCost: 15,
-            badge: '⭐ TIẾT KIỆM 15%',
+            badge: 'TIẾT KIỆM 15%',
             desc: 'Đổi từ 15 Kim Cương'
         },
         {
@@ -818,7 +819,7 @@ var GAME_CONFIG = {
             name: 'Kho Vàng Hoàng Gia',
             coins: 25000,
             gemCost: 30,
-            badge: '🔥 SIÊU LỜI +30%',
+            badge: 'SIÊU LỜI +30%',
             desc: 'Đổi từ 30 Kim Cương'
         }
     ],
@@ -837,8 +838,8 @@ var GAME_CONFIG = {
             4: { coins: 15, gems: 0 },
             5: { coins: 35, gems: 0 },
             6: { coins: 80, gems: 0 },
-            7: { coins: 180, gems: 1 },
-            8: { coins: 400, gems: 2 }
+            7: { coins: 180, gems: 0 },
+            8: { coins: 400, gems: 1 }
         },
         combo: {
             enabled: true,

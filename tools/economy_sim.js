@@ -92,7 +92,7 @@ function simulate(lvNum) {
                     gold += ctx.sellPrice(c.id);
                 }
             });
-            return { won: true, energy, effectiveSpent, gold, gems, budget, stars };
+            return { won: true, energy, effectiveSpent, gold, gems, budget, stars, clearEnergy: r.energy || 0 };
         }
         const merge = ctx.findBestMerge(board, orders, level);
         const empties = ctx.getEmptyIndexes(board);
@@ -154,7 +154,8 @@ for (let lv = 1; lv <= MAX_LV; lv++) {
     const p50 = pct(en, 0.5), p75 = pct(en, 0.75);
     const coverPct = p50 > 0 ? Math.round((avgGold / ctx.ENERGY_PACK_PRICE * ctx.ENERGY_PACK) / p50 * 100) : 0;
     cumGold += avgGold; cumGems += avgGems;
-    perLevel.push({ lv, p50, p75, gold: avgGold, gems: avgGems });
+    const avgClearE = Math.round(wins.reduce((s, r) => s + (r.clearEnergy || 0), 0) / Math.max(1, wins.length));
+    perLevel.push({ lv, p50, p75, gold: avgGold, gems: avgGems, clearE: avgClearE });
     console.log(`${String(lv).padStart(2)} | ${String(p50).padStart(4)} | ${String(p75).padStart(4)} | ` +
         `${String(res[0].budget).padStart(6)} | ${String(Math.round(wins.length / RUNS * 100)).padStart(5)}% | ` +
         `${String(avgGold).padStart(7)} | ${avgGems.toFixed(1).padStart(4)} | ${avgStars.padStart(4)} | ${String(coverPct).padStart(8)}%`);
@@ -181,7 +182,7 @@ function journey(useP, spendCurrencyOnEnergy) {
             const short = need - avail;
             return `P${useP} (${spendCurrencyOnEnergy ? 'dùng Vàng/💎 mua ⚡' : 'giữ Vàng mua Pet/Điểm đến'}): chơi liên tục qua Level ${passed}, cần tiếp sức ở Level ${L.lv} (thiếu ${short}⚡ ≈ chờ ${Math.ceil(short * ctx.ENERGY_REGEN_SEC / 60)} phút, hoặc ${Math.ceil(short / ctx.AD_REWARDS.energy.amount)} QC). Thời gian chơi ~${Math.round(timeSec / 60)} phút. Tích lũy: ${gold} Vàng, ${gems}💎`;
         }
-        energy = avail - need; gold += L.gold; gems += Math.round(L.gems); passed++; timeSec += playSec;
+        energy = Math.min(maxE(), (avail - need) + (L.clearE || 0)); gold += L.gold; gems += Math.round(L.gems); passed++; timeSec += playSec;
     }
     return `P${useP} (${spendCurrencyOnEnergy ? 'dùng Vàng/💎 mua ⚡' : 'giữ Vàng mua Pet/Điểm đến'}): chơi hết ${passed} level (còn dư ${gold} Vàng, ${gems}💎 để sưu tập Pet/Điểm đến)`;
 }

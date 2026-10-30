@@ -82,7 +82,8 @@ function defaultSave() {
             sound: true,
             bgm: true,
             vibrate: true,
-            unlockAllLevels: false
+            unlockAllLevels: false,
+            lang: (typeof I18N !== 'undefined') ? I18N.currentLang : 'vi'
         },
         lastEnergyTs: Date.now()
     };
@@ -94,6 +95,21 @@ function loadSave() {
         if (raw) {
             var parsed = JSON.parse(raw);
             var s = Object.assign(defaultSave(), parsed);
+            if (s.settings && typeof I18N !== 'undefined') {
+                var explicit = (typeof localStorage !== 'undefined') ? localStorage.getItem('camping_lang_explicit') : null;
+                if (explicit === '1') {
+                    var storedLang = (typeof localStorage !== 'undefined') ? localStorage.getItem('camping_language') : null;
+                    I18N.currentLang = storedLang || s.settings.lang || 'vi';
+                } else {
+                    I18N.currentLang = 'vi';
+                    try {
+                        if (typeof localStorage !== 'undefined') {
+                            localStorage.setItem('camping_language', 'vi');
+                        }
+                    } catch (e) {}
+                }
+                s.settings.lang = I18N.currentLang;
+            }
             if (!s.playerId) s.playerId = generatePlayerId();
             if (!s.googleUser || typeof s.googleUser !== 'object') s.googleUser = null;
             if (s.currentBoardState && typeof s.currentBoardState !== 'object') s.currentBoardState = null;
@@ -330,7 +346,7 @@ var PET_CHARACTERS = [
 ];
 
 // ---------- HỒI NĂNG LƯỢNG THEO TƯƠNG TÁC (ACTIVE INTERACTION REGEN) ----------
-// Năng lượng chỉ hồi khi người chơi tương tác với game (30 giây / 1⚡, hoặc 28 giây khi đạt 60 ⭐).
+// Năng lượng chỉ hồi khi người chơi tương tác với game (30 giây / 1 Năng lượng, hoặc 28 giây khi đạt 60 Sao).
 // Nếu sau thời gian đó người chơi không tương tác hoặc rời game, bộ đếm dừng lại chờ tương tác tiếp theo.
 function calcIdleEnergyRegen(currentEnergy, maxEnergy) {
     return { added: 0, secLeft: getEnergyRegenSec() };
@@ -348,7 +364,7 @@ function itemUnits(id) {
 // Người dùng có thể điều chỉnh mọi chỉ số trong js/config.js
 // ==========================================
 
-// Giá bán: Tính theo năng lượng để tạo ra (15 Vàng / 1⚡, thu hồi 12.5% giá trị năng lượng)
+// Giá bán: Tính theo năng lượng để tạo ra (15 Vàng / 1 Năng lượng, thu hồi 12.5% giá trị năng lượng)
 function sellPrice(id) {
     if (!id || String(id).indexOf('_lv') === -1) return 0;
     var minLv = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellMinLevel === 'number')
@@ -369,7 +385,7 @@ function sellPrice(id) {
     return Math.floor(itemUnits(id) * mul / divisor);
 }
 
-// Thưởng Vàng khi nộp đơn hàng: tăng theo độ khó (cấp) của món hàng (24 Vàng / 1⚡, +10% khi đạt 90 ⭐)
+// Thưởng Vàng khi nộp đơn hàng: tăng theo độ khó (cấp) của món hàng (24 Vàng / 1 Năng lượng, +10% khi đạt 90 Sao)
 function orderReward(id) {
     var mul = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.orderRewardMultiplier === 'number')
         ? GAME_CONFIG.gameplay.orderRewardMultiplier : 24;
@@ -536,8 +552,8 @@ function tuneOrders(rawOrders, lvNum, levelCfg) {
 
 // B5: Ngân sách năng lượng chuẩn cho mỗi level, đồng bộ với thuật toán rơi đồ theo thiếu hụt (computeLineDeficits)
 // Sao được chấm trên số lượt bấm hữu ích (effectiveSpent = levelClicks - levelUnwantedClicks):
-// - Chơi chuẩn kỹ thuật (tận dụng đồ mồi/nhện, không bán nhầm, không bấm thừa): luôn đạt 3⭐ công bằng, không sợ đen RNG
-// - Chơi ẩu (bỏ qua mạng nhện, bấm loạn nguồn phát không cần thiết, để nhện lan): tụt xuống 2⭐ hoặc 1⭐
+// - Chơi chuẩn kỹ thuật (tận dụng đồ mồi/nhện, không bán nhầm, không bấm thừa): luôn đạt 3 Sao công bằng, không sợ đen RNG
+// - Chơi ẩu (bỏ qua mạng nhện, bấm loạn nguồn phát không cần thiết, để nhện lan): tụt xuống 2 Sao hoặc 1 Sao
 function computeEnergyBudget(board, orderIds, level) {
     var lvNum = (level && level.num) ? level.num : 1;
     var adjWeb = !level || level.adjWeb !== false;
@@ -607,45 +623,56 @@ function calcStars(energyLeft, budget) {
 // ---------- SỔ TAY SƯU TẬP 72 VẬT PHẨM (9 DÒNG x 8 CẤP) ----------
 var ITEM_CHAINS = [
     {
-        line: 'an', icon: '🍔', title: 'Ẩm Thực Dã Ngoại',
+        line: 'an', icon: '', title: 'Ẩm Thực Dã Ngoại',
         names: ['Quả Táo Đỏ', 'Ổ Bánh Mì Dài', 'Bánh Sandwich Kẹp', 'Tô Mì Sợi Nóng', 'Đĩa Trái Cây Tươi', 'Tô Hoa Quả Thập Cẩm', 'Đĩa Bánh Quy Nướng', 'Đại Tiệc BBQ Xiên Nướng']
     },
     {
-        line: 'ban', icon: '🪑', title: 'Bàn Dã Ngoại',
+        line: 'ban', icon: '', title: 'Bàn Dã Ngoại',
         names: ['Bàn Nhôm Vuông Mini', 'Bàn Vải Gấp Dã Ngoại', 'Bàn Trà Dã Ngoại', 'Bàn Gỗ Cuộn Dã Ngoại', 'Bàn Dã Ngoại Kèm Giá Lưới', 'Bàn Cắm Trại Đa Năng', 'Bàn Chiến Thuật IGT', 'Trạm Bếp Nấu Ăn Glamping']
     },
     {
-        line: 'cafe', icon: '☕', title: 'Cà Phê Sương Sớm',
+        line: 'cafe', icon: '', title: 'Cà Phê Sương Sớm',
         names: ['Hạt Cà Phê Robusta', 'Cối Xay Cà Phê Tay Gỗ', 'Ấm Rót Cổ Ngỗng', 'Tách Cà Phê Nóng', 'Gói Cà Phê Specialty', 'Cối Xay Cầm Tay Inox', 'Ấm Pha Moka Pot Ý', 'Cốc Cà Phê Men Đỏ']
     },
     {
-        line: 'trai', icon: '⛺', title: 'Lều Trại Trú Ngụ',
+        line: 'trai', icon: '', title: 'Lều Trại Trú Ngụ',
         names: ['Cọc Ghim Lều Kim Loại', 'Cuộn Dây Dù Căng Lều', 'Bộ Khung Cọc Chống Lều', 'Bạt Tăng Che Mưa Nắng', 'Lều Vòm Cắm Trại 2 Người', 'Lều Gia Đình Chống Gió', 'Lều Kim Tự Tháp Glamping', 'Biệt Thự Lều Glamping']
     },
     {
-        line: 'tham', icon: '🛏️', title: 'Chỗ Ngủ Êm Ái',
+        line: 'tham', icon: '', title: 'Chỗ Ngủ Êm Ái',
         names: ['Bạt Trải Đất Dã Ngoại', 'Thảm Xốp Cuộn Cách Nhiệt', 'Thảm Thổ Cẩm Dã Ngoại', 'Chăn Đệm Gấp Ấm Áp', 'Túi Ngủ Dã Ngoại', 'Võng Dù Giữa Rừng', 'Sofa Hơi Dã Ngoại', 'Đệm Hơi Đôi Cao Cấp']
     },
     {
-        line: 'ghe', icon: '🛋️', title: 'Ghế Nghỉ Ngơi',
+        line: 'ghe', icon: '', title: 'Ghế Nghỉ Ngơi',
         names: ['Ghế Đôn Xếp Mini', 'Ghế Xếp Tựa Lưng Xanh', 'Ghế Xếp Dã Ngoại Màu Cát', 'Ghế Xếp Có Tay Vịn', 'Ghế Câu Cá Có Khay', 'Ghế Mặt Trăng Moon Chair', 'Ghế Tựa Lưng Cao Có Gối', 'Ghế Đạo Diễn Cao Cấp']
     },
     {
-        line: 'bep', icon: '🔥', title: 'Lửa & Bếp Trại',
+        line: 'bep', icon: '', title: 'Lửa & Bếp Trại',
         names: ['Nhánh Củi Khô', 'Khúc Gỗ Tròn', 'Bó Củi Buộc Dây', 'Hố Đá Xếp Lửa', 'Đống Củi Trại Vòng Đá', 'Lửa Trại Rực Hồng', 'Lò Nướng Than Hoa Tròn', 'Bếp Nướng BBQ Chữ Nhật']
     },
     {
-        line: 'congcu', icon: '🔦', title: 'Dụng Cụ Sinh Tồn',
+        line: 'congcu', icon: '', title: 'Dụng Cụ Sinh Tồn',
         names: ['Túi Vệ Sinh Cá Nhân', 'Can Nước Dã Ngoại', 'Bộ Bát Đĩa Dã Ngoại', 'Đầu Khò Lửa Cầm Tay', 'Bếp Gas Dã Ngoại Mini', 'Dây Đèn Led Lung Linh', 'Đèn Cắm Trại 3 Chân', 'Đèn Bão Cổ Điển']
     },
     {
-        line: 'antoan', icon: '🧰', title: 'Y Tế & An Toàn',
+        line: 'antoan', icon: '', title: 'Y Tế & An Toàn',
         names: ['Chai Xịt Côn Trùng', 'Tuýp Kem Chống Nắng', 'Hộp Sơ Cứu Khẩn Cấp', 'Xẻng Sinh Tồn Dã Ngoại', 'Pin Sạc Dự Phòng', 'Lều Trú Ẩn Khẩn Cấp', 'Bộ Đàm Loa Rừng Già', 'Trạm Điện Di Động Dã Ngoại']
     }
 ];
 
+// Đồng bộ danh mục 72 vật phẩm với bộ từ điển đa ngôn ngữ
+if (typeof I18N !== 'undefined' && typeof I18N.syncItemChainsLanguage === 'function') {
+    I18N.syncItemChainsLanguage();
+}
+
 function getItemDisplayName(id) {
     if (!id) return '';
+    if (typeof I18N !== 'undefined' && typeof I18N.getItemName === 'function') {
+        var base = I18N.getItemName(id);
+        var parts = String(id).split('_lv');
+        var lv = parts.length === 2 ? parseInt(parts[1]) || 1 : null;
+        return lv ? base + ' (Lv.' + lv + ')' : base;
+    }
     if (id === 'generator_backpack') return 'Ba Lô Dã Ngoại';
     if (id === 'generator_cooler') return 'Xe Kéo Dã Ngoại';
     if (id === 'generator_crate') return 'Thùng Dụng Cụ';
@@ -658,6 +685,9 @@ function getItemDisplayName(id) {
 
 function getItemCleanName(id) {
     if (!id) return '';
+    if (typeof I18N !== 'undefined' && typeof I18N.getItemName === 'function') {
+        return I18N.getItemName(id);
+    }
     if (id === 'generator_backpack') return 'Ba Lô Dã Ngoại';
     if (id === 'generator_cooler') return 'Xe Kéo Dã Ngoại';
     if (id === 'generator_crate') return 'Thùng Dụng Cụ';

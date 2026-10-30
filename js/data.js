@@ -14,18 +14,23 @@ var LEVEL_BACKGROUNDS = [
     'assets/images/ui/bg04.jpg',
     'assets/images/ui/bg05.jpg',
     'assets/images/ui/bg06.jpg',
-    'assets/images/ui/bg07.jpg'
+    'assets/images/ui/bg07.jpg',
+    'assets/images/ui/bg08.jpg',
+    'assets/images/ui/bg09.jpg',
+    'assets/images/ui/bg10.jpg'
 ];
 
-// Danh sách Điểm Đến cắm trại bán trong Khu Trại (Phân tầng giá từ 12.000 -> 65.000 Vàng)
+// Danh sách Điểm Đến cắm trại bán trong Khu Trại (Phân tầng giá từ 12.000 -> 98.000 Vàng)
 var CAMP_LOCATIONS = [
-    { id: 'loc_dongdo', name: 'Hồ Đồng Đò', img: 'assets/images/ui/bg_01.jpg', price: 0 },
-    { id: 'loc_doibu', name: 'Đồi Bù', img: 'assets/images/ui/bg_03.jpg', price: 12000 },
-    { id: 'loc_matthan', name: 'Núi Mắt Thần', img: 'assets/images/ui/bg07.jpg', price: 18000 },
-    { id: 'loc_pudao', name: 'Bản Pú Đao', img: 'assets/images/ui/bg06.jpg', price: 28000 },
-    { id: 'loc_taxua', name: 'Tà Xùa', img: 'assets/images/ui/bg_02.jpg', price: 38000 },
-    { id: 'loc_bangioc', name: 'Thác Bản Giốc', img: 'assets/images/ui/bg05.jpg', price: 50000 },
-    { id: 'loc_yty', name: 'Y Tý Đại Ngàn', img: 'assets/images/ui/bg04.jpg', price: 65000 }
+    { id: 'loc_dongdo', nameKey: 'dest_dongdo', name: 'Hồ Đồng Đò', img: 'assets/images/ui/bg_01.jpg', price: 0 },
+    { id: 'loc_doibu', nameKey: 'dest_doibu', name: 'Đồi Bù', img: 'assets/images/ui/bg_03.jpg', price: 12000 },
+    { id: 'loc_matthan', nameKey: 'dest_matthan', name: 'Núi Mắt Thần', img: 'assets/images/ui/bg07.jpg', price: 18000 },
+    { id: 'loc_pudao', nameKey: 'dest_pudao', name: 'Bản Pú Đao', img: 'assets/images/ui/bg06.jpg', price: 28000 },
+    { id: 'loc_taxua', nameKey: 'dest_taxua', name: 'Tà Xùa', img: 'assets/images/ui/bg_02.jpg', price: 38000 },
+    { id: 'loc_bangioc', nameKey: 'dest_bangioc', name: 'Thác Bản Giốc', img: 'assets/images/ui/bg05.jpg', price: 50000 },
+    { id: 'loc_yty', nameKey: 'dest_yty', name: 'Y Tý Đại Ngàn', img: 'assets/images/ui/bg04.jpg', price: 65000 },
+    { id: 'loc_biennhacu', nameKey: 'dest_biennhacu', name: 'Biển Nhà Cũ', img: 'assets/images/ui/bg09.jpg', price: 80000 },
+    { id: 'loc_songnuocbinhba', nameKey: 'dest_songnuocbinhba', name: 'Sóng nước Bình Ba', img: 'assets/images/ui/bg10.jpg', price: 98000 }
 ];
 
 function getActiveLocationBackground() {
@@ -220,20 +225,20 @@ function getLevelConfig(lvNum) {
 var NPC_CHARACTERS = {
     gau: {
         id: 'gau',
-        name: '🐻 Bác Gấu Nâu',
-        avatar: 'assets/images/items/avata_gau.png',
+        name: 'Bác Gấu Nâu',
+        avatar: 'assets/images/ui/character01.png',
         role: 'Bếp Trưởng & Pha Chế'
     },
     cao: {
         id: 'cao',
-        name: '🦊 Nhiếp Ảnh Cáo',
-        avatar: 'assets/images/items/avata_cao.png',
+        name: 'Nhiếp Ảnh Cáo',
+        avatar: 'assets/images/ui/character02.png',
         role: 'Thám Hiểm & Săn Ảnh'
     },
     de: {
         id: 'de',
-        name: '🦗 Học Giả Dế Mèn',
-        avatar: 'assets/images/items/avata_de.png',
+        name: 'Học Giả Dế Mèn',
+        avatar: 'assets/images/ui/character03.png',
         role: 'Kỹ Thuật & Sổ Tay Sinh Tồn'
     }
 };

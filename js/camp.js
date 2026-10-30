@@ -107,8 +107,15 @@ if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') 
 }
 
 function closeModal() {
-    var m = document.getElementById('modal-overlay');
-    if (m) m.remove();
+    if (typeof window.stopWinFireworks === 'function') {
+        window.stopWinFireworks();
+    }
+    var canvas = document.getElementById('win-fireworks-canvas');
+    if (canvas) canvas.remove();
+    var modals = document.querySelectorAll('#modal-overlay, .modal-overlay, [id^="modal-overlay"]');
+    modals.forEach(function (m) {
+        m.remove();
+    });
 }
 
 function createModal(innerHtml, extraClass, titleText) {
@@ -118,18 +125,27 @@ function createModal(innerHtml, extraClass, titleText) {
     if (typeof hideNpcBubble === 'function') hideNpcBubble();
     if (typeof clearHintVisuals === 'function') clearHintVisuals();
 
+    // Triệt để dọn dẹp các lớp overlay hoặc modal-box cũ còn sót
+    var leftovers = document.querySelectorAll('#modal-overlay, .modal-overlay');
+    leftovers.forEach(function (el) { el.remove(); });
+
     var overlay = document.createElement('div');
     overlay.id = 'modal-overlay';
+    var isWinModal = extraClass && extraClass.indexOf('win-box') !== -1;
+    if (isWinModal) {
+        overlay.classList.add('win-modal-overlay');
+    }
 
-    var ribbonHtml = titleText ? ('<div class="popup-ribbon"><span>' + titleText + '</span></div>') : '';
-
-    overlay.innerHTML = '<div class="modal-box ' + (extraClass || '') + '">' +
-        ribbonHtml +
-        '<div class="popup-bg-3slice" aria-hidden="true">' +
+    var ribbonHtml = (titleText && !isWinModal) ? ('<div class="popup-ribbon"><span>' + titleText + '</span></div>') : '';
+    var bg3sliceHtml = !isWinModal ? ('<div class="popup-bg-3slice" aria-hidden="true">' +
             '<div class="p3-top"></div>' +
             '<div class="p3-mid"></div>' +
             '<div class="p3-bot"></div>' +
-        '</div>' +
+        '</div>') : '';
+
+    overlay.innerHTML = '<div class="modal-box ' + (extraClass || '') + '">' +
+        ribbonHtml +
+        bg3sliceHtml +
         '<div class="modal-content-wrap">' + innerHtml + '</div>' +
     '</div>';
 
@@ -143,78 +159,344 @@ function createModal(innerHtml, extraClass, titleText) {
 }
 
 // ---------- 1. TOAST THÔNG BÁO (THAY THẾ ALERT) ----------
+// Màu nền duy nhất chuẩn 3d221b trong suốt 86% (rgba(61, 34, 27, 0.86)), độ dài tối đa <= 48 ký tự
 var toastTimer = null;
-function showToast(msg, bg) {
+function showToast(msg) {
     var old = document.getElementById('game-toast');
     if (old) old.remove();
     if (toastTimer) clearTimeout(toastTimer);
 
+    var cleanMsg = (msg || '').trim();
+    if (cleanMsg.length > 48) {
+        cleanMsg = cleanMsg.slice(0, 47) + '…';
+    }
+
     var t = document.createElement('div');
     t.id = 'game-toast';
-    t.style.background = bg || '#4e342e';
-    t.textContent = msg;
+    t.style.background = 'rgba(61, 34, 27, 0.86)';
+    t.textContent = cleanMsg;
     document.body.appendChild(t);
 
     toastTimer = setTimeout(function () {
         if (t.parentNode) t.remove();
-    }, 2000);
+    }, 1800);
 }
 
-// ---------- 2. MÀN HÌNH CHIẾN THẮNG ----------
+// ---------- HIỆU ỨNG PHÁO HOA ĂN MỪNG CHIẾN THẮNG ----------
+function startWinFireworks(targetOverlay, starCount) {
+    if (typeof window.stopWinFireworks === 'function') {
+        window.stopWinFireworks();
+    }
+    var oldCanvas = document.getElementById('win-fireworks-canvas');
+    if (oldCanvas) oldCanvas.remove();
+
+    var canvas = document.createElement('canvas');
+    canvas.id = 'win-fireworks-canvas';
+    canvas.style.position = 'fixed';
+    canvas.style.inset = '0';
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '200001';
+
+    var parent = targetOverlay || document.body;
+    parent.appendChild(canvas);
+
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width = window.innerWidth;
+    var h = canvas.height = window.innerHeight;
+
+    var handleResize = function () {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    var particles = [];
+    var rockets = [];
+    var isRunning = true;
+    var animId = null;
+
+    var colors = [
+        '#ff1744', '#f50057', '#d500f9', '#651fff',
+        '#00e5ff', '#00e676', '#ffea00', '#ff9100',
+        '#ffffff', '#ff80ab', '#ffd700'
+    ];
+
+    function createExplosion(x, y, count, baseColor) {
+        var pCount = count || 65;
+        for (var i = 0; i < pCount; i++) {
+            var angle = Math.random() * Math.PI * 2;
+            var speed = 2.4 + Math.random() * 5.6;
+            var col = baseColor || colors[Math.floor(Math.random() * colors.length)];
+            particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                alpha: 1,
+                decay: 0.012 + Math.random() * 0.016,
+                color: col,
+                size: 2.4 + Math.random() * 2.8,
+                gravity: 0.08
+            });
+        }
+    }
+
+    function launchRocket() {
+        if (!isRunning) return;
+        var startX = w * (0.15 + Math.random() * 0.7);
+        var targetY = h * (0.12 + Math.random() * 0.28);
+        rockets.push({
+            x: startX,
+            y: h,
+            targetY: targetY,
+            vy: -(8.5 + Math.random() * 4),
+            color: colors[Math.floor(Math.random() * colors.length)]
+        });
+    }
+
+    // Nổ đợt đầu chúc mừng ngay lập tức (1 sao, 2 sao hay 3 sao đều có)
+    setTimeout(function () {
+        createExplosion(w * 0.28, h * 0.22, 75, '#ffd700');
+        createExplosion(w * 0.72, h * 0.24, 75, '#00e5ff');
+    }, 100);
+    setTimeout(function () {
+        createExplosion(w * 0.5, h * 0.16, 95, '#ff4081');
+    }, 320);
+
+    // Nếu đạt 3 sao thì nổ thêm đợt kim tuyến bùng nổ hoành tráng
+    if (starCount >= 3) {
+        setTimeout(function () {
+            createExplosion(w * 0.38, h * 0.28, 80, '#ffeb3b');
+            createExplosion(w * 0.62, h * 0.28, 80, '#d500f9');
+        }, 550);
+    }
+
+    var launchInterval = setInterval(function () {
+        if (!isRunning) return;
+        launchRocket();
+    }, 600);
+
+    function loop() {
+        if (!isRunning) return;
+        ctx.clearRect(0, 0, w, h);
+
+        // Update rockets
+        for (var r = rockets.length - 1; r >= 0; r--) {
+            var rk = rockets[r];
+            rk.y += rk.vy;
+            ctx.fillStyle = rk.color;
+            ctx.beginPath();
+            ctx.arc(rk.x, rk.y, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Trail
+            particles.push({
+                x: rk.x,
+                y: rk.y,
+                vx: (Math.random() - 0.5) * 0.8,
+                vy: Math.random() * 1.5,
+                alpha: 0.6,
+                decay: 0.05,
+                color: rk.color,
+                size: 1.5,
+                gravity: 0.02
+            });
+
+            if (rk.y <= rk.targetY) {
+                createExplosion(rk.x, rk.y, 70, rk.color);
+                rockets.splice(r, 1);
+            }
+        }
+
+        // Update particles
+        for (var i = particles.length - 1; i >= 0; i--) {
+            var p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += p.gravity || 0.06;
+            p.vx *= 0.98;
+            p.alpha -= p.decay;
+
+            if (p.alpha <= 0) {
+                particles.splice(i, 1);
+            } else {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        animId = requestAnimationFrame(loop);
+    }
+    loop();
+
+    window.stopWinFireworks = function () {
+        isRunning = false;
+        clearInterval(launchInterval);
+        window.removeEventListener('resize', handleResize);
+        if (animId) cancelAnimationFrame(animId);
+        if (canvas.parentNode) canvas.remove();
+    };
+}
+
+// ---------- 2. MÀN HÌNH CHIẾN THẮNG QUA MÀN ----------
 function showWinModal(info, onReplay, onNext) {
-    var starsHtml = '';
+    // 1. Level Up Banner
+    var levelUpHtml = '<div class="win-levelup-header">' +
+        '<img src="assets/images/ui/level_up.png" class="win-levelup-img" alt="Level Up!">' +
+    '</div>';
+
+    // 2. Stars
+    var starsHtml = '<div class="win-stars">';
     for (var i = 1; i <= 3; i++) {
         var isStarOn = i <= info.stars;
         starsHtml += '<img src="assets/images/ui/icon_star.png" class="win-star-img' + (isStarOn ? ' on' : ' off') + '" ' +
             'style="animation-delay:' + (i * 0.16) + 's" alt="">';
     }
-    var decorHtml = '';
+    starsHtml += '</div>';
+
+    // 3. Level label
+    var levelTextHtml = '<div class="win-level-label">Level ' + info.level + '</div>';
+
+    // 4. Kết hợp Vàng thưởng và Vàng bán vật phẩm thừa thành 1
+    var baseWinCoins = (info.alreadyDoubled ? info.coins * 2 : info.coins);
+    var totalCoins = baseWinCoins + (info.sweepCoins || 0);
+
+    // 5. Rewards row (Năng lượng, Vàng tổng hợp, Kim cương)
+    var rewardsHtml = '<div class="win-rewards-row">';
+    if (info.energy && info.energy > 0) {
+        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.energy + '</span> <img class="reward-icon" src="assets/images/ui/icon_nangluong.png" alt="Năng lượng"></div>';
+    }
+    rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + totalCoins.toLocaleString('vi-VN') + '</span> <img class="reward-icon" src="assets/images/ui/icon_glod.png" alt="Vàng"></div>';
+    if (info.gems && info.gems > 0) {
+        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.gems + '</span> <img class="reward-icon" src="assets/images/ui/icon_ruby.png" alt="Kim cương"></div>';
+    }
+    rewardsHtml += '</div>';
+
+    // 6. Vật phẩm thu thập vào khu trại (Icon cách đều nhau không cần nền)
     var completedList = (info.completedOrders && info.completedOrders.length)
         ? info.completedOrders
         : (info.decor ? [info.decor[1]] : []);
+    var decorHtml = '';
     if (completedList.length > 0) {
         var itemsHtml = completedList.map(function (oId) {
             var imgPath = getItemImagePath(oId);
-            return '<div class="win-decor-icon-wrap">' +
-                '<img src="' + imgPath + '" alt="">' +
-            '</div>';
+            return '<img src="' + imgPath + '" class="win-bare-item-img" alt="">';
         }).join('');
-        decorHtml = '<div class="win-decor">' +
-            '<div class="win-decor-label">Đã chuyển vào khu trại:</div>' +
-            '<div class="win-decor-row">' + itemsHtml + '</div>' +
-        '</div>';
-    }
-    var gemText = info.gems > 0 ? ' &nbsp;+' + info.gems + ' ' + ICON_RUBY_HTML : '';
-    var energyText = (info.energy && info.energy > 0) ? ' &nbsp;+' + info.energy + ' ' + ICON_ENERGY_HTML : '';
-
-    var baseWinCoins = (info.alreadyDoubled ? info.coins * 2 : info.coins);
-    var totalCoinsWithSweep = baseWinCoins + (info.sweepCoins || 0);
-
-    var sweepHtml = '';
-    if (info.sweepCoins > 0) {
-        sweepHtml = '<div class="win-sweep-banner">Thu dọn <b>' + info.sweepCount + '</b> vật phẩm thừa: <b style="color:#e65100">+' + info.sweepCoins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</b></div>';
+        var decorLabel = (typeof I18N !== 'undefined' && I18N.currentLang === 'en')
+            ? 'Items collected to camp'
+            : 'Vật phẩm thu thập vào khu trại';
+        decorHtml = '<div class="win-decor-subtitle">' + decorLabel + '</div>' +
+            '<div class="win-items-bare-row">' + itemsHtml + '</div>';
     }
 
-    var nextBtnHtml = info.hasNext
-        ? '<button class="modal-btn primary" id="mb-next">Màn tiếp</button>'
-        : '<button class="modal-btn primary" id="mb-close">Đóng</button>';
-
-    var overlay = createModal(
-        '<div class="modal-sub win-level-title">Level ' + info.level + '</div>' +
-        '<div class="win-stars">' + starsHtml + '</div>' +
-        '<div class="win-coins">+' + totalCoinsWithSweep.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + gemText + energyText +
-            (info.firstTime ? '' : ' <small>(chơi lại)</small>') + '</div>' +
-        sweepHtml +
+    // 7. Dark Rounded Card chứa phần thưởng & vật phẩm
+    var cardHtml = '<div class="win-dark-card">' +
+        rewardsHtml +
         decorHtml +
-        '<div class="win-buttons-system">' +
-            '<div class="win-btn-row">' +
-                '<button class="modal-btn gem-btn" id="mb-replay">Chơi lại</button>' +
-                nextBtnHtml +
-            '</div>' +
-        '</div>',
-        'win-box',
-        'HOÀN THÀNH'
-    );
+    '</div>';
+
+    // 8. Buttons
+    var nextBtnHtml = info.hasNext
+        ? '<button class="modal-btn primary" id="mb-next">' + (typeof I18N !== 'undefined' ? I18N.t('win.btn_next') : 'Màn tiếp') + '</button>'
+        : '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('settings.close_btn') : 'Đóng') + '</button>';
+
+    var replayBtnHtml = '<button class="modal-btn gem-btn" id="mb-replay">' + (typeof I18N !== 'undefined' ? I18N.t('win.btn_replay') : 'Chơi lại') + '</button>';
+
+    var buttonsHtml = '<div class="win-buttons-system">' +
+        '<div class="win-btn-row">' +
+            replayBtnHtml +
+            nextBtnHtml +
+        '</div>' +
+    '</div>';
+
+    var innerHtml = levelUpHtml + starsHtml + levelTextHtml + cardHtml + buttonsHtml;
+
+    var overlay = createModal(innerHtml, 'win-box', null);
+
+    // KÍCH HOẠT PHÁO HOA SAU KHI TẠO MODAL OVERLAY (Cho tất cả các màn: 1 sao, 2 sao, 3 sao)
+    startWinFireworks(overlay, info.stars || 1);
+
+    // 1. Level Up Banner
+    var levelUpHtml = '<div class="win-levelup-header">' +
+        '<img src="assets/images/ui/level_up.png" class="win-levelup-img" alt="Level Up!">' +
+    '</div>';
+
+    // 2. Stars
+    var starsHtml = '<div class="win-stars">';
+    for (var i = 1; i <= 3; i++) {
+        var isStarOn = i <= info.stars;
+        starsHtml += '<img src="assets/images/ui/icon_star.png" class="win-star-img' + (isStarOn ? ' on' : ' off') + '" ' +
+            'style="animation-delay:' + (i * 0.16) + 's" alt="">';
+    }
+    starsHtml += '</div>';
+
+    // 3. Level label
+    var levelTextHtml = '<div class="win-level-label">Level ' + info.level + '</div>';
+
+    // 4. Kết hợp Vàng thưởng và Vàng bán vật phẩm thừa thành 1
+    var baseWinCoins = (info.alreadyDoubled ? info.coins * 2 : info.coins);
+    var totalCoins = baseWinCoins + (info.sweepCoins || 0);
+
+    // 5. Rewards row (Năng lượng, Vàng tổng hợp, Kim cương)
+    var rewardsHtml = '<div class="win-rewards-row">';
+    if (info.energy && info.energy > 0) {
+        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.energy + '</span> <img class="reward-icon" src="assets/images/ui/icon_nangluong.png" alt="Năng lượng"></div>';
+    }
+    rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + totalCoins.toLocaleString('vi-VN') + '</span> <img class="reward-icon" src="assets/images/ui/icon_glod.png" alt="Vàng"></div>';
+    if (info.gems && info.gems > 0) {
+        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.gems + '</span> <img class="reward-icon" src="assets/images/ui/icon_ruby.png" alt="Kim cương"></div>';
+    }
+    rewardsHtml += '</div>';
+
+    // 6. Vật phẩm thu thập vào khu trại (Icon cách đều nhau không cần nền)
+    var completedList = (info.completedOrders && info.completedOrders.length)
+        ? info.completedOrders
+        : (info.decor ? [info.decor[1]] : []);
+    var decorHtml = '';
+    if (completedList.length > 0) {
+        var itemsHtml = completedList.map(function (oId) {
+            var imgPath = getItemImagePath(oId);
+            return '<img src="' + imgPath + '" class="win-bare-item-img" alt="">';
+        }).join('');
+        var decorLabel = (typeof I18N !== 'undefined' && I18N.currentLang === 'en')
+            ? 'Items collected to camp'
+            : 'Vật phẩm thu thập vào khu trại';
+        decorHtml = '<div class="win-decor-subtitle">' + decorLabel + '</div>' +
+            '<div class="win-items-bare-row">' + itemsHtml + '</div>';
+    }
+
+    // 7. Dark Rounded Card chứa phần thưởng & vật phẩm
+    var cardHtml = '<div class="win-dark-card">' +
+        rewardsHtml +
+        decorHtml +
+    '</div>';
+
+    // 8. Buttons
+    var nextBtnHtml = info.hasNext
+        ? '<button class="modal-btn primary" id="mb-next">' + (typeof I18N !== 'undefined' ? I18N.t('win.btn_next') : 'Màn tiếp') + '</button>'
+        : '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('settings.close_btn') : 'Đóng') + '</button>';
+
+    var replayBtnHtml = '<button class="modal-btn gem-btn" id="mb-replay">' + (typeof I18N !== 'undefined' ? I18N.t('win.btn_replay') : 'Chơi lại') + '</button>';
+
+    var buttonsHtml = '<div class="win-buttons-system">' +
+        '<div class="win-btn-row">' +
+            replayBtnHtml +
+            nextBtnHtml +
+        '</div>' +
+    '</div>';
+
+    var innerHtml = levelUpHtml + starsHtml + levelTextHtml + cardHtml + buttonsHtml;
+
+    var overlay = createModal(innerHtml, 'win-box', null);
 
     var didClickNext = false;
     var leaveWithoutNext = function () {
@@ -234,13 +516,13 @@ function showWinModal(info, onReplay, onNext) {
     var doubleBtn = overlay.querySelector('#mb-double-ad');
     if (doubleBtn && !info.alreadyDoubled) {
         doubleBtn.onclick = function () {
-            simulateWatchAd('Nhân Đôi Vàng Thưởng Màn Chơi (+' + info.coins + ' 🪙)', function () {
+            simulateWatchAd('Nhân Đôi Vàng Thưởng Màn Chơi (+' + info.coins + ' Vàng)', function () {
                 if (typeof playerCoins !== 'undefined') playerCoins += info.coins;
                 if (typeof updateUIStats === 'function') updateUIStats();
                 if (typeof playSound === 'function') playSound('win');
                 var coinEl = document.getElementById('btn-coin-shop') || document.body;
                 if (typeof spawnFlyingCurrency === 'function') spawnFlyingCurrency(coinEl, 'gold', Math.min(info.coins, 100));
-                showToast('🎉 Đã x2 Vàng thành công: +' + info.coins + ' Vàng!', '#2e7d32');
+                showToast('Đã x2 Vàng: +' + info.coins + ' Vàng!');
                 var updatedInfo = Object.assign({}, info, { alreadyDoubled: true });
                 showWinModal(updatedInfo, onReplay, onNext);
             });
@@ -286,38 +568,38 @@ function openCamp(highlightLevel, onBack, initialTab) {
         { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 65000 }
     ];
 
-    var defaultTab = (initialTab === 'pets' || initialTab === 'locations') ? initialTab : 'decor';
+    var defaultTab = (initialTab === 'pets' || initialTab === 'decor') ? initialTab : 'locations';
 
     var overlay = createModal(
         '<div class="camp-tab-nav">' +
-            '<button class="camp-tab-btn btn-3s' + (defaultTab === 'pets' ? ' active' : '') + '" id="tab-btn-pets">Thú cưng</button>' +
-            '<button class="camp-tab-btn btn-3s' + (defaultTab === 'locations' ? ' active' : '') + '" id="tab-btn-locations">Điểm đến</button>' +
-            '<button class="camp-tab-btn btn-3s' + (defaultTab === 'decor' ? ' active' : '') + '" id="tab-btn-decor">Vật phẩm</button>' +
-        '</div>' +
-        '<div id="camp-pane-decor" class="camp-tab-pane" style="' + (defaultTab === 'decor' ? '' : 'display:none;') + '">' +
-            '<div class="modal-sub" id="camp-items-sub">Đã thu thập: <b>' + SAVE.campItems.length + '</b> vật phẩm từ nhiệm vụ</div>' +
-            '<div class="camp-items-wrap">' +
-                '<div class="camp-items-grid" id="camp-items-grid"></div>' +
-            '</div>' +
-            '<div id="camp-info-bar" class="camp-info-bar">Chạm vào một vật phẩm để xem chi tiết hoặc bán lấy Vàng</div>' +
-        '</div>' +
-        '<div id="camp-pane-pets" class="camp-tab-pane" style="' + (defaultTab === 'pets' ? '' : 'display:none;') + '">' +
-            '<div class="modal-sub" id="pets-unlocked-sub">Bộ sưu tập thú cưng đồng hành</div>' +
-            '<div class="pets-scroll-wrap">' +
-                '<div class="pets-grid" id="pets-grid-container"></div>' +
-            '</div>' +
+            '<button class="camp-tab-btn btn-3s' + (defaultTab === 'locations' ? ' active' : '') + '" id="tab-btn-locations">' + (typeof I18N !== 'undefined' ? I18N.t('camp.tab_destinations') : 'Điểm đến') + '</button>' +
+            '<button class="camp-tab-btn btn-3s' + (defaultTab === 'pets' ? ' active' : '') + '" id="tab-btn-pets">' + (typeof I18N !== 'undefined' ? I18N.t('camp.tab_pets') : 'Thú cưng') + '</button>' +
+            '<button class="camp-tab-btn btn-3s' + (defaultTab === 'decor' ? ' active' : '') + '" id="tab-btn-decor">' + (typeof I18N !== 'undefined' ? I18N.t('camp.tab_decor') : 'Vật phẩm') + '</button>' +
         '</div>' +
         '<div id="camp-pane-locations" class="camp-tab-pane" style="' + (defaultTab === 'locations' ? '' : 'display:none;') + '">' +
-            '<div class="modal-sub" id="loc-unlocked-sub">Bộ sưu tập bối cảnh điểm đến</div>' +
+            '<div class="modal-sub" id="loc-unlocked-sub">' + (typeof I18N !== 'undefined' ? I18N.t('camp.dest_sub', { count: SAVE.ownedLocations.length, total: (typeof CAMP_LOCATIONS !== 'undefined' ? CAMP_LOCATIONS.length : 9) }) : 'Bộ sưu tập bối cảnh điểm đến') + '</div>' +
             '<div class="locations-scroll-wrap">' +
                 '<div class="locations-list" id="locations-list-container"></div>' +
             '</div>' +
         '</div>' +
+        '<div id="camp-pane-pets" class="camp-tab-pane" style="' + (defaultTab === 'pets' ? '' : 'display:none;') + '">' +
+            '<div class="modal-sub" id="pets-unlocked-sub">' + (typeof I18N !== 'undefined' ? I18N.t('camp.pets_sub', { count: SAVE.ownedPets.length }) : 'Bộ sưu tập thú cưng đồng hành') + '</div>' +
+            '<div class="pets-scroll-wrap">' +
+                '<div class="pets-grid" id="pets-grid-container"></div>' +
+            '</div>' +
+        '</div>' +
+        '<div id="camp-pane-decor" class="camp-tab-pane" style="' + (defaultTab === 'decor' ? '' : 'display:none;') + '">' +
+            '<div class="modal-sub" id="camp-items-sub">' + (typeof I18N !== 'undefined' ? I18N.t('camp.items_sub', { count: SAVE.campItems.length }) : ('Đã thu thập: <b>' + SAVE.campItems.length + '</b> vật phẩm từ nhiệm vụ')) + '</div>' +
+            '<div class="camp-items-wrap">' +
+                '<div class="camp-items-grid" id="camp-items-grid"></div>' +
+            '</div>' +
+            '<div id="camp-info-bar" class="camp-info-bar">' + (typeof I18N !== 'undefined' ? I18N.t('camp.sell_prompt') : 'Chạm vào một vật phẩm để xem chi tiết hoặc bán lấy Vàng') + '</div>' +
+        '</div>' +
         '<div class="modal-buttons" id="camp-modal-buttons">' +
-            '<button class="modal-btn primary" id="mb-close">Đóng</button>' +
+            '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('camp.btn_close') : 'Đóng') + '</button>' +
         '</div>',
         'camp-box',
-        'KHU CẮM TRẠI'
+        (typeof I18N !== 'undefined' ? I18N.t('camp.title') : 'KHU CẮM TRẠI')
     );
 
     var tabBtnDecor = overlay.querySelector('#tab-btn-decor');
@@ -349,7 +631,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
         removeCampItem(item.uid);
 
         if (typeof playSound === 'function') playSound('coin');
-        showToast('💰 Đã bán ' + item.name + ' nhận +' + price.toLocaleString('vi-VN') + ' Vàng!', '#2e7d32');
+        showToast('Bán ' + item.name + ' (+' + price.toLocaleString('vi-VN') + ' Vàng)!');
 
         var coinEl = document.getElementById('btn-coin-shop') || document.body;
         if (typeof spawnFlyingCurrency === 'function') {
@@ -381,7 +663,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 infoBar.innerHTML = '<div class="camp-info-content">' +
                     '<div class="camp-info-name"><b>' + displayName + '</b></div>' +
                     '<button class="btn-3s btn-danger size-32 camp-inline-sell-btn" id="camp-inline-sell-btn">' +
-                        '💰 Bán (+' + price.toLocaleString('vi-VN') + ' Vàng)' +
+                        'Bán (+' + price.toLocaleString('vi-VN') + ' Vàng)' +
                     '</button>' +
                 '</div>';
                 var inlineSellBtn = infoBar.querySelector('#camp-inline-sell-btn');
@@ -397,8 +679,8 @@ function openCamp(highlightLevel, onBack, initialTab) {
             if (infoBar) {
                 infoBar.innerHTML = '<div class="camp-info-placeholder">' +
                     (SAVE.campItems.length > 0
-                        ? '💡 Chạm vào một vật phẩm để xem chi tiết hoặc bán lấy Vàng'
-                        : '🏕️ Chưa có vật phẩm nào trong khu trại.') +
+                        ? 'Chạm vào một vật phẩm để xem chi tiết hoặc bán lấy Vàng'
+                        : 'Chưa có vật phẩm nào trong khu trại.') +
                 '</div>';
             }
         }
@@ -407,7 +689,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
 
         if (SAVE.campItems.length === 0) {
             itemsGrid.innerHTML = '<div class="camp-empty-state">' +
-                '<div class="camp-empty-icon">🏕️</div>' +
+                '<div class="camp-empty-icon"></div>' +
                 '<div class="camp-empty-title">Khu Trại Chưa Có Vật Phẩm</div>' +
                 '<div class="camp-empty-desc">Khi bạn vượt qua các màn chơi và hoàn thành đơn hàng nhiệm vụ, các món đồ đó sẽ được chuyển vào đây để lưu trữ hoặc bán lấy Vàng!</div>' +
             '</div>';
@@ -487,7 +769,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
 
             var priceHtml = '';
             if (isOwned) {
-                priceHtml = '<div class="pet-price owned">' + (isActive ? '🐾 Đang chọn' : 'Đã sở hữu') + '</div>';
+                priceHtml = '<div class="pet-price owned">' + (isActive ? 'Đang chọn' : 'Đã sở hữu') + '</div>';
             } else {
                 var p = (typeof pet.price === 'number') ? pet.price : 30000;
                 priceHtml = '<div class="pet-price">' + p.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</div>';
@@ -526,7 +808,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
 
                 if (currentCoins < cost) {
                     if (typeof playSound === 'function') playSound('error');
-                    showToast('⚠️ Bạn không đủ Vàng! Cần ' + cost.toLocaleString('vi-VN') + ' Vàng để mua ' + pet.name + '.', '#d32f2f');
+                    showToast('Chưa đủ Vàng để mua ' + pet.name + '!');
                     return;
                 }
 
@@ -546,7 +828,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 if (typeof updateUIStats === 'function') updateUIStats();
                 if (typeof updateCompanionAvatar === 'function') updateCompanionAvatar();
                 if (typeof playSound === 'function') playSound('win');
-                showToast('🎉 Bạn đã mua thành công & chọn ' + pet.name + ' làm bạn đồng hành!', '#2e7d32');
+                showToast('Đã chọn ' + pet.name + ' đồng hành!');
                 renderPetsGrid();
             };
         });
@@ -561,7 +843,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
 
                 if (typeof updateCompanionAvatar === 'function') updateCompanionAvatar();
                 if (typeof playSound === 'function') playSound('tap');
-                showToast('🐾 Đã chọn ' + pet.name + ' làm bạn đồng hành!', '#2e7d32');
+                showToast('Đã chọn ' + pet.name + ' làm bạn đồng hành!', '#2e7d32');
                 renderPetsGrid();
             };
         });
@@ -574,7 +856,9 @@ function openCamp(highlightLevel, onBack, initialTab) {
         var locations = (typeof CAMP_LOCATIONS !== 'undefined') ? CAMP_LOCATIONS : [];
         var ownedCount = SAVE.ownedLocations.length;
         if (locSub) {
-            locSub.innerHTML = 'Đã sở hữu: <b>' + ownedCount + '/' + locations.length + '</b> điểm đến cắm trại';
+            locSub.innerHTML = (typeof I18N !== 'undefined')
+                ? I18N.t('camp.dest_sub', { count: ownedCount, total: locations.length })
+                : ('Đã sở hữu: <b>' + ownedCount + '/' + locations.length + '</b> điểm đến cắm trại');
         }
 
         var html = '';
@@ -582,35 +866,45 @@ function openCamp(highlightLevel, onBack, initialTab) {
             var isOwned = SAVE.ownedLocations.includes(loc.id);
             var isActive = (SAVE.activeLocation === loc.id);
             var cardCls = 'location-card' + (isActive ? ' is-active' : '');
+            var locName = (typeof I18N !== 'undefined' && loc.nameKey) ? I18N.t('camp.' + loc.nameKey) : loc.name;
 
             var priceHtml = '';
             if (isOwned) {
+                var statusText = isActive
+                    ? ((typeof I18N !== 'undefined') ? I18N.t('camp.dest_active') : 'Đang dùng làm cảnh nền')
+                    : ((typeof I18N !== 'undefined') ? I18N.t('camp.dest_owned') : 'Đã sở hữu');
                 priceHtml = '<div class="loc-price-status ' + (isActive ? 'active' : 'owned') + '">' +
-                    (isActive ? 'Đang dùng làm cảnh nền' : 'Đã sở hữu') +
+                    statusText +
                 '</div>';
             } else {
                 var p = (typeof loc.price === 'number') ? loc.price : 30000;
                 priceHtml = '<div class="loc-price">' +
-                    p.toLocaleString('vi-VN') + ' ' + (typeof ICON_GOLD_HTML !== 'undefined' ? ICON_GOLD_HTML : '🪙') +
+                    p.toLocaleString('vi-VN') + ' ' + (typeof ICON_GOLD_HTML !== 'undefined' ? ICON_GOLD_HTML : 'Vàng') +
                 '</div>';
             }
 
             var btnHtml = '';
             if (isActive) {
-                btnHtml = '<button class="loc-action-btn btn-active" disabled>Đang dùng</button>';
+                btnHtml = '<button class="loc-action-btn btn-active" disabled>' +
+                    ((typeof I18N !== 'undefined') ? I18N.t('camp.dest_using') : 'Đang dùng') +
+                '</button>';
             } else if (isOwned) {
-                btnHtml = '<button class="loc-action-btn btn-equip" data-id="' + loc.id + '">Sử dụng</button>';
+                btnHtml = '<button class="loc-action-btn btn-equip" data-id="' + loc.id + '">' +
+                    ((typeof I18N !== 'undefined') ? I18N.t('camp.dest_select') : 'Sử dụng') +
+                '</button>';
             } else {
-                btnHtml = '<button class="loc-action-btn btn-buy" data-id="' + loc.id + '">Mua</button>';
+                btnHtml = '<button class="loc-action-btn btn-buy" data-id="' + loc.id + '">' +
+                    ((typeof I18N !== 'undefined') ? I18N.t('camp.dest_buy') : 'Mua') +
+                '</button>';
             }
 
             html += '<div class="' + cardCls + '">' +
                 '<div class="loc-card-img-wrap">' +
-                    '<img src="' + loc.img + '" alt="' + loc.name + '" class="loc-card-img">' +
+                    '<img src="' + loc.img + '" alt="' + locName + '" class="loc-card-img">' +
                 '</div>' +
                 '<div class="loc-card-footer">' +
                     '<div class="loc-info-col">' +
-                        '<div class="loc-name">' + loc.name + '</div>' +
+                        '<div class="loc-name">' + locName + '</div>' +
                         priceHtml +
                     '</div>' +
                     '<div class="loc-action-col">' +
@@ -630,10 +924,11 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 if (!loc) return;
                 var cost = (typeof loc.price === 'number') ? loc.price : 30000;
                 var currentCoins = (typeof playerCoins !== 'undefined') ? playerCoins : (SAVE.coins || 0);
+                var locName = (typeof I18N !== 'undefined' && loc.nameKey) ? I18N.t('camp.' + loc.nameKey) : loc.name;
 
                 if (currentCoins < cost) {
                     if (typeof playSound === 'function') playSound('error');
-                    showToast('⚠️ Bạn không đủ Vàng! Cần ' + cost.toLocaleString('vi-VN') + ' Vàng để mua điểm đến ' + loc.name + '.', '#d32f2f');
+                    showToast('Chưa đủ Vàng để mua ' + locName + '!');
                     return;
                 }
 
@@ -653,7 +948,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 if (typeof updateUIStats === 'function') updateUIStats();
                 if (typeof updateActiveLocationBackground === 'function') updateActiveLocationBackground();
                 if (typeof playSound === 'function') playSound('win');
-                showToast('🎉 Mở khóa thành công & đặt cảnh nền: ' + loc.name + '!', '#2e7d32');
+                showToast('Mở khóa cảnh nền: ' + locName + '!');
                 renderLocationsList();
             };
         });
@@ -663,12 +958,13 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 var locId = btn.dataset.id;
                 var loc = locations.find(function (l) { return l.id === locId; });
                 if (!loc) return;
+                var locName = (typeof I18N !== 'undefined' && loc.nameKey) ? I18N.t('camp.' + loc.nameKey) : loc.name;
                 SAVE.activeLocation = locId;
                 saveGame();
 
                 if (typeof updateActiveLocationBackground === 'function') updateActiveLocationBackground();
                 if (typeof playSound === 'function') playSound('tap');
-                showToast('🌄 Đã đổi cảnh nền sang: ' + loc.name + '!', '#2e7d32');
+                showToast('Đổi cảnh nền: ' + locName + '!');
                 renderLocationsList();
             };
         });
@@ -700,7 +996,7 @@ var GEM_IAP_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.iapPacks)
         bonusGems: 0,
         priceVnd: '5.000 ₫',
         badge: null,
-        desc: 'Đủ 3 lần nạp siêu tốc (+120 ⚡)'
+        desc: 'Đủ 3 lần nạp siêu tốc (+120 Năng lượng)'
     },
     {
         id: 'gem_tier_3',
@@ -708,9 +1004,9 @@ var GEM_IAP_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.iapPacks)
         gems: 90,
         bonusGems: 25,
         priceVnd: '15.000 ₫',
-        badge: '⭐ HỜI NHẤT +28%',
+        badge: 'HỜI NHẤT +28%',
         isPopular: true,
-        desc: 'Tặng thêm +25 💎 khuyến mãi'
+        desc: 'Tặng thêm +25 Kim Cương khuyến mãi'
     },
     {
         id: 'gem_tier_4',
@@ -718,8 +1014,8 @@ var GEM_IAP_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.iapPacks)
         gems: 320,
         bonusGems: 180,
         priceVnd: '49.000 ₫',
-        badge: '👑 SIÊU GIÁ TRỊ +56%',
-        desc: 'Gói nạp tối thượng, nhận ngay 500 💎'
+        badge: 'SIÊU GIÁ TRỊ +56%',
+        desc: 'Gói nạp tối thượng, nhận ngay 500 Kim Cương'
     }
 ];
 
@@ -736,7 +1032,7 @@ var COIN_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.coinExchange
         name: 'Rương Vàng Lớn',
         coins: 1000,
         gemCost: 15,
-        badge: '⭐ TIẾT KIỆM 10%',
+        badge: 'TIẾT KIỆM 10%',
         desc: 'Đổi từ 15 Kim Cương'
     },
     {
@@ -744,7 +1040,7 @@ var COIN_PACKS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.coinExchange
         name: 'Kho Vàng Hoàng Gia',
         coins: 2200,
         gemCost: 30,
-        badge: '🔥 SIÊU LỜI +20%',
+        badge: 'SIÊU LỜI +20%',
         desc: 'Đổi từ 30 Kim Cương'
     }
 ];
@@ -755,12 +1051,12 @@ function simulateWatchAd(title, onReward) {
     var overlay = createModal(
         '<div class="ad-sim-container">' +
             '<div class="ad-sim-topbar">' +
-                '<span class="ad-sponsor-tag">🎬 QUẢNG CÁO TÀI TRỢ</span>' +
+                '<span class="ad-sponsor-tag">QUẢNG CÁO TÀI TRỢ</span>' +
                 '<span id="ad-sim-timer" class="ad-sim-timer">Bỏ qua sau 3s</span>' +
             '</div>' +
             '<div class="ad-sim-viewport">' +
                 '<div class="ad-sim-badge">CAMPING MERGE ADVENTURE</div>' +
-                '<div class="ad-sim-icon-glow">🏕️✨</div>' +
+                '<div class="ad-sim-icon-glow"></div>' +
                 '<div class="ad-sim-title">' + (title || 'Đang phát video tài trợ...') + '</div>' +
                 '<div class="ad-sim-sub">Cảm ơn bạn đã xem quảng cáo ủng hộ trò chơi!</div>' +
                 '<div class="ad-sim-pbar-wrap">' +
@@ -768,7 +1064,7 @@ function simulateWatchAd(title, onReward) {
                 '</div>' +
             '</div>' +
             '<div class="ad-sim-bottom">' +
-                '<button class="modal-btn disabled-btn" id="ad-sim-action" disabled>⏳ Đang phát (3s)...</button>' +
+                '<button class="modal-btn disabled-btn" id="ad-sim-action" disabled>Đang phát (3s)...</button>' +
             '</div>' +
         '</div>',
         'ad-sim-box'
@@ -786,14 +1082,14 @@ function simulateWatchAd(title, onReward) {
         timerVal--;
         if (timerVal > 0) {
             if (timerEl) timerEl.innerText = 'Bỏ qua sau ' + timerVal + 's';
-            if (actionBtn) setBtnText(actionBtn, '⏳ Đang phát (' + timerVal + 's)...');
+            if (actionBtn) setBtnText(actionBtn, 'Đang phát (' + timerVal + 's)...');
         } else {
             clearInterval(countdownInterval);
-            if (timerEl) timerEl.innerText = '✅ Hoàn tất';
+            if (timerEl) timerEl.innerText = 'Hoàn tất';
             if (actionBtn) {
                 actionBtn.className = 'modal-btn primary';
                 actionBtn.disabled = false;
-                setBtnText(actionBtn, '🎁 NHẬN THƯỞNG NGAY');
+                setBtnText(actionBtn, 'NHẬN THƯỞNG NGAY');
                 actionBtn.onclick = function () {
                     closeModal();
                     if (onReward) onReward();
@@ -812,7 +1108,7 @@ function simulateBuyIAP(pack, onConfirm) {
                 '<div class="iap-title">Xác Nhận Mua Gói IAP</div>' +
             '</div>' +
             '<div class="iap-pack-banner">' +
-                '<div class="iap-pack-name">💎 ' + pack.name + '</div>' +
+                '<div class="iap-pack-name">' + pack.name + '</div>' +
                 (pack.badge ? '<span class="iap-pack-badge">' + pack.badge + '</span>' : '') +
             '</div>' +
             '<div class="iap-body">' +
@@ -828,7 +1124,7 @@ function simulateBuyIAP(pack, onConfirm) {
                 '</div>' +
             '</div>' +
             '<div class="iap-mock-notice">' +
-                '<small>💡 Đây là giao diện giả lập nạp IAP theo yêu cầu. Nhấn "Thanh Toán" để cộng ngay vật phẩm vào tài khoản!</small>' +
+                '<small>Đây là giao diện giả lập nạp IAP theo yêu cầu. Nhấn "Thanh Toán" để cộng ngay vật phẩm vào tài khoản!</small>' +
             '</div>' +
             '<div class="modal-buttons">' +
                 '<button class="modal-btn gem-btn" id="btn-iap-cancel">Hủy Bỏ</button>' +
@@ -869,8 +1165,8 @@ function showEnergyShopModal(opts) {
     var energyCoinPacks = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.coinPacks)
         ? GAME_CONFIG.energyShop.coinPacks
         : [
-            { energy: 25, coinCost: 3000, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' },
-            { energy: 50, coinCost: 6000, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' }
+            { energy: 25, coinCost: 4000, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' },
+            { energy: 50, coinCost: 7500, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' }
         ];
 
     var coinPacksHtml = '';
@@ -909,7 +1205,7 @@ function showEnergyShopModal(opts) {
             'Hiện có: <b>' + opts.energy + ' ' + ICON_ENERGY_HTML + '</b> &nbsp;|&nbsp; ' +
             '<b>' + opts.coins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</b> &nbsp;|&nbsp; ' +
             '<b>' + opts.gems + ' ' + ICON_RUBY_HTML + '</b><br>' +
-            '<small>⏳ Tự động hồi +1 năng lượng sau mỗi ' + curRegenSec + 's khi tương tác (còn ' + opts.secLeft + 's)</small>' +
+            '<small>Tự động hồi +1 năng lượng sau mỗi ' + curRegenSec + 's khi tương tác (còn ' + opts.secLeft + 's)</small>' +
         '</div>' +
         '<div class="shop-scroll">' +
             // 1. Xem Ads nhận năng lượng
@@ -920,7 +1216,7 @@ function showEnergyShopModal(opts) {
                 '</div>' +
                 '<button class="modal-btn primary" id="btn-shop-ad">XEM ADS</button>' +
             '</div>' +
-            // 2. Gói nạp siêu tốc bằng Kim Cương (+50 ⚡ giá 8 💎)
+            // 2. Gói nạp siêu tốc bằng Kim Cương (+50 NL giá 8 Kim Cương)
             gemPackHtml +
             // 3. Các gói Đổi Vàng lấy năng lượng (+25 giá 3.000, +50 giá 6.000)
             coinPacksHtml +
@@ -938,7 +1234,7 @@ function showEnergyShopModal(opts) {
     if (gemEnergyBtn) {
         gemEnergyBtn.onclick = function () {
             if (opts.gems < gemPackCfg.gemCost) {
-                if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">❌ Chưa đủ ' + gemPackCfg.gemCost + ' Kim Cương! Hãy mở Cẩm Nang hoặc xem Ads tại Cửa Hàng Kim Cương nhé.</b>';
+                if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">Chưa đủ ' + gemPackCfg.gemCost + ' Kim Cương! Hãy mở Cẩm Nang hoặc xem Ads tại Cửa Hàng Kim Cương nhé.</b>';
                 return;
             }
             closeModal();
@@ -952,7 +1248,7 @@ function showEnergyShopModal(opts) {
             var pack = energyCoinPacks[idx];
             if (!pack) return;
             if (opts.coins < pack.coinCost) {
-                if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">❌ Chưa đủ ' + pack.coinCost.toLocaleString('vi-VN') + ' Vàng! Hãy ghép đồ (Lv.2+), nộp đơn hoặc bán đồ nhé.</b>';
+                if (shopStatusBar) shopStatusBar.innerHTML = '<b style="color:#c62828">Chưa đủ ' + pack.coinCost.toLocaleString('vi-VN') + ' Vàng! Hãy ghép đồ (Lv.2+), nộp đơn hoặc bán đồ nhé.</b>';
                 return;
             }
             closeModal();
@@ -1141,7 +1437,7 @@ function showCoinShopModal(opts) {
 function showLuckyDropModal(onReward) {
     var overlay = createModal(
         '<div class="lucky-drop-dialog">' +
-            '<div class="lucky-drop-visual">🪂</div>' +
+            '<div class="lucky-drop-visual"></div>' +
             '<div class="lucky-drop-desc">' +
                 'Kiểm lâm vừa thả dù một kiện hàng tiếp tế đặc biệt xuống khu trại!<br>' +
                 'Xem một đoạn video ngắn từ nhà tài trợ để nhận ngẫu nhiên phần quà:' +
@@ -1163,11 +1459,11 @@ function showLuckyDropModal(onReward) {
     overlay.querySelector('#btn-lucky-cancel').onclick = closeModal;
     overlay.querySelector('#btn-lucky-watch').onclick = function () {
         closeModal();
-        simulateWatchAd('Mở Kiện Hàng Tiếp Tế May Mắn 🎁', function () {
+        simulateWatchAd('Mở Kiện Hàng Tiếp Tế May Mắn', function () {
             var rolls = [
-                { type: 'energy', val: 35, text: '+35 ⚡ Năng lượng', color: '#2e7d32' },
-                { type: 'coin', val: 1800, text: '+1.800 🪙 Vàng', color: '#f57f17' },
-                { type: 'gem', val: 8, text: '+8 💎 Kim cương', color: '#1565c0' }
+                { type: 'energy', val: 35, text: '+35 Năng lượng', color: '#2e7d32' },
+                { type: 'coin', val: 1800, text: '+1.800 Vàng', color: '#f57f17' },
+                { type: 'gem', val: 8, text: '+8 Kim cương', color: '#1565c0' }
             ];
             var roll = rolls[Math.floor(Math.random() * rolls.length)];
             if (onReward) onReward(roll);
@@ -1212,13 +1508,13 @@ function openDiscoveryBook() {
     });
 
     var overlay = createModal(
-        '<div class="modal-sub">Đã khám phá: <b>' + discCount + '/' + totalItems + '</b> vật phẩm cắm trại</div>' +
+        '<div class="modal-sub">' + (typeof I18N !== 'undefined' ? I18N.t('handbook.sub', { count: discCount, total: totalItems }) : ('Đã khám phá: <b>' + discCount + '/' + totalItems + '</b> vật phẩm cắm trại')) + '</div>' +
         '<div class="book-scroll">' + chainsHtml + '</div>' +
         '<div class="modal-buttons book-buttons">' +
-            '<button class="modal-btn primary" id="mb-close">Đóng</button>' +
+            '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('handbook.btn_close') : 'Đóng') + '</button>' +
         '</div>',
         'book-box',
-        'CẨM NANG'
+        (typeof I18N !== 'undefined' ? I18N.t('handbook.title') : 'CẨM NANG')
     );
 
     overlay.querySelectorAll('.book-slot').forEach(function (slot) {
@@ -1237,11 +1533,11 @@ function openDiscoveryBook() {
             }
             if (isDisc) {
                 if (typeof playSound === 'function') playSound('tap');
-                showToast('📖 ' + name + ' (Lv.' + lv + ')', '#4e342e');
+                showToast(name + ' (Lv.' + lv + ')', '#4e342e');
             } else {
                 var gen = getChainGenerator(id.split('_lv')[0]);
                 if (typeof playSound === 'function') playSound('tap');
-                showToast('🔒 Hãy ghép từ ' + gen.name + ' để mở khóa Lv.' + lv + '!', '#795548');
+                showToast('Hãy ghép từ ' + gen.name + ' để mở khóa Lv.' + lv + '!', '#795548');
             }
         };
     });
@@ -1277,10 +1573,10 @@ function openWorldMap(currentLv, onSelectLevel) {
         '</div>' +
         '<div class="map-stage-req" id="map-stage-req"></div>' +
         '<div class="modal-buttons map-modal-buttons">' +
-            '<button class="modal-btn primary" id="mb-close">Đóng</button>' +
+            '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('map.btn_close') : 'Đóng') + '</button>' +
         '</div>',
         'map-popup-box',
-        'BẢN ĐỒ HÀNH TRÌNH'
+        (typeof I18N !== 'undefined' ? I18N.t('map.title') : 'BẢN ĐỒ HÀNH TRÌNH')
     );
 
     var closeBtn = overlay.querySelector('#mb-close');
@@ -1323,7 +1619,7 @@ function openWorldMap(currentLv, onSelectLevel) {
                 '</button>';
             } else {
                 nodesHtml += '<button class="map-level-btn locked" data-lv="' + lv + '">' +
-                    '<img src="assets/images/ui/icon_lock.png" class="map-level-lock" alt="🔒">' +
+                    '<img src="assets/images/ui/icon_lock.png" class="map-level-lock" alt="Khóa">' +
                     starsHtml +
                 '</button>';
             }
@@ -1348,7 +1644,7 @@ function openWorldMap(currentLv, onSelectLevel) {
                 }
             } else {
                 stageReqEl.className = 'map-stage-req unlocked';
-                stageReqEl.innerHTML = '🏆 <span>Chặng cuối cùng của hành trình!</span>';
+                stageReqEl.innerHTML = '<span>Chặng cuối cùng của hành trình!</span>';
             }
         }
 
@@ -1364,7 +1660,7 @@ function openWorldMap(currentLv, onSelectLevel) {
                     }
                 } else {
                     if (typeof playSound === 'function') playSound('error');
-                    showToast('🔒 Hãy hoàn thành Level ' + (lv - 1) + ' trước nhé!', '#c62828');
+                    showToast('Hãy hoàn thành Level ' + (lv - 1) + ' trước nhé!', '#c62828');
                 }
             };
         });
@@ -1391,15 +1687,13 @@ function openWorldMap(currentLv, onSelectLevel) {
 // opts: { currentLevel, onSelectLevel, isAuto, onToggleAuto, onUnlockChanged, onRestartLevel, onResetAll, onCloudRestore }
 function openSettingsModal(opts) {
     var s = SAVE.settings || {};
-    var unlockAll = s.unlockAllLevels;
-    var isAuto = opts.isAuto;
+    var isAuto = !!opts.isAuto;
     var pid = SAVE.playerId || generatePlayerId();
     var gUser = SAVE.googleUser;
 
-    var googleCardHtml = '';
-    if (!gUser) {
-        googleCardHtml =
-            '<div class="st-google-unlinked">' +
+    function buildGoogleCardHtml(user) {
+        if (!user) {
+            return '<div class="st-google-unlinked">' +
                 '<button class="google-auth-btn" id="st-google-login-btn" type="button">' +
                     '<svg class="google-logo-svg" viewBox="0 0 24 24" width="20" height="20">' +
                         '<path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>' +
@@ -1407,70 +1701,112 @@ function openSettingsModal(opts) {
                         '<path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.17 0 9.95 0 12s.45 3.83 1.25 5.42l4.03-3.15z"/>' +
                         '<path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>' +
                     '</svg>' +
-                    '<span>Đăng nhập Google</span>' +
+                    '<span>' + (typeof I18N !== 'undefined' ? I18N.t('settings.google_login_btn') : 'Đăng nhập Google') + '</span>' +
                 '</button>' +
             '</div>';
-    } else {
-        googleCardHtml =
-            '<div class="st-google-linked">' +
-                '<div class="st-google-user-row">' +
-                    '<div class="st-google-avatar-wrap">' +
-                        '<img src="' + (gUser.picture || 'assets/images/ui/character01.png') + '" class="st-google-avatar" alt="">' +
-                    '</div>' +
-                    '<div class="st-google-user-meta">' +
-                        '<div class="st-google-name">' + (gUser.name || 'Người chơi Google') + '</div>' +
-                        '<div class="st-google-email">' + (gUser.email || '') + '</div>' +
-                        '<div class="st-google-status">🟢 Đã liên kết tài khoản Google</div>' +
-                    '</div>' +
+        }
+        return '<div class="st-google-linked">' +
+            '<div class="st-google-user-row">' +
+                '<div class="st-google-avatar-wrap">' +
+                    '<img src="' + (user.picture || user.photoURL || 'assets/images/ui/character01.png') + '" class="st-google-avatar" alt="">' +
                 '</div>' +
-            '</div>';
+                '<div class="st-google-user-meta">' +
+                    '<div class="st-google-name">' + (user.name || user.displayName || 'Người chơi Google') + '</div>' +
+                    '<div class="st-google-email">' + (user.email || '') + '</div>' +
+                    '<div class="st-google-status">' + (typeof I18N !== 'undefined' ? I18N.t('settings.google_connected') : 'Đã liên kết tài khoản Google') + '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
     }
 
     var accountCardHtml =
         '<div class="st-account-card">' +
             '<div class="st-account-id-row">' +
                 '<div class="st-id-meta">' +
-                    '<span class="st-id-label">ID NGƯỜI CHƠI</span>' +
+                    '<span class="st-id-label">' + (typeof I18N !== 'undefined' ? I18N.t('settings.user_id_label') : 'ID NGƯỜI CHƠI') + '</span>' +
                     '<span class="st-id-val" id="st-player-id-val">' + pid + '</span>' +
                 '</div>' +
                 '<div class="st-id-btn-group">' +
-                    '<button class="st-edit-id-btn" id="st-edit-id-btn" type="button" title="Đổi ID người chơi">' +
-                        '<span>✏️ Đổi ID</span>' +
+                    '<button class="st-edit-id-btn" id="st-edit-id-btn" type="button" title="' + (typeof I18N !== 'undefined' ? I18N.t('settings.edit_id') : 'Đổi ID người chơi') + '">' +
+                        '<span>' + (typeof I18N !== 'undefined' ? I18N.t('settings.edit_id') : 'Đổi ID') + '</span>' +
                     '</button>' +
-                    '<button class="st-copy-btn" id="st-copy-id-btn" type="button" title="Sao chép ID người chơi">' +
+                    '<button class="st-copy-btn" id="st-copy-id-btn" type="button" title="' + (typeof I18N !== 'undefined' ? I18N.t('settings.copy') : 'Sao chép ID người chơi') + '">' +
                         '<svg class="st-copy-svg" viewBox="0 0 24 24" width="13" height="13" fill="currentColor">' +
                             '<path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>' +
                         '</svg>' +
-                        '<span>Sao chép</span>' +
+                        '<span>' + (typeof I18N !== 'undefined' ? I18N.t('settings.copy') : 'Sao chép') + '</span>' +
                     '</button>' +
                 '</div>' +
             '</div>' +
-            googleCardHtml +
+            '<!-- Khung chỉnh sửa ID inline (không mở popup mới, không chồng popup) -->' +
+            '<div class="st-edit-id-inline" id="st-edit-id-inline" style="display:none;">' +
+                '<div class="st-inline-input-row">' +
+                    '<input type="text" id="st-inline-id-input" class="st-inline-input" maxlength="16" value="' + pid + '" autocomplete="off" spellcheck="false">' +
+                    '<button type="button" class="modal-btn primary st-inline-btn" id="st-inline-save-btn">' + (typeof I18N !== 'undefined' ? I18N.t('settings.save') : 'Lưu') + '</button>' +
+                    '<button type="button" class="modal-btn gem-btn st-inline-btn" id="st-inline-cancel-btn">' + (typeof I18N !== 'undefined' ? I18N.t('settings.cancel') : 'Hủy') + '</button>' +
+                '</div>' +
+                '<div id="st-inline-id-msg" class="st-inline-msg" style="display:none;"></div>' +
+            '</div>' +
+            '<div id="st-google-area">' + buildGoogleCardHtml(gUser) + '</div>' +
+        '</div>';
+
+    var curLang = (typeof I18N !== 'undefined' && I18N.currentLang === 'en') ? 'en' : 'vi';
+    var isEn = (curLang === 'en');
+
+    var langBoxHtml =
+        '<div class="lang-dropdown-container" id="st-lang-container">' +
+            '<div class="lang-dropdown-trigger" id="st-lang-trigger" role="button" tabindex="0" title="' + (typeof I18N !== 'undefined' ? I18N.t('settings.lang_dropdown_hint') : 'Bấm để mở danh sách chọn ngôn ngữ') + '">' +
+                '<div class="st-row-left">' +
+                    '<img src="assets/images/ui/icon_ngonngu.png" class="st-icon" alt="">' +
+                    '<span class="st-label" id="st-lbl-lang">' + (typeof I18N !== 'undefined' ? I18N.t('settings.lang_label') : 'Ngôn ngữ') + '</span>' +
+                '</div>' +
+                '<div class="lang-current-pill">' +
+                    (typeof I18N !== 'undefined' ? I18N.getFlagHtml(curLang, 22) : '') +
+                    '<span class="lang-current-text">' + (isEn ? 'English' : 'Tiếng Việt') + '</span>' +
+                    '<img src="assets/images/ui/icon_down.png" class="lang-arrow" id="st-lang-arrow" alt="▼">' +
+                '</div>' +
+            '</div>' +
+            '<div class="lang-dropdown-menu" id="st-lang-menu" style="display:none">' +
+                '<div class="lang-option-item ' + (curLang === 'vi' ? 'active' : '') + '" data-lang="vi">' +
+                    '<div class="lang-opt-main">' +
+                        (typeof I18N !== 'undefined' ? I18N.getFlagHtml('vi', 24) : '') +
+                        '<div>' +
+                            '<span class="lang-opt-title">Tiếng Việt</span>' +
+                            '<span class="lang-opt-sub">(Vietnamese)</span>' +
+                        '</div>' +
+                    '</div>' +
+                    (curLang === 'vi' ? '<span class="lang-opt-check">✓</span>' : '') +
+                '</div>' +
+                '<div class="lang-option-item ' + (curLang === 'en' ? 'active' : '') + '" data-lang="en">' +
+                    '<div class="lang-opt-main">' +
+                        (typeof I18N !== 'undefined' ? I18N.getFlagHtml('en', 24) : '') +
+                        '<div>' +
+                            '<span class="lang-opt-title">English</span>' +
+                            '<span class="lang-opt-sub">(Tiếng Anh)</span>' +
+                        '</div>' +
+                    '</div>' +
+                    (curLang === 'en' ? '<span class="lang-opt-check">✓</span>' : '') +
+                '</div>' +
+            '</div>' +
         '</div>';
 
     var overlay = createModal(
-        '<div class="popup-sub">Cài đặt màn chơi và dữ liệu</div>' +
+        '<div class="popup-sub">' + (typeof I18N !== 'undefined' ? I18N.t('settings.sub') : 'Cài đặt màn chơi và dữ liệu') + '</div>' +
         '<div class="st-rows">' +
             '<!-- Khối ID Người Chơi & Đồng Bộ Google -->' +
             accountCardHtml +
 
             '<!-- Ngôn ngữ -->' +
-            '<div class="lang-selector" id="st-lang-btn">' +
-                '<div class="st-row-left">' +
-                    '<img src="assets/images/ui/icon_ngonngu.png" class="st-icon" alt="">' +
-                    '<span class="st-label">Tiếng Việt</span>' +
-                '</div>' +
-                '<img src="assets/images/ui/icon_down.png" class="lang-arrow" alt="">' +
-            '</div>' +
+            langBoxHtml +
 
             '<!-- Nhạc nền cắm trại -->' +
             '<div class="st-row">' +
                 '<div class="st-row-left">' +
                     '<img src="assets/images/ui/icon_amthanh.png" class="st-icon" alt="">' +
-                    '<span class="st-label">Nhạc nền cắm trại</span>' +
+                    '<span class="st-label" id="st-lbl-bgm">' + (typeof I18N !== 'undefined' ? I18N.t('settings.bgm_label') : 'Nhạc nền cắm trại') + '</span>' +
                 '</div>' +
                 '<button class="toggle-btn ' + (s.bgm !== false ? 'on' : 'off') + '" id="st-bgm">' +
-                    (s.bgm !== false ? 'BẬT' : 'TẮT') +
+                    (s.bgm !== false ? (typeof I18N !== 'undefined' ? I18N.t('settings.on') : 'BẬT') : (typeof I18N !== 'undefined' ? I18N.t('settings.off') : 'TẮT')) +
                 '</button>' +
             '</div>' +
 
@@ -1478,10 +1814,10 @@ function openSettingsModal(opts) {
             '<div class="st-row">' +
                 '<div class="st-row-left">' +
                     '<img src="assets/images/ui/icon_mussic.png" class="st-icon" alt="">' +
-                    '<span class="st-label">Âm thanh hiệu ứng</span>' +
+                    '<span class="st-label" id="st-lbl-sfx">' + (typeof I18N !== 'undefined' ? I18N.t('settings.sfx_label') : 'Âm thanh hiệu ứng') + '</span>' +
                 '</div>' +
                 '<button class="toggle-btn ' + (s.sound ? 'on' : 'off') + '" id="st-sound">' +
-                    (s.sound ? 'BẬT' : 'TẮT') +
+                    (s.sound ? (typeof I18N !== 'undefined' ? I18N.t('settings.on') : 'BẬT') : (typeof I18N !== 'undefined' ? I18N.t('settings.off') : 'TẮT')) +
                 '</button>' +
             '</div>' +
 
@@ -1489,10 +1825,10 @@ function openSettingsModal(opts) {
             '<div class="st-row">' +
                 '<div class="st-row-left">' +
                     '<img src="assets/images/ui/icon_lock.png" class="st-icon" alt="">' +
-                    '<span class="st-label">Mở khóa tất cả level</span>' +
+                    '<span class="st-label" id="st-lbl-unlock">' + (typeof I18N !== 'undefined' ? I18N.t('settings.unlock_all') : 'Mở khóa tất cả level') + '</span>' +
                 '</div>' +
                 '<button class="toggle-btn ' + (s.unlockAllLevels ? 'on' : 'off') + '" id="st-unlock">' +
-                    (s.unlockAllLevels ? 'BẬT' : 'TẮT') +
+                    (s.unlockAllLevels ? (typeof I18N !== 'undefined' ? I18N.t('settings.on') : 'BẬT') : (typeof I18N !== 'undefined' ? I18N.t('settings.off') : 'TẮT')) +
                 '</button>' +
             '</div>' +
 
@@ -1500,129 +1836,425 @@ function openSettingsModal(opts) {
             '<div class="st-row">' +
                 '<div class="st-row-left">' +
                     '<img src="assets/images/ui/icon_auto.png" class="st-icon" alt="">' +
-                    '<span class="st-label">Tự động đổ đầy bàn</span>' +
+                    '<span class="st-label" id="st-lbl-auto">' + (typeof I18N !== 'undefined' ? I18N.t('settings.auto_fill') : 'Tự động đổ đầy bàn') + '</span>' +
                 '</div>' +
                 '<button class="toggle-btn ' + (isAuto ? 'on' : 'off') + '" id="st-auto">' +
-                    (isAuto ? 'BẬT' : 'TẮT') +
+                    (isAuto ? (typeof I18N !== 'undefined' ? I18N.t('settings.on') : 'BẬT') : (typeof I18N !== 'undefined' ? I18N.t('settings.off') : 'TẮT')) +
                 '</button>' +
             '</div>' +
         '</div>' +
 
         '<div id="reset-confirm-area" class="reset-confirm-area" style="display:none">' +
-            '<p style="margin-bottom:12px;">⚠️ Bạn chắc chắn muốn xóa toàn bộ tiến trình, sao, vàng và cẩm nang về ban đầu?</p>' +
+            '<p style="margin-bottom:12px;">' + (typeof I18N !== 'undefined' ? I18N.t('settings.reset_warning') : 'Bạn chắc chắn muốn xóa toàn bộ tiến trình, sao, vàng và cẩm nang về ban đầu?') + '</p>' +
             '<div class="st-actions">' +
-                '<button class="modal-btn danger-btn" id="st-confirm-reset" style="flex:2">Xác nhận xóa hết</button>' +
-                '<button class="modal-btn gem-btn" id="st-cancel-reset" style="flex:1">Hủy</button>' +
+                '<button class="modal-btn danger-btn" id="st-confirm-reset" style="flex:2">' + (typeof I18N !== 'undefined' ? I18N.t('settings.reset_confirm') : 'Xác nhận xóa hết') + '</button>' +
+                '<button class="modal-btn gem-btn" id="st-cancel-reset" style="flex:1">' + (typeof I18N !== 'undefined' ? I18N.t('settings.reset_cancel') : 'Hủy') + '</button>' +
             '</div>' +
         '</div>' +
 
         '<div class="st-actions" id="st-main-btns">' +
-            '<button class="st-act-btn green" id="st-close">Đóng</button>' +
-            '<button class="st-act-btn blue" id="st-reset">Xóa dữ liệu</button>' +
+            '<button class="st-act-btn green" id="st-close">' + (typeof I18N !== 'undefined' ? I18N.t('settings.close_btn') : 'Đóng') + '</button>' +
+            '<button class="st-act-btn blue" id="st-reset">' + (typeof I18N !== 'undefined' ? I18N.t('settings.reset_btn') : 'Xóa dữ liệu') + '</button>' +
         '</div>',
         'settings-popup-box',
-        'CÀI ĐẶT'
+        (typeof I18N !== 'undefined' ? I18N.t('settings.title') : 'CÀI ĐẶT')
     );
 
     var closeBtn = overlay.querySelector('#st-close');
     if (closeBtn) closeBtn.onclick = closeModal;
 
-    // Đổi ID người chơi
-    var editIdBtn = overlay.querySelector('#st-edit-id-btn');
-    if (editIdBtn) {
-        editIdBtn.onclick = function () {
-            closeModal();
-            showEditPlayerIdModal(opts);
-        };
+    // Elements
+    var bgmBtn = overlay.querySelector('#st-bgm');
+    var soundBtn = overlay.querySelector('#st-sound');
+    var unlockBtn = overlay.querySelector('#st-unlock');
+    var autoBtn = overlay.querySelector('#st-auto');
+
+    // Cập nhật text trong popup cài đặt tại chỗ khi đổi ngôn ngữ
+    function updateAllSettingsTexts(lang) {
+        var isEnLang = (lang === 'en');
+
+        // Tiêu đề Ribbon & Phụ đề
+        var ribbonSpan = overlay.querySelector('.popup-ribbon span');
+        if (ribbonSpan && typeof I18N !== 'undefined') ribbonSpan.textContent = I18N.t('settings.title');
+        var subEl = overlay.querySelector('.popup-sub');
+        if (subEl && typeof I18N !== 'undefined') subEl.textContent = I18N.t('settings.sub');
+
+        // ID Người chơi & Các nút sao chép / đổi ID
+        var idLabel = overlay.querySelector('.st-id-label');
+        if (idLabel && typeof I18N !== 'undefined') idLabel.textContent = I18N.t('settings.user_id_label');
+        var editBtnText = overlay.querySelector('#st-edit-id-btn span');
+        if (editBtnText && typeof I18N !== 'undefined') editBtnText.textContent = I18N.t('settings.edit_id');
+        var copyBtnText = overlay.querySelector('#st-copy-id-btn span');
+        if (copyBtnText && typeof I18N !== 'undefined') copyBtnText.textContent = I18N.t('settings.copy');
+
+        // Ngôn ngữ
+        var langLabel = overlay.querySelector('#st-lbl-lang');
+        if (langLabel && typeof I18N !== 'undefined') langLabel.textContent = I18N.t('settings.lang_label');
+        var pillWrap = overlay.querySelector('.lang-current-pill');
+        if (pillWrap && typeof I18N !== 'undefined') {
+            pillWrap.innerHTML = I18N.getFlagHtml(lang, 22) +
+                '<span class="lang-current-text">' + (isEnLang ? 'English' : 'Tiếng Việt') + '</span>' +
+                '<img src="assets/images/ui/icon_down.png" class="lang-arrow" id="st-lang-arrow" alt="▼">';
+        }
+
+        // Tích chọn trong Menu ngôn ngữ
+        var optItems = overlay.querySelectorAll('.lang-option-item');
+        optItems.forEach(function (el) {
+            var elLang = el.getAttribute('data-lang');
+            var isSel = (elLang === lang);
+            el.classList.toggle('active', isSel);
+            var existingCheck = el.querySelector('.lang-opt-check');
+            if (isSel && !existingCheck) {
+                var chk = document.createElement('span');
+                chk.className = 'lang-opt-check';
+                chk.textContent = '✓';
+                el.appendChild(chk);
+            } else if (!isSel && existingCheck) {
+                existingCheck.remove();
+            }
+        });
+
+        // Nhãn các hàng chức năng
+        var lblBgm = overlay.querySelector('#st-lbl-bgm');
+        if (lblBgm && typeof I18N !== 'undefined') lblBgm.textContent = I18N.t('settings.bgm_label');
+        var lblSfx = overlay.querySelector('#st-lbl-sfx');
+        if (lblSfx && typeof I18N !== 'undefined') lblSfx.textContent = I18N.t('settings.sfx_label');
+        var lblUnlock = overlay.querySelector('#st-lbl-unlock');
+        if (lblUnlock && typeof I18N !== 'undefined') lblUnlock.textContent = I18N.t('settings.unlock_all');
+        var lblAuto = overlay.querySelector('#st-lbl-auto');
+        if (lblAuto && typeof I18N !== 'undefined') lblAuto.textContent = I18N.t('settings.auto_fill');
+
+        // Nhãn các nút Bật / Tắt
+        if (bgmBtn && typeof I18N !== 'undefined') {
+            bgmBtn.textContent = I18N.t(s.bgm !== false ? 'settings.on' : 'settings.off');
+        }
+        if (soundBtn && typeof I18N !== 'undefined') {
+            soundBtn.textContent = I18N.t(s.sound ? 'settings.on' : 'settings.off');
+        }
+        if (unlockBtn && typeof I18N !== 'undefined') {
+            unlockBtn.textContent = I18N.t(s.unlockAllLevels ? 'settings.on' : 'settings.off');
+        }
+        if (autoBtn && typeof I18N !== 'undefined') {
+            autoBtn.textContent = I18N.t(opts.isAuto ? 'settings.on' : 'settings.off');
+        }
+
+        // Các nút hành động chính ở chân popup
+        var closeBtnEl = overlay.querySelector('#st-close');
+        if (closeBtnEl && typeof I18N !== 'undefined') setBtnText(closeBtnEl, I18N.t('settings.close_btn'));
+        var resetBtnEl = overlay.querySelector('#st-reset');
+        if (resetBtnEl && typeof I18N !== 'undefined') setBtnText(resetBtnEl, I18N.t('settings.reset_btn'));
+
+        // Khu vực xác nhận Xóa dữ liệu
+        var resetWarn = overlay.querySelector('#reset-confirm-area p');
+        if (resetWarn && typeof I18N !== 'undefined') resetWarn.textContent = I18N.t('settings.reset_warning');
+        var resetConfirmBtn = overlay.querySelector('#st-confirm-reset');
+        if (resetConfirmBtn && typeof I18N !== 'undefined') setBtnText(resetConfirmBtn, I18N.t('settings.reset_confirm'));
+        var resetCancelBtn = overlay.querySelector('#st-cancel-reset');
+        if (resetCancelBtn && typeof I18N !== 'undefined') setBtnText(resetCancelBtn, I18N.t('settings.reset_cancel'));
+
+        // Cập nhật nhãn nút Google hoặc trạng thái liên kết
+        var gBtnSpan = overlay.querySelector('#st-google-login-btn span');
+        if (gBtnSpan && typeof I18N !== 'undefined') gBtnSpan.textContent = I18N.t('settings.google_login_btn');
+        var gStatus = overlay.querySelector('.st-google-status');
+        if (gStatus && typeof I18N !== 'undefined') gStatus.textContent = I18N.t('settings.google_connected');
+
+        // Nút Lưu/Hủy chỉnh sửa ID inline
+        var inlineSave = overlay.querySelector('#st-inline-save-btn');
+        if (inlineSave && typeof I18N !== 'undefined') setBtnText(inlineSave, I18N.t('settings.save'));
+        var inlineCancel = overlay.querySelector('#st-inline-cancel-btn');
+        if (inlineCancel && typeof I18N !== 'undefined') setBtnText(inlineCancel, I18N.t('settings.cancel'));
     }
 
-    // Sao chép ID người chơi
-    var copyIdBtn = overlay.querySelector('#st-copy-id-btn');
-    if (copyIdBtn) {
-        copyIdBtn.onclick = function () {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(pid).then(function () {
-                    showToast('📋 Đã sao chép ID: ' + pid, '#2e7d32');
-                }).catch(function () {
-                    showToast('ID của bạn: ' + pid, '#2e7d32');
-                });
+    // 1. CHỈNH SỬA ID NGƯỜI CHƠI TRỰC TIẾP (INLINE - KHÔNG TẠO POPUP CHỒNG)
+    var editIdBtn = overlay.querySelector('#st-edit-id-btn');
+    var editInlinePanel = overlay.querySelector('#st-edit-id-inline');
+    var inlineInput = overlay.querySelector('#st-inline-id-input');
+    var inlineSaveBtn = overlay.querySelector('#st-inline-save-btn');
+    var inlineCancelBtn = overlay.querySelector('#st-inline-cancel-btn');
+    var inlineMsg = overlay.querySelector('#st-inline-id-msg');
+    var playerIdVal = overlay.querySelector('#st-player-id-val');
+
+    if (editIdBtn && editInlinePanel) {
+        editIdBtn.onclick = function (e) {
+            e.stopPropagation();
+            var isOpen = editInlinePanel.style.display !== 'none';
+            if (isOpen) {
+                editInlinePanel.style.display = 'none';
             } else {
-                showToast('ID của bạn: ' + pid, '#2e7d32');
+                editInlinePanel.style.display = 'flex';
+                if (inlineMsg) inlineMsg.style.display = 'none';
+                if (inlineInput) {
+                    inlineInput.value = SAVE.playerId || pid;
+                    setTimeout(function () { inlineInput.focus(); }, 60);
+                }
             }
         };
     }
 
-    // Đăng nhập Google (Tự động mở cửa sổ chọn tài khoản Google không cần nhập email)
-    var googleLoginBtn = overlay.querySelector('#st-google-login-btn');
-    if (googleLoginBtn) {
-        googleLoginBtn.onclick = function () {
+    if (inlineCancelBtn && editInlinePanel) {
+        inlineCancelBtn.onclick = function (e) {
+            e.stopPropagation();
+            editInlinePanel.style.display = 'none';
+        };
+    }
+
+    if (inlineInput) {
+        inlineInput.addEventListener('input', function () {
+            inlineInput.value = inlineInput.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+        });
+    }
+
+    if (inlineSaveBtn && inlineInput) {
+        inlineSaveBtn.onclick = function (e) {
+            e.stopPropagation();
+            var newId = (inlineInput.value || '').trim().toUpperCase();
+            var curId = SAVE.playerId || pid;
+
+            if (!newId || newId.length < 3) {
+                if (inlineMsg) {
+                    inlineMsg.style.display = 'block';
+                    inlineMsg.style.background = '#ffebee';
+                    inlineMsg.style.color = '#c62828';
+                    inlineMsg.innerText = 'ID phải có ít nhất 3 ký tự!';
+                }
+                inlineInput.focus();
+                return;
+            }
+
+            if (!/^[A-Z0-9_-]{3,16}$/.test(newId)) {
+                if (inlineMsg) {
+                    inlineMsg.style.display = 'block';
+                    inlineMsg.style.background = '#ffebee';
+                    inlineMsg.style.color = '#c62828';
+                    inlineMsg.innerText = 'ID chỉ gồm chữ cái, số và dấu gạch (-)!';
+                }
+                inlineInput.focus();
+                return;
+            }
+
+            if (newId === curId) {
+                editInlinePanel.style.display = 'none';
+                return;
+            }
+
+            inlineSaveBtn.disabled = true;
+            setBtnText(inlineSaveBtn, '...');
+
             if (typeof FIREBASE_SYNC !== 'undefined' && FIREBASE_SYNC.isConfigured()) {
-                FIREBASE_SYNC.loginWithGoogle(function (user) {
-                    showToast('🎉 Đăng nhập Google thành công: ' + (user.displayName || user.email), '#2e7d32');
-                    openSettingsModal(opts);
-                }, function (err) {
-                    console.warn('Google sign-in notice:', err);
-                    var msg = (err && err.message) ? err.message : String(err);
-                    var code = (err && err.code) ? err.code : '';
-                    if (code === 'auth/configuration-not-found' || msg.indexOf('configuration-not-found') !== -1) {
-                        showToast('⚠️ Bạn chưa Bật "Google" trong Firebase Console > Authentication > Sign-in method!', '#c62828');
-                    } else if (code === 'auth/unauthorized-domain' || msg.indexOf('unauthorized-domain') !== -1) {
-                        showToast('⚠️ Vui lòng thêm domain/IP này vào Firebase Console > Authentication > Settings > Authorized domains!', '#c62828');
-                    } else if (code === 'auth/popup-closed-by-user' || msg.indexOf('popup-closed-by-user') !== -1) {
-                        showToast('ℹ️ Bạn đã đóng cửa sổ chọn tài khoản Google.', '#546e7a');
-                    } else if (code === 'auth/popup-blocked' || msg.indexOf('popup-blocked') !== -1) {
-                        showToast('⚠️ Trình duyệt đang chặn cửa sổ Popup. Vui lòng cho phép popup!', '#c62828');
+                FIREBASE_SYNC.claimPlayerId(newId, curId, function (success, resultOrMsg) {
+                    inlineSaveBtn.disabled = false;
+                    setBtnText(inlineSaveBtn, typeof I18N !== 'undefined' ? I18N.t('settings.save') : 'Lưu');
+                    if (success) {
+                        SAVE.playerId = newId;
+                        if (typeof saveGame === 'function') saveGame();
+                        if (FIREBASE_SYNC.getCurrentUser()) {
+                            FIREBASE_SYNC.save(SAVE);
+                        }
+                        if (playerIdVal) playerIdVal.textContent = newId;
+                        editInlinePanel.style.display = 'none';
+                        showToast('Đã đổi ID thành công: ' + newId, '#2e7d32');
                     } else {
-                        showToast('⚠️ Đăng nhập Google không thành công: ' + msg, '#c62828');
+                        if (inlineMsg) {
+                            inlineMsg.style.display = 'block';
+                            inlineMsg.style.background = '#ffebee';
+                            inlineMsg.style.color = '#c62828';
+                            inlineMsg.innerText = resultOrMsg;
+                        }
                     }
                 });
             } else {
-                showToast('⚠️ Chưa cấu hình kết nối Firebase Google!', '#c62828');
+                SAVE.playerId = newId;
+                if (typeof saveGame === 'function') saveGame();
+                if (playerIdVal) playerIdVal.textContent = newId;
+                inlineSaveBtn.disabled = false;
+                setBtnText(inlineSaveBtn, typeof I18N !== 'undefined' ? I18N.t('settings.save') : 'Lưu');
+                editInlinePanel.style.display = 'none';
+                showToast('Đã đổi ID thành công: ' + newId, '#2e7d32');
             }
         };
     }
 
-    var langBtn = overlay.querySelector('#st-lang-btn');
-    if (langBtn) {
-        langBtn.onclick = function () {
-            showToast('🇻🇳 Hiện tại trò chơi hỗ trợ giao diện Tiếng Việt');
+    // 2. SAO CHÉP ID NGƯỜI CHƠI
+    var copyIdBtn = overlay.querySelector('#st-copy-id-btn');
+    if (copyIdBtn) {
+        copyIdBtn.onclick = function (e) {
+            e.stopPropagation();
+            var curSaveId = SAVE.playerId || pid;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(curSaveId).then(function () {
+                    showToast('Đã sao chép ID: ' + curSaveId, '#2e7d32');
+                }).catch(function () {
+                    showToast('ID của bạn: ' + curSaveId, '#2e7d32');
+                });
+            } else {
+                showToast('ID của bạn: ' + curSaveId);
+            }
         };
     }
 
-    overlay.querySelector('#st-bgm').onclick = function () {
-        s.bgm = (s.bgm === false) ? true : false;
-        saveGame();
-        if (typeof updateBgmPlayback === 'function') updateBgmPlayback();
-        openSettingsModal(opts);
-    };
-    overlay.querySelector('#st-sound').onclick = function () {
-        s.sound = !s.sound;
-        saveGame();
-        openSettingsModal(opts);
-    };
-    overlay.querySelector('#st-unlock').onclick = function () {
-        s.unlockAllLevels = !s.unlockAllLevels;
-        saveGame();
-        if (opts.onUnlockChanged) opts.onUnlockChanged();
-        openSettingsModal(opts);
-    };
-    overlay.querySelector('#st-auto').onclick = function () {
-        opts.onToggleAuto();
-        opts.isAuto = !opts.isAuto;
-        openSettingsModal(opts);
-    };
-    overlay.querySelector('#st-reset').onclick = function () {
-        overlay.querySelector('#reset-confirm-area').style.display = 'block';
-        overlay.querySelector('#st-main-btns').style.display = 'none';
-    };
-    overlay.querySelector('#st-cancel-reset').onclick = function () {
-        overlay.querySelector('#reset-confirm-area').style.display = 'none';
-        overlay.querySelector('#st-main-btns').style.display = 'flex';
-    };
-    overlay.querySelector('#st-confirm-reset').onclick = function () {
-        closeModal();
-        opts.onResetAll();
-    };
+    // 3. ĐĂNG NHẬP GOOGLE & CẬP NHẬT GIAO DIỆN TẠI CHỖ (IN-PLACE)
+    function bindGoogleLogin() {
+        var gBtn = overlay.querySelector('#st-google-login-btn');
+        if (gBtn) {
+            gBtn.onclick = function (e) {
+                e.stopPropagation();
+                if (typeof FIREBASE_SYNC !== 'undefined' && FIREBASE_SYNC.isConfigured()) {
+                    FIREBASE_SYNC.loginWithGoogle(function (user) {
+                        showToast('Đăng nhập Google thành công!');
+                        var gArea = overlay.querySelector('#st-google-area');
+                        if (gArea) {
+                            gArea.innerHTML = buildGoogleCardHtml({
+                                picture: user.photoURL || user.picture,
+                                name: user.displayName || user.name,
+                                email: user.email
+                            });
+                        }
+                    }, function (err) {
+                        console.warn('Google sign-in notice:', err);
+                        var msg = (err && err.message) ? err.message : String(err);
+                        var code = (err && err.code) ? err.code : '';
+                        if (code === 'auth/configuration-not-found' || msg.indexOf('configuration-not-found') !== -1) {
+                            showToast('Chưa bật Google trong Firebase!');
+                        } else if (code === 'auth/unauthorized-domain' || msg.indexOf('unauthorized-domain') !== -1) {
+                            showToast('Vui lòng thêm domain vào Firebase!');
+                        } else if (code === 'auth/popup-closed-by-user' || msg.indexOf('popup-closed-by-user') !== -1) {
+                            showToast('Đã đóng cửa sổ chọn Google.');
+                        } else if (code === 'auth/popup-blocked' || msg.indexOf('popup-blocked') !== -1) {
+                            showToast('Trình duyệt đang chặn Popup!');
+                        } else {
+                            showToast('Đăng nhập Google thất bại!');
+                        }
+                    });
+                } else {
+                    showToast('Chưa cấu hình Firebase Google!');
+                }
+            };
+        }
+    }
+    bindGoogleLogin();
+
+    // 4. DROPDOWN CHỌN NGÔN NGỮ & CẬP NHẬT TẠI CHỖ (KHÔNG RE-RENDER POPUP)
+    var langContainer = overlay.querySelector('#st-lang-container');
+    var langTrigger = overlay.querySelector('#st-lang-trigger');
+    var langMenu = overlay.querySelector('#st-lang-menu');
+    var langArrow = overlay.querySelector('#st-lang-arrow');
+
+    if (langTrigger && langMenu) {
+        langTrigger.onclick = function (e) {
+            e.stopPropagation();
+            var isOpen = langMenu.style.display !== 'none';
+            if (isOpen) {
+                langMenu.style.display = 'none';
+                if (langArrow) langArrow.classList.remove('rotated');
+                if (langContainer) langContainer.classList.remove('open');
+            } else {
+                langMenu.style.display = 'flex';
+                if (langArrow) langArrow.classList.add('rotated');
+                if (langContainer) langContainer.classList.add('open');
+            }
+        };
+
+        var options = overlay.querySelectorAll('.lang-option-item');
+        options.forEach(function (opt) {
+            opt.onclick = function (e) {
+                e.stopPropagation();
+                var targetLang = this.getAttribute('data-lang');
+                if (typeof I18N !== 'undefined') {
+                    I18N.setLanguage(targetLang);
+                    if (typeof saveGame === 'function') saveGame();
+                    var msg = targetLang === 'en'
+                        ? I18N.t('toasts.lang_switched_en')
+                        : I18N.t('toasts.lang_switched_vi');
+                    showToast(msg, '#2e7d32');
+                }
+                // Cập nhật toàn bộ nhãn/text trong popup hiện tại mượt mà
+                updateAllSettingsTexts(targetLang);
+                // Đóng menu sổ xuống
+                langMenu.style.display = 'none';
+                var curArrow = overlay.querySelector('#st-lang-arrow');
+                if (curArrow) curArrow.classList.remove('rotated');
+                if (langContainer) langContainer.classList.remove('open');
+            };
+        });
+    }
+
+    // 5. CÁC NÚT BẬT/TẮT TÍNH NĂNG CẬP NHẬT TRỰC TIẾP (IN-PLACE, KHÔNG TẠO LẠI POPUP)
+    if (bgmBtn) {
+        bgmBtn.onclick = function (e) {
+            e.stopPropagation();
+            s.bgm = (s.bgm === false) ? true : false;
+            if (typeof saveGame === 'function') saveGame();
+            if (typeof updateBgmPlayback === 'function') updateBgmPlayback();
+            var isOn = s.bgm !== false;
+            bgmBtn.className = 'toggle-btn ' + (isOn ? 'on' : 'off');
+            bgmBtn.textContent = typeof I18N !== 'undefined' ? I18N.t(isOn ? 'settings.on' : 'settings.off') : (isOn ? 'BẬT' : 'TẮT');
+        };
+    }
+
+    if (soundBtn) {
+        soundBtn.onclick = function (e) {
+            e.stopPropagation();
+            s.sound = !s.sound;
+            if (typeof saveGame === 'function') saveGame();
+            var isOn = !!s.sound;
+            soundBtn.className = 'toggle-btn ' + (isOn ? 'on' : 'off');
+            soundBtn.textContent = typeof I18N !== 'undefined' ? I18N.t(isOn ? 'settings.on' : 'settings.off') : (isOn ? 'BẬT' : 'TẮT');
+        };
+    }
+
+    if (unlockBtn) {
+        unlockBtn.onclick = function (e) {
+            e.stopPropagation();
+            s.unlockAllLevels = !s.unlockAllLevels;
+            if (typeof saveGame === 'function') saveGame();
+            if (opts.onUnlockChanged) opts.onUnlockChanged();
+            var isOn = !!s.unlockAllLevels;
+            unlockBtn.className = 'toggle-btn ' + (isOn ? 'on' : 'off');
+            unlockBtn.textContent = typeof I18N !== 'undefined' ? I18N.t(isOn ? 'settings.on' : 'settings.off') : (isOn ? 'BẬT' : 'TẮT');
+        };
+    }
+
+    if (autoBtn) {
+        autoBtn.onclick = function (e) {
+            e.stopPropagation();
+            if (opts.onToggleAuto) opts.onToggleAuto();
+            opts.isAuto = !opts.isAuto;
+            var isOn = !!opts.isAuto;
+            autoBtn.className = 'toggle-btn ' + (isOn ? 'on' : 'off');
+            autoBtn.textContent = typeof I18N !== 'undefined' ? I18N.t(isOn ? 'settings.on' : 'settings.off') : (isOn ? 'BẬT' : 'TẮT');
+        };
+    }
+
+    // 6. XÓA DỮ LIỆU & XÁC NHẬN (IN-PLACE)
+    var resetBtn = overlay.querySelector('#st-reset');
+    var resetArea = overlay.querySelector('#reset-confirm-area');
+    var mainBtns = overlay.querySelector('#st-main-btns');
+    var cancelResetBtn = overlay.querySelector('#st-cancel-reset');
+    var confirmResetBtn = overlay.querySelector('#st-confirm-reset');
+
+    if (resetBtn && resetArea && mainBtns) {
+        resetBtn.onclick = function (e) {
+            e.stopPropagation();
+            resetArea.style.display = 'block';
+            mainBtns.style.display = 'none';
+        };
+    }
+
+    if (cancelResetBtn && resetArea && mainBtns) {
+        cancelResetBtn.onclick = function (e) {
+            e.stopPropagation();
+            resetArea.style.display = 'none';
+            mainBtns.style.display = 'flex';
+        };
+    }
+
+    if (confirmResetBtn) {
+        confirmResetBtn.onclick = function (e) {
+            e.stopPropagation();
+            closeModal();
+            if (opts.onResetAll) opts.onResetAll();
+        };
+    }
 }
 
 // ---------- MODAL ĐĂNG NHẬP GOOGLE & ĐỒNG BỘ ĐÁM MÂY ----------
@@ -1654,7 +2286,7 @@ function showGoogleAuthModal(params) {
 
             '<div class="modal-buttons" style="margin-top:14px;flex-direction:column;gap:8px;">' +
                 '<button class="modal-btn primary" id="g-submit-btn" style="width:100%;height:44px;">Đăng Nhập & Đồng Bộ Đám Mây</button>' +
-                '<button class="modal-btn" id="g-open-fb-btn" style="width:100%;height:38px;font-size:0.8125rem;background:#fff3e0;border:1.5px solid #ffcc80;color:#e65100;">🔥 Cấu hình Google Firebase (100% Miễn phí)</button>' +
+                '<button class="modal-btn" id="g-open-fb-btn" style="width:100%;height:38px;font-size:0.8125rem;background:#fff3e0;border:1.5px solid #ffcc80;color:#e65100;">Cấu hình Google Firebase (100% Miễn phí)</button>' +
                 '<button class="modal-btn gem-btn" id="g-open-import-btn" style="width:100%;height:40px;font-size:0.875rem;">Nhập mã sao lưu từ máy khác</button>' +
                 '<button class="modal-btn" id="g-cancel-btn" style="width:100%;height:40px;">Quay lại</button>' +
             '</div>' +
@@ -1695,7 +2327,7 @@ function showGoogleAuthModal(params) {
         submitBtn.onclick = function () {
             var email = (emailInput.value || '').trim();
             if (!email || email.indexOf('@') === -1 || email.indexOf('.') === -1) {
-                showToast('⚠️ Vui lòng nhập đúng định dạng email (ví dụ: ten@gmail.com)', '#c62828');
+                showToast('Vui lòng nhập đúng định dạng email (ví dụ: ten@gmail.com)', '#c62828');
                 emailInput.focus();
                 return;
             }
@@ -1710,9 +2342,9 @@ function showGoogleAuthModal(params) {
 
                 noticeBox.style.display = 'block';
                 noticeBox.innerHTML =
-                    '<b>💡 Tìm thấy dữ liệu Đám Mây của tài khoản này:</b><br>' +
+                    '<b>Tìm thấy dữ liệu Đám Mây của tài khoản này:</b><br>' +
                     '• Màn hiện tại: <b>Level ' + cloudLv + '</b> (' + cloudStars + ' màn đạt sao)<br>' +
-                    '• Kho Vàng: <b>' + cloudCoins + ' 🪙</b><br>' +
+                    '• Kho Vàng: <b>' + cloudCoins + ' Vàng</b><br>' +
                     '<div style="margin-top:8px;display:flex;gap:6px;">' +
                         '<button class="modal-btn primary" id="g-apply-cloud-btn" style="flex:1;height:36px;font-size:0.8125rem;">Nạp dữ liệu từ Đám Mây</button>' +
                         '<button class="modal-btn danger-btn" id="g-overwrite-cloud-btn" style="flex:1;height:36px;font-size:0.8125rem;">Ghi đè bằng máy này</button>' +
@@ -1733,7 +2365,7 @@ function showGoogleAuthModal(params) {
                         saveGame();
                         if (opts.onCloudRestore) opts.onCloudRestore();
                         closeModal();
-                        showToast('🎉 Đã đồng bộ thành công dữ liệu từ tài khoản Google!', '#2e7d32');
+                        showToast('Đồng bộ dữ liệu thành công!');
                         if (onSuccess) onSuccess();
                     };
                 }
@@ -1748,7 +2380,7 @@ function showGoogleAuthModal(params) {
                         };
                         syncSaveToCloud();
                         closeModal();
-                        showToast('☁️ Đã ghi đè và sao lưu tiến trình máy này lên Google!', '#2e7d32');
+                        showToast('Đã lưu tiến trình lên Google!');
                         if (onSuccess) onSuccess();
                     };
                 }
@@ -1764,7 +2396,7 @@ function showGoogleAuthModal(params) {
             };
             syncSaveToCloud();
             closeModal();
-            showToast('🎉 Đã liên kết tài khoản Google & lưu lên Đám Mây thành công!', '#2e7d32');
+            showToast('Đã liên kết tài khoản Google!');
             if (onSuccess) onSuccess();
         };
     }
@@ -1775,7 +2407,7 @@ function showImportSyncModal(opts) {
     var overlay = createModal(
         '<div class="google-auth-dialog">' +
             '<div class="google-dialog-header">' +
-                '<div style="font-size:2rem;line-height:1;margin-bottom:6px;">📋</div>' +
+                '<div style="font-size:2rem;line-height:1;margin-bottom:6px;"></div>' +
                 '<div class="google-dialog-title">Nhập Mã Sao Lưu Chuyển Máy</div>' +
             '</div>' +
             '<div class="google-dialog-desc">' +
@@ -1810,7 +2442,7 @@ function showImportSyncModal(opts) {
         doImportBtn.onclick = function () {
             var code = (codeArea.value || '').trim();
             if (!code) {
-                showToast('⚠️ Vui lòng dán mã sao lưu vào ô!', '#c62828');
+                showToast('Vui lòng dán mã sao lưu!');
                 codeArea.focus();
                 return;
             }
@@ -1819,9 +2451,9 @@ function showImportSyncModal(opts) {
             if (ok) {
                 if (opts.onCloudRestore) opts.onCloudRestore();
                 closeModal();
-                showToast('🎉 Đã đồng bộ tiến trình thành công từ thiết bị cũ!', '#2e7d32');
+                showToast('Đồng bộ tiến trình thành công!');
             } else {
-                showToast('❌ Mã sao lưu không hợp lệ hoặc bị lỗi!', '#c62828');
+                showToast('Mã sao lưu không hợp lệ!');
             }
         };
     }
@@ -1834,7 +2466,7 @@ function showFirebaseSetupModal(opts) {
     var overlay = createModal(
         '<div class="fb-guide-dialog">' +
             '<div class="fb-guide-header">' +
-                '<span style="font-size:1.75rem;">🔥</span>' +
+                '<span style="font-size:1.75rem;"></span>' +
                 '<div>' +
                     '<h3 class="fb-guide-title">Lưu Trữ Google Firebase Miễn Phí</h3>' +
                     '<div style="font-size:0.75rem;color:#795548;">Spark Plan: 50.000 lượt đọc / 20.000 lượt ghi / ngày (100% Free)</div>' +
@@ -1867,7 +2499,7 @@ function showFirebaseSetupModal(opts) {
                 '<div class="fb-step-item">' +
                     '<span class="fb-step-num">4</span>' +
                     '<div class="fb-step-text">' +
-                        'Bấm vào biểu tượng <b>Cài đặt dự án ⚙️</b> (Project settings) -> Cuộn xuống mục <b>Your apps</b> -> Chọn Web <b>&lt;/&gt;</b> -> Sao chép đoạn <code>firebaseConfig = { ... }</code>.' +
+                        'Bấm vào biểu tượng <b>Cài đặt dự án</b> (Project settings) -> Cuộn xuống mục <b>Your apps</b> -> Chọn Web <b>&lt;/&gt;</b> -> Sao chép đoạn <code>firebaseConfig = { ... }</code>.' +
                     '</div>' +
                 '</div>' +
 
@@ -1908,7 +2540,7 @@ function showFirebaseSetupModal(opts) {
         clearBtn.onclick = function () {
             if (typeof FIREBASE_SYNC !== 'undefined') {
                 FIREBASE_SYNC.clearConfig();
-                showToast('Đã xóa cấu hình Firebase.', '#546e7a');
+                showToast('Đã xóa cấu hình Firebase.');
                 closeModal();
                 openSettingsModal(opts);
             }
@@ -1919,7 +2551,7 @@ function showFirebaseSetupModal(opts) {
         applyBtn.onclick = function () {
             var rawText = (configInput.value || '').trim();
             if (!rawText) {
-                showToast('⚠️ Vui lòng dán mã cấu hình Firebase vào ô!', '#c62828');
+                showToast('Vui lòng dán mã cấu hình!');
                 configInput.focus();
                 return;
             }
@@ -1927,11 +2559,11 @@ function showFirebaseSetupModal(opts) {
             if (typeof FIREBASE_SYNC !== 'undefined') {
                 var res = FIREBASE_SYNC.saveConfig(rawText);
                 if (res.success) {
-                    showToast('🎉 Đã kích hoạt kết nối Google Firebase thành công!', '#2e7d32');
+                    showToast('Kích hoạt Firebase thành công!');
                     closeModal();
                     openSettingsModal(opts);
                 } else {
-                    showToast('❌ ' + (res.message || 'Cấu hình không hợp lệ!'), '#c62828');
+                    showToast('Cấu hình không hợp lệ!');
                 }
             }
         };
@@ -1990,7 +2622,7 @@ function showEditPlayerIdModal(opts) {
                 msgBox.style.display = 'block';
                 msgBox.style.background = '#ffebee';
                 msgBox.style.color = '#c62828';
-                msgBox.innerText = '⚠️ ID phải có ít nhất 3 ký tự!';
+                msgBox.innerText = 'ID phải có ít nhất 3 ký tự!';
                 input.focus();
                 return;
             }
@@ -1999,7 +2631,7 @@ function showEditPlayerIdModal(opts) {
                 msgBox.style.display = 'block';
                 msgBox.style.background = '#ffebee';
                 msgBox.style.color = '#c62828';
-                msgBox.innerText = '⚠️ ID chỉ được chứa chữ cái, số và dấu gạch (-)!';
+                msgBox.innerText = 'ID chỉ được chứa chữ cái, số và dấu gạch (-)!';
                 input.focus();
                 return;
             }
@@ -2023,20 +2655,20 @@ function showEditPlayerIdModal(opts) {
                         if (FIREBASE_SYNC.getCurrentUser()) {
                             FIREBASE_SYNC.save(SAVE);
                         }
-                        showToast('🎉 Đã đổi ID thành công: ' + newId, '#2e7d32');
+                        showToast('Đã đổi ID thành công: ' + newId, '#2e7d32');
                         closeModal();
                         openSettingsModal(opts);
                     } else {
                         msgBox.style.display = 'block';
                         msgBox.style.background = '#ffebee';
                         msgBox.style.color = '#c62828';
-                        msgBox.innerText = '❌ ' + resultOrMsg;
+                        msgBox.innerText = resultOrMsg;
                     }
                 });
             } else {
                 SAVE.playerId = newId;
                 saveGame();
-                showToast('🎉 Đã đổi ID thành công: ' + newId, '#2e7d32');
+                showToast('Đã đổi ID thành công: ' + newId, '#2e7d32');
                 closeModal();
                 openSettingsModal(opts);
             }

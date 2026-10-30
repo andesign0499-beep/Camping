@@ -130,7 +130,7 @@ var FIREBASE_SYNC = (function () {
             db = firebase.firestore();
             initialized = true;
             status = 'ready';
-            console.log('🔥 Firebase Cloud Sync initialized successfully for project:', activeCfg.projectId);
+            console.log('[Firebase] Cloud Sync initialized successfully for project:', activeCfg.projectId);
 
             // Bắt kết quả đăng nhập sau khi redirect trên điện thoại
             if (auth.getRedirectResult) {
@@ -147,10 +147,10 @@ var FIREBASE_SYNC = (function () {
                             lastSynced: Date.now()
                         };
                         saveGame();
-                        console.log('🎉 Đăng nhập Google thành công qua Redirect:', user.email);
+                        console.log('[Firebase] Đăng nhập Google thành công qua Redirect:', user.email);
                         checkAndSyncCloudData(user);
                         if (typeof showToast === 'function') {
-                            showToast('🎉 Đăng nhập Google thành công: ' + (user.displayName || user.email), '#2e7d32');
+                            showToast('Đăng nhập Google thành công: ' + (user.displayName || user.email), '#2e7d32');
                         }
                     }
                 }).catch(function (err) {
@@ -174,7 +174,7 @@ var FIREBASE_SYNC = (function () {
                         lastSynced: Date.now()
                     };
                     saveGame();
-                    console.log('🔥 Firebase user active:', user.email);
+                    console.log('[Firebase] User active:', user.email);
 
                     // Tự động kiểm tra bản lưu đám mây
                     checkAndSyncCloudData(user);
@@ -257,7 +257,7 @@ var FIREBASE_SYNC = (function () {
         };
 
         docRef.set(payload, { merge: true }).then(function () {
-            console.log('☁️ Saved to Firebase Firestore successfully at', new Date().toLocaleTimeString());
+            console.log('[Firebase] Saved to Firestore successfully at', new Date().toLocaleTimeString());
             if (SAVE.googleUser) {
                 SAVE.googleUser.lastSynced = Date.now();
                 try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {}
@@ -337,7 +337,7 @@ var FIREBASE_SYNC = (function () {
                 return;
             }
 
-            console.log('📱 Gọi hộp thoại Google gốc của Android qua FirebaseAuthentication plugin...');
+            console.log('[NativeAuth] Gọi hộp thoại Google gốc của Android qua FirebaseAuthentication plugin...');
             fbAuthPlugin.signInWithGoogle().then(function (result) {
                 console.log('Native Google Sign-In result:', result);
                 var nativeUser = result.user || {};
