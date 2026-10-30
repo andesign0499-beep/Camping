@@ -569,7 +569,15 @@ function computeEnergyBudget(board, orderIds, level) {
         if (c && c.isLocked) webCount++;
     });
 
-    var expectedEff = Math.max(3, totalDeficit);
+    // Tính số lần click kỳ vọng dựa trên tỷ lệ rơi đồ Cấp 1, 2, 3 mới:
+    // Từ Level 11 trở lên, thùng sinh đồ có thể rơi Lv.2 (2 đơn vị) và Lv.3 (4 đơn vị),
+    // giúp giảm số lần bấm thực tế của người chơi. Ngân sách năng lượng và ngưỡng 3 sao
+    // được chuẩn hóa lại theo số click thực tế này để đảm bảo độ chuẩn xác và hấp dẫn.
+    var avgDropVal = (typeof getGeneratorDropExpectedValue === 'function')
+        ? getGeneratorDropExpectedValue(lvNum)
+        : 1.0;
+    var expectedClicks = Math.ceil(totalDeficit / avgDropVal);
+    var expectedEff = Math.max(3, expectedClicks);
     if (level && level.bonus) {
         expectedEff *= (lvNum >= 36 ? 0.86 : 0.90);
     }

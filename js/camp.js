@@ -1511,7 +1511,7 @@ function openSettingsModal(opts) {
         '<div id="reset-confirm-area" class="reset-confirm-area" style="display:none">' +
             '<p style="margin-bottom:12px;">⚠️ Bạn chắc chắn muốn xóa toàn bộ tiến trình, sao, vàng và cẩm nang về ban đầu?</p>' +
             '<div class="st-actions">' +
-                '<button class="modal-btn danger-btn" id="st-confirm-reset" style="flex:1">Xác nhận xóa hết</button>' +
+                '<button class="modal-btn danger-btn" id="st-confirm-reset" style="flex:2">Xác nhận xóa hết</button>' +
                 '<button class="modal-btn gem-btn" id="st-cancel-reset" style="flex:1">Hủy</button>' +
             '</div>' +
         '</div>' +

@@ -790,6 +790,12 @@ function setNpcState(npcId, moodEmoji, speechText, autoHideMs) {
         hideNpcBubble();
         return;
     }
+    if (speechText && typeof speechText === 'string') {
+        speechText = speechText.trim();
+        if (speechText.length > 51) {
+            speechText = speechText.slice(0, 48) + '...';
+        }
+    }
     if (speechText && npcSpeechBubble && npcSpeechText) {
         npcSpeechText.textContent = speechText;
         npcSpeechBubble.style.display = 'flex';
@@ -826,16 +832,16 @@ function updateEarlyLevelsTutorial() {
     // Level 7-9: Chỉ có Thùng Dụng Cụ ('generator_crate')
     // Level 10: Hội tụ cả 3 thùng sinh đồ
     var targetGenMap = {
-        1: { id: 'generator_cooler', npc: 'gau', emoji: '🛒', text: 'Chào mừng bạn tới khu cắm trại! Chạm vào Xe Kéo Dã Ngoại để lấy nguyên liệu nhé!' },
-        2: { id: 'generator_cooler', npc: 'gau', emoji: '🛒', text: 'Tiếp tục chạm vào Xe Kéo Dã Ngoại để chuẩn bị vật dụng cắm trại nhé!' },
-        3: { id: 'generator_cooler', npc: 'gau', emoji: '🛒', text: 'Chạm vào Xe Kéo Dã Ngoại để chuẩn bị đầy đủ 3 nhóm vật dụng cắm trại nhé!' },
-        4: { id: 'generator_backpack', npc: 'cao', emoji: '🎒', text: 'Ở Màn 4, bạn có Ba Lô Dã Ngoại mới! Chạm vào Ba Lô để lấy nguyên liệu nhé!' },
-        5: { id: 'generator_backpack', npc: 'cao', emoji: '🎒', text: 'Chạm vào Ba Lô Dã Ngoại để chuẩn bị các món ẩm thực & dụng cụ nhé!' },
-        6: { id: 'generator_backpack', npc: 'cao', emoji: '🎒', text: 'Hoàn thiện các món đồ cao cấp từ Ba Lô Dã Ngoại nhé!' },
-        7: { id: 'generator_crate', npc: 'de', emoji: '🧰', text: 'Ở Màn 7, bạn có Thùng Dụng Cụ mới! Chạm vào Thùng Dụng Cụ để khám phá nguyên liệu nhé!' },
-        8: { id: 'generator_crate', npc: 'de', emoji: '🧰', text: 'Tiếp tục tạo các vật dụng sinh hoạt & an toàn từ Thùng Dụng Cụ nhé!' },
-        9: { id: 'generator_crate', npc: 'de', emoji: '🧰', text: 'Khám phá trọn vẹn 3 nhóm vật phẩm từ Thùng Dụng Cụ nhé!' },
-        10: { id: 'generator_cooler', npc: 'gau', emoji: '✨', text: 'Màn 10 hội tụ cả 3 nguồn phát! Mỗi thùng đảm nhiệm 1 nhiệm vụ, hãy chạm vào thùng nhé!' }
+        1: { id: 'generator_cooler', npc: 'gau', emoji: '🛒', text: 'Chạm Xe Kéo Dã Ngoại để lấy đồ cắm trại nhé!' },
+        2: { id: 'generator_cooler', npc: 'gau', emoji: '🛒', text: 'Tiếp tục chạm Xe Kéo để lấy thêm nguyên liệu!' },
+        3: { id: 'generator_cooler', npc: 'gau', emoji: '🛒', text: 'Chạm Xe Kéo để chuẩn bị đủ 3 nhóm vật dụng nhé!' },
+        4: { id: 'generator_backpack', npc: 'cao', emoji: '🎒', text: 'Ba Lô Dã Ngoại mới! Chạm Ba Lô để lấy đồ nhé!' },
+        5: { id: 'generator_backpack', npc: 'cao', emoji: '🎒', text: 'Chạm Ba Lô để chuẩn bị ẩm thực và dụng cụ nhé!' },
+        6: { id: 'generator_backpack', npc: 'cao', emoji: '🎒', text: 'Ghép các món cao cấp từ Ba Lô Dã Ngoại nhé!' },
+        7: { id: 'generator_crate', npc: 'de', emoji: '🧰', text: 'Thùng Dụng Cụ mới! Chạm để lấy thêm nguyên liệu!' },
+        8: { id: 'generator_crate', npc: 'de', emoji: '🧰', text: 'Tạo vật dụng sinh hoạt từ Thùng Dụng Cụ nhé!' },
+        9: { id: 'generator_crate', npc: 'de', emoji: '🧰', text: 'Khám phá trọn vẹn đồ từ Thùng Dụng Cụ nhé!' },
+        10: { id: 'generator_cooler', npc: 'gau', emoji: '✨', text: 'Hội tụ 3 nguồn phát! Chạm thùng để làm nhiệm vụ!' }
     };
 
     var cfg = targetGenMap[currentLevel];
@@ -847,7 +853,7 @@ function updateEarlyLevelsTutorial() {
         var readyCard = ordersContainer ? ordersContainer.querySelector('.order-card.ready') : null;
         if (readyCard && !tutDeliveredOnce) {
             showTutorialHandTap(readyCard);
-            setNpcState('cao', '❗', 'Đủ món rồi! Chạm vào ô NỘP viền xanh bên dưới để giao đơn nhận Vàng nhé!', 0);
+            setNpcState('cao', '❗', 'Đủ món rồi! Chạm ô NỘP xanh để nhận Vàng nhé!', 0);
             return true;
         }
 
@@ -860,11 +866,11 @@ function updateEarlyLevelsTutorial() {
             if (cTo) cTo.classList.add('hint-pulse');
             showTutorialHandDrag(cFrom, cTo);
             var isWebTarget = boardData[best.to] && boardData[best.to].isLocked;
-            var itemName = getItemDisplayName(boardData[best.from].id);
+            var itemName = (typeof getItemCleanName === 'function') ? getItemCleanName(boardData[best.from].id) : getItemDisplayName(boardData[best.from].id);
             if (isWebTarget) {
-                setNpcState('de', '🕸️', 'Kéo ' + itemName + ' thả đè lên ô Mạng Nhện cùng loại để phá nhện và nâng cấp nhé!', 0);
+                setNpcState('de', '🕸️', 'Kéo ' + itemName + ' vào ô Nhện nhé!', 0);
             } else {
-                setNpcState('de', '✨', 'Kéo 2 ' + itemName + ' chồng lên nhau để ghép lên cấp cao hơn nhé!', 0);
+                setNpcState('de', '✨', 'Ghép 2 ' + itemName + ' để lên cấp nhé!', 0);
             }
             return true;
         }
@@ -907,16 +913,16 @@ function scheduleHint() {
 
 function buildCharacterHintText(npcId, actionType, itemName) {
     if (actionType === 'deliver') {
-        return 'Đơn hàng đã hoàn thành! Chạm vào ô NỘP viền xanh ngay bên dưới để nhận Vàng thưởng nhé!';
+        return 'Xong đơn! Chạm ô NỘP viền xanh nhận Vàng nhé!';
     }
     if (actionType === 'merge_web') {
-        return 'Thử kéo ' + itemName + ' đè lên ô Mạng Nhện cùng loại đang sáng để phá nhện nhé!';
+        return 'Kéo ' + itemName + ' vào ô Mạng Nhện sáng nhé!';
     }
     if (actionType === 'merge_free') {
-        return 'Mình thấy 2 ' + itemName + ' giống nhau kìa, ghép chúng lại để hoàn thành nhiệm vụ Màn ' + currentLevel + ' nhé!';
+        return 'Ghép 2 ' + itemName + ' để làm nhiệm vụ nhé!';
     }
     if (actionType === 'spawn') {
-        return 'Bàn cờ hết cặp ghép rồi, chạm vào Nguồn phát đang lấp lánh để lấy thêm nguyên liệu nhé!';
+        return 'Chạm vào Nguồn phát sáng để lấy thêm đồ nhé!';
     }
     return '';
 }
@@ -940,7 +946,7 @@ function showIdleHint(isManualClick) {
         var cTo = boardElement.children[best.to];
         if (cFrom) cFrom.classList.add('hint-pulse');
         if (cTo) cTo.classList.add('hint-pulse');
-        var itemName = getItemDisplayName(boardData[best.from].id);
+        var itemName = (typeof getItemCleanName === 'function') ? getItemCleanName(boardData[best.from].id) : getItemDisplayName(boardData[best.from].id);
         var isWeb = boardData[best.to] && boardData[best.to].isLocked;
         setNpcState(speakerId, '💡', buildCharacterHintText(speakerId, isWeb ? 'merge_web' : 'merge_free', itemName), 4500);
         return;
@@ -958,11 +964,11 @@ function showIdleHint(isManualClick) {
     }
 
     if (playerEnergy <= 0) {
-        setNpcState('gau', '⚡', 'Hết năng lượng mất rồi! Bấm vào biểu tượng Năng lượng ở góc trên để tiếp sức nhé!', 4500);
+        setNpcState('gau', '⚡', 'Hết năng lượng rồi! Chạm biểu tượng ⚡ để nạp nhé!', 4500);
         return;
     }
     if (empties.length === 0) {
-        setNpcState('de', '🗑️', 'Bàn cờ đầy kín rồi! Hãy chạm chọn 1 món cấp thấp rồi bấm nút BÁN ở dưới để giải phóng ô trống nhé!', 4500);
+        setNpcState('de', '🗑️', 'Bàn cờ đã đầy! Chọn 1 món rồi bấm BÁN ở dưới nhé!', 4500);
     }
 }
 
@@ -1654,8 +1660,8 @@ function renderOrders() {
         } else {
             card.addEventListener('click', () => {
                 var askNpc = getNextNpcId();
-                var targetName = getItemDisplayName(o.id);
-                setNpcState(askNpc, '🎯', 'Đơn hàng này cần ' + targetName + '. Hãy ghép các món cùng loại lên đúng cấp độ nhé!', 3200);
+                var targetName = (typeof getItemCleanName === 'function') ? getItemCleanName(o.id) : getItemDisplayName(o.id);
+                setNpcState(askNpc, '🎯', 'Cần ' + targetName + '! Ghép đồ cùng loại nhé!', 3200);
             });
         }
         ordersContainer.appendChild(card);
@@ -1663,7 +1669,7 @@ function renderOrders() {
 
     var allDone = currentOrders.every(o => o.done);
     if (allDone && webs > 0 && !levelWon) {
-        setNpcState('de', '🕸️', 'Đơn hàng đã xong hết! Hãy ghép phá nốt ' + webs + ' ô Mạng Nhện trên bàn cờ để hoàn thành màn chơi nhé!', 3000);
+        setNpcState('de', '🕸️', 'Xong đơn! Phá nốt ' + webs + ' ô Nhện để thắng nhé!', 3000);
     }
     if (allDone && webs === 0 && !levelWon) {
         levelWon = true;
@@ -1976,6 +1982,134 @@ function handleGeneratorClick(gen, cellElement) {
     }
 }
 
+// ==========================================
+// HIỆU ỨNG ĐỒ BAY RA TỪ THÙNG CHỨA / NGUỒN PHÁT SANG Ô TRỐNG
+// Tạo cảm giác trực quan, sống động khi người chơi bấm sinh đồ
+// ==========================================
+function flyItemFromGenerator(sourceEl, targetIdx, itemId, itemLv, delayMs, onLand) {
+    if (targetIdx == null || targetIdx < 0) {
+        if (typeof onLand === 'function') onLand();
+        return;
+    }
+
+    var targetCell = boardElement && boardElement.children[targetIdx];
+    var targetImg = targetCell ? targetCell.querySelector('.item-img') : null;
+    if (targetImg) {
+        targetImg.style.visibility = 'hidden';
+    }
+
+    var delay = delayMs || 0;
+    setTimeout(function () {
+        // Fallback hiển thị ngay nếu thiếu thông tin vị trí DOM
+        if (!sourceEl || !targetCell || !sourceEl.getBoundingClientRect || !targetCell.getBoundingClientRect) {
+            if (targetImg) targetImg.style.visibility = '';
+            if (typeof onLand === 'function') onLand();
+            return;
+        }
+
+        var srcRect = sourceEl.getBoundingClientRect();
+        var tgtRect = targetCell.getBoundingClientRect();
+
+        if (srcRect.width === 0 || tgtRect.width === 0) {
+            if (targetImg) targetImg.style.visibility = '';
+            if (typeof onLand === 'function') onLand();
+            return;
+        }
+
+        var flyWidth = Math.max(28, Math.min(tgtRect.width * 0.85, 52));
+        var flyHeight = Math.max(28, Math.min(tgtRect.height * 0.85, 52));
+
+        var x0 = srcRect.left + (srcRect.width - flyWidth) / 2;
+        var y0 = srcRect.top + (srcRect.height - flyHeight) / 2;
+
+        var x1 = tgtRect.left + (tgtRect.width - flyWidth) / 2;
+        var y1 = tgtRect.top + (tgtRect.height - flyHeight) / 2;
+
+        var dx = x1 - x0;
+        var dy = y1 - y0;
+
+        var flyer = document.createElement('img');
+        flyer.src = getItemImagePath(itemId);
+        flyer.alt = itemId;
+        flyer.className = 'spawn-flying-item';
+
+        var glowFilter = itemLv === 3
+            ? 'drop-shadow(0 0 10px #ffd54f) drop-shadow(0 3px 6px rgba(0,0,0,0.35))'
+            : (itemLv === 2 ? 'drop-shadow(0 0 8px #64b5f6) drop-shadow(0 3px 6px rgba(0,0,0,0.3))' : 'drop-shadow(0 3px 5px rgba(0,0,0,0.25))');
+
+        flyer.style.cssText = 'position:fixed;pointer-events:none;z-index:180005;will-change:transform,opacity;' +
+            'width:' + flyWidth + 'px;height:' + flyHeight + 'px;' +
+            'left:' + x0 + 'px;top:' + y0 + 'px;' +
+            'filter:' + glowFilter + ';object-fit:contain;';
+
+        document.body.appendChild(flyer);
+
+        // Nguồn phát nhún nhẹ khi đồ phóng ra
+        sourceEl.animate([
+            { transform: 'scale(0.94)' },
+            { transform: 'scale(1.06)' },
+            { transform: 'scale(1)' }
+        ], { duration: 180, easing: 'ease-out' });
+
+        var arcPeakY = Math.min(-26, (dy * 0.5) - 32);
+        var tiltDeg = (dx >= 0 ? 1 : -1) * (10 + Math.random() * 8);
+        var duration = 260;
+
+        var anim = flyer.animate([
+            { transform: 'translate(0, 0) scale(0.35) rotate(0deg)', opacity: 0.8 },
+            { transform: 'translate(' + (dx * 0.45) + 'px, ' + (dy * 0.45 + arcPeakY) + 'px) scale(1.18) rotate(' + tiltDeg + 'deg)', opacity: 1, offset: 0.48 },
+            { transform: 'translate(' + dx + 'px, ' + dy + 'px) scale(1.0) rotate(0deg)', opacity: 1 }
+        ], {
+            duration: duration,
+            easing: 'cubic-bezier(0.2, 0.85, 0.32, 1.15)',
+            fill: 'none'
+        });
+
+        var landed = false;
+        var finishFlight = function () {
+            if (landed) return;
+            landed = true;
+            if (flyer.parentNode) flyer.remove();
+
+            if (targetImg) {
+                targetImg.style.visibility = '';
+                if (itemLv === 3) {
+                    targetImg.animate([
+                        { transform: 'scale(1.35)' },
+                        { transform: 'scale(0.95)' },
+                        { transform: 'scale(1)' }
+                    ], { duration: 220, easing: 'cubic-bezier(.2,.85,.32,1.2)' });
+                } else if (itemLv === 2) {
+                    targetImg.animate([
+                        { transform: 'scale(1.25)' },
+                        { transform: 'scale(1)' }
+                    ], { duration: 190, easing: 'ease-out' });
+                } else {
+                    targetImg.animate([
+                        { transform: 'scale(1.16)' },
+                        { transform: 'scale(1)' }
+                    ], { duration: 170, easing: 'ease-out' });
+                }
+            }
+
+            if (itemLv === 3) {
+                triggerParticleBurst(targetCell, ['#ffd700', '#ff9800', '#ffffff', '#ffeb3b']);
+                showFloatingBadge(targetCell, '🌟 Lv.3 CỰC MAY MẮN!', '#e65100');
+            } else if (itemLv === 2) {
+                showFloatingBadge(targetCell, '✨ Lv.2!', '#1976d2');
+            }
+
+            if (typeof onLand === 'function') {
+                onLand();
+            }
+        };
+
+        anim.onfinish = finishFlight;
+        anim.oncancel = finishFlight;
+        setTimeout(finishFlight, duration + 60);
+    }, delay);
+}
+
 // Bấm 1 lần: Sinh 1 item từ nguồn phát vào 1 ô trống ngẫu nhiên (tiêu tốn 1 ⚡)
 function spawnFromGenerator(gen, cellElement) {
     if (isLevelCompleted()) return;
@@ -1992,9 +2126,9 @@ function spawnFromGenerator(gen, cellElement) {
             var cTo = boardElement.children[best.to];
             if (cFrom) cFrom.classList.add('hint-pulse');
             if (cTo) cTo.classList.add('hint-pulse');
-            setNpcState('de', '💡', 'Bàn cờ đã đầy! Hãy ghép cặp đang sáng nhấp nháy trước nhé!', 3000);
+            setNpcState('de', '💡', 'Bàn cờ đầy! Ghép các cặp đang nhấp nháy nhé!', 3000);
         } else {
-            setNpcState('de', '🗑️', 'Bàn cờ đầy & hết nước ghép! Hãy chọn 1 món rồi bấm nút BÁN ở dưới nhé!', 3500);
+            setNpcState('de', '🗑️', 'Bàn cờ đầy & hết nước! Chọn 1 món rồi bấm BÁN nhé!', 3500);
         }
         return;
     }
@@ -2017,41 +2151,13 @@ function spawnFromGenerator(gen, cellElement) {
     playSound('spawn', spawnedItem);
     renderBoard();
 
-    var el = boardElement.children[target];
-    var img = el && el.querySelector('.item-img');
-    if (img) {
-        if (spawnedLv === 3) {
-            img.animate([
-                { transform: 'scale(0)' },
-                { transform: 'scale(1.35)' },
-                { transform: 'scale(0.95)' },
-                { transform: 'scale(1)' }
-            ], { duration: 320, easing: 'cubic-bezier(.2,.85,.32,1.2)' });
-        } else if (spawnedLv === 2) {
-            img.animate([
-                { transform: 'scale(0)' },
-                { transform: 'scale(1.25)' },
-                { transform: 'scale(1)' }
-            ], { duration: 270, easing: 'ease-out' });
-        } else {
-            img.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.15)' }, { transform: 'scale(1)' }], { duration: 240, easing: 'ease-out' });
+    // Hiệu ứng đồ bay ra từ thùng chứa sang ô đích trực quan
+    flyItemFromGenerator(cellElement, target, spawnedItem, spawnedLv, 0, function () {
+        if (spreadIdx !== -1 && boardElement.children[spreadIdx]) {
+            showFloatingBadge(boardElement.children[spreadIdx], '🕸️ Nhện lan!', '#6a1b9a');
         }
-    }
-
-    if (spawnedLv === 3 && el) {
-        triggerParticleBurst(el, ['#ffd700', '#ff9800', '#ffffff', '#ffeb3b']);
-        showFloatingBadge(el, '🌟 Lv.3 CỰC MAY MẮN!', '#e65100');
-    } else if (spawnedLv === 2 && el) {
-        showFloatingBadge(el, '✨ Lv.2!', '#1976d2');
-    }
-
-    if (spreadIdx !== -1 && boardElement.children[spreadIdx]) {
-        showFloatingBadge(boardElement.children[spreadIdx], '🕸️ Nhện lan!', '#6a1b9a');
-    }
-
-    setTimeout(function () {
         checkAutoDeliverRevealedOrders();
-    }, 280);
+    });
 }
 
 // Bấm 6 lần liên tục: Xả đồ ra toàn bộ các ô trống trên bàn cờ (tiêu tốn tương ứng với số ô trống và năng lượng hiện có)
@@ -2089,9 +2195,10 @@ function bulkSpawnFromGenerator(gen, cellElement) {
             levelUnwantedClicks++;
         }
         var sLv = (lastSpawnResult && lastSpawnResult.itemLv) || 1;
+        var sId = (lastSpawnResult && lastSpawnResult.id) || ('an_lv' + sLv);
         if (sLv === 2) countLv2++;
         if (sLv === 3) countLv3++;
-        spawnedTargets.push({ idx: tIdx, lv: sLv });
+        spawnedTargets.push({ idx: tIdx, lv: sLv, id: sId });
 
         if (currentLevelCfg && currentLevelCfg.spreadEvery && levelClicks % currentLevelCfg.spreadEvery === 0) {
             spreadWeb(boardData);
@@ -2117,37 +2224,19 @@ function bulkSpawnFromGenerator(gen, cellElement) {
         showFloatingBadge(cellElement, bulkMsg, countLv3 > 0 ? '#e65100' : '#2e7d32');
     }
 
-    // Hiệu ứng nảy liên hoàn lượn sóng cho các ô vừa nhận đồ
+    // Hiệu ứng vòi phun: Đồ bay lần lượt từ thùng chứa ra từng ô trống
     spawnedTargets.forEach(function (sp, seq) {
-        var cEl = boardElement.children[sp.idx];
-        if (cEl) {
-            var img = cEl.querySelector('.item-img');
-            if (img) {
-                img.style.transform = 'scale(0.3)';
-                setTimeout(function () {
-                    img.animate([
-                        { transform: 'scale(0.3)' },
-                        { transform: sp.lv === 3 ? 'scale(1.35)' : (sp.lv === 2 ? 'scale(1.25)' : 'scale(1.15)') },
-                        { transform: 'scale(1)' }
-                    ], { duration: 240, easing: 'cubic-bezier(.2,.85,.32,1.2)' });
-                    img.style.transform = 'scale(1)';
-                }, Math.min(seq * 20, 240));
+        var staggerDelay = Math.min(seq * 32, 280);
+        flyItemFromGenerator(cellElement, sp.idx, sp.id, sp.lv, staggerDelay, function () {
+            if (seq === spawnedTargets.length - 1) {
+                checkAutoDeliverRevealedOrders();
             }
-            if (sp.lv === 3) {
-                showFloatingBadge(cEl, '🌟 Lv.3', '#e65100');
-            } else if (sp.lv === 2) {
-                showFloatingBadge(cEl, '✨ Lv.2', '#1976d2');
-            }
-        }
+        });
     });
 
     if (playerEnergy <= 0) {
         setTimeout(openEnergyShop, 450);
     }
-
-    setTimeout(function () {
-        checkAutoDeliverRevealedOrders();
-    }, 320);
 }
 
 function handleCellClick(e, cellElement) {

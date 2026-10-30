@@ -631,26 +631,26 @@ function generateLevelConfig(lvNum) {
     var npcList = ['gau', 'cao', 'de'];
     var leadNpc = npcList[(lvNum - 1) % 3];
     var defaultText = lvNum === 1
-        ? 'Chào mừng bạn! Hãy chạm vào Xe Kéo Dã Ngoại để chuẩn bị nguyên liệu làm nhiệm vụ nhé!'
+        ? 'Chạm Xe Kéo Dã Ngoại để lấy đồ cắm trại nhé!'
         : (lvNum === 2
-            ? 'Khám phá thêm các vật dụng cắm trại từ Xe Kéo Dã Ngoại nhé!'
+            ? 'Khám phá thêm đồ cắm trại từ Xe Kéo nhé!'
             : (lvNum === 3
-                ? 'Ghép các món cắm trại nâng cao từ Xe Kéo Dã Ngoại nhé!'
+                ? 'Ghép các món nâng cao từ Xe Kéo Dã Ngoại nhé!'
                 : (lvNum === 4
-                    ? 'Ở Màn 4, bạn có Ba Lô Dã Ngoại mới! Chạm vào Ba Lô để lấy nguyên liệu nhé!'
+                    ? 'Ba Lô Dã Ngoại mới! Chạm Ba Lô để lấy đồ nhé!'
                     : (lvNum === 5
-                        ? 'Tiếp tục khám phá các món ẩm thực & công cụ từ Ba Lô Dã Ngoại nhé!'
+                        ? 'Chạm Ba Lô để chuẩn bị ẩm thực và dụng cụ nhé!'
                         : (lvNum === 6
-                            ? 'Thử thách nâng cao với các vật phẩm từ Ba Lô Dã Ngoại nhé!'
+                            ? 'Ghép các món cao cấp từ Ba Lô Dã Ngoại nhé!'
                             : (lvNum === 7
-                                ? 'Ở Màn 7, bạn có Thùng Dụng Cụ mới! Chạm vào Thùng Dụng Cụ để khám phá nguyên liệu nhé!'
+                                ? 'Thùng Dụng Cụ mới! Chạm để lấy thêm nguyên liệu!'
                                 : (lvNum === 8
-                                    ? 'Tiếp tục tạo các vật dụng sinh hoạt & an toàn từ Thùng Dụng Cụ nhé!'
+                                    ? 'Tạo vật dụng sinh hoạt từ Thùng Dụng Cụ nhé!'
                                     : (lvNum === 9
-                                        ? 'Thử thách nâng cao với Thùng Dụng Cụ trước khi bước vào màn hội tụ nhé!'
+                                        ? 'Khám phá trọn vẹn đồ từ Thùng Dụng Cụ nhé!'
                                         : (lvNum === 10
-                                            ? 'Màn 10 hội tụ cả 3 nguồn phát! Mỗi thùng đảm nhiệm 1 nhiệm vụ, hãy phối hợp thật nhịp nhàng nhé!'
-                                            : 'Ghép các vật phẩm cùng loại để hoàn thành nhiệm vụ! Khi xong 1 nhiệm vụ, nhiệm vụ tiếp theo sẽ xuất hiện!')))))))));
+                                            ? 'Hội tụ 3 nguồn phát! Chạm thùng để làm nhiệm vụ!'
+                                            : 'Ghép các món cùng loại để hoàn thành nhiệm vụ nhé!')))))))));
 
     return {
         level: lvNum,

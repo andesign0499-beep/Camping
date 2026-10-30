@@ -349,6 +349,32 @@ function getGeneratorDropLevel(levelNum) {
     return 1;
 }
 
+// Giá trị kỳ vọng tương đương Lv.1 của 1 lần bấm sinh đồ theo cấp độ màn chơi:
+// Lv.1 = 1 điểm, Lv.2 = 2 điểm, Lv.3 = 4 điểm (1 món Lv3 = 2 món Lv2 = 4 món Lv1)
+// Ví dụ: màn 91-120 rơi 50% Lv1, 32% Lv2, 18% Lv3 => Kỳ vọng = 0.50*1 + 0.32*2 + 0.18*4 = 1.86 điểm/click.
+function getGeneratorDropExpectedValue(levelNum) {
+    if (!levelNum || levelNum <= 10) return 1.0;
+
+    var dropCfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.generatorDrops)
+        ? GAME_CONFIG.gameplay.generatorDrops
+        : null;
+
+    var tiers = (dropCfg && dropCfg.tiers) || [
+        { maxLevel: 10,  lv1: 1.00, lv2: 0.00, lv3: 0.00 },
+        { maxLevel: 20,  lv1: 0.78, lv2: 0.18, lv3: 0.04 },
+        { maxLevel: 40,  lv1: 0.70, lv2: 0.23, lv3: 0.07 },
+        { maxLevel: 60,  lv1: 0.62, lv2: 0.26, lv3: 0.12 },
+        { maxLevel: 90,  lv1: 0.55, lv2: 0.30, lv3: 0.15 },
+        { maxLevel: 120, lv1: 0.50, lv2: 0.32, lv3: 0.18 }
+    ];
+
+    var tier = tiers.find(function (t) { return levelNum <= t.maxLevel; }) || tiers[tiers.length - 1];
+    var p1 = tier.lv1 != null ? tier.lv1 : 1.0;
+    var p2 = tier.lv2 != null ? tier.lv2 : 0.0;
+    var p3 = tier.lv3 != null ? tier.lv3 : 0.0;
+    return Math.max(1.0, (p1 * 1) + (p2 * 2) + (p3 * 4));
+}
+
 // Sinh 1 item từ nguồn phát vào ô trống ngẫu nhiên. Trả về index ô mới, hoặc -1 nếu bàn đầy
 // Giải pháp 1: Thuật toán Rơi Đồ Thông Minh Theo Thiếu Hụt Thực Tế (Deficit-Driven) & Bảo Hiểm Pity
 function spawnItem(board, genId, activeOrders, levelCfg) {
