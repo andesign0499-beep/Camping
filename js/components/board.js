@@ -801,8 +801,8 @@ function setNpcState(npcId, moodEmoji, speechText, autoHideMs) {
     }
     if (speechText && typeof speechText === 'string') {
         speechText = speechText.trim();
-        if (speechText.length > 51) {
-            speechText = speechText.slice(0, 48) + '...';
+        if (speechText.length > 120) {
+            speechText = speechText.slice(0, 117) + '...';
         }
     }
     if (speechText && npcSpeechBubble && npcSpeechText) {
@@ -832,24 +832,90 @@ function clearHintVisuals() {
     boardElement.querySelectorAll('.hint-pulse').forEach(c => c.classList.remove('hint-pulse'));
 }
 
+// =============================================================================
+// HỆ THỐNG KỊCH BẢN CỐT TRUYỆN MỖI LEVEL (LEVEL STORY SEQUENCES)
+// Hỗ trợ hiển thị chuỗi câu thoại chú chó dẫn dắt từng bước mở đầu màn chơi
+// =============================================================================
+var storySequenceTimer = null;
+var storyStepIndex = 0;
+
+function advanceStoryStep() {
+    if (storySequenceTimer) {
+        clearTimeout(storySequenceTimer);
+        storySequenceTimer = null;
+    }
+    var dlg = (typeof LEVEL_STORY_DIALOGUES !== 'undefined') ? LEVEL_STORY_DIALOGUES[currentLevel] : null;
+    var texts = (dlg && Array.isArray(dlg.texts) && dlg.texts.length) ? dlg.texts : (dlg && dlg.text ? [dlg.text] : []);
+    var nextStep = storyStepIndex + 1;
+    if (nextStep < texts.length) {
+        showStoryStep(nextStep, texts, dlg);
+    } else {
+        storyStepIndex = 999;
+        scheduleHint();
+    }
+}
+
+function showStoryStep(step, texts, dlg) {
+    storyStepIndex = step;
+    var text = texts[step];
+    var isLast = (step === texts.length - 1);
+
+    if (isLast && currentLevel <= 10 && !tutNewGenTapped) {
+        // Câu cuối hướng dẫn chạm nguồn phát: hiển thị bàn tay chỉ vào nguồn phát
+        var genIdx = boardData.findIndex(function (c) {
+            return c && GENERATORS[c.id] && !c.isLocked;
+        });
+        if (genIdx !== -1 && boardElement.children[genIdx]) {
+            var genCell = boardElement.children[genIdx];
+            genCell.classList.add('hint-pulse');
+            showTutorialHandTap(genCell);
+        }
+        setNpcState((dlg && dlg.npc) || 'gau', '', text, 0);
+    } else {
+        // Tự động chuyển câu thoại tiếp theo sau 3.8s hoặc khi người chơi chạm vào bong bóng thoại
+        var autoHide = isLast ? 5500 : 3800;
+        setNpcState((dlg && dlg.npc) || 'gau', '', text, autoHide);
+        if (!isLast) {
+            storySequenceTimer = setTimeout(function () {
+                advanceStoryStep();
+            }, 3800);
+        }
+    }
+}
+
+function playLevelStory(lvNum) {
+    if (typeof LEVEL_STORY_DIALOGUES === 'undefined') return false;
+    var dlg = LEVEL_STORY_DIALOGUES[lvNum];
+    if (!dlg) return false;
+    var texts = (dlg && Array.isArray(dlg.texts) && dlg.texts.length) ? dlg.texts : (dlg && dlg.text ? [dlg.text] : []);
+    if (!texts.length) return false;
+
+    clearHintVisuals();
+    showStoryStep(0, texts, dlg);
+    return true;
+}
+
 function updateEarlyLevelsTutorial() {
     if (currentLevel > 10 || levelWon || isAutoEnabled || document.getElementById('modal-overlay')) return false;
 
-    // Cấu hình hướng dẫn cho 10 level đầu:
-    // Level 1-3: Chỉ có Xe Kéo Dã Ngoại ('generator_cooler')
-    // Level 4-6: Chỉ có Ba Lô Dã Ngoại ('generator_backpack')
-    // Level 7-9: Chỉ có Thùng Dụng Cụ ('generator_crate')
-    // Level 10: Hội tụ cả 3 thùng sinh đồ
+    // Nếu đang trong chuỗi câu thoại mở đầu (chưa tới câu cuối hướng dẫn thùng), không ngắt ngang
+    var dlg = (typeof LEVEL_STORY_DIALOGUES !== 'undefined') ? LEVEL_STORY_DIALOGUES[currentLevel] : null;
+    var texts = (dlg && Array.isArray(dlg.texts) && dlg.texts.length) ? dlg.texts : [];
+    if (texts.length > 1 && storyStepIndex < texts.length - 1) {
+        return true;
+    }
+
+    // Cấu hình hướng dẫn cho 10 level đầu (xen kẽ: Xe kéo -> Ba lô -> Thùng đồ):
     var targetGenMap = {
-        1: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv1', text: 'Chạm Xe Kéo Dã Ngoại để lấy đồ cắm trại nhé!' },
-        2: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv2', text: 'Tiếp tục chạm Xe Kéo để lấy thêm nguyên liệu!' },
-        3: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv3', text: 'Chạm Xe Kéo để chuẩn bị đủ 3 nhóm vật dụng nhé!' },
-        4: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv4', text: 'Ba Lô Dã Ngoại mới! Chạm Ba Lô để lấy đồ nhé!' },
-        5: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv5', text: 'Chạm Ba Lô để chuẩn bị ẩm thực và dụng cụ nhé!' },
-        6: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv6', text: 'Ghép các món cao cấp từ Ba Lô Dã Ngoại nhé!' },
-        7: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv7', text: 'Thùng Dụng Cụ mới! Chạm để lấy thêm nguyên liệu!' },
-        8: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv8', text: 'Tạo vật dụng sinh hoạt từ Thùng Dụng Cụ nhé!' },
-        9: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv9', text: 'Khám phá trọn vẹn đồ từ Thùng Dụng Cụ nhé!' },
+        1: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv1', text: 'Chạm vào xe kéo để lấy đồ cắm trại và ghép hoàn thành nhiệm vụ bạn nhé.' },
+        2: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv2', text: 'Chạm Ba Lô để lấy bánh mì và pha cà phê ấm nóng nào!' },
+        3: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv3', text: 'Chạm Thùng Đồ lấy thảm trải cỏ và bật bếp lửa sưởi ấm nhé!' },
+        4: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv4', text: 'Chạm Xe Kéo để ghép bàn gỗ và ghế tựa êm ái nào!' },
+        5: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv5', text: 'Mở Ba Lô chuẩn bị búa cắm cọc và làm bữa ăn no nê bạn nhé!' },
+        6: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv6', text: 'Mở Thùng Đồ chuẩn bị bếp nướng và hộp sơ cứu phòng thân nhé!' },
+        7: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv7', text: 'Chạm Xe Kéo dựng thêm bạt che lớn và bàn tiệc hoành tráng nhé!' },
+        8: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv8', text: 'Mở Ba Lô pha bình cà phê nóng và lấy đèn pin đi dạo thôi!' },
+        9: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv9', text: 'Mở Thùng Đồ nhóm ngọn lửa trại rực rỡ cho đêm tiệc đáng nhớ nhé!' },
         10: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv10', text: 'Hội tụ 3 nguồn phát! Chạm thùng để làm nhiệm vụ!' }
     };
 
@@ -1063,6 +1129,15 @@ function loadLevel(lvNum, options) {
         SAVE.currentBoardState.boardData.length === TOTAL_CELLS &&
         Array.isArray(SAVE.currentBoardState.currentOrders);
 
+    // Nếu cấu hình đơn hàng của màn chơi khác với bàn cờ đã lưu (do vừa cập nhật kịch bản nhiệm vụ), tải mới màn
+    if (hasSavedState && currentLevelCfg && Array.isArray(currentLevelCfg.orders)) {
+        var savedOrderIds = (SAVE.currentBoardState.currentOrders || []).map(function (o) { return o.id; }).join(',');
+        var cfgOrderIds = currentLevelCfg.orders.join(',');
+        if (savedOrderIds !== cfgOrderIds) {
+            hasSavedState = false;
+        }
+    }
+
     if (hasSavedState) {
         boardData = SAVE.currentBoardState.boardData.map(function (c) {
             return c ? { id: c.id, isRock: !!c.isRock, isLocked: !!c.isLocked } : makeEmptyCell();
@@ -1096,13 +1171,10 @@ function loadLevel(lvNum, options) {
 
     renderBoard();
 
-    // Hiển thị lời thoại cốt truyện của màn chơi khi vào màn (từ Lv.2+, hoặc khi đã qua hướng dẫn cơ bản)
-    if (!levelIntroShown && typeof LEVEL_STORY_DIALOGUES !== 'undefined' && LEVEL_STORY_DIALOGUES[lvNum]) {
+    // Hiển thị lời thoại cốt truyện của màn chơi khi vào màn
+    if (!levelIntroShown) {
         levelIntroShown = true;
-        if (lvNum > 1) {
-            var dlg = LEVEL_STORY_DIALOGUES[lvNum];
-            setNpcState(dlg.npc || 'gau', '', dlg.text, 5500);
-        }
+        playLevelStory(lvNum);
     }
 }
 
@@ -1963,18 +2035,22 @@ function handleGeneratorClick(gen, cellElement) {
     if (currentLevel <= 10 && !tutNewGenTapped) {
         var targetGens = {
             1: 'generator_cooler',
-            2: 'generator_cooler',
-            3: 'generator_cooler',
-            4: 'generator_backpack',
+            2: 'generator_backpack',
+            3: 'generator_crate',
+            4: 'generator_cooler',
             5: 'generator_backpack',
-            6: 'generator_backpack',
-            7: 'generator_crate',
-            8: 'generator_crate',
+            6: 'generator_crate',
+            7: 'generator_cooler',
+            8: 'generator_backpack',
             9: 'generator_crate',
             10: 'generator_cooler'
         };
         if (currentLevel === 10 || (gen && gen.id === targetGens[currentLevel])) {
             tutNewGenTapped = true;
+            if (storySequenceTimer) {
+                clearTimeout(storySequenceTimer);
+                storySequenceTimer = null;
+            }
             clearHintVisuals();
             hideNpcBubble();
         }
@@ -2957,6 +3033,12 @@ function initGame() {
     }
     if (npcSpeechBubble) {
         npcSpeechBubble.onclick = () => {
+            var dlg = (typeof LEVEL_STORY_DIALOGUES !== 'undefined') ? LEVEL_STORY_DIALOGUES[currentLevel] : null;
+            var texts = dlg && Array.isArray(dlg.texts) ? dlg.texts : [];
+            if (texts.length > 1 && storyStepIndex < texts.length - 1) {
+                advanceStoryStep();
+                return;
+            }
             hideNpcBubble();
             clearTutorialHand();
         };

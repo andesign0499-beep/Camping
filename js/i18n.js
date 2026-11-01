@@ -37,8 +37,8 @@ var I18N_DATA = {
         tham: { vi: 'Chỗ Ngủ Êm Ái', en: 'Cozy Sleep' },
         ghe: { vi: 'Ghế Nghỉ Ngơi', en: 'Camp Chairs' },
         bep: { vi: 'Lửa & Bếp Trại', en: 'Campfire & Cooking' },
-        congcu: { vi: 'Dụng Cụ Sinh Tồn', en: 'Survival Tools' },
-        antoan: { vi: 'Y Tế & An Toàn', en: 'First Aid & Safety' }
+        congcu: { vi: 'Chiếu Sáng Dã Ngoại', en: 'Camp Lighting' },
+        antoan: { vi: 'Nguồn Điện & Trạm Năng Lượng', en: 'Power & Energy Station' }
     },
 
     items: {
@@ -112,25 +112,25 @@ var I18N_DATA = {
         bep_lv7: { vi: 'Lò Nướng Than Hoa Tròn', en: 'Round Charcoal Grill' },
         bep_lv8: { vi: 'Bếp Nướng BBQ Chữ Nhật', en: 'BBQ Grill Station' },
 
-        // Dòng 8: Dụng cụ (congcu)
-        congcu_lv1: { vi: 'Túi Vệ Sinh Cá Nhân', en: 'Toiletry Pouch' },
-        congcu_lv2: { vi: 'Can Nước Dã Ngoại', en: 'Camp Water Jug' },
-        congcu_lv3: { vi: 'Bộ Bát Đĩa Dã Ngoại', en: 'Camping Tableware Set' },
-        congcu_lv4: { vi: 'Đầu Khò Lửa Cầm Tay', en: 'Handheld Torch Burner' },
-        congcu_lv5: { vi: 'Bếp Gas Dã Ngoại Mini', en: 'Mini Camp Gas Stove' },
-        congcu_lv6: { vi: 'Dây Đèn Led Lung Linh', en: 'Fairy String Lights' },
-        congcu_lv7: { vi: 'Đèn Cắm Trại 3 Chân', en: 'Tripod Camp Lamp' },
-        congcu_lv8: { vi: 'Đèn Bão Cổ Điển', en: 'Vintage Hurricane Lantern' },
+        // Dòng 8: Chiếu sáng dã ngoại (congcu)
+        congcu_lv1: { vi: 'Bóng Đèn LED Treo Lều', en: 'Hanging Tent Bulb' },
+        congcu_lv2: { vi: 'Đèn Pin Cầm Tay Dã Ngoại', en: 'Handheld Camp Flashlight' },
+        congcu_lv3: { vi: 'Dây Đèn LED Đom Đóm', en: 'Fairy String Lights' },
+        congcu_lv4: { vi: 'Đèn Lồng Dã Ngoại', en: 'Portable Camp Lantern' },
+        congcu_lv5: { vi: 'Đèn Bảng LED Dã Ngoại', en: 'LED Camp Floodlight' },
+        congcu_lv6: { vi: 'Đèn Bão Dã Ngoại Vintage', en: 'Vintage Storm Lantern' },
+        congcu_lv7: { vi: 'Đèn Cắm Trại Chân Cao Tripod', en: 'Tripod Camp Light' },
+        congcu_lv8: { vi: 'Đèn Bão Cổ Điển Retro', en: 'Classic Hurricane Lantern' },
 
-        // Dòng 9: An toàn (antoan)
-        antoan_lv1: { vi: 'Chai Xịt Côn Trùng', en: 'Bug Spray' },
-        antoan_lv2: { vi: 'Tuýp Kem Chống Nắng', en: 'Sunscreen Tube' },
-        antoan_lv3: { vi: 'Hộp Sơ Cứu Khẩn Cấp', en: 'First Aid Kit' },
-        antoan_lv4: { vi: 'Xẻng Sinh Tồn Dã Ngoại', en: 'Survival Shovel' },
-        antoan_lv5: { vi: 'Pin Sạc Dự Phòng', en: 'Power Bank' },
-        antoan_lv6: { vi: 'Lều Trú Ẩn Khẩn Cấp', en: 'Emergency Shelter' },
-        antoan_lv7: { vi: 'Bộ Đàm Loa Rừng Già', en: 'Walkie-Talkie' },
-        antoan_lv8: { vi: 'Trạm Điện Di Động Dã Ngoại', en: 'Portable Power Station' }
+        // Dòng 9: Nguồn điện & Trạm năng lượng (antoan)
+        antoan_lv1: { vi: 'Cáp Sạc Dã Ngoại Bọc Dù', en: 'Braided Charging Cable' },
+        antoan_lv2: { vi: 'Củ Sạc Nhanh Dã Ngoại', en: 'Fast Charger Adapter' },
+        antoan_lv3: { vi: 'Pin Sạc Dự Phòng Bỏ Túi', en: 'Slim Power Bank' },
+        antoan_lv4: { vi: 'Pin Sạc Dự Phòng Chống Sốc', en: 'Rugged Power Bank' },
+        antoan_lv5: { vi: 'Quạt Tích Điện Dã Ngoại', en: 'Rechargeable Camp Fan' },
+        antoan_lv6: { vi: 'Tấm Pin Năng Lượng Mặt Trời', en: 'Solar Charging Panel' },
+        antoan_lv7: { vi: 'Trạm Điện Di Động Mini', en: 'Compact Power Station' },
+        antoan_lv8: { vi: 'Trạm Điện Dã Ngoại Glamping', en: 'Glamping Power Station' }
     },
 
     // -------------------------------------------------------------------------
@@ -298,15 +298,16 @@ var I18N_DATA = {
     // -------------------------------------------------------------------------
     npc: {
         // Mở đầu Level 1 - 10
-        intro_lv1: { vi: 'Chạm Xe Kéo Dã Ngoại để lấy đồ cắm trại nhé!', en: 'Tap Camping Wagon to get camping gear!' },
-        intro_lv2: { vi: 'Chạm Xe Kéo để lấy thêm nguyên liệu nhé!', en: 'Keep tapping Wagon for more materials!' },
-        intro_lv3: { vi: 'Chạm Xe Kéo để chuẩn bị đủ 3 nhóm đồ nhé!', en: 'Tap Wagon to prepare all 3 gear groups!' },
-        intro_lv4: { vi: 'Ba Lô Dã Ngoại mới! Chạm để lấy đồ nhé!', en: 'New Backpack! Tap it to get new items!' },
-        intro_lv5: { vi: 'Chạm Ba Lô chuẩn bị ẩm thực & dụng cụ!', en: 'Tap Backpack to prepare food & tools!' },
-        intro_lv6: { vi: 'Ghép các món cao cấp từ Ba Lô Dã Ngoại nhé!', en: 'Merge higher items from the Backpack!' },
-        intro_lv7: { vi: 'Thùng Dụng Cụ mới! Chạm để lấy thêm đồ!', en: 'New Tool Crate! Tap to explore gear!' },
-        intro_lv8: { vi: 'Tạo đồ sinh hoạt từ Thùng Dụng Cụ nhé!', en: 'Make living & safety gear from Crate!' },
-        intro_lv9: { vi: 'Khám phá trọn vẹn đồ từ Thùng Dụng Cụ!', en: 'Discover all items from the Tool Crate!' },
+        welcome_camp: { vi: 'Chào mừng bạn đến với khu trại nhỏ', en: 'Welcome to the small camp!' },
+        intro_lv1: { vi: 'Chạm vào xe kéo để lấy đồ cắm trại và ghép hoàn thành nhiệm vụ bạn nhé.', en: 'Tap the wagon to get camping gear and complete quests!' },
+        intro_lv2: { vi: 'Chạm Ba Lô để lấy bánh mì và pha cà phê ấm nóng nào!', en: 'Tap the Backpack to get sandwiches and warm coffee!' },
+        intro_lv3: { vi: 'Chạm Thùng Đồ lấy thảm trải cỏ và bật bếp lửa sưởi ấm nhé!', en: 'Tap the Tool Crate to spread mats and light the fire!' },
+        intro_lv4: { vi: 'Chạm Xe Kéo để ghép bàn gỗ và ghế tựa êm ái nào!', en: 'Tap the Wagon to merge wooden tables and chairs!' },
+        intro_lv5: { vi: 'Mở Ba Lô chuẩn bị búa cắm cọc và làm bữa ăn no nê bạn nhé!', en: 'Open Backpack for tent hammers and hearty meals!' },
+        intro_lv6: { vi: 'Mở Thùng Đồ chuẩn bị bếp nướng và hộp sơ cứu phòng thân nhé!', en: 'Open Tool Crate for BBQ stoves and first aid kits!' },
+        intro_lv7: { vi: 'Chạm Xe Kéo dựng thêm bạt che lớn và bàn tiệc hoành tráng nhé!', en: 'Tap Wagon for large tarps and family banquet tables!' },
+        intro_lv8: { vi: 'Mở Ba Lô pha bình cà phê nóng và lấy đèn pin đi dạo thôi!', en: 'Open Backpack for hot coffee flasks and flashlights!' },
+        intro_lv9: { vi: 'Mở Thùng Đồ nhóm ngọn lửa trại rực rỡ cho đêm tiệc đáng nhớ nhé!', en: 'Open Tool Crate to light a warm campfire for the party!' },
         intro_lv10: { vi: 'Hội tụ 3 nguồn phát! Chạm thùng làm việc!', en: 'All 3 containers ready! Tap to play!' },
         intro_default: { vi: 'Ghép các món cùng loại để nộp đơn nhé!', en: 'Merge matching items to finish orders!' },
 

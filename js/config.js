@@ -274,16 +274,16 @@ function getProceduralLeadLine(lv) {
 
 function buildProceduralOrdersMap() {
     var table = {};
-    table[1] = ['trai_lv4', 'ghe_lv3'];
-    table[2] = ['ban_lv4', 'ghe_lv3'];
-    table[3] = ['ghe_lv4', 'ban_lv3', 'trai_lv3']; // trai_lv3 thay vì trai_lv4
-    table[4] = ['an_lv4', 'cafe_lv3'];
-    table[5] = ['congcu_lv4', 'an_lv4', 'cafe_lv3'];
-    table[6] = ['an_lv5', 'congcu_lv3']; // Giảm gai năng lượng vùng hướng dẫn (19 -> ~14 NL)
-    table[7] = ['tham_lv4', 'bep_lv3', 'antoan_lv3'];
-    table[8] = ['bep_lv4', 'antoan_lv4', 'tham_lv3'];
-    table[9] = ['bep_lv5', 'tham_lv4']; // Giảm gai năng lượng vùng hướng dẫn (23 -> ~17 NL)
-    table[10] = ['ban_lv4', 'an_lv4', 'bep_lv4']; // ban_lv4 thay vì trai_lv4 (chỉ trai_lv4 duy nhất ở Màn 1)
+    table[1] = ['trai_lv4', 'ghe_lv2', 'ghe_lv2'];
+    table[2] = ['an_lv3', 'cafe_lv2', 'cafe_lv2'];
+    table[3] = ['tham_lv3', 'bep_lv2', 'bep_lv2'];
+    table[4] = ['ban_lv3', 'ghe_lv3', 'trai_lv3'];
+    table[5] = ['congcu_lv3', 'an_lv4'];
+    table[6] = ['bep_lv3', 'antoan_lv3', 'tham_lv3'];
+    table[7] = ['trai_lv4', 'ban_lv4', 'ghe_lv3'];
+    table[8] = ['cafe_lv3', 'congcu_lv4', 'an_lv3'];
+    table[9] = ['bep_lv4', 'tham_lv4'];
+    table[10] = ['ban_lv4', 'an_lv4', 'bep_lv4'];
 
     var lastSeen = {};
     for (var l = 1; l <= 10; l++) {
@@ -356,12 +356,13 @@ function generateLevelConfig(lvNum) {
     var patFn = ORGANIC_BOARD_PATTERNS[patternName] || ORGANIC_BOARD_PATTERNS.creek_bend;
 
     // 2. Chọn số lượng và chủng loại nguồn phát (Generators)
+    // Xen kẽ: Lv.1 Xe kéo -> Lv.2 Ba lô -> Lv.3 Thùng đồ -> Lv.4 Xe kéo -> Lv.5 Ba lô -> Lv.6 Thùng đồ -> Lv.7 Xe kéo -> Lv.8 Ba lô -> Lv.9 Thùng đồ
     var chosenGenIds = [];
-    if (lvNum <= 3) {
+    if (lvNum === 1 || lvNum === 4 || lvNum === 7) {
         chosenGenIds = ['generator_cooler'];
-    } else if (lvNum <= 6) {
+    } else if (lvNum === 2 || lvNum === 5 || lvNum === 8) {
         chosenGenIds = ['generator_backpack'];
-    } else if (lvNum <= 9) {
+    } else if (lvNum === 3 || lvNum === 6 || lvNum === 9) {
         chosenGenIds = ['generator_crate'];
     } else {
         // Từ Level 10 trở đi: Mở khóa cả 3 nguồn phát trên bàn cờ
@@ -391,29 +392,29 @@ function generateLevelConfig(lvNum) {
         freeList = ['trai_lv1', 'ghe_lv1'];
         webList = ['trai_lv1', 'ghe_lv1', 'ghe_lv1', 'trai_lv2'];
     } else if (lvNum === 2) {
-        freeList = ['ban_lv1', 'ghe_lv1'];
-        webList = ['ban_lv1', 'ghe_lv1', 'ghe_lv1', 'ban_lv2'];
-    } else if (lvNum === 3) {
-        freeList = ['ghe_lv1', 'ban_lv1'];
-        webList = ['ghe_lv1', 'ban_lv1', 'trai_lv1', 'ghe_lv2'];
-    } else if (lvNum === 4) {
         freeList = ['an_lv1', 'cafe_lv1'];
         webList = ['an_lv1', 'cafe_lv1', 'cafe_lv1', 'an_lv2'];
+    } else if (lvNum === 3) {
+        freeList = ['tham_lv1', 'bep_lv1'];
+        webList = ['tham_lv1', 'bep_lv1', 'bep_lv1', 'tham_lv2'];
+    } else if (lvNum === 4) {
+        freeList = ['ban_lv1', 'ghe_lv1'];
+        webList = ['ban_lv1', 'ghe_lv2', 'trai_lv2', 'ban_lv2'];
     } else if (lvNum === 5) {
         freeList = ['congcu_lv1', 'an_lv1'];
-        webList = ['congcu_lv1', 'an_lv1', 'cafe_lv1', 'congcu_lv2'];
+        webList = ['congcu_lv1', 'an_lv2', 'an_lv3', 'congcu_lv2'];
     } else if (lvNum === 6) {
-        freeList = ['an_lv1', 'congcu_lv1'];
-        webList = ['an_lv1', 'congcu_lv1', 'cafe_lv1', 'an_lv2'];
-    } else if (lvNum === 7) {
-        freeList = ['tham_lv1', 'bep_lv1'];
-        webList = ['tham_lv1', 'bep_lv1', 'antoan_lv1', 'tham_lv2'];
-    } else if (lvNum === 8) {
         freeList = ['bep_lv1', 'antoan_lv1'];
-        webList = ['bep_lv1', 'antoan_lv1', 'tham_lv1', 'bep_lv2'];
+        webList = ['bep_lv2', 'antoan_lv2', 'tham_lv2', 'bep_lv1'];
+    } else if (lvNum === 7) {
+        freeList = ['trai_lv1', 'ban_lv1'];
+        webList = ['trai_lv3', 'ban_lv3', 'ghe_lv2', 'ban_lv2'];
+    } else if (lvNum === 8) {
+        freeList = ['cafe_lv1', 'congcu_lv1'];
+        webList = ['cafe_lv2', 'congcu_lv3', 'an_lv2', 'cafe_lv1'];
     } else if (lvNum === 9) {
         freeList = ['bep_lv1', 'tham_lv1'];
-        webList = ['bep_lv1', 'tham_lv1', 'antoan_lv1', 'bep_lv2'];
+        webList = ['bep_lv3', 'tham_lv3', 'antoan_lv2', 'bep_lv2'];
     } else if (lvNum === 10) {
         freeList = ['ban_lv1', 'an_lv1', 'bep_lv1'];
         webList = ['ban_lv1', 'an_lv1', 'bep_lv1', 'ban_lv2', 'an_lv2'];
@@ -630,27 +631,50 @@ function generateLevelConfig(lvNum) {
 
     var npcList = ['gau', 'cao', 'de'];
     var leadNpc = npcList[(lvNum - 1) % 3];
-    var defaultText = lvNum === 1
-        ? 'Chạm Xe Kéo Dã Ngoại để lấy đồ cắm trại nhé!'
-        : (lvNum === 2
-            ? 'Khám phá thêm đồ cắm trại từ Xe Kéo nhé!'
-            : (lvNum === 3
-                ? 'Ghép các món nâng cao từ Xe Kéo Dã Ngoại nhé!'
-                : (lvNum === 4
-                    ? 'Ba Lô Dã Ngoại mới! Chạm Ba Lô để lấy đồ nhé!'
-                    : (lvNum === 5
-                        ? 'Chạm Ba Lô để chuẩn bị ẩm thực và dụng cụ nhé!'
-                        : (lvNum === 6
-                            ? 'Ghép các món cao cấp từ Ba Lô Dã Ngoại nhé!'
-                            : (lvNum === 7
-                                ? 'Thùng Dụng Cụ mới! Chạm để lấy thêm nguyên liệu!'
-                                : (lvNum === 8
-                                    ? 'Tạo vật dụng sinh hoạt từ Thùng Dụng Cụ nhé!'
-                                    : (lvNum === 9
-                                        ? 'Khám phá trọn vẹn đồ từ Thùng Dụng Cụ nhé!'
-                                        : (lvNum === 10
-                                            ? 'Hội tụ 3 nguồn phát! Chạm thùng để làm nhiệm vụ!'
-                                            : 'Ghép các món cùng loại để hoàn thành nhiệm vụ nhé!')))))))));
+    var storyDialoguesMap = {
+        1: [
+            'Chào mừng bạn đến với khu trại nhỏ',
+            'Chạm vào xe kéo để lấy đồ cắm trại và ghép hoàn thành nhiệm vụ bạn nhé.'
+        ],
+        2: [
+            'Đi đường xa chắc bạn đói rồi, mình cùng nghỉ ngơi ăn nhẹ nhé!',
+            'Chạm Ba Lô để lấy bánh mì và pha cà phê ấm nóng nào!'
+        ],
+        3: [
+            'Gió rừng chiều se lạnh rồi, cần làm ấm khu trại thôi bạn ơi!',
+            'Chạm Thùng Đồ lấy thảm trải cỏ và bật bếp lửa sưởi ấm nhé!'
+        ],
+        4: [
+            'Có chỗ ngồi đẹp rồi, mình dựng thêm bàn ăn để bày tiệc nhé!',
+            'Chạm Xe Kéo để ghép bàn gỗ và ghế tựa êm ái nào!'
+        ],
+        5: [
+            'Trời sắp tối rồi, khu trại cần ánh đèn lung linh ấm áp!',
+            'Mở Ba Lô lấy dây đèn trang trí và làm bữa mì sợi nóng bạn nhé!'
+        ],
+        6: [
+            'Đi cắm trại giữa thiên nhiên cần nguồn năng lượng dồi dào!',
+            'Mở Thùng Đồ chuẩn bị bếp lửa, thảm trải và sạc dự phòng nhé!'
+        ],
+        7: [
+            'Khu trại của chúng mình trông ngày càng xịn sò như Glamping rồi!',
+            'Chạm Xe Kéo dựng thêm bạt che lớn và bàn tiệc hoành tráng nhé!'
+        ],
+        8: [
+            'Gâu gâu! Nắng sớm lên rồi, cùng đón bình minh trong lành nào!',
+            'Mở Ba Lô pha bình cà phê nóng và lấy đèn pin đi dạo thôi!'
+        ],
+        9: [
+            'Bạn đã trở thành một chuyên gia cắm trại thực thụ rồi đấy!',
+            'Mở Thùng Đồ nhóm ngọn lửa trại rực rỡ cho đêm tiệc đáng nhớ nhé!'
+        ],
+        10: [
+            'Hội tụ cả 3 nguồn phát! Hãy chuẩn bị cho đại tiệc cắm trại nào!',
+            'Chạm vào các thùng đồ để hoàn thành nhiệm vụ cuối cùng nhé!'
+        ]
+    };
+    var defaultTexts = storyDialoguesMap[lvNum] || null;
+    var defaultText = defaultTexts ? defaultTexts[0] : 'Ghép các món cùng loại để hoàn thành nhiệm vụ nhé!';
 
     return {
         level: lvNum,
@@ -668,7 +692,8 @@ function generateLevelConfig(lvNum) {
         },
         dialogue: {
             npc: leadNpc,
-            text: defaultText
+            text: defaultText,
+            texts: defaultTexts || [defaultText]
         }
     };
 }

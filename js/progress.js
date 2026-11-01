@@ -653,12 +653,12 @@ var ITEM_CHAINS = [
         names: ['Nhánh Củi Khô', 'Khúc Gỗ Tròn', 'Bó Củi Buộc Dây', 'Hố Đá Xếp Lửa', 'Đống Củi Trại Vòng Đá', 'Lửa Trại Rực Hồng', 'Lò Nướng Than Hoa Tròn', 'Bếp Nướng BBQ Chữ Nhật']
     },
     {
-        line: 'congcu', icon: '', title: 'Dụng Cụ Sinh Tồn',
-        names: ['Túi Vệ Sinh Cá Nhân', 'Can Nước Dã Ngoại', 'Bộ Bát Đĩa Dã Ngoại', 'Đầu Khò Lửa Cầm Tay', 'Bếp Gas Dã Ngoại Mini', 'Dây Đèn Led Lung Linh', 'Đèn Cắm Trại 3 Chân', 'Đèn Bão Cổ Điển']
+        line: 'congcu', icon: '', title: 'Chiếu Sáng Dã Ngoại',
+        names: ['Bóng Đèn LED Treo Lều', 'Đèn Pin Cầm Tay Dã Ngoại', 'Dây Đèn LED Đom Đóm', 'Đèn Lồng Dã Ngoại', 'Đèn Bảng LED Dã Ngoại', 'Đèn Bão Dã Ngoại Vintage', 'Đèn Cắm Trại Chân Cao Tripod', 'Đèn Bão Cổ Điển Retro']
     },
     {
-        line: 'antoan', icon: '', title: 'Y Tế & An Toàn',
-        names: ['Chai Xịt Côn Trùng', 'Tuýp Kem Chống Nắng', 'Hộp Sơ Cứu Khẩn Cấp', 'Xẻng Sinh Tồn Dã Ngoại', 'Pin Sạc Dự Phòng', 'Lều Trú Ẩn Khẩn Cấp', 'Bộ Đàm Loa Rừng Già', 'Trạm Điện Di Động Dã Ngoại']
+        line: 'antoan', icon: '', title: 'Nguồn Điện & Trạm Năng Lượng',
+        names: ['Cáp Sạc Dã Ngoại Bọc Dù', 'Củ Sạc Nhanh Dã Ngoại', 'Pin Sạc Dự Phòng Bỏ Túi', 'Pin Sạc Dự Phòng Chống Sốc', 'Quạt Tích Điện Dã Ngoại', 'Tấm Pin Năng Lượng Mặt Trời', 'Trạm Điện Di Động Mini', 'Trạm Điện Dã Ngoại Glamping']
     }
 ];
 
@@ -804,12 +804,12 @@ var CAMP_DECORS = [
     [4,  'an_lv5',             'Đĩa Trái Cây Tươi'],
     [5,  'an_lv6',             'Tô Hoa Quả Thập Cẩm'],
     [6,  'an_lv8',             'Đại Tiệc BBQ Xiên Nướng'],
-    [7,  'antoan_lv1',         'Chai Xịt Côn Trùng'],
-    [8,  'antoan_lv2',         'Tuýp Kem Chống Nắng'],
-    [9,  'antoan_lv4',         'Xẻng Sinh Tồn Dã Ngoại'],
-    [10, 'antoan_lv5',         'Pin Sạc Dự Phòng'],
-    [11, 'antoan_lv7',         'Bộ Đàm Loa Rừng Già'],
-    [12, 'antoan_lv8',         'Trạm Điện Di Động Dã Ngoại'],
+    [7,  'antoan_lv1',         'Cáp Sạc Dã Ngoại Bọc Dù'],
+    [8,  'antoan_lv2',         'Củ Sạc Nhanh Dã Ngoại'],
+    [9,  'antoan_lv4',         'Pin Sạc Dự Phòng Chống Sốc'],
+    [10, 'antoan_lv5',         'Quạt Tích Điện Dã Ngoại'],
+    [11, 'antoan_lv7',         'Trạm Điện Di Động Mini'],
+    [12, 'antoan_lv8',         'Trạm Điện Dã Ngoại Glamping'],
     [13, 'ban_lv8',            'Trạm Bếp Nấu Ăn Glamping'],
     [14, 'ban_lv2',            'Bàn Vải Gấp Dã Ngoại'],
     [15, 'ban_lv4',            'Bàn Gỗ Cuộn Dã Ngoại'],
@@ -822,12 +822,12 @@ var CAMP_DECORS = [
     [22, 'cafe_lv6',           'Cối Xay Cầm Tay Inox'],
     [23, 'cafe_lv7',           'Ấm Pha Moka Pot Ý'],
     [24, 'cafe_lv8',           'Cốc Cà Phê Men Đỏ'],
-    [25, 'congcu_lv1',         'Túi Vệ Sinh Cá Nhân'],
-    [26, 'congcu_lv3',         'Bộ Bát Đĩa Dã Ngoại'],
-    [27, 'congcu_lv5',         'Bếp Gas Dã Ngoại Mini'],
-    [28, 'congcu_lv6',         'Dây Đèn Led Lung Linh'],
-    [29, 'congcu_lv7',         'Đèn Cắm Trại 3 Chân'],
-    [30, 'congcu_lv8',         'Đèn Bão Cổ Điển'],
+    [25, 'congcu_lv1',         'Bóng Đèn LED Treo Lều'],
+    [26, 'congcu_lv3',         'Dây Đèn LED Đom Đóm'],
+    [27, 'congcu_lv5',         'Đèn Bảng LED Dã Ngoại'],
+    [28, 'congcu_lv6',         'Đèn Bão Dã Ngoại Vintage'],
+    [29, 'congcu_lv7',         'Đèn Cắm Trại Chân Cao Tripod'],
+    [30, 'congcu_lv8',         'Đèn Bão Cổ Điển Retro'],
     [31, 'generator_backpack', 'Ba Lô Dã Ngoại'],
     [32, 'generator_cooler',   'Xe Kéo Dã Ngoại'],
     [33, 'generator_crate',    'Thùng Dụng Cụ'],

@@ -70,8 +70,8 @@ var ITEM_CELL_BG_MAP = {
     'tham': 'cell-bg-05',   // 5. Chỗ ngủ êm ái
     'ghe': 'cell-bg-06',    // 6. Ghế nghỉ ngơi
     'bep': 'cell-bg-07',    // 7. Lửa & bếp trại
-    'congcu': 'cell-bg-08', // 8. Dụng cụ sinh tồn
-    'antoan': 'cell-bg-09'  // 9. Y tế & an toàn
+    'congcu': 'cell-bg-08', // 8. Chiếu sáng dã ngoại
+    'antoan': 'cell-bg-09'  // 9. Nguồn điện & trạm năng lượng
 };
 
 function getCellBgClass(line) {

@@ -197,7 +197,8 @@ function getLevelConfig(lvNum) {
             rawOrders: cfg.orders || [],
             adjWeb: mech.adjWeb !== undefined ? mech.adjWeb : (cfg.level >= 3),
             bonus: !!mech.bonus,
-            spreadEvery: mech.spreadEvery || 0
+            spreadEvery: mech.spreadEvery || 0,
+            dialogue: cfg.dialogue || null
         };
     }
 
@@ -215,7 +216,8 @@ function getLevelConfig(lvNum) {
         adjWeb: rMech.adjWeb !== undefined ? rMech.adjWeb : (row[0] >= 3),
         bonus: !!rMech.bonus,
         spreadEvery: rMech.spreadEvery || 0,
-        rocks: row[8] || []
+        rocks: row[8] || [],
+        dialogue: null
     };
 }
 
