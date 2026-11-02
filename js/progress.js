@@ -75,6 +75,13 @@ function defaultSave() {
         activeLocation: 'loc_dongdo',
         campItems: [],
         campItemsMigrated: false,
+        myCampEquipped: {
+            tent: 'trai_lv4',
+            chair1: 'ghe_lv8',
+            chair2: 'ghe_lv8',
+            table: 'ban_lv7',
+            stove: 'bep_lv7'
+        },
         claimedStarChests: [],
         starterPackBought: false,
         ads: { day: todayKey(), energy: 0, gem: 0, coin: 0, mystery: 0, dailyGemClaimed: false },
@@ -122,6 +129,15 @@ function loadSave() {
             if (!Array.isArray(s.ownedLocations) || !s.ownedLocations.length) s.ownedLocations = ['loc_dongdo'];
             if (!s.activeLocation) s.activeLocation = 'loc_dongdo';
             if (!Array.isArray(s.campItems)) s.campItems = [];
+            if (!s.myCampEquipped || typeof s.myCampEquipped !== 'object') {
+                s.myCampEquipped = {
+                    tent: 'trai_lv4',
+                    chair1: 'ghe_lv8',
+                    chair2: 'ghe_lv8',
+                    table: 'ban_lv7',
+                    stove: 'bep_lv7'
+                };
+            }
             if (!Array.isArray(s.claimedStarChests)) s.claimedStarChests = [];
             if (!s.campItemsMigrated) {
                 s.campItemsMigrated = true;

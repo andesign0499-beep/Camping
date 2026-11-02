@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=2.4">
+    <link rel="stylesheet" href="css/style.css?v=3.0">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -92,20 +92,43 @@
             </main>
 
             <footer id="game-footer">
-                <button id="btn-camp" class="footer-img-btn btn-camp-ui size-44" type="button" title="Khu Cắm Trại">
+                <button id="btn-camp" class="footer-img-btn btn-camp-ui size-44" type="button" title="Cửa Hàng">
                     <span class="btn-3s-bg" aria-hidden="true"><span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span></span>
-                    <span class="footer-btn-label">KHU TRẠI</span>
+                    <span class="footer-btn-label">CỬA HÀNG</span>
                 </button>
                 <button id="btn-book" class="footer-img-btn btn-book-ui size-44" type="button" title="Cẩm Nang Trò Chơi">
                     <span class="btn-3s-bg" aria-hidden="true"><span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span></span>
                     <span class="footer-btn-label">CẨM NANG</span>
                 </button>
-                <button id="btn-sell" class="footer-img-btn btn-sell-ui disabled size-44" type="button" title="Bán Vật Phẩm Lấy Vàng">
+                <button id="btn-my-camp" class="footer-img-btn btn-mycamp-ui size-44" type="button" title="Trại của bạn">
                     <span class="btn-3s-bg" aria-hidden="true"><span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span></span>
-                    <span class="footer-btn-label"><span id="sell-btn-text">BÁN</span></span>
+                    <span class="footer-btn-label">Trại của bạn</span>
                 </button>
             </footer>
         </section>
+
+        <!-- MÀN HÌNH TRẠI CỦA BẠN (MY CAMP SCREEN) -->
+        <div id="my-camp-screen" class="my-camp-screen" style="display: none;">
+            <!-- LƯỚI Ô 1PX MÀU ĐEN (DEBUG / CAN CHINH) -->
+            <div class="mycamp-grid-overlay" id="mycamp-grid-overlay"></div>
+
+            <div class="mycamp-header">
+                <button id="btn-mycamp-back" class="map-nav-btn mycamp-back-btn" type="button" title="Quay lại" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <div class="mycamp-title">Trại của bạn</div>
+                <div class="mycamp-header-spacer" aria-hidden="true"></div>
+            </div>
+
+            <div class="mycamp-stage" id="mycamp-stage">
+                <!-- Nội dung được render tự động từ js/mycamp_config.js -->
+            </div>
+
+            <button id="btn-mycamp-decor" class="btn-3s btn-green size-44 mycamp-decor-btn" type="button" title="Đồ cắm trại">
+                <span class="btn-3s-bg" aria-hidden="true"><span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span></span>
+                <span class="btn-3s-text">Đồ cắm trại</span>
+            </button>
+        </div>
     </div>
 
     <!-- Google Firebase SDK (Compat Version cho Web tĩnh) -->
@@ -119,7 +142,8 @@
     <script src="js/engine.js"></script>
     <script src="js/progress.js"></script>
     <script src="js/firebase-sync.js"></script>
-    <script src="js/camp.js"></script>
+    <script src="js/mycamp_config.js?v=3.0"></script>
+    <script src="js/camp.js?v=3.0"></script>
     <script src="js/components/board.js"></script>
 </body>
 </html>

@@ -283,14 +283,29 @@ function buildProceduralOrdersMap() {
     table[7] = ['trai_lv4', 'ban_lv4', 'ghe_lv3'];
     table[8] = ['cafe_lv3', 'congcu_lv4', 'an_lv3'];
     table[9] = ['bep_lv4', 'tham_lv4'];
-    table[10] = ['ban_lv4', 'an_lv4', 'bep_lv4'];
+
+    // Giai đoạn chuyển tiếp (Màn 10 - 19): 2 Generators / màn (6 nhánh vật phẩm)
+    // Luân phiên 3 cặp đôi: Xe Kéo + Ba Lô -> Ba Lô + Thùng Đồ -> Thùng Đồ + Xe Kéo
+    table[10] = ['ban_lv4', 'an_lv4', 'ghe_lv3'];                      // Xe Kéo + Ba Lô
+    table[11] = ['an_lv5', 'bep_lv4', 'congcu_lv3', 'tham_lv3'];      // Ba Lô + Thùng Đồ
+    table[12] = ['trai_lv5', 'antoan_lv4', 'ban_lv3', 'bep_lv3'];     // Thùng Đồ + Xe Kéo
+    table[13] = ['ghe_lv5', 'cafe_lv4', 'ban_lv4', 'an_lv3'];         // Xe Kéo + Ba Lô
+    table[14] = ['antoan_lv5', 'congcu_lv4', 'tham_lv4', 'cafe_lv3'];   // Ba Lô + Thùng Đồ
+    table[15] = ['bep_lv6', 'trai_lv4', 'antoan_lv3', 'ghe_lv3'];     // Thùng Đồ + Xe Kéo
+    table[16] = ['congcu_lv6', 'ban_lv4', 'an_lv3', 'ghe_lv3'];       // Xe Kéo + Ba Lô
+    table[17] = ['cafe_lv6', 'tham_lv4', 'an_lv4', 'bep_lv3'];        // Ba Lô + Thùng Đồ
+    table[18] = ['antoan_lv6', 'ghe_lv4', 'bep_lv4', 'ban_lv3'];      // Thùng Đồ + Xe Kéo
+    table[19] = ['an_lv6', 'trai_lv5', 'congcu_lv4', 'ban_lv3'];      // Xe Kéo + Ba Lô
+
+    // Cột mốc Màn 20: Tung trọn vẹn cả 3 Generators với đại tiệc Lều Gia Đình trai_lv6
+    table[20] = ['trai_lv6', 'cafe_lv5', 'bep_lv4', 'ghe_lv3'];       // Xe Kéo + Ba Lô + Thùng Đồ
 
     var lastSeen = {};
-    for (var l = 1; l <= 10; l++) {
+    for (var l = 1; l <= 20; l++) {
         table[l].forEach(function (it) { lastSeen[it] = l; });
     }
 
-    for (var lv = 11; lv <= 120; lv++) {
+    for (var lv = 21; lv <= 120; lv++) {
         var tiers = getProceduralTiersForLevel(lv);
         var count = tiers.length;
         var lead = getProceduralLeadLine(lv);
@@ -356,7 +371,9 @@ function generateLevelConfig(lvNum) {
     var patFn = ORGANIC_BOARD_PATTERNS[patternName] || ORGANIC_BOARD_PATTERNS.creek_bend;
 
     // 2. Chọn số lượng và chủng loại nguồn phát (Generators)
-    // Xen kẽ: Lv.1 Xe kéo -> Lv.2 Ba lô -> Lv.3 Thùng đồ -> Lv.4 Xe kéo -> Lv.5 Ba lô -> Lv.6 Thùng đồ -> Lv.7 Xe kéo -> Lv.8 Ba lô -> Lv.9 Thùng đồ
+    // - Giai đoạn 1 (Màn 1 - 9): 1 Generator xen kẽ (3 nhánh vật phẩm)
+    // - Giai đoạn chuyển tiếp (Màn 10 - 19): 2 Generators / màn (6 nhánh vật phẩm)
+    // - Cột mốc Màn 20 trở đi: Chính thức tung cả 3 Generators lên bàn cờ (9 nhánh vật phẩm)
     var chosenGenIds = [];
     if (lvNum === 1 || lvNum === 4 || lvNum === 7) {
         chosenGenIds = ['generator_cooler'];
@@ -364,9 +381,18 @@ function generateLevelConfig(lvNum) {
         chosenGenIds = ['generator_backpack'];
     } else if (lvNum === 3 || lvNum === 6 || lvNum === 9) {
         chosenGenIds = ['generator_crate'];
+    } else if (lvNum >= 10 && lvNum <= 19) {
+        // Giai đoạn chuyển tiếp (Màn 10 - 19): Luân phiên 3 cặp đôi 2 Generators
+        var pairIdx = (lvNum - 10) % 3;
+        if (pairIdx === 0) {
+            chosenGenIds = ['generator_cooler', 'generator_backpack']; // Xe Kéo & Ba Lô
+        } else if (pairIdx === 1) {
+            chosenGenIds = ['generator_backpack', 'generator_crate'];   // Ba Lô & Thùng Đồ
+        } else {
+            chosenGenIds = ['generator_crate', 'generator_cooler'];      // Thùng Đồ & Xe Kéo
+        }
     } else {
-        // Từ Level 10 trở đi: Mở khóa cả 3 nguồn phát trên bàn cờ
-        // để hỗ trợ nhịp điệu phân bổ đa dạng toàn bộ 9 nhánh cắm trại
+        // Từ Màn 20 trở đi: Cột mốc chính thức tung cả 3 Generators lên bàn cờ
         chosenGenIds = ['generator_cooler', 'generator_backpack', 'generator_crate'];
     }
 
@@ -416,8 +442,8 @@ function generateLevelConfig(lvNum) {
         freeList = ['bep_lv1', 'tham_lv1'];
         webList = ['bep_lv3', 'tham_lv3', 'antoan_lv2', 'bep_lv2'];
     } else if (lvNum === 10) {
-        freeList = ['ban_lv1', 'an_lv1', 'bep_lv1'];
-        webList = ['ban_lv1', 'an_lv1', 'bep_lv1', 'ban_lv2', 'an_lv2'];
+        freeList = ['ban_lv1', 'an_lv1'];
+        webList = ['ban_lv1', 'an_lv2', 'ghe_lv2', 'ban_lv2', 'an_lv1'];
     } else {
         orders.forEach(function (ordId, oIdx) {
             var oLine = ordId.split('_lv')[0];
@@ -669,8 +695,20 @@ function generateLevelConfig(lvNum) {
             'Mở Thùng Đồ nhóm ngọn lửa trại rực rỡ cho đêm tiệc đáng nhớ nhé!'
         ],
         10: [
-            'Hội tụ cả 3 nguồn phát! Hãy chuẩn bị cho đại tiệc cắm trại nào!',
-            'Chạm vào các thùng đồ để hoàn thành nhiệm vụ cuối cùng nhé!'
+            'Khu trại mở rộng rồi! Lần này hãy kết hợp cả Xe Kéo và Ba Lô nhé!',
+            'Chạm 2 nguồn phát để lấy đồ cắm trại và hoàn thành đơn hàng nào!'
+        ],
+        11: [
+            'Thêm một trải nghiệm mới: Phối hợp Ba Lô và Thùng Đồ dã ngoại!',
+            'Chuẩn bị bữa ăn ấm cúng và trạm năng lượng dã ngoại bạn nhé!'
+        ],
+        12: [
+            'Đêm xuống bên bếp lửa trại ấm áp cùng bàn ghế tiện nghi!',
+            'Chạm Xe Kéo và Thùng Đồ để hoàn thành các đơn hàng nhé!'
+        ],
+        20: [
+            'Đại tiệc Glamping chính thức bắt đầu! Cả 3 nguồn phát đã hội tụ!',
+            'Hãy phối hợp nhịp nhàng Xe Kéo, Ba Lô và Thùng Đồ để dựng Lều Gia Đình nhé!'
         ]
     };
     var defaultTexts = storyDialoguesMap[lvNum] || null;

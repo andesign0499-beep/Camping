@@ -17,12 +17,14 @@ var I18N_DATA = {
         settings_title: { vi: 'Cài đặt trò chơi & Lưu trữ', en: 'Game Settings & Sync' },
         npc_avatar_title: { vi: 'Chạm vào nhân vật để trò chuyện & xem gợi ý', en: 'Tap character to chat & see hints' },
         broom_title: { vi: 'Dọn dẹp bàn cờ: Bán vật phẩm thừa & gom nhóm gọn gàng (-3 Năng lượng)', en: 'Clean Board: Sell extras & tidy up (-3 Energy)' },
-        btn_camp: { vi: 'KHU TRẠI', en: 'CAMP' },
-        btn_camp_title: { vi: 'Khu Cắm Trại', en: 'Campground' },
+        btn_camp: { vi: 'CỬA HÀNG', en: 'SHOP' },
+        btn_camp_title: { vi: 'Cửa Hàng', en: 'Shop' },
         btn_book: { vi: 'CẨM NANG', en: 'HANDBOOK' },
         btn_book_title: { vi: 'Cẩm Nang Trò Chơi', en: 'Camping Handbook' },
         btn_sell: { vi: 'BÁN', en: 'SELL' },
         btn_sell_title: { vi: 'Bán Vật Phẩm Lấy Vàng', en: 'Sell Item for Gold' },
+        btn_mycamp: { vi: 'Trại của bạn', en: 'Your Camp' },
+        btn_mycamp_title: { vi: 'Trại của bạn', en: 'Your Camp' },
         deliver_tag: { vi: 'NỘP', en: 'DELIVER' }
     },
 
@@ -168,7 +170,10 @@ var I18N_DATA = {
     // MỤC 6: KHU CẮM TRẠI, THÚ CƯNG & ĐIỂM ĐẾN (CAMP MODAL)
     // -------------------------------------------------------------------------
     camp: {
-        title: { vi: 'KHU CẮM TRẠI', en: 'CAMPGROUND' },
+        title: { vi: 'CỬA HÀNG', en: 'SHOP' },
+        decor_modal_title: { vi: 'ĐỒ CẮM TRẠI', en: 'CAMP ITEMS' },
+        decor_title: { vi: 'ĐỒ CẮM TRẠI', en: 'CAMP ITEMS' },
+        btn_mycamp_decor: { vi: 'Đồ cắm trại', en: 'Camp Items' },
         tab_decor: { vi: 'Đồ Cắm Trại', en: 'Camp Items' },
         tab_pets: { vi: 'Thú Cưng', en: 'Pets' },
         tab_destinations: { vi: 'Điểm Đến', en: 'Locations' },
@@ -518,6 +523,12 @@ var I18N = (function () {
                 if (sellTextEl && typeof currentSelectedCell !== 'undefined' && currentSelectedCell === -1) {
                     sellTextEl.textContent = this.t('hud.btn_sell');
                 }
+            }
+            var myCampBtn = document.getElementById('btn-my-camp');
+            if (myCampBtn) {
+                myCampBtn.title = this.t('hud.btn_mycamp_title') || 'Trại của bạn';
+                var myCampLabel = myCampBtn.querySelector('.footer-btn-label');
+                if (myCampLabel) myCampLabel.textContent = this.t('hud.btn_mycamp') || 'Trại của bạn';
             }
 
             // Nút Cây chổi dọn dẹp

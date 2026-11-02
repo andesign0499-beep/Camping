@@ -3026,6 +3026,13 @@ function initGame() {
         renderBoard();
     };
 
+    var btnMyCamp = document.getElementById('btn-my-camp');
+    if (btnMyCamp) {
+        btnMyCamp.onclick = () => {
+            if (typeof openMyCamp === 'function') openMyCamp();
+        };
+    }
+
     if (npcAvatarBtn) {
         npcAvatarBtn.onclick = () => {
             showIdleHint(true);

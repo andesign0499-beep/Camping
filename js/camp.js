@@ -551,10 +551,179 @@ function showWinModal(info, onReplay, onNext) {
     });
 }
 
-// ---------- 3. KHU CẮM TRẠI (KHO VẬT PHẨM NHIỆM VỤ, THÚ CƯNG & ĐIỂM ĐẾN) ----------
-function openCamp(highlightLevel, onBack, initialTab) {
-    if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) SAVE.campItems = [];
+// ==========================================
+// CẤU HÌNH VẬT PHẨM TRẠI CỦA BẠN (ITEMS KHU TRẠI 3D)
+// ==========================================
+if (typeof KHUTRAI_ITEMS === 'undefined') {
+    var KHUTRAI_ITEMS = {
+        // --- LỀU TRẠI (TENT) ---
+        'trai_lv4': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv4.png', name: 'Bạt Tăng Che Nắng' },
+        'trai_lv5': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv5.png', name: 'Lều Vòm Cắm Trại 2 Người' },
+        'trai_lv6': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv6.png', name: 'Lều Gia Đình Chống Gió' },
+        'trai_lv7': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv7.png', name: 'Lều Kim Tự Tháp Glamping' },
+        'trai_lv8': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv8.png', name: 'Biệt Thự Lều Glamping' },
 
+        // --- BÀN DÃ NGOẠI (TABLE) ---
+        'ban_lv1':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv1.png',  name: 'Bàn Nhôm Vuông Mini' },
+        'ban_lv2':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv2.png',  name: 'Bàn Vải Gấp Dã Ngoại' },
+        'ban_lv3':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv3.png',  name: 'Bàn Trà Dã Ngoại' },
+        'ban_lv4':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv4.png',  name: 'Bàn Gỗ Cuộn Dã Ngoại' },
+        'ban_lv5':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv5.png',  name: 'Bàn Dã Ngoại Kèm Giá Lưới' },
+        'ban_lv6':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv6.png',  name: 'Bàn Cắm Trại Đa Năng' },
+        'ban_lv7':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv7.png',  name: 'Bàn Chiến Thuật IGT' },
+        'ban_lv8':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv8.png',  name: 'Trạm Bếp Nấu Ăn Glamping' },
+
+        // --- BẾP & LỬA TRẠI (STOVE) ---
+        'bep_lv1':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv1.png',  name: 'Nhánh Củi Khô' },
+        'bep_lv2':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv2.png',  name: 'Khúc Gỗ Tròn' },
+        'bep_lv3':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv3.png',  name: 'Bó Củi Buộc Dây' },
+        'bep_lv4':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv4.png',  name: 'Hố Đá Xếp Lửa' },
+        'bep_lv5':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv5.png',  name: 'Đống Củi Trại Vòng Đá' },
+        'bep_lv6':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv6.png',  name: 'Lửa Trại Rực Hồng' },
+        'bep_lv7':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv7.png',  name: 'Lò Nướng Than Hoa Tròn' },
+        'bep_lv8':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv8.png',  name: 'Bếp Nướng BBQ Chữ Nhật' },
+
+        // --- GHẾ DÃ NGOẠI (CHAIR) ---
+        'ghe_lv1':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv1.png',  name: 'Ghế Đôn Xếp Mini' },
+        'ghe_lv2':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv2.png',  name: 'Ghế Xếp Tựa Lưng Xanh' },
+        'ghe_lv3':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv3.png',  name: 'Ghế Xếp Dã Ngoại Màu Cát' },
+        'ghe_lv4':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv4.png',  name: 'Ghế Xếp Có Tay Vịn' },
+        'ghe_lv5':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv5.png',  name: 'Ghế Câu Cá Có Khay' },
+        'ghe_lv6':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv6.png',  name: 'Ghế Mặt Trăng Moon Chair' },
+        'ghe_lv7':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv7.png',  name: 'Ghế Tựa Lưng Cao Có Gối' },
+        'ghe_lv8':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv8.png',  name: 'Ghế Đạo Diễn Cao Cấp' }
+    };
+}
+
+function reconcileMyCampEquipped() {
+    if (!SAVE) return;
+    if (!SAVE.myCampEquipped || typeof SAVE.myCampEquipped !== 'object') {
+        SAVE.myCampEquipped = {};
+    }
+    var eq = SAVE.myCampEquipped;
+    var items = Array.isArray(SAVE.campItems) ? SAVE.campItems : [];
+    var slots = ['tent', 'chair1', 'chair2', 'table', 'stove'];
+    var usedUids = {};
+
+    slots.forEach(function (slot) {
+        var val = eq[slot];
+        if (!val) {
+            eq[slot] = null;
+            return;
+        }
+
+        var itemId = (typeof val === 'object' && val) ? val.id : val;
+        var itemUid = (typeof val === 'object' && val) ? val.uid : null;
+
+        // Nếu itemUid đang tồn tại trong kho campItems và chưa bị slot nào chiếm:
+        if (itemUid && items.some(function (it) { return it.uid === itemUid; }) && !usedUids[itemUid]) {
+            usedUids[itemUid] = true;
+            eq[slot] = { id: itemId, uid: itemUid };
+            return;
+        }
+
+        // Nếu chưa gắn uid hợp lệ, tìm ĐÚNG 1 instance chưa dùng trong kho campItems có cùng itemId:
+        var match = items.find(function (it) {
+            return it.id === itemId && !usedUids[it.uid];
+        });
+
+        if (match) {
+            usedUids[match.uid] = true;
+            eq[slot] = { id: itemId, uid: match.uid };
+        } else {
+            // Không tìm thấy trong kho (ví dụ đồ mặc định ban đầu), giữ id nhưng uid = null
+            eq[slot] = { id: itemId, uid: null };
+        }
+    });
+}
+
+function isItemEquippedInMyCamp(itemOrUid) {
+    if (!SAVE || !SAVE.myCampEquipped || !itemOrUid) return false;
+    var uid = (typeof itemOrUid === 'object' && itemOrUid) ? itemOrUid.uid : itemOrUid;
+    var eq = SAVE.myCampEquipped;
+    var slots = ['tent', 'chair1', 'chair2', 'table', 'stove'];
+
+    for (var i = 0; i < slots.length; i++) {
+        var val = eq[slots[i]];
+        if (!val) continue;
+        if (typeof val === 'object' && val.uid && val.uid === uid) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function equipItemInMyCamp(item) {
+    if (!SAVE || !item) return false;
+    reconcileMyCampEquipped();
+
+    var itemId = item.id || item;
+    var itemUid = item.uid || null;
+
+    var itemCfg = (typeof KHUTRAI_ITEMS !== 'undefined') ? KHUTRAI_ITEMS[itemId] : null;
+    if (!itemCfg) return false;
+
+    var type = itemCfg.type;
+    var eq = SAVE.myCampEquipped;
+    var entry = { id: itemId, uid: itemUid };
+
+    // Nguyên tắc: Chỉ được sử dụng 1 lều, 2 ghế, 1 bàn, 1 bếp
+    if (type === 'tent') {
+        eq.tent = entry;
+    } else if (type === 'table') {
+        eq.table = entry;
+    } else if (type === 'stove') {
+        eq.stove = entry;
+    } else if (type === 'chair') {
+        if (!eq.chair1) {
+            eq.chair1 = entry;
+        } else if (!eq.chair2) {
+            if (eq.chair1.uid !== itemUid) {
+                eq.chair2 = entry;
+            } else {
+                eq.chair1 = entry;
+            }
+        } else {
+            // Đã có 2 ghế -> nếu đang là ghế 1 thì cập nhật ghế 1, nếu là ghế 2 cập nhật ghế 2, còn lại dồn ghế 2 sang ghế 1 và thay ghế 2
+            if (eq.chair1.uid === itemUid) {
+                eq.chair1 = entry;
+            } else if (eq.chair2.uid === itemUid) {
+                eq.chair2 = entry;
+            } else {
+                eq.chair1 = eq.chair2;
+                eq.chair2 = entry;
+            }
+        }
+    }
+
+    if (typeof saveGame === 'function') saveGame();
+    return true;
+}
+
+function unequipItemInMyCamp(itemOrUid) {
+    if (!SAVE || !SAVE.myCampEquipped || !itemOrUid) return false;
+    var uid = (typeof itemOrUid === 'object' && itemOrUid) ? itemOrUid.uid : itemOrUid;
+    var eq = SAVE.myCampEquipped;
+    var slots = ['tent', 'chair1', 'chair2', 'table', 'stove'];
+    var changed = false;
+
+    slots.forEach(function (slot) {
+        var val = eq[slot];
+        if (val && typeof val === 'object' && val.uid === uid) {
+            eq[slot] = null;
+            changed = true;
+        } else if (val === uid) {
+            eq[slot] = null;
+            changed = true;
+        }
+    });
+
+    if (changed && typeof saveGame === 'function') saveGame();
+    return changed;
+}
+
+// ---------- 3. CỬA HÀNG (THÚ CƯNG & ĐIỂM ĐẾN) ----------
+function openCamp(highlightLevel, onBack, initialTab) {
     var petsList = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS : [
         { id: 'character01', name: 'Golden', img: 'assets/images/ui/character01.png', price: 0 },
         { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 12000 },
@@ -568,187 +737,55 @@ function openCamp(highlightLevel, onBack, initialTab) {
         { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 65000 }
     ];
 
-    var defaultTab = (initialTab === 'pets' || initialTab === 'decor') ? initialTab : 'locations';
+    var defaultTab = (initialTab === 'pets') ? 'pets' : 'locations';
 
     var overlay = createModal(
         '<div class="camp-tab-nav">' +
             '<button class="camp-tab-btn btn-3s' + (defaultTab === 'locations' ? ' active' : '') + '" id="tab-btn-locations">' + (typeof I18N !== 'undefined' ? I18N.t('camp.tab_destinations') : 'Điểm đến') + '</button>' +
             '<button class="camp-tab-btn btn-3s' + (defaultTab === 'pets' ? ' active' : '') + '" id="tab-btn-pets">' + (typeof I18N !== 'undefined' ? I18N.t('camp.tab_pets') : 'Thú cưng') + '</button>' +
-            '<button class="camp-tab-btn btn-3s' + (defaultTab === 'decor' ? ' active' : '') + '" id="tab-btn-decor">' + (typeof I18N !== 'undefined' ? I18N.t('camp.tab_decor') : 'Vật phẩm') + '</button>' +
         '</div>' +
         '<div id="camp-pane-locations" class="camp-tab-pane" style="' + (defaultTab === 'locations' ? '' : 'display:none;') + '">' +
-            '<div class="modal-sub" id="loc-unlocked-sub">' + (typeof I18N !== 'undefined' ? I18N.t('camp.dest_sub', { count: SAVE.ownedLocations.length, total: (typeof CAMP_LOCATIONS !== 'undefined' ? CAMP_LOCATIONS.length : 9) }) : 'Bộ sưu tập bối cảnh điểm đến') + '</div>' +
+            '<div class="modal-sub" id="loc-unlocked-sub">' + (typeof I18N !== 'undefined' ? I18N.t('camp.dest_sub', { count: (SAVE.ownedLocations ? SAVE.ownedLocations.length : 1), total: (typeof CAMP_LOCATIONS !== 'undefined' ? CAMP_LOCATIONS.length : 9) }) : 'Bộ sưu tập bối cảnh điểm đến') + '</div>' +
             '<div class="locations-scroll-wrap">' +
                 '<div class="locations-list" id="locations-list-container"></div>' +
             '</div>' +
         '</div>' +
         '<div id="camp-pane-pets" class="camp-tab-pane" style="' + (defaultTab === 'pets' ? '' : 'display:none;') + '">' +
-            '<div class="modal-sub" id="pets-unlocked-sub">' + (typeof I18N !== 'undefined' ? I18N.t('camp.pets_sub', { count: SAVE.ownedPets.length }) : 'Bộ sưu tập thú cưng đồng hành') + '</div>' +
+            '<div class="modal-sub" id="pets-unlocked-sub">' + (typeof I18N !== 'undefined' ? I18N.t('camp.pets_sub', { count: (SAVE.ownedPets ? SAVE.ownedPets.length : 1) }) : 'Bộ sưu tập thú cưng đồng hành') + '</div>' +
             '<div class="pets-scroll-wrap">' +
                 '<div class="pets-grid" id="pets-grid-container"></div>' +
             '</div>' +
-        '</div>' +
-        '<div id="camp-pane-decor" class="camp-tab-pane" style="' + (defaultTab === 'decor' ? '' : 'display:none;') + '">' +
-            '<div class="modal-sub" id="camp-items-sub">' + (typeof I18N !== 'undefined' ? I18N.t('camp.items_sub', { count: SAVE.campItems.length }) : ('Đã thu thập: <b>' + SAVE.campItems.length + '</b> vật phẩm từ nhiệm vụ')) + '</div>' +
-            '<div class="camp-items-wrap">' +
-                '<div class="camp-items-grid" id="camp-items-grid"></div>' +
-            '</div>' +
-            '<div id="camp-info-bar" class="camp-info-bar">' + (typeof I18N !== 'undefined' ? I18N.t('camp.sell_prompt') : 'Chạm vào một vật phẩm để xem chi tiết hoặc bán lấy Vàng') + '</div>' +
         '</div>' +
         '<div class="modal-buttons" id="camp-modal-buttons">' +
             '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('camp.btn_close') : 'Đóng') + '</button>' +
         '</div>',
         'camp-box',
-        (typeof I18N !== 'undefined' ? I18N.t('camp.title') : 'KHU CẮM TRẠI')
+        (typeof I18N !== 'undefined' ? I18N.t('camp.title') : 'CỬA HÀNG')
     );
 
-    var tabBtnDecor = overlay.querySelector('#tab-btn-decor');
     var tabBtnPets = overlay.querySelector('#tab-btn-pets');
     var tabBtnLocations = overlay.querySelector('#tab-btn-locations');
-    var paneDecor = overlay.querySelector('#camp-pane-decor');
     var panePets = overlay.querySelector('#camp-pane-pets');
     var paneLocations = overlay.querySelector('#camp-pane-locations');
     var petsGridContainer = overlay.querySelector('#pets-grid-container');
     var petsSub = overlay.querySelector('#pets-unlocked-sub');
     var locationsListContainer = overlay.querySelector('#locations-list-container');
     var locSub = overlay.querySelector('#loc-unlocked-sub');
-    var infoBar = overlay.querySelector('#camp-info-bar');
-    var itemsGrid = overlay.querySelector('#camp-items-grid');
-    var itemsSub = overlay.querySelector('#camp-items-sub');
-
-    var selectedCampItemUid = null;
-
-    function sellSelectedCampItem(item) {
-        if (!item) return;
-        var price = sellPrice(item.id) || 10;
-        if (typeof playerCoins !== 'undefined') {
-            playerCoins += price;
-            SAVE.coins = playerCoins;
-        } else {
-            SAVE.coins = (SAVE.coins || 0) + price;
-        }
-
-        removeCampItem(item.uid);
-
-        if (typeof playSound === 'function') playSound('coin');
-        showToast('Bán ' + item.name + ' (+' + price.toLocaleString('vi-VN') + ' Vàng)!');
-
-        var coinEl = document.getElementById('btn-coin-shop') || document.body;
-        if (typeof spawnFlyingCurrency === 'function') {
-            spawnFlyingCurrency(coinEl, 'gold', Math.min(price, 80));
-        }
-
-        if (typeof updateUIStats === 'function') updateUIStats();
-
-        selectedCampItemUid = null;
-        renderCampItems();
-    }
-
-    function renderCampItems() {
-        if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) SAVE.campItems = [];
-
-        if (itemsSub) {
-            itemsSub.innerHTML = 'Đã thu thập: <b>' + SAVE.campItems.length + '</b> vật phẩm từ nhiệm vụ';
-        }
-
-        var selectedItem = selectedCampItemUid ? SAVE.campItems.find(function (it) { return it.uid === selectedCampItemUid; }) : null;
-        if (!selectedItem) {
-            selectedCampItemUid = null;
-        }
-
-        if (selectedItem) {
-            var price = sellPrice(selectedItem.id) || 10;
-            var displayName = (typeof getItemCleanName === 'function') ? getItemCleanName(selectedItem.id) : selectedItem.name;
-            if (infoBar) {
-                infoBar.innerHTML = '<div class="camp-info-content">' +
-                    '<div class="camp-info-name"><b>' + displayName + '</b></div>' +
-                    '<button class="btn-3s btn-danger size-32 camp-inline-sell-btn" id="camp-inline-sell-btn">' +
-                        'Bán (+' + price.toLocaleString('vi-VN') + ' Vàng)' +
-                    '</button>' +
-                '</div>';
-                var inlineSellBtn = infoBar.querySelector('#camp-inline-sell-btn');
-                if (inlineSellBtn) {
-                    enhance3sButton(inlineSellBtn);
-                    inlineSellBtn.onclick = function (e) {
-                        e.stopPropagation();
-                        sellSelectedCampItem(selectedItem);
-                    };
-                }
-            }
-        } else {
-            if (infoBar) {
-                infoBar.innerHTML = '<div class="camp-info-placeholder">' +
-                    (SAVE.campItems.length > 0
-                        ? 'Chạm vào một vật phẩm để xem chi tiết hoặc bán lấy Vàng'
-                        : 'Chưa có vật phẩm nào trong khu trại.') +
-                '</div>';
-            }
-        }
-
-        if (!itemsGrid) return;
-
-        if (SAVE.campItems.length === 0) {
-            itemsGrid.innerHTML = '<div class="camp-empty-state">' +
-                '<div class="camp-empty-icon"></div>' +
-                '<div class="camp-empty-title">Khu Trại Chưa Có Vật Phẩm</div>' +
-                '<div class="camp-empty-desc">Khi bạn vượt qua các màn chơi và hoàn thành đơn hàng nhiệm vụ, các món đồ đó sẽ được chuyển vào đây để lưu trữ hoặc bán lấy Vàng!</div>' +
-            '</div>';
-            return;
-        }
-
-        var html = '';
-        SAVE.campItems.forEach(function (item, idx) {
-            var isSelected = (item.uid === selectedCampItemUid);
-            var imgPath = getItemImagePath(item.id);
-            var bgCls = (idx % 2 === 0) ? 'bg-light' : 'bg-dark';
-
-            html += '<div class="camp-item-slot ' + bgCls + (isSelected ? ' is-selected' : '') + '" data-uid="' + item.uid + '">' +
-                '<img src="' + imgPath + '" class="camp-item-slot-img" alt="' + item.name + '">' +
-            '</div>';
-        });
-
-        itemsGrid.innerHTML = html;
-
-        itemsGrid.querySelectorAll('.camp-item-slot').forEach(function (slotEl) {
-            slotEl.onclick = function () {
-                var uid = slotEl.dataset.uid;
-                if (selectedCampItemUid === uid) {
-                    var img = slotEl.querySelector('img');
-                    if (img) {
-                        img.animate([
-                            { transform: 'scale(0.85)' },
-                            { transform: 'scale(1.18)' },
-                            { transform: 'scale(1)' }
-                        ], { duration: 240, easing: 'ease-out' });
-                    }
-                } else {
-                    selectedCampItemUid = uid;
-                    if (typeof playSound === 'function') playSound('tap');
-                    renderCampItems();
-                }
-            };
-        });
-    }
 
     function switchTab(tab) {
-        tabBtnDecor.classList.toggle('active', tab === 'decor');
         tabBtnPets.classList.toggle('active', tab === 'pets');
         tabBtnLocations.classList.toggle('active', tab === 'locations');
 
-        paneDecor.style.display = (tab === 'decor') ? '' : 'none';
         panePets.style.display = (tab === 'pets') ? '' : 'none';
         paneLocations.style.display = (tab === 'locations') ? '' : 'none';
 
-        if (tab === 'decor') {
-            renderCampItems();
-        } else if (tab === 'pets') {
+        if (tab === 'pets') {
             renderPetsGrid();
         } else if (tab === 'locations') {
             renderLocationsList();
         }
     }
 
-    tabBtnDecor.onclick = function () { switchTab('decor'); };
     tabBtnPets.onclick = function () { switchTab('pets'); };
     tabBtnLocations.onclick = function () { switchTab('locations'); };
 
@@ -970,12 +1007,10 @@ function openCamp(highlightLevel, onBack, initialTab) {
         });
     }
 
-    if (defaultTab === 'locations') {
-        renderLocationsList();
-    } else if (defaultTab === 'pets') {
+    if (defaultTab === 'pets') {
         renderPetsGrid();
     } else {
-        renderCampItems();
+        renderLocationsList();
     }
 
     overlay.querySelector('#mb-close').onclick = function () {
@@ -983,6 +1018,202 @@ function openCamp(highlightLevel, onBack, initialTab) {
         if (onBack) onBack();
     };
 }
+
+// ==========================================
+// POPUP "ĐỒ CẮM TRẠI" (MỞ TRONG MÀN HÌNH "TRẠI CỦA BẠN")
+// ==========================================
+function openCampItemsModal(onClose) {
+    if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) SAVE.campItems = [];
+    reconcileMyCampEquipped();
+
+    var title = (typeof I18N !== 'undefined' && I18N.t('camp.decor_modal_title')) ? I18N.t('camp.decor_modal_title') : 'ĐỒ CẮM TRẠI';
+
+    var overlay = createModal(
+        '<div class="camp-items-modal-pane">' +
+            '<div class="modal-sub" id="camp-items-sub">' + (typeof I18N !== 'undefined' ? I18N.t('camp.items_sub', { count: SAVE.campItems.length }) : ('Đã thu thập: <b>' + SAVE.campItems.length + '</b> vật phẩm từ nhiệm vụ')) + '</div>' +
+            '<div class="camp-items-wrap">' +
+                '<div class="camp-items-grid" id="camp-items-grid"></div>' +
+            '</div>' +
+            '<div id="camp-info-bar" class="camp-info-bar">' + (typeof I18N !== 'undefined' ? I18N.t('camp.sell_prompt') : 'Chạm vào vật phẩm để xem chi tiết, trang bị hoặc bán lấy Vàng') + '</div>' +
+        '</div>' +
+        '<div class="modal-buttons" id="camp-decor-modal-buttons">' +
+            '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('camp.btn_close') : 'Đóng') + '</button>' +
+        '</div>',
+        'camp-box camp-decor-modal',
+        title
+    );
+
+    var infoBar = overlay.querySelector('#camp-info-bar');
+    var itemsGrid = overlay.querySelector('#camp-items-grid');
+    var itemsSub = overlay.querySelector('#camp-items-sub');
+    var selectedCampItemUid = null;
+
+    function sellSelectedCampItem(item) {
+        if (!item) return;
+        var price = sellPrice(item.id) || 10;
+        if (typeof playerCoins !== 'undefined') {
+            playerCoins += price;
+            SAVE.coins = playerCoins;
+        } else {
+            SAVE.coins = (SAVE.coins || 0) + price;
+        }
+
+        removeCampItem(item.uid);
+
+        if (typeof playSound === 'function') playSound('coin');
+        showToast('Bán ' + item.name + ' (+' + price.toLocaleString('vi-VN') + ' Vàng)!');
+
+        var coinEl = document.getElementById('btn-coin-shop') || document.body;
+        if (typeof spawnFlyingCurrency === 'function') {
+            spawnFlyingCurrency(coinEl, 'gold', Math.min(price, 80));
+        }
+
+        if (typeof updateUIStats === 'function') updateUIStats();
+        renderMyCampScene();
+
+        selectedCampItemUid = null;
+        renderCampItems();
+    }
+
+    function renderCampItems() {
+        if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) SAVE.campItems = [];
+        reconcileMyCampEquipped();
+
+        if (itemsSub) {
+            itemsSub.innerHTML = 'Đã thu thập: <b>' + SAVE.campItems.length + '</b> vật phẩm từ nhiệm vụ';
+        }
+
+        var selectedItem = selectedCampItemUid ? SAVE.campItems.find(function (it) { return it.uid === selectedCampItemUid; }) : null;
+        if (!selectedItem) {
+            selectedCampItemUid = null;
+        }
+
+        if (selectedItem) {
+            var price = sellPrice(selectedItem.id) || 10;
+            var displayName = (typeof getItemCleanName === 'function') ? getItemCleanName(selectedItem.id) : selectedItem.name;
+            var isKhutrai = !!KHUTRAI_ITEMS[selectedItem.id];
+            var isEquipped = isItemEquippedInMyCamp(selectedItem);
+
+            if (infoBar) {
+                var actionBtnsHtml = '';
+                if (isKhutrai) {
+                    if (isEquipped) {
+                        actionBtnsHtml += '<button class="btn-3s btn-gray size-32 camp-inline-equip-btn" id="camp-inline-equip-btn">' +
+                            'Tháo ra' +
+                        '</button>';
+                    } else {
+                        actionBtnsHtml += '<button class="btn-3s btn-green size-32 camp-inline-equip-btn" id="camp-inline-equip-btn">' +
+                            'Sử dụng' +
+                        '</button>';
+                    }
+                }
+                actionBtnsHtml += '<button class="btn-3s btn-danger size-32 camp-inline-sell-btn" id="camp-inline-sell-btn">' +
+                    'Bán (+' + price.toLocaleString('vi-VN') + ' Vàng)' +
+                '</button>';
+
+                infoBar.innerHTML = '<div class="camp-info-content">' +
+                    '<div class="camp-info-name"><b>' + displayName + '</b>' +
+                        (isEquipped ? ' <span style="color:#27ae60;font-size:11px;font-weight:700;">(Đang dùng ở Trại)</span>' : '') +
+                    '</div>' +
+                    '<div class="camp-info-actions">' + actionBtnsHtml + '</div>' +
+                '</div>';
+
+                var inlineEquipBtn = infoBar.querySelector('#camp-inline-equip-btn');
+                if (inlineEquipBtn) {
+                    enhance3sButton(inlineEquipBtn);
+                    inlineEquipBtn.onclick = function (e) {
+                        e.stopPropagation();
+                        if (isEquipped) {
+                            unequipItemInMyCamp(selectedItem);
+                            showToast('Đã tháo ' + displayName + ' khỏi Trại của bạn!');
+                        } else {
+                            equipItemInMyCamp(selectedItem);
+                            showToast('Đã trang bị ' + displayName + ' vào Trại của bạn!');
+                        }
+                        if (typeof playSound === 'function') playSound('click');
+                        renderMyCampScene();
+                        renderCampItems();
+                    };
+                }
+
+                var inlineSellBtn = infoBar.querySelector('#camp-inline-sell-btn');
+                if (inlineSellBtn) {
+                    enhance3sButton(inlineSellBtn);
+                    inlineSellBtn.onclick = function (e) {
+                        e.stopPropagation();
+                        if (isEquipped) {
+                            unequipItemInMyCamp(selectedItem);
+                        }
+                        sellSelectedCampItem(selectedItem);
+                    };
+                }
+            }
+        } else {
+            if (infoBar) {
+                infoBar.innerHTML = '<div class="camp-info-placeholder">' +
+                    (SAVE.campItems.length > 0
+                        ? 'Chạm vào vật phẩm để xem chi tiết, trang bị hoặc bán lấy Vàng'
+                        : 'Chưa có vật phẩm nào trong khu trại.') +
+                '</div>';
+            }
+        }
+
+        if (!itemsGrid) return;
+
+        if (SAVE.campItems.length === 0) {
+            itemsGrid.innerHTML = '<div class="camp-empty-state">' +
+                '<div class="camp-empty-icon"></div>' +
+                '<div class="camp-empty-title">Khu Trại Chưa Có Vật Phẩm</div>' +
+                '<div class="camp-empty-desc">Khi bạn vượt qua các màn chơi và hoàn thành đơn hàng nhiệm vụ, các món đồ đó sẽ được chuyển vào đây để lưu trữ hoặc bán lấy Vàng!</div>' +
+            '</div>';
+            return;
+        }
+
+        var html = '';
+        SAVE.campItems.forEach(function (item, idx) {
+            var isSelected = (item.uid === selectedCampItemUid);
+            var isEquipped = isItemEquippedInMyCamp(item);
+            var imgPath = getItemImagePath(item.id);
+            var bgCls = (idx % 2 === 0) ? 'bg-light' : 'bg-dark';
+
+            html += '<div class="camp-item-slot ' + bgCls + (isSelected ? ' is-selected' : '') + (isEquipped ? ' is-equipped' : '') + '" data-uid="' + item.uid + '">' +
+                '<img src="' + imgPath + '" class="camp-item-slot-img" alt="' + item.name + '">' +
+                (isEquipped ? '<span class="camp-slot-badge">Đang dùng</span>' : '') +
+            '</div>';
+        });
+
+        itemsGrid.innerHTML = html;
+
+        itemsGrid.querySelectorAll('.camp-item-slot').forEach(function (slotEl) {
+            slotEl.onclick = function () {
+                var uid = slotEl.dataset.uid;
+                if (selectedCampItemUid === uid) {
+                    var img = slotEl.querySelector('img');
+                    if (img) {
+                        img.animate([
+                            { transform: 'scale(0.85)' },
+                            { transform: 'scale(1.18)' },
+                            { transform: 'scale(1)' }
+                        ], { duration: 240, easing: 'ease-out' });
+                    }
+                } else {
+                    selectedCampItemUid = uid;
+                    if (typeof playSound === 'function') playSound('tap');
+                    renderCampItems();
+                }
+            };
+        });
+    }
+
+    renderCampItems();
+
+    overlay.querySelector('#mb-close').onclick = function () {
+        closeModal();
+        renderMyCampScene();
+        if (onClose) onClose();
+    };
+}
+window.openCampItemsModal = openCampItemsModal;
 
 // ==========================================
 // ĐỊNH NGHĨA KINH TẾ QUẢNG CÁO & CỬA HÀNG
@@ -2618,6 +2849,128 @@ function showEditPlayerIdModal(opts) {
                 openSettingsModal(opts);
             }
         };
+    }
+}
+
+// ==========================================
+// MÀN HÌNH "TRẠI CỦA BẠN" (MY CAMP SCREEN)
+// ==========================================
+function openMyCamp() {
+    var screen = document.getElementById('my-camp-screen');
+    if (!screen) return;
+
+    reconcileMyCampEquipped();
+
+    renderMyCampScene();
+    screen.style.display = 'block';
+
+    if (typeof playSound === 'function') playSound('click');
+}
+
+function closeMyCamp() {
+    var screen = document.getElementById('my-camp-screen');
+    if (!screen) return;
+    screen.style.display = 'none';
+
+    if (typeof playSound === 'function') playSound('click');
+}
+
+function renderMyCampScene() {
+    var stage = document.getElementById('mycamp-stage');
+    if (!stage) return;
+
+    var cfg = (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG) ? MYCAMP_CONFIG : null;
+
+    // 1. Cấu hình lưới ô (Bật / Tắt / Kích thước)
+    var gridOverlay = document.getElementById('mycamp-grid-overlay');
+    if (gridOverlay && cfg && cfg.grid) {
+        gridOverlay.style.display = cfg.grid.show ? 'block' : 'none';
+        if (cfg.grid.cellWidth && cfg.grid.cellHeight) {
+            gridOverlay.style.backgroundSize = cfg.grid.cellWidth + 'px ' + cfg.grid.cellHeight + 'px';
+        }
+        if (cfg.grid.opacity !== undefined) {
+            gridOverlay.style.opacity = cfg.grid.opacity;
+        }
+    }
+
+    // 2. Cấu hình khung sân khấu chính (Stage)
+    if (cfg && cfg.stage) {
+        if (cfg.stage.width) stage.style.width = (typeof cfg.stage.width === 'number' ? cfg.stage.width + 'px' : cfg.stage.width);
+        if (cfg.stage.height) stage.style.height = (typeof cfg.stage.height === 'number' ? cfg.stage.height + 'px' : cfg.stage.height);
+        if (cfg.stage.top) stage.style.top = cfg.stage.top;
+    }
+
+    // 3. Render danh sách tất cả các đối tượng (Decor & Slots) từ MYCAMP_CONFIG.items
+    var eq = (SAVE && SAVE.myCampEquipped) ? SAVE.myCampEquipped : {};
+    var itemsList = (cfg && Array.isArray(cfg.items)) ? cfg.items : [];
+
+    var html = '';
+    itemsList.forEach(function (item) {
+        var style = 'position:absolute;' +
+            'left:' + (typeof item.left === 'number' ? item.left + 'px' : item.left) + ';' +
+            'top:' + (typeof item.top === 'number' ? item.top + 'px' : item.top) + ';' +
+            'width:' + (typeof item.width === 'number' ? item.width + 'px' : item.width) + ';' +
+            'height:' + (typeof item.height === 'number' ? item.height + 'px' : item.height) + ';' +
+            'z-index:' + (item.zIndex !== undefined ? item.zIndex : 10) + ';';
+
+        if (item.transform) style += 'transform:' + item.transform + ';';
+        if (item.extraStyle) style += item.extraStyle + ';';
+
+        var imgFit = item.fit ? ('object-fit:' + item.fit + ';height:100%;') : '';
+
+        if (item.type === 'decor') {
+            // Vật trang trí cố định (Cây thông, cột đèn, v.v.)
+            var elemId = 'mycamp-decor-' + item.id;
+            html += '<div id="' + elemId + '" class="mycamp-item mycamp-' + item.id + '" style="' + style + '" title="' + (item.name || '') + '">';
+            html += '<img src="' + item.src + '" class="mycamp-prop-img" style="' + imgFit + '" alt="' + (item.name || '') + '">';
+            html += '</div>';
+        } else if (item.type === 'slot') {
+            // Slot gắn đồ trang bị người chơi thu thập
+            var elemId = 'mycamp-slot-' + item.slotKey;
+            var equippedVal = eq[item.slotKey];
+            var equippedId = (typeof equippedVal === 'object' && equippedVal) ? equippedVal.id : equippedVal;
+            var itemData = (equippedId && typeof KHUTRAI_ITEMS !== 'undefined' && KHUTRAI_ITEMS) ? KHUTRAI_ITEMS[equippedId] : null;
+
+            if (itemData) {
+                html += '<div id="' + elemId + '" class="mycamp-item mycamp-' + item.slotKey + '" style="' + style + '" title="' + (itemData.name || item.name || '') + '">';
+                html += '<img src="' + itemData.path + '" class="mycamp-prop-img" style="' + imgFit + '" alt="' + (itemData.name || item.name || '') + '">';
+                html += '</div>';
+            } else {
+                html += '<div id="' + elemId + '" class="mycamp-item mycamp-' + item.slotKey + '" style="' + style + 'display:none;" title="' + (item.name || '') + '"></div>';
+            }
+        }
+    });
+
+    stage.innerHTML = html;
+}
+
+// Tự động gắn sự kiện cho các nút điều khiển Trại Của Bạn
+if (typeof document !== 'undefined' && typeof document.getElementById === 'function') {
+    function initMyCampListeners() {
+        var myCampBtn = document.getElementById('btn-my-camp');
+        if (myCampBtn) {
+            myCampBtn.onclick = function () {
+                openMyCamp();
+            };
+        }
+        var backBtn = document.getElementById('btn-mycamp-back');
+        if (backBtn) {
+            backBtn.onclick = function () {
+                closeMyCamp();
+            };
+        }
+        var decorBtn = document.getElementById('btn-mycamp-decor');
+        if (decorBtn) {
+            decorBtn.onclick = function () {
+                openCampItemsModal();
+            };
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMyCampListeners);
+    } else {
+        initMyCampListeners();
     }
 }
 
