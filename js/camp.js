@@ -926,6 +926,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 if (typeof playSound === 'function') playSound('win');
                 showToast('Đã chọn ' + pet.name + ' đồng hành!');
                 renderPetsGrid();
+                if (typeof renderMyCampScene === 'function') renderMyCampScene();
             };
         });
 
@@ -941,15 +942,17 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 if (typeof playSound === 'function') playSound('tap');
                 showToast('Đã chọn ' + pet.name + ' làm bạn đồng hành!', '#2e7d32');
                 renderPetsGrid();
+                if (typeof renderMyCampScene === 'function') renderMyCampScene();
             };
         });
     }
 
     function renderLocationsList() {
         if (!SAVE.ownedLocations || !Array.isArray(SAVE.ownedLocations)) SAVE.ownedLocations = ['loc_dongdo'];
-        if (!SAVE.activeLocation) SAVE.activeLocation = 'loc_dongdo';
-
         var locations = (typeof CAMP_LOCATIONS !== 'undefined') ? CAMP_LOCATIONS : [];
+        if (!SAVE.activeLocation || !locations.some(function (l) { return l.id === SAVE.activeLocation; })) {
+            SAVE.activeLocation = 'loc_dongdo';
+        }
         var ownedCount = SAVE.ownedLocations.length;
         if (locSub) {
             locSub.innerHTML = (typeof I18N !== 'undefined')
@@ -1046,6 +1049,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 if (typeof playSound === 'function') playSound('win');
                 showToast('Mở khóa cảnh nền: ' + locName + '!');
                 renderLocationsList();
+                if (typeof renderMyCampScene === 'function') renderMyCampScene();
             };
         });
 
@@ -1062,6 +1066,7 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 if (typeof playSound === 'function') playSound('tap');
                 showToast('Đổi cảnh nền: ' + locName + '!');
                 renderLocationsList();
+                if (typeof renderMyCampScene === 'function') renderMyCampScene();
             };
         });
     }
@@ -3106,37 +3111,295 @@ function closeMyCamp() {
 }
 
 var campAnimTimers = {};
+var petHoldState = {
+    isHolding: false,
+    timer: null
+};
 
 function stopCampAnimators() {
     Object.keys(campAnimTimers).forEach(function (k) {
         clearInterval(campAnimTimers[k]);
         delete campAnimTimers[k];
     });
+    if (petHoldState.timer) {
+        clearInterval(petHoldState.timer);
+        petHoldState.timer = null;
+    }
+    petHoldState.isHolding = false;
 }
 
-function showPetHeartBubble(container) {
+// Thông báo bay lên (Số tiền thưởng / Thời gian đếm ngược)
+function showPetFloatingToast(container, text, isGold) {
     if (!container) return;
-    var bubble = document.createElement('div');
-    bubble.className = 'pet-heart-bubble';
-    bubble.innerHTML = '❤️ Gâu!';
-    bubble.style.cssText = 'position:absolute;top:-28px;left:50%;transform:translateX(-50%);' +
-        'background:rgba(255,255,255,0.92);padding:2px 8px;border-radius:12px;' +
-        'font-family:Nunito,sans-serif;font-weight:800;font-size:12px;color:#e74c3c;' +
-        'box-shadow:0 2px 8px rgba(0,0,0,0.25);pointer-events:none;z-index:99;' +
-        'animation:petHeartFloat 0.85s ease-out forwards;';
-    container.appendChild(bubble);
+    var toast = document.createElement('div');
+    toast.className = 'pet-float-toast' + (isGold ? ' gold' : '');
+    toast.innerHTML = text;
+    container.appendChild(toast);
     setTimeout(function () {
-        if (bubble && bubble.parentNode) bubble.parentNode.removeChild(bubble);
-    }, 900);
+        if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 1250);
 }
 
 function startCampAnimators() {
     stopCampAnimators();
 
     var cfg = (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG) ? MYCAMP_CONFIG : null;
+
+    // 1. CHẠY HOẠT ẢNH CHO THÚ CƯNG THEO CƠ CHẾ NGƯỜI CHƠI CHỌN MUA (SAVE.activePet)
+    var activePetId = (SAVE && SAVE.activePet) ? SAVE.activePet : 'character01';
+    var petConfig = (cfg && cfg.pets && cfg.pets[activePetId]) ? cfg.pets[activePetId] : null;
+
+    if (petConfig) {
+        var f1 = petConfig.state1Frames || petConfig.standFrames || petConfig.idleFrames || [];
+        var f2 = petConfig.state2Frames || petConfig.sitFrames || petConfig.helloFrames || [];
+
+        if (f1.length || f2.length) {
+            var elemId = 'mycamp-anim-pet';
+            var imgElem = document.getElementById(elemId + '-img');
+            if (imgElem) {
+                // Preload toàn bộ frames của pet
+                f1.concat(f2).forEach(function (src) {
+                    var img = new Image();
+                    img.src = src;
+                });
+
+                var fps = (petConfig.fps && petConfig.fps > 0) ? petConfig.fps : 8;
+                var intervalMs = Math.round(1000 / fps);
+
+                var s1DurationMs = (petConfig.state1Duration || petConfig.standDuration || petConfig.idleDuration || 5) * 1000;
+                var s2DurationMs = (petConfig.state2Duration || petConfig.sitDuration || petConfig.helloDuration || 5) * 1000;
+                var s1Width = petConfig.state1Width || petConfig.standWidth || petConfig.idleWidth || 60;
+                var s2Width = petConfig.state2Width || petConfig.sitWidth || petConfig.helloWidth || 60;
+
+                var currentState = f1.length ? 'state1' : 'state2';
+                var currentFrameIdx = 0;
+                var stateElapsedMs = 0;
+
+                campAnimTimers['pet'] = setInterval(function () {
+                    var img = document.getElementById(elemId + '-img');
+                    if (!img) return;
+
+                    var frames = (currentState === 'state1') ? f1 : f2;
+                    if (!frames || !frames.length) return;
+
+                    currentFrameIdx = (currentFrameIdx + 1) % frames.length;
+                    img.src = frames[currentFrameIdx];
+
+                    var targetWidth = (currentState === 'state1') ? s1Width : s2Width;
+                    if (img.style.width !== targetWidth + 'px') {
+                        img.style.width = targetWidth + 'px';
+                    }
+
+                    // Nếu có cả 2 trạng thái và không đang giữ vuốt ve thì luân phiên
+                    if (f1.length && f2.length && !petHoldState.isHolding) {
+                        stateElapsedMs += intervalMs;
+                        var currentLimit = (currentState === 'state1') ? s1DurationMs : s2DurationMs;
+
+                        if (stateElapsedMs >= currentLimit && currentFrameIdx === 0) {
+                            currentState = (currentState === 'state1') ? 'state2' : 'state1';
+                            stateElapsedMs = 0;
+                            currentFrameIdx = 0;
+                        }
+                    }
+                }, intervalMs);
+
+                // Cập nhật biểu tượng đồng xu bé trên đầu thú cưng (khi hết 10 phút)
+                var rwdCfg = (cfg && cfg.petReward) ? cfg.petReward : {
+                    cooldownMinutes: 10,
+                    minHoldSeconds: 1,
+                    maxHoldSeconds: 3,
+                    tiers: [
+                        { seconds: 1, gold: 750 },
+                        { seconds: 2, gold: 1200 },
+                        { seconds: 3, gold: 2000 }
+                    ]
+                };
+                var cooldownMs = (rwdCfg.cooldownMinutes || 10) * 60 * 1000;
+
+                function updatePetReadyBadge() {
+                    var badge = document.getElementById('mycamp-pet-ready-coin');
+                    if (!badge) return;
+                    var lastClaim = (SAVE && SAVE.lastPetRewardTime) ? SAVE.lastPetRewardTime : 0;
+                    var elapsed = Date.now() - lastClaim;
+                    var isReady = elapsed >= cooldownMs;
+                    badge.style.display = isReady ? 'flex' : 'none';
+                }
+                updatePetReadyBadge();
+                campAnimTimers['pet_cooldown'] = setInterval(updatePetReadyBadge, 2000);
+
+                // Tương tác chạm & giữ nhận tiền dựa trên thời gian chạm (1s: 750, 2s: 1200, 3s: 2000)
+                var container = document.getElementById(elemId);
+                if (container && !container._petHoldInit) {
+                    container._petHoldInit = true;
+                    container.style.cursor = 'pointer';
+
+                    // Chống mở context menu khi nhấn giữ lâu trên màn hình cảm ứng
+                    container.addEventListener('contextmenu', function (e) {
+                        e.preventDefault();
+                    });
+
+                    var holdStartTime = 0;
+                    var lastTierReported = 0;
+
+                    function getRewardTier(sec) {
+                        if (sec >= 3.0) return { tier: 3, gold: 2000, isMax: true };
+                        if (sec >= 2.0) return { tier: 2, gold: 1200, isMax: false };
+                        if (sec >= 1.0) return { tier: 1, gold: 750, isMax: false };
+                        return { tier: 0, gold: 0, isMax: false };
+                    }
+
+                    function onPetTouchDown(e) {
+                        if (e.button !== undefined && e.button !== 0) return;
+                        e.stopPropagation();
+
+                        // 1. Chuyển ngay sang động tác anim thứ 2 khi người chơi chạm vào
+                        if (f2.length) {
+                            currentState = 'state2';
+                            stateElapsedMs = 0;
+                            currentFrameIdx = 0;
+                            var img = document.getElementById(elemId + '-img');
+                            if (img && f2[0]) img.src = f2[0];
+                            if (img) img.style.width = s2Width + 'px';
+                        }
+
+                        container.style.transition = 'transform 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+                        container.style.transform = 'scale(1.15) translateY(-6px)';
+
+                        var lastClaim = (SAVE && SAVE.lastPetRewardTime) ? SAVE.lastPetRewardTime : 0;
+                        var elapsed = Date.now() - lastClaim;
+                        var isReady = elapsed >= cooldownMs;
+
+                        if (!isReady) {
+                            // Chưa hết chu kỳ 10 phút: pet đổi tư thế, báo thời gian còn lại
+                            if (typeof playSound === 'function') playSound('tap');
+                            var remainMs = cooldownMs - elapsed;
+                            var remainMins = Math.floor(remainMs / 60000);
+                            var remainSecs = Math.floor((remainMs % 60000) / 1000);
+                            var timeStr = (remainMins > 0 ? remainMins + 'p ' : '') + remainSecs + 's';
+                            showPetFloatingToast(container, '⏳ Còn ' + timeStr + ' để nhận quà', false);
+
+                            setTimeout(function () {
+                                if (container && !petHoldState.isHolding) container.style.transform = '';
+                            }, 200);
+                            return;
+                        }
+
+                        // Đã hết 10 phút: Bắt đầu đếm thời gian giữ chạm để tính thưởng
+                        petHoldState.isHolding = true;
+                        holdStartTime = Date.now();
+                        lastTierReported = 0;
+                        if (typeof playSound === 'function') playSound('tap');
+
+                        var indicator = document.getElementById('mycamp-pet-hold-indicator');
+                        if (indicator) {
+                            indicator.style.display = 'flex';
+                            indicator.className = 'pet-hold-indicator';
+                            indicator.innerHTML = 'Vuốt ve... 0.0s';
+                        }
+
+                        if (petHoldState.timer) clearInterval(petHoldState.timer);
+                        petHoldState.timer = setInterval(function () {
+                            if (!petHoldState.isHolding) {
+                                clearInterval(petHoldState.timer);
+                                return;
+                            }
+
+                            var holdSec = (Date.now() - holdStartTime) / 1000;
+                            var info = getRewardTier(holdSec);
+
+                            if (indicator) {
+                                var dispSec = Math.min(holdSec, 3.0).toFixed(1) + 's';
+                                if (info.tier === 0) {
+                                    indicator.className = 'pet-hold-indicator';
+                                    indicator.innerHTML = 'Vuốt ve... ' + dispSec;
+                                } else if (info.isMax) {
+                                    indicator.className = 'pet-hold-indicator tier-max';
+                                    indicator.innerHTML = '🎉 ' + dispSec + ': +2.000 Vàng (Tối đa)';
+                                } else {
+                                    indicator.className = 'pet-hold-indicator tier-' + info.tier;
+                                    indicator.innerHTML = '✨ ' + dispSec + ': +' + info.gold.toLocaleString('vi-VN') + ' Vàng';
+                                }
+                            }
+
+                            if (info.tier > lastTierReported) {
+                                lastTierReported = info.tier;
+                                if (typeof playSound === 'function') playSound(info.isMax ? 'win' : 'coin');
+                                container.style.transform = 'scale(' + (1.14 + info.tier * 0.04) + ') translateY(-' + (6 + info.tier * 2) + 'px)';
+                            }
+
+                            // Đạt mốc tối đa 3s: Tự động trao thưởng ngay lập tức
+                            if (holdSec >= (rwdCfg.maxHoldSeconds || 3)) {
+                                finalizeHoldReward();
+                            }
+                        }, 60);
+                    }
+
+                    function finalizeHoldReward() {
+                        if (!petHoldState.isHolding) return;
+                        petHoldState.isHolding = false;
+                        if (petHoldState.timer) {
+                            clearInterval(petHoldState.timer);
+                            petHoldState.timer = null;
+                        }
+
+                        var holdSec = (Date.now() - holdStartTime) / 1000;
+                        var info = getRewardTier(holdSec);
+
+                        var indicator = document.getElementById('mycamp-pet-hold-indicator');
+                        if (indicator) indicator.style.display = 'none';
+
+                        if (container) {
+                            container.style.transform = '';
+                        }
+
+                        if (info.gold > 0) {
+                            // Nhận thưởng hợp lệ (>= 1s): Cộng tiền, lưu thời gian, bật tiền bay ra
+                            if (typeof playerCoins !== 'undefined') playerCoins += info.gold;
+                            SAVE.coins = (SAVE.coins || 0) + info.gold;
+                            SAVE.lastPetRewardTime = Date.now();
+
+                            if (typeof saveGame === 'function') saveGame();
+                            if (typeof updateUIStats === 'function') updateUIStats();
+                            if (typeof playSound === 'function') playSound('win');
+
+                            // Hiệu ứng tiền bay ra
+                            if (typeof spawnFlyingCurrency === 'function') {
+                                spawnFlyingCurrency(container, 'gold', Math.min(info.gold, 80));
+                            }
+
+                            // Hiện số tiền nhận được bay lên
+                            showPetFloatingToast(container, '+' + info.gold.toLocaleString('vi-VN') + ' Vàng', true);
+
+                            // Cập nhật ẩn đồng xu trên đầu thú cưng
+                            updatePetReadyBadge();
+                        } else {
+                            // Thả tay quá nhanh (< 1s): Không trừ lượt 10 phút, nhắc người chơi giữ lâu hơn
+                            showPetFloatingToast(container, 'Giữ từ 1s - 3s để nhận tới 2.000 Vàng!', false);
+                        }
+                    }
+
+                    container.addEventListener('mousedown', onPetTouchDown);
+                    container.addEventListener('touchstart', onPetTouchDown, { passive: false });
+
+                    window.addEventListener('mouseup', function () {
+                        if (petHoldState.isHolding) finalizeHoldReward();
+                    });
+                    window.addEventListener('touchend', function () {
+                        if (petHoldState.isHolding) finalizeHoldReward();
+                    });
+                    window.addEventListener('touchcancel', function () {
+                        if (petHoldState.isHolding) finalizeHoldReward();
+                    });
+                }
+            }
+        }
+    }
+
+    // 2. CHẠY HOẠT ẢNH CHO CÁC ĐỐI TƯỢNG KHÁC TRONG MYCAMP_CONFIG.items
     var itemsList = (cfg && Array.isArray(cfg.items)) ? cfg.items : [];
 
     itemsList.forEach(function (item) {
+        if (item.type === 'pet' || item.id === 'slot-pet' || item.id === 'npc-dog-golden') return;
         if (item.type === 'anim_states') {
             // Đối tượng hoạt ảnh nhiều trạng thái (Đứng 1 lúc rồi ngồi)
             var elemId = 'mycamp-anim-' + item.id;
@@ -3215,7 +3478,7 @@ function startCampAnimators() {
                         if (container) container.style.transform = '';
                     }, 200);
 
-                    showPetHeartBubble(container);
+                    showPetFloatingToast(container, '✨', false);
                 });
             }
             return;
@@ -3265,7 +3528,7 @@ function startCampAnimators() {
                     if (container) container.style.transform = '';
                 }, 200);
 
-                showPetHeartBubble(container);
+                showPetFloatingToast(container, '✨', false);
             });
         }
     });
@@ -3334,6 +3597,48 @@ function renderMyCampScene() {
         if (item.extraStyle) style += item.extraStyle + ';';
 
         var imgFit = item.fit ? ('object-fit:' + item.fit + ';height:100%;') : '';
+
+        if (item.type === 'pet' || item.id === 'slot-pet' || item.id === 'npc-dog-golden') {
+            // Thú cưng đồng hành theo cơ chế người chơi chọn mua (SAVE.activePet)
+            var activePetId = (SAVE && SAVE.activePet) ? SAVE.activePet : 'character01';
+            var petConfig = (cfg && cfg.pets && cfg.pets[activePetId]) ? cfg.pets[activePetId] : null;
+
+            // Nếu con vật chưa có chuyển động (chưa có frame animation) thì tự động để trống bãi cỏ
+            var f1 = petConfig ? (petConfig.state1Frames || petConfig.standFrames || petConfig.idleFrames || []) : [];
+            var f2 = petConfig ? (petConfig.state2Frames || petConfig.sitFrames || petConfig.helloFrames || []) : [];
+
+            if (!petConfig || (!f1.length && !f2.length)) {
+                // "Nếu con vật nào chưa có chuyển động thì cứ để trống"
+                return;
+            }
+
+            var petLeft = (petConfig.left !== undefined) ? petConfig.left : item.left;
+            var petTop = (petConfig.top !== undefined) ? petConfig.top : item.top;
+            var petWidth = (petConfig.width !== undefined) ? petConfig.width : item.width;
+            var petHeight = (petConfig.height !== undefined) ? petConfig.height : item.height;
+            var petZIndex = (petConfig.zIndex !== undefined) ? petConfig.zIndex : item.zIndex;
+
+            var petStyle = 'position:absolute;' +
+                'left:' + (typeof petLeft === 'number' ? petLeft + 'px' : petLeft) + ';' +
+                'top:' + (typeof petTop === 'number' ? petTop + 'px' : petTop) + ';' +
+                'width:' + (typeof petWidth === 'number' ? petWidth + 'px' : petWidth) + ';' +
+                'height:' + (typeof petHeight === 'number' ? petHeight + 'px' : petHeight) + ';' +
+                'z-index:' + (petZIndex !== undefined ? petZIndex : 18) + ';' +
+                'display:flex;align-items:flex-end;justify-content:center;';
+
+            var elemId = 'mycamp-anim-pet';
+            var initialSrc = f1[0] || f2[0] || '';
+            var initialW = petConfig.state1Width || petConfig.standWidth || petConfig.idleWidth || 60;
+
+            html += '<div id="' + elemId + '" class="mycamp-item mycamp-anim-item mycamp-pet mycamp-pet-' + activePetId + '" data-pet-id="' + activePetId + '" style="' + petStyle + '" title="' + (petConfig.name || '') + '">';
+            html += '<img id="' + elemId + '-img" src="' + initialSrc + '" class="mycamp-prop-img" style="display:block;width:' + initialW + 'px;height:auto;pointer-events:none;" alt="' + (petConfig.name || '') + '">';
+            // Đồng xu bé trên đầu thú cưng (hiển thị khi hết chu kỳ 10 phút để người chơi biết chạm vào nhận tiền)
+            html += '<div id="mycamp-pet-ready-coin" class="pet-ready-coin" style="display:none;"><img src="assets/images/ui/icon_glod.png" class="pet-ready-coin-img" alt="Vàng"></div>';
+            // Thanh trạng thái thời gian giữ chạm (vuốt ve)
+            html += '<div id="mycamp-pet-hold-indicator" class="pet-hold-indicator" style="display:none;"></div>';
+            html += '</div>';
+            return;
+        }
 
         if (item.type === 'decor') {
             // Vật trang trí cố định (Cây thông, cột đèn, v.v.)

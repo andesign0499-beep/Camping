@@ -87,7 +87,8 @@ function defaultSave() {
             unlockAllLevels: false,
             lang: (typeof I18N !== 'undefined') ? I18N.currentLang : 'vi'
         },
-        lastEnergyTs: Date.now()
+        lastEnergyTs: Date.now(),
+        lastPetRewardTime: 0
     };
 }
 
@@ -121,6 +122,7 @@ function loadSave() {
             if (!s.ads || typeof s.ads !== 'object') s.ads = defaultSave().ads;
             if (!Array.isArray(s.ownedPets) || !s.ownedPets.length) s.ownedPets = ['character01'];
             if (!s.activePet) s.activePet = 'character01';
+            if (typeof s.lastPetRewardTime !== 'number') s.lastPetRewardTime = 0;
             if (!Array.isArray(s.ownedLocations) || !s.ownedLocations.length) s.ownedLocations = ['loc_dongdo'];
             if (!s.activeLocation) s.activeLocation = 'loc_dongdo';
             if (!Array.isArray(s.campItems)) s.campItems = [];

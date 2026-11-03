@@ -97,7 +97,162 @@ var MYCAMP_CONFIG = {
     },
 
     // -------------------------------------------------------------------------
-    // IV. DANH SÁCH CÁC ĐỐI TƯỢNG TRÊN BÃI CẮM TRẠI (ĐÃ CĂN CHUẨN TRÊN NỀN 400PX)
+    // IV. CẤU HÌNH THÚ CƯNG TRÊN BÃI CỎ (THEO CON VẬT NGƯỜI CHƠI CHỌN MUA)
+    // -------------------------------------------------------------------------
+    // Khu trại tự động hiển thị thú cưng theo con vật người chơi đang chọn (SAVE.activePet).
+    // NẾU CON VẬT NÀO CHƯA CÓ CHUYỂN ĐỘNG THÌ KHU TRẠI SẼ TỰ ĐỘNG ĐỂ TRỐNG BÃI CỎ!
+    // Bạn có thể chủ động sửa tọa độ (left, top), độ rộng, thời gian, frame cho từng con dưới đây:
+    pets: {
+        // 1. CHÚ CHÓ GOLDEN (character01) - Mặc định sở hữu
+        'character01': {
+            id: 'character01',
+            name: 'Chú chó Golden',
+            left: 108,               // Tọa độ ngang (px) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            top: 320,                // Tọa độ dọc (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            width: 76,               // Chiều rộng khung bãi cỏ (px)
+            height: 90,              // Chiều cao khung bãi cỏ (px)
+            zIndex: 18,              // Phân lớp hiển thị (nằm trên bãi cỏ, cạnh bếp/ghế)
+            fps: 8,                  // Tốc độ khung hình (8 hình/giây)
+
+            // Động tác 1: ĐỨNG (Idle - 20 frame)
+            state1Name: 'stand',
+            state1Duration: 14,       // Thời gian ĐỨNG (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            state1Width: 56,         // Chiều rộng khi đứng (px)
+            state1Frames: [
+                'assets/images/npc_anim/goden_idle1.png',
+                'assets/images/npc_anim/goden_idle2.png',
+                'assets/images/npc_anim/goden_idle3.png',
+                'assets/images/npc_anim/goden_idle4.png',
+                'assets/images/npc_anim/goden_idle5.png',
+                'assets/images/npc_anim/goden_idle6.png',
+                'assets/images/npc_anim/goden_idle7.png',
+                'assets/images/npc_anim/goden_idle8.png',
+                'assets/images/npc_anim/goden_idle9.png',
+                'assets/images/npc_anim/goden_idle10.png',
+                'assets/images/npc_anim/goden_idle11.png',
+                'assets/images/npc_anim/goden_idle12.png',
+                'assets/images/npc_anim/goden_idle13.png',
+                'assets/images/npc_anim/goden_idle14.png',
+                'assets/images/npc_anim/goden_idle15.png',
+                'assets/images/npc_anim/goden_idle16.png',
+                'assets/images/npc_anim/goden_idle17.png',
+                'assets/images/npc_anim/goden_idle18.png',
+                'assets/images/npc_anim/goden_idle19.png',
+                'assets/images/npc_anim/goden_idle20.png'
+            ],
+
+            // Động tác 2: NGỒI (Sit - 20 frame)
+            state2Name: 'sit',
+            state2Duration: 3,        // Thời gian NGỒI (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            state2Width: 72,         // Chiều rộng khi ngồi (px)
+            state2Frames: [
+                'assets/images/npc_anim/goden_sit1.png',
+                'assets/images/npc_anim/goden_sit2.png',
+                'assets/images/npc_anim/goden_sit3.png',
+                'assets/images/npc_anim/goden_sit4.png',
+                'assets/images/npc_anim/goden_sit5.png',
+                'assets/images/npc_anim/goden_sit6.png',
+                'assets/images/npc_anim/goden_sit7.png',
+                'assets/images/npc_anim/goden_sit8.png',
+                'assets/images/npc_anim/goden_sit9.png',
+                'assets/images/npc_anim/goden_sit10.png',
+                'assets/images/npc_anim/goden_sit11.png',
+                'assets/images/npc_anim/goden_sit12.png',
+                'assets/images/npc_anim/goden_sit13.png',
+                'assets/images/npc_anim/goden_sit14.png',
+                'assets/images/npc_anim/goden_sit15.png',
+                'assets/images/npc_anim/goden_sit16.png',
+                'assets/images/npc_anim/goden_sit17.png',
+                'assets/images/npc_anim/goden_sit18.png',
+                'assets/images/npc_anim/goden_sit19.png',
+                'assets/images/npc_anim/goden_sit20.png'
+            ]
+        },
+
+        // 2. CHÚ MÈO ANH (character07) - Mua trong Cửa Hàng
+        'character07': {
+            id: 'character07',
+            name: 'Chú mèo Anh',
+            left: 108,               // Tọa độ ngang (px) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            top: 320,                // Tọa độ dọc (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            width: 76,               // Chiều rộng khung bãi cỏ (px)
+            height: 90,              // Chiều cao khung bãi cỏ (px)
+            zIndex: 18,              // Phân lớp hiển thị
+            fps: 8,                  // Tốc độ khung hình (8 hình/giây)
+
+            // Động tác 1: ĐỨNG NGHỈ (Idle - 15 frame)
+            state1Name: 'idle',
+            state1Duration: 8,        // Thời gian ĐỨNG NGHỈ (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            state1Width: 64,         // Chiều rộng khi đứng nghỉ (px) (tỷ lệ 180x214)
+            state1Frames: [
+                'assets/images/npc_anim/meoanh_idle1.png',
+                'assets/images/npc_anim/meoanh_idle2.png',
+                'assets/images/npc_anim/meoanh_idle3.png',
+                'assets/images/npc_anim/meoanh_idle4.png',
+                'assets/images/npc_anim/meoanh_idle5.png',
+                'assets/images/npc_anim/meoanh_idle6.png',
+                'assets/images/npc_anim/meoanh_idle7.png',
+                'assets/images/npc_anim/meoanh_idle8.png',
+                'assets/images/npc_anim/meoanh_idle9.png',
+                'assets/images/npc_anim/meoanh_idle10.png',
+                'assets/images/npc_anim/meoanh_idle11.png',
+                'assets/images/npc_anim/meoanh_idle12.png',
+                'assets/images/npc_anim/meoanh_idle13.png',
+                'assets/images/npc_anim/meoanh_idle14.png',
+                'assets/images/npc_anim/meoanh_idle15.png'
+            ],
+
+            // Động tác 2: VẪY TAY CHÀO (Hello - 20 frame)
+            state2Name: 'hello',
+            state2Duration: 4,        // Thời gian VẪY TAY CHÀO (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            state2Width: 64,         // Chiều rộng khi vẫy tay (px)
+            state2Frames: [
+                'assets/images/npc_anim/meoanh_hello1.png',
+                'assets/images/npc_anim/meoanh_hello2.png',
+                'assets/images/npc_anim/meoanh_hello3.png',
+                'assets/images/npc_anim/meoanh_hello4.png',
+                'assets/images/npc_anim/meoanh_hello5.png',
+                'assets/images/npc_anim/meoanh_hello6.png',
+                'assets/images/npc_anim/meoanh_hello7.png',
+                'assets/images/npc_anim/meoanh_hello8.png',
+                'assets/images/npc_anim/meoanh_hello9.png',
+                'assets/images/npc_anim/meoanh_hello10.png',
+                'assets/images/npc_anim/meoanh_hello11.png',
+                'assets/images/npc_anim/meoanh_hello12.png',
+                'assets/images/npc_anim/meoanh_hello13.png',
+                'assets/images/npc_anim/meoanh_hello14.png',
+                'assets/images/npc_anim/meoanh_hello15.png',
+                'assets/images/npc_anim/meoanh_hello16.png',
+                'assets/images/npc_anim/meoanh_hello17.png',
+                'assets/images/npc_anim/meoanh_hello18.png',
+                'assets/images/npc_anim/meoanh_hello19.png',
+                'assets/images/npc_anim/meoanh_hello20.png'
+            ]
+        }
+
+        // CÁC CON VẬT KHÁC (Labrador, Poodle, Bulldog, Béc-giê, Ba Tư, Maine Coon, Ragdoll, Xiêm):
+        // Khi người chơi mua và chọn các con vật này, vì chưa có chuỗi ảnh chuyển động nên hệ thống
+        // sẽ TỰ ĐỘNG ĐỂ TRỐNG bãi cỏ như yêu cầu. Sau này bạn chỉ cần bổ sung vào đây là hiển thị ngay!
+    },
+
+    // -------------------------------------------------------------------------
+    // V. CẤU HÌNH THƯỞNG VUỐT VE THÚ CƯNG (PET REWARD CONFIG)
+    // -------------------------------------------------------------------------
+    // Chu kỳ 10 phút được chạm 1 lần. Khi hết 10 phút hiện đồng xu bé trên đầu thú cưng.
+    // Người chơi chạm & giữ từ 1s - 3s để nhận tiền thưởng bay ra tương ứng:
+    petReward: {
+        cooldownMinutes: 10,     // Chu kỳ hồi chiêu (10 phút)
+        minHoldSeconds: 1,       // Thời gian giữ tối thiểu để nhận vàng (1s)
+        maxHoldSeconds: 3,       // Thời gian giữ tối đa (3s = mốc cao nhất)
+        tiers: [
+            { seconds: 1, gold: 750 },   // 1s -> 750 Vàng
+            { seconds: 2, gold: 1200 },  // 2s -> 1.200 Vàng
+            { seconds: 3, gold: 2000 }   // 3s -> 2.000 Vàng (tối đa)
+        ]
+    },
+
+    // -------------------------------------------------------------------------
+    // VI. DANH SÁCH CÁC ĐỐI TƯỢNG TRÊN BÃI CẮM TRẠI (ĐÃ CĂN CHUẨN TRÊN NỀN 400PX)
     // -------------------------------------------------------------------------
     // Tọa độ left (ngang) và top (dọc) được tính trực tiếp từ góc trên-trái (0, 0)
     // của ảnh nền 400px, đảm bảo ảnh nền và các item LUÔN CỐ ĐỊNH KHÔNG BỊ LỆCH NHAU!
@@ -133,9 +288,9 @@ var MYCAMP_CONFIG = {
             name: 'Cột đèn dã ngoại (bên bờ suối)',
             type: 'decor',
             src: 'assets/images/items_khutrai/icon_den.png',
-            left: 298,
+            left: 230,
             top: 245,
-            width: 34,
+            width: 24,
             height: 'auto',
             zIndex: 13
         },
@@ -159,8 +314,8 @@ var MYCAMP_CONFIG = {
             name: 'Ghế 2 (Bên phải, phía sau bàn)',
             type: 'slot',
             slotKey: 'chair2',
-            left: 242,
-            top: 310,
+            left: 230,
+            top: 315,
             width: 66,
             height: 'auto',
             zIndex: 14
@@ -183,8 +338,8 @@ var MYCAMP_CONFIG = {
             slotKey: 'table',
             left: 238,
             top: 358,
-            width: 95,
-            height: 95,
+            width: 85,
+            height: 85,
             zIndex: 16,
             fit: 'contain'
         },
@@ -201,74 +356,20 @@ var MYCAMP_CONFIG = {
         },
 
         // ==========================================
-        // 3. THÚ CƯNG & NHÂN VẬT HOẠT HÌNH (ANIMATION)
+        // 3. VỊ TRÍ THÚ CƯNG ĐỒNG HÀNH TRÊN BÃI CỎ (PET SLOT)
         // ==========================================
+        // Thú cưng sẽ tự động hiển thị theo con vật người chơi chọn mua (SAVE.activePet).
+        // NẾU CON VẬT NÀO CHƯA CÓ CHUYỂN ĐỘNG THÌ HỆ THỐNG SẼ TỰ ĐỘNG ĐỂ TRỐNG BÃI CỎ!
+        // Toàn bộ hoạt ảnh, thời gian, frame chi tiết của từng con đã được gom riêng ở mục "IV. pets" ở trên.
         {
-            id: 'npc-dog-golden',
-            name: 'Chú chó Golden (Đứng 1 lúc rồi ngồi)',
-            type: 'anim_states',     // Hoạt ảnh chuyển đổi trạng thái (Đứng 1 lúc rồi ngồi)
-            left: 108,               // Tọa độ ngang (px) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            top: 320,                // Tọa độ dọc (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            id: 'slot-pet',
+            name: 'Thú cưng đồng hành (Gán theo người mua)',
+            type: 'pet',             // Tự động lấy hoạt ảnh theo con vật SAVE.activePet
+            left: 108,               // Tọa độ ngang mặc định (px) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            top: 320,                // Tọa độ dọc mặc định (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             width: 76,               // Chiều rộng khung bãi cỏ (px)
             height: 90,              // Chiều cao khung bãi cỏ (px)
-            zIndex: 18,              // Phân lớp hiển thị (nằm trên bãi cỏ, cạnh bếp/ghế)
-
-            // Thời gian mỗi động tác: Đứng trong bao nhiêu giây rồi Ngồi trong bao nhiêu giây
-            standDuration: 14,        // Thời gian ĐỨNG (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            sitDuration: 3,          // Thời gian NGỒI (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            fps: 8,                  // Tốc độ chuyển hình (8 hình/giây)
-
-            // Độ rộng hiển thị của từng tư thế (px)
-            standWidth: 56,          // Bề rộng khi đứng (tỷ lệ 145x229)
-            sitWidth: 72,            // Bề rộng khi ngồi (tỷ lệ 200x205)
-
-            // Danh sách 20 khung hình động tác ĐỨNG (Idle)
-            standFrames: [
-                'assets/images/npc_anim/goden_idle1.png',
-                'assets/images/npc_anim/goden_idle2.png',
-                'assets/images/npc_anim/goden_idle3.png',
-                'assets/images/npc_anim/goden_idle4.png',
-                'assets/images/npc_anim/goden_idle5.png',
-                'assets/images/npc_anim/goden_idle6.png',
-                'assets/images/npc_anim/goden_idle7.png',
-                'assets/images/npc_anim/goden_idle8.png',
-                'assets/images/npc_anim/goden_idle9.png',
-                'assets/images/npc_anim/goden_idle10.png',
-                'assets/images/npc_anim/goden_idle11.png',
-                'assets/images/npc_anim/goden_idle12.png',
-                'assets/images/npc_anim/goden_idle13.png',
-                'assets/images/npc_anim/goden_idle14.png',
-                'assets/images/npc_anim/goden_idle15.png',
-                'assets/images/npc_anim/goden_idle16.png',
-                'assets/images/npc_anim/goden_idle17.png',
-                'assets/images/npc_anim/goden_idle18.png',
-                'assets/images/npc_anim/goden_idle19.png',
-                'assets/images/npc_anim/goden_idle20.png'
-            ],
-
-            // Danh sách 20 khung hình động tác NGỒI (Sit)
-            sitFrames: [
-                'assets/images/npc_anim/goden_sit1.png',
-                'assets/images/npc_anim/goden_sit2.png',
-                'assets/images/npc_anim/goden_sit3.png',
-                'assets/images/npc_anim/goden_sit4.png',
-                'assets/images/npc_anim/goden_sit5.png',
-                'assets/images/npc_anim/goden_sit6.png',
-                'assets/images/npc_anim/goden_sit7.png',
-                'assets/images/npc_anim/goden_sit8.png',
-                'assets/images/npc_anim/goden_sit9.png',
-                'assets/images/npc_anim/goden_sit10.png',
-                'assets/images/npc_anim/goden_sit11.png',
-                'assets/images/npc_anim/goden_sit12.png',
-                'assets/images/npc_anim/goden_sit13.png',
-                'assets/images/npc_anim/goden_sit14.png',
-                'assets/images/npc_anim/goden_sit15.png',
-                'assets/images/npc_anim/goden_sit16.png',
-                'assets/images/npc_anim/goden_sit17.png',
-                'assets/images/npc_anim/goden_sit18.png',
-                'assets/images/npc_anim/goden_sit19.png',
-                'assets/images/npc_anim/goden_sit20.png'
-            ]
+            zIndex: 18               // Phân lớp hiển thị (nằm trên bãi cỏ, cạnh bếp/ghế)
         }
 
         // ==========================================

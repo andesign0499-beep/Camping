@@ -9,29 +9,21 @@
 // Danh sách ảnh nền màn chơi (Tự động lặp tuần hoàn 1..N theo thứ tự mặc định)
 var LEVEL_BACKGROUNDS = [
     'assets/images/ui/bg_01.jpg',
-    'assets/images/ui/bg_02.jpg',
     'assets/images/ui/bg_03.jpg',
     'assets/images/ui/bg04.jpg',
     'assets/images/ui/bg05.jpg',
-    'assets/images/ui/bg06.jpg',
     'assets/images/ui/bg07.jpg',
-    'assets/images/ui/bg08.jpg',
-    'assets/images/ui/bg09.jpg',
     'assets/images/ui/bg10.jpg'
 ];
 
-// Danh sách Điểm Đến cắm trại bán trong Khu Trại (Phân tầng giá từ 12.000 -> 98.000 Vàng)
-// campBg: Đường dẫn ảnh nền khu trại 3D (hậu tố _bg) tương ứng với địa điểm mua
+// Danh sách Điểm Đến cắm trại bán trong Khu Trại (Mỗi địa điểm đều có ảnh nền 3D khu trại _bg tương ứng)
 var CAMP_LOCATIONS = [
-    { id: 'loc_dongdo', nameKey: 'dest_dongdo', name: 'Hồ Đồng Đò', img: 'assets/images/ui/bg_01.jpg', price: 0 },
+    { id: 'loc_dongdo', nameKey: 'dest_dongdo', name: 'Hồ Đồng Đò', img: 'assets/images/ui/bg_01.jpg', campBg: 'assets/images/ui/bg_01_bg.jpg', price: 0 },
     { id: 'loc_doibu', nameKey: 'dest_doibu', name: 'Đồi Bù', img: 'assets/images/ui/bg_03.jpg', campBg: 'assets/images/ui/bg_03_bg.jpg', price: 12000 },
-    { id: 'loc_matthan', nameKey: 'dest_matthan', name: 'Núi Mắt Thần', img: 'assets/images/ui/bg07.jpg', campBg: 'assets/images/ui/bg07_bg.jpg', price: 18000 },
-    { id: 'loc_pudao', nameKey: 'dest_pudao', name: 'Bản Pú Đao', img: 'assets/images/ui/bg06.jpg', price: 28000 },
-    { id: 'loc_taxua', nameKey: 'dest_taxua', name: 'Tà Xùa', img: 'assets/images/ui/bg_02.jpg', price: 38000 },
-    { id: 'loc_bangioc', nameKey: 'dest_bangioc', name: 'Thác Bản Giốc', img: 'assets/images/ui/bg05.jpg', campBg: 'assets/images/ui/bg05_bg.jpg', price: 50000 },
-    { id: 'loc_yty', nameKey: 'dest_yty', name: 'Y Tý Đại Ngàn', img: 'assets/images/ui/bg04.jpg', price: 65000 },
-    { id: 'loc_biennhacu', nameKey: 'dest_biennhacu', name: 'Biển Nhà Cũ', img: 'assets/images/ui/bg09.jpg', price: 80000 },
-    { id: 'loc_songnuocbinhba', nameKey: 'dest_songnuocbinhba', name: 'Sóng nước Bình Ba', img: 'assets/images/ui/bg10.jpg', price: 98000 }
+    { id: 'loc_matthan', nameKey: 'dest_matthan', name: 'Núi Mắt Thần', img: 'assets/images/ui/bg07.jpg', campBg: 'assets/images/ui/bg07_bg.jpg', price: 25000 },
+    { id: 'loc_bangioc', nameKey: 'dest_bangioc', name: 'Thác Bản Giốc', img: 'assets/images/ui/bg05.jpg', campBg: 'assets/images/ui/bg05_bg.jpg', price: 45000 },
+    { id: 'loc_muine', nameKey: 'dest_muine', name: 'Đồi Cát Mũi Né', img: 'assets/images/ui/bg04.jpg', campBg: 'assets/images/ui/bg04_bg.jpg', price: 68000 },
+    { id: 'loc_songnuocbinhba', nameKey: 'dest_songnuocbinhba', name: 'Sóng nước Bình Ba', img: 'assets/images/ui/bg10.jpg', campBg: 'assets/images/ui/bg10_bg.jpg', price: 88000 }
 ];
 
 function getActiveLocationBackground() {

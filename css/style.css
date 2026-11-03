@@ -5401,11 +5401,126 @@ body {
     filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.45)) brightness(1.05);
 }
 
-@keyframes petHeartFloat {
-    0% { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.6); }
-    25% { opacity: 1; transform: translateX(-50%) translateY(-6px) scale(1.1); }
-    70% { opacity: 1; transform: translateX(-50%) translateY(-14px) scale(1.0); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(-24px) scale(0.85); }
+/* ĐỒNG XU BÉ TRÊN ĐẦU THÚ CƯNG (BÁO HIỆU ĐƯỢC CHẠM NHẬN TIỀN) */
+.pet-ready-coin {
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 25;
+    animation: petCoinBounce 1.4s ease-in-out infinite;
+}
+
+.pet-ready-coin-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(255, 215, 0, 0.75));
+}
+
+@keyframes petCoinBounce {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+    50% {
+        transform: translateX(-50%) translateY(-6px) scale(1.18);
+    }
+}
+
+/* THANH TIẾN ĐỘ GIỮ CHẠM (VUỐT VE) */
+.pet-hold-indicator {
+    position: absolute;
+    top: -38px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(22, 28, 20, 0.92);
+    border: 1.5px solid #ffd54f;
+    border-radius: 14px;
+    padding: 3px 9px;
+    color: #fff;
+    font-family: Nunito, sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+}
+
+.pet-hold-indicator.tier-1 {
+    border-color: #ffd54f;
+    color: #ffe082;
+}
+
+.pet-hold-indicator.tier-2 {
+    border-color: #ffb300;
+    color: #ffd54f;
+    transform: translateX(-50%) scale(1.06);
+}
+
+.pet-hold-indicator.tier-max {
+    border-color: #ff9800;
+    background: linear-gradient(135deg, rgba(230, 81, 0, 0.95), rgba(255, 179, 0, 0.95));
+    color: #fff;
+    transform: translateX(-50%) scale(1.12);
+    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.65);
+}
+
+/* THÔNG BÁO TIỀN THƯỞNG / THỜI GIAN BAY LÊN */
+.pet-float-toast {
+    position: absolute;
+    top: -26px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 3px 10px;
+    border-radius: 14px;
+    font-family: Nunito, sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    color: #2e7d32;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    z-index: 35;
+    white-space: nowrap;
+    animation: petToastFloat 1.25s ease-out forwards;
+}
+
+.pet-float-toast.gold {
+    color: #d84315;
+    background: #fff8e1;
+    border: 1px solid #ffd54f;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+@keyframes petToastFloat {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(4px) scale(0.7);
+    }
+    20% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-6px) scale(1.08);
+    }
+    75% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-18px) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-32px) scale(0.9);
+    }
 }
 
 .mycamp-prop-img {

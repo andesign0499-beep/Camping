@@ -206,12 +206,11 @@ var I18N_DATA = {
         dest_dongdo: { vi: 'Hồ Đồng Đò', en: 'Dong Do Lake' },
         dest_doibu: { vi: 'Đồi Bù', en: 'Doi Bu Hill' },
         dest_matthan: { vi: 'Núi Mắt Thần', en: 'God Eye Mountain' },
-        dest_pudao: { vi: 'Bản Pú Đao', en: 'Pu Dao Village' },
-        dest_taxua: { vi: 'Tà Xùa', en: 'Ta Xua Cloud Peak' },
         dest_bangioc: { vi: 'Thác Bản Giốc', en: 'Ban Gioc Waterfall' },
-        dest_yty: { vi: 'Y Tý Đại Ngàn', en: 'Y Ty Highlands' },
-        dest_biennhacu: { vi: 'Biển Nhà Cũ', en: 'Nha Cu Beach' },
-        dest_songnuocbinhba: { vi: 'Sóng nước Bình Ba', en: 'Binh Ba Waves' }
+        dest_muine: { vi: 'Đồi Cát Mũi Né', en: 'Mui Ne Sand Dunes' },
+        dest_yty: { vi: 'Đồi Cát Mũi Né', en: 'Mui Ne Sand Dunes' },
+        dest_songnuocbinhba: { vi: 'Sóng nước Bình Ba', en: 'Binh Ba Waves' },
+        dest_binhba: { vi: 'Sóng nước Bình Ba', en: 'Binh Ba Waves' }
     },
 
     // -------------------------------------------------------------------------
