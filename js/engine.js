@@ -325,7 +325,8 @@ function computeLineDeficits(board, activeOrders, levelCfg, includeAllOrders) {
 
 // Tính toán cấp độ rơi của vật phẩm từ thùng sinh đồ (Lv.1, Lv.2, Lv.3)
 // Màn 1-10: 100% Cấp 1 (Chế độ hướng dẫn)
-// Màn 11+: Mở tỷ lệ rơi Cấp 2 và Cấp 3 tăng dần theo cấp độ màn chơi
+// Màn 11-29: Rơi Lv.1 và Lv.2 (Tuyệt đối không rơi Lv.3 trước màn 30)
+// Màn 30+: Mở khóa tỷ lệ rơi Cấp 3 để hỗ trợ ghép các item cấp cao
 function getGeneratorDropLevel(levelNum) {
     if (!levelNum || levelNum <= 10) return 1;
 
@@ -333,25 +334,28 @@ function getGeneratorDropLevel(levelNum) {
         ? GAME_CONFIG.gameplay.generatorDrops
         : null;
 
+    var minLv3 = (dropCfg && dropCfg.minLevelForLv3Drops != null) ? dropCfg.minLevelForLv3Drops : 30;
+
     var tiers = (dropCfg && dropCfg.tiers) || [
         { maxLevel: 10,  lv1: 1.00, lv2: 0.00, lv3: 0.00 },
-        { maxLevel: 20,  lv1: 0.78, lv2: 0.18, lv3: 0.04 },
-        { maxLevel: 40,  lv1: 0.70, lv2: 0.23, lv3: 0.07 },
-        { maxLevel: 60,  lv1: 0.62, lv2: 0.26, lv3: 0.12 },
-        { maxLevel: 90,  lv1: 0.55, lv2: 0.30, lv3: 0.15 },
-        { maxLevel: 120, lv1: 0.50, lv2: 0.32, lv3: 0.18 }
+        { maxLevel: 20,  lv1: 0.82, lv2: 0.18, lv3: 0.00 },
+        { maxLevel: 29,  lv1: 0.74, lv2: 0.26, lv3: 0.00 },
+        { maxLevel: 45,  lv1: 0.68, lv2: 0.25, lv3: 0.07 },
+        { maxLevel: 60,  lv1: 0.58, lv2: 0.28, lv3: 0.14 }
     ];
 
     var tier = tiers.find(function (t) { return levelNum <= t.maxLevel; }) || tiers[tiers.length - 1];
+    var lv3Prob = (levelNum >= minLv3) ? (tier.lv3 || 0) : 0;
+    var lv2Prob = tier.lv2 || 0;
+
     var r = rand();
-    if (r < (tier.lv3 || 0)) return 3;
-    if (r < (tier.lv3 || 0) + (tier.lv2 || 0)) return 2;
+    if (levelNum >= minLv3 && r < lv3Prob) return 3;
+    if (r < lv3Prob + lv2Prob) return 2;
     return 1;
 }
 
 // Giá trị kỳ vọng tương đương Lv.1 của 1 lần bấm sinh đồ theo cấp độ màn chơi:
 // Lv.1 = 1 điểm, Lv.2 = 2 điểm, Lv.3 = 4 điểm (1 món Lv3 = 2 món Lv2 = 4 món Lv1)
-// Ví dụ: màn 91-120 rơi 50% Lv1, 32% Lv2, 18% Lv3 => Kỳ vọng = 0.50*1 + 0.32*2 + 0.18*4 = 1.86 điểm/click.
 function getGeneratorDropExpectedValue(levelNum) {
     if (!levelNum || levelNum <= 10) return 1.0;
 
@@ -359,19 +363,20 @@ function getGeneratorDropExpectedValue(levelNum) {
         ? GAME_CONFIG.gameplay.generatorDrops
         : null;
 
+    var minLv3 = (dropCfg && dropCfg.minLevelForLv3Drops != null) ? dropCfg.minLevelForLv3Drops : 30;
+
     var tiers = (dropCfg && dropCfg.tiers) || [
         { maxLevel: 10,  lv1: 1.00, lv2: 0.00, lv3: 0.00 },
-        { maxLevel: 20,  lv1: 0.78, lv2: 0.18, lv3: 0.04 },
-        { maxLevel: 40,  lv1: 0.70, lv2: 0.23, lv3: 0.07 },
-        { maxLevel: 60,  lv1: 0.62, lv2: 0.26, lv3: 0.12 },
-        { maxLevel: 90,  lv1: 0.55, lv2: 0.30, lv3: 0.15 },
-        { maxLevel: 120, lv1: 0.50, lv2: 0.32, lv3: 0.18 }
+        { maxLevel: 20,  lv1: 0.82, lv2: 0.18, lv3: 0.00 },
+        { maxLevel: 29,  lv1: 0.74, lv2: 0.26, lv3: 0.00 },
+        { maxLevel: 45,  lv1: 0.68, lv2: 0.25, lv3: 0.07 },
+        { maxLevel: 60,  lv1: 0.58, lv2: 0.28, lv3: 0.14 }
     ];
 
     var tier = tiers.find(function (t) { return levelNum <= t.maxLevel; }) || tiers[tiers.length - 1];
-    var p1 = tier.lv1 != null ? tier.lv1 : 1.0;
+    var p3 = (levelNum >= minLv3) ? (tier.lv3 != null ? tier.lv3 : 0.0) : 0.0;
     var p2 = tier.lv2 != null ? tier.lv2 : 0.0;
-    var p3 = tier.lv3 != null ? tier.lv3 : 0.0;
+    var p1 = tier.lv1 != null ? tier.lv1 : Math.max(0, 1.0 - p2 - p3);
     return Math.max(1.0, (p1 * 1) + (p2 * 2) + (p3 * 4));
 }
 

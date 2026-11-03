@@ -75,13 +75,8 @@ function defaultSave() {
         activeLocation: 'loc_dongdo',
         campItems: [],
         campItemsMigrated: false,
-        myCampEquipped: {
-            tent: 'trai_lv4',
-            chair1: 'ghe_lv8',
-            chair2: 'ghe_lv8',
-            table: 'ban_lv7',
-            stove: 'bep_lv7'
-        },
+        myCampEquipped: {},
+        myCampUnequipped: {},
         claimedStarChests: [],
         starterPackBought: false,
         ads: { day: todayKey(), energy: 0, gem: 0, coin: 0, mystery: 0, dailyGemClaimed: false },
@@ -130,39 +125,39 @@ function loadSave() {
             if (!s.activeLocation) s.activeLocation = 'loc_dongdo';
             if (!Array.isArray(s.campItems)) s.campItems = [];
             if (!s.myCampEquipped || typeof s.myCampEquipped !== 'object') {
-                s.myCampEquipped = {
-                    tent: 'trai_lv4',
-                    chair1: 'ghe_lv8',
-                    chair2: 'ghe_lv8',
-                    table: 'ban_lv7',
-                    stove: 'bep_lv7'
-                };
+                s.myCampEquipped = {};
+            }
+            if (!s.myCampUnequipped || typeof s.myCampUnequipped !== 'object') {
+                s.myCampUnequipped = {};
             }
             if (!Array.isArray(s.claimedStarChests)) s.claimedStarChests = [];
             if (!s.campItemsMigrated) {
                 s.campItemsMigrated = true;
-                if (typeof RAW_LEVELS !== 'undefined' && Array.isArray(RAW_LEVELS)) {
-                    Object.keys(s.stars).forEach(function (lvStr) {
-                        var lvNum = parseInt(lvStr);
-                        if (s.stars[lvStr] > 0) {
+                var hasOrdersTable = (typeof PROCEDURAL_LEVEL_ORDERS !== 'undefined' && PROCEDURAL_LEVEL_ORDERS);
+                Object.keys(s.stars).forEach(function (lvStr) {
+                    var lvNum = parseInt(lvStr, 10);
+                    if (s.stars[lvStr] > 0) {
+                        var orders = hasOrdersTable ? PROCEDURAL_LEVEL_ORDERS[lvNum] : null;
+                        if (!orders && typeof RAW_LEVELS !== 'undefined' && Array.isArray(RAW_LEVELS)) {
                             var row = RAW_LEVELS.find(function(r) { return r[0] === lvNum; });
-                            if (row && Array.isArray(row[6])) {
-                                row[6].forEach(function(oId) {
-                                    var parts = String(oId).split('_lv');
-                                    var itemLv = parts.length === 2 ? parseInt(parts[1]) || 1 : 1;
-                                    s.campItems.push({
-                                        uid: 'camp_init_' + lvNum + '_' + Math.random().toString(36).substr(2, 7),
-                                        id: oId,
-                                        level: itemLv,
-                                        name: getItemCleanName(oId),
-                                        fromLevel: lvNum,
-                                        addedAt: Date.now()
-                                    });
-                                });
-                            }
+                            if (row && Array.isArray(row[6])) orders = row[6];
                         }
-                    });
-                }
+                        if (Array.isArray(orders)) {
+                            orders.forEach(function (oId) {
+                                var parts = String(oId).split('_lv');
+                                var itemLv = parts.length === 2 ? parseInt(parts[1], 10) || 1 : 1;
+                                s.campItems.push({
+                                    uid: 'camp_init_' + lvNum + '_' + Math.random().toString(36).substr(2, 7),
+                                    id: oId,
+                                    level: itemLv,
+                                    name: getItemCleanName(oId),
+                                    fromLevel: lvNum,
+                                    addedAt: Date.now()
+                                });
+                            });
+                        }
+                    }
+                });
             }
             s.settings = Object.assign(defaultSave().settings, parsed.settings || {});
             if (typeof s.gems !== 'number') s.gems = 8;
@@ -178,8 +173,8 @@ function loadSave() {
             }
             if (typeof s.energy !== 'number' || isNaN(s.energy)) s.energy = START_ENERGY;
 
-            // Giới hạn cấp độ tối đa của game là 120 màn (6 Chặng x 20 màn)
-            var MAX_GAME_LEVEL = 120;
+            // Giới hạn cấp độ tối đa của game là 60 màn (3 Chặng x 20 màn)
+            var MAX_GAME_LEVEL = 60;
             if (s.maxLevel > MAX_GAME_LEVEL) s.maxLevel = MAX_GAME_LEVEL;
             if (s.level > MAX_GAME_LEVEL) s.level = MAX_GAME_LEVEL;
             if (s.currentBoardState && s.currentBoardState.level > MAX_GAME_LEVEL) {
@@ -736,6 +731,12 @@ function addCampItem(itemId, fromLevel) {
         addedAt: Date.now()
     };
     SAVE.campItems.push(itemObj);
+
+    // Tự động gắn vào Trại của bạn nếu slot tương ứng chưa có đồ
+    if (typeof autoEquipIfSlotEmpty === 'function') {
+        autoEquipIfSlotEmpty(itemObj);
+    }
+
     saveGame();
     return itemObj;
 }
@@ -812,53 +813,73 @@ function countUnclaimedBookRewards() {
     return count;
 }
 
-// ---------- KHU CẮM TRẠI (45 VẬT PHẨM LƯỚI BÀN CHƠI) ----------
+// ---------- KHU CẮM TRẠI (60 VẬT PHẨM TƯƠNG ỨNG 60 LEVEL & 3 CHẶNG) ----------
 var CAMP_DECORS = [
-    [1,  'an_lv2',             'Ổ Bánh Mì Dài'],
-    [2,  'an_lv3',             'Bánh Sandwich Kẹp'],
-    [3,  'an_lv4',             'Tô Mì Sợi Nóng'],
-    [4,  'an_lv5',             'Đĩa Trái Cây Tươi'],
-    [5,  'an_lv6',             'Tô Hoa Quả Thập Cẩm'],
-    [6,  'an_lv8',             'Đại Tiệc BBQ Xiên Nướng'],
-    [7,  'antoan_lv1',         'Cáp Sạc Dã Ngoại Bọc Dù'],
-    [8,  'antoan_lv2',         'Củ Sạc Nhanh Dã Ngoại'],
-    [9,  'antoan_lv4',         'Pin Sạc Dự Phòng Chống Sốc'],
-    [10, 'antoan_lv5',         'Quạt Tích Điện Dã Ngoại'],
-    [11, 'antoan_lv7',         'Trạm Điện Di Động Mini'],
-    [12, 'antoan_lv8',         'Trạm Điện Dã Ngoại Glamping'],
-    [13, 'ban_lv8',            'Trạm Bếp Nấu Ăn Glamping'],
-    [14, 'ban_lv2',            'Bàn Vải Gấp Dã Ngoại'],
-    [15, 'ban_lv4',            'Bàn Gỗ Cuộn Dã Ngoại'],
-    [16, 'ban_lv7',            'Bàn Chiến Thuật IGT'],
-    [17, 'bep_lv6',            'Lửa Trại Rực Hồng'],
-    [18, 'bep_lv8',            'Bếp Nướng BBQ Chữ Nhật'],
-    [19, 'cafe_lv1',           'Hạt Cà Phê Robusta'],
-    [20, 'cafe_lv3',           'Ấm Rót Cổ Ngỗng'],
-    [21, 'cafe_lv5',           'Gói Cà Phê Specialty'],
-    [22, 'cafe_lv6',           'Cối Xay Cầm Tay Inox'],
-    [23, 'cafe_lv7',           'Ấm Pha Moka Pot Ý'],
-    [24, 'cafe_lv8',           'Cốc Cà Phê Men Đỏ'],
-    [25, 'congcu_lv1',         'Bóng Đèn LED Treo Lều'],
-    [26, 'congcu_lv3',         'Dây Đèn LED Đom Đóm'],
-    [27, 'congcu_lv5',         'Đèn Bảng LED Dã Ngoại'],
-    [28, 'congcu_lv6',         'Đèn Bão Dã Ngoại Vintage'],
-    [29, 'congcu_lv7',         'Đèn Cắm Trại Chân Cao Tripod'],
-    [30, 'congcu_lv8',         'Đèn Bão Cổ Điển Retro'],
-    [31, 'generator_backpack', 'Ba Lô Dã Ngoại'],
-    [32, 'generator_cooler',   'Xe Kéo Dã Ngoại'],
-    [33, 'generator_crate',    'Thùng Dụng Cụ'],
-    [34, 'ghe_lv3',            'Ghế Xếp Dã Ngoại Màu Cát'],
-    [35, 'ghe_lv5',            'Ghế Câu Cá Có Khay'],
-    [36, 'ghe_lv6',            'Ghế Mặt Trăng Moon Chair'],
-    [37, 'ghe_lv8',            'Ghế Đạo Diễn Cao Cấp'],
-    [38, 'tham_lv2',           'Thảm Xốp Cuộn Cách Nhiệt'],
-    [39, 'tham_lv3',           'Thảm Thổ Cẩm Dã Ngoại'],
-    [40, 'tham_lv6',           'Võng Dù Giữa Rừng'],
-    [41, 'tham_lv7',           'Sofa Hơi Dã Ngoại'],
-    [42, 'tham_lv8',           'Đệm Hơi Đôi Cao Cấp'],
-    [43, 'trai_lv2',           'Cuộn Dây Dù Căng Lều'],
-    [44, 'trai_lv7',           'Lều Kim Tự Tháp Glamping'],
-    [45, 'trai_lv8',           'Biệt Thự Lều Glamping']
+    // Chặng 1: Level 1 - 20 (Khởi đầu hành trình & Dựng trại tiện nghi)
+    [1, 'ghe_lv4', 'Ghế Xếp Có Tay Vịn'],
+    [2, 'an_lv4', 'Tô Mì Sợi Nóng'],
+    [3, 'tham_lv4', 'Chăn Đệm Gấp Ấm Áp'],
+    [4, 'ban_lv4', 'Bàn Gỗ Cuộn Dã Ngoại'],
+    [5, 'an_lv3', 'Bánh Sandwich Kẹp'],
+    [6, 'tham_lv3', 'Thảm Thổ Cẩm Dã Ngoại'],
+    [7, 'ghe_lv5', 'Ghế Câu Cá Có Khay'],
+    [8, 'an_lv5', 'Đĩa Trái Cây Tươi'],
+    [9, 'tham_lv5', 'Túi Ngủ Dã Ngoại'],
+    [10, 'trai_lv5', 'Lều Vòm Cắm Trại 2 Người'],
+    [11, 'cafe_lv5', 'Gói Cà Phê Specialty'],
+    [12, 'congcu_lv5', 'Đèn Bảng LED Dã Ngoại'],
+    [13, 'bep_lv5', 'Đống Củi Trại Vòng Đá'],
+    [14, 'antoan_lv5', 'Quạt Tích Điện Dã Ngoại'],
+    [15, 'an_lv6', 'Tô Hoa Quả Thập Cẩm'],
+    [16, 'cafe_lv6', 'Cối Xay Cầm Tay Inox'],
+    [17, 'ban_lv6', 'Bàn Cắm Trại Đa Năng'],
+    [18, 'bep_lv6', 'Lửa Trại Rực Hồng'],
+    [19, 'ghe_lv6', 'Ghế Mặt Trăng Moon Chair'],
+    [20, 'trai_lv6', 'Lều Gia Đình Chống Gió'],
+
+    // Chặng 2: Level 21 - 40 (Cắm trại chuyên nghiệp & Nâng cao)
+    [21, 'tham_lv6', 'Võng Dù Giữa Rừng'],
+    [22, 'congcu_lv6', 'Đèn Bão Dã Ngoại Vintage'],
+    [23, 'bep_lv6', 'Lửa Trại Rực Hồng'],
+    [24, 'antoan_lv6', 'Tấm Pin Năng Lượng Mặt Trời'],
+    [25, 'trai_lv6', 'Lều Gia Đình Chống Gió'],
+    [26, 'an_lv7', 'Đĩa Bánh Quy Nướng'],
+    [27, 'an_lv6', 'Tô Hoa Quả Thập Cẩm'],
+    [28, 'cafe_lv7', 'Ấm Pha Moka Pot Ý'],
+    [29, 'antoan_lv6', 'Tấm Pin Năng Lượng Mặt Trời'],
+    [30, 'ban_lv7', 'Bàn Chiến Thuật IGT'],
+    [31, 'an_lv7', 'Đĩa Bánh Quy Nướng'],
+    [32, 'bep_lv7', 'Lò Nướng Than Hoa Tròn'],
+    [33, 'cafe_lv7', 'Ấm Pha Moka Pot Ý'],
+    [34, 'congcu_lv7', 'Đèn Cắm Trại Chân Cao Tripod'],
+    [35, 'ban_lv7', 'Bàn Chiến Thuật IGT'],
+    [36, 'tham_lv7', 'Sofa Hơi Dã Ngoại'],
+    [37, 'tham_lv6', 'Võng Dù Giữa Rừng'],
+    [38, 'ghe_lv7', 'Ghế Tựa Lưng Cao Có Gối'],
+    [39, 'congcu_lv7', 'Đèn Cắm Trại Chân Cao Tripod'],
+    [40, 'trai_lv7', 'Lều Kim Tự Tháp Glamping'],
+
+    // Chặng 3: Level 41 - 60 (Đẳng cấp Glamping sang trọng & Masterpieces)
+    [41, 'tham_lv7', 'Sofa Hơi Dã Ngoại'],
+    [42, 'antoan_lv7', 'Trạm Điện Di Động Mini'],
+    [43, 'ghe_lv7', 'Ghế Tựa Lưng Cao Có Gối'],
+    [44, 'an_lv8', 'Đại Tiệc BBQ Xiên Nướng'],
+    [45, 'trai_lv7', 'Lều Kim Tự Tháp Glamping'],
+    [46, 'cafe_lv8', 'Cốc Cà Phê Men Đỏ'],
+    [47, 'antoan_lv7', 'Trạm Điện Di Động Mini'],
+    [48, 'ban_lv8', 'Trạm Bếp Nấu Ăn Glamping'],
+    [49, 'an_lv8', 'Đại Tiệc BBQ Xiên Nướng'],
+    [50, 'bep_lv8', 'Bếp Nướng BBQ Chữ Nhật'],
+    [51, 'cafe_lv8', 'Cốc Cà Phê Men Đỏ'],
+    [52, 'congcu_lv8', 'Đèn Bão Cổ Điển Retro'],
+    [53, 'ban_lv8', 'Trạm Bếp Nấu Ăn Glamping'],
+    [54, 'tham_lv8', 'Đệm Hơi Đôi Cao Cấp'],
+    [55, 'bep_lv8', 'Bếp Nướng BBQ Chữ Nhật'],
+    [56, 'ghe_lv8', 'Ghế Đạo Diễn Cao Cấp'],
+    [57, 'congcu_lv8', 'Đèn Bão Cổ Điển Retro'],
+    [58, 'antoan_lv8', 'Trạm Điện Dã Ngoại Glamping'],
+    [59, 'tham_lv8', 'Đệm Hơi Đôi Cao Cấp'],
+    [60, 'trai_lv8', 'Biệt Thự Lều Glamping']
 ];
 
 function getCampDecor(level) {

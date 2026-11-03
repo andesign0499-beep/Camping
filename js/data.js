@@ -21,13 +21,14 @@ var LEVEL_BACKGROUNDS = [
 ];
 
 // Danh sách Điểm Đến cắm trại bán trong Khu Trại (Phân tầng giá từ 12.000 -> 98.000 Vàng)
+// campBg: Đường dẫn ảnh nền khu trại 3D (hậu tố _bg) tương ứng với địa điểm mua
 var CAMP_LOCATIONS = [
     { id: 'loc_dongdo', nameKey: 'dest_dongdo', name: 'Hồ Đồng Đò', img: 'assets/images/ui/bg_01.jpg', price: 0 },
-    { id: 'loc_doibu', nameKey: 'dest_doibu', name: 'Đồi Bù', img: 'assets/images/ui/bg_03.jpg', price: 12000 },
-    { id: 'loc_matthan', nameKey: 'dest_matthan', name: 'Núi Mắt Thần', img: 'assets/images/ui/bg07.jpg', price: 18000 },
+    { id: 'loc_doibu', nameKey: 'dest_doibu', name: 'Đồi Bù', img: 'assets/images/ui/bg_03.jpg', campBg: 'assets/images/ui/bg_03_bg.jpg', price: 12000 },
+    { id: 'loc_matthan', nameKey: 'dest_matthan', name: 'Núi Mắt Thần', img: 'assets/images/ui/bg07.jpg', campBg: 'assets/images/ui/bg07_bg.jpg', price: 18000 },
     { id: 'loc_pudao', nameKey: 'dest_pudao', name: 'Bản Pú Đao', img: 'assets/images/ui/bg06.jpg', price: 28000 },
     { id: 'loc_taxua', nameKey: 'dest_taxua', name: 'Tà Xùa', img: 'assets/images/ui/bg_02.jpg', price: 38000 },
-    { id: 'loc_bangioc', nameKey: 'dest_bangioc', name: 'Thác Bản Giốc', img: 'assets/images/ui/bg05.jpg', price: 50000 },
+    { id: 'loc_bangioc', nameKey: 'dest_bangioc', name: 'Thác Bản Giốc', img: 'assets/images/ui/bg05.jpg', campBg: 'assets/images/ui/bg05_bg.jpg', price: 50000 },
     { id: 'loc_yty', nameKey: 'dest_yty', name: 'Y Tý Đại Ngàn', img: 'assets/images/ui/bg04.jpg', price: 65000 },
     { id: 'loc_biennhacu', nameKey: 'dest_biennhacu', name: 'Biển Nhà Cũ', img: 'assets/images/ui/bg09.jpg', price: 80000 },
     { id: 'loc_songnuocbinhba', nameKey: 'dest_songnuocbinhba', name: 'Sóng nước Bình Ba', img: 'assets/images/ui/bg10.jpg', price: 98000 }
@@ -41,14 +42,55 @@ function getActiveLocationBackground() {
     return null;
 }
 
+// Lấy ảnh nền cho màn hình "Trại của bạn" dựa trên địa điểm người dùng đang kích hoạt
+// Nếu địa điểm chưa có ảnh _bg thì mặc định dùng bg_khutrai.jpg
+function getMyCampBackgroundSrc() {
+    var defaultSrc = 'assets/images/items_khutrai/bg_khutrai.jpg';
+    if (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG.background && MYCAMP_CONFIG.background.src) {
+        defaultSrc = MYCAMP_CONFIG.background.src;
+    }
+
+    if (typeof SAVE === 'undefined' || !SAVE || !SAVE.activeLocation) {
+        return defaultSrc;
+    }
+
+    var activeLocId = SAVE.activeLocation;
+
+    // 1. Kiểm tra cấu hình liên kết trong MYCAMP_CONFIG.locationBackgrounds
+    if (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG.locationBackgrounds && MYCAMP_CONFIG.locationBackgrounds[activeLocId]) {
+        return MYCAMP_CONFIG.locationBackgrounds[activeLocId];
+    }
+
+    // 2. Kiểm tra thuộc tính campBg trong danh sách CAMP_LOCATIONS
+    if (typeof CAMP_LOCATIONS !== 'undefined' && Array.isArray(CAMP_LOCATIONS)) {
+        var found = CAMP_LOCATIONS.find(function (l) { return l.id === activeLocId; });
+        if (found && found.campBg) {
+            return found.campBg;
+        }
+    }
+
+    // 3. Dự phòng mặc định nếu địa điểm chưa có ảnh _bg
+    return defaultSrc;
+}
+
 function updateActiveLocationBackground() {
     var topSceneEl = document.getElementById('top-scene');
-    if (!topSceneEl) return;
-    var customBg = getActiveLocationBackground();
-    if (customBg) {
-        topSceneEl.style.backgroundImage = "url('" + customBg + "')";
-    } else if (typeof currentLevel !== 'undefined') {
-        topSceneEl.style.backgroundImage = "url('" + getLevelBackground(currentLevel) + "')";
+    if (topSceneEl) {
+        var customBg = getActiveLocationBackground();
+        if (customBg) {
+            topSceneEl.style.backgroundImage = "url('" + customBg + "')";
+        } else if (typeof currentLevel !== 'undefined') {
+            topSceneEl.style.backgroundImage = "url('" + getLevelBackground(currentLevel) + "')";
+        }
+    }
+
+    // Cập nhật đồng bộ ảnh nền Trại của bạn nếu đang mở hoặc sau khi đổi điểm đến
+    var myCampBgImg = document.getElementById('mycamp-bg-img');
+    if (myCampBgImg && typeof getMyCampBackgroundSrc === 'function') {
+        var campBg = getMyCampBackgroundSrc();
+        if (myCampBgImg.getAttribute('src') !== campBg) {
+            myCampBgImg.src = campBg;
+        }
     }
 }
 
@@ -121,7 +163,7 @@ function getLevelBackground(lvNum) {
 })();
 
 // ==========================================
-// HỆ THỐNG DỮ LIỆU LEVEL TỰ ĐỘNG (120 LEVEL HIỆN TẠI & MỞ RỘNG VÔ HẠN)
+// HỆ THỐNG DỮ LIỆU LEVEL TỰ ĐỘNG (60 LEVEL TRONG 3 CHẶNG)
 // Sử dụng công thức generateLevelConfig(lvNum) từ js/config.js
 // ==========================================
 var RAW_LEVELS = [];
@@ -141,7 +183,7 @@ if (typeof GAME_CONFIG !== 'undefined' && Array.isArray(GAME_CONFIG.levels) && G
         ];
     });
 } else if (typeof generateLevelConfig === 'function') {
-    for (var _i = 1; _i <= 120; _i++) {
+    for (var _i = 1; _i <= 60; _i++) {
         var _cfg = generateLevelConfig(_i);
         RAW_LEVELS.push([
             _cfg.level,
@@ -158,7 +200,7 @@ if (typeof GAME_CONFIG !== 'undefined' && Array.isArray(GAME_CONFIG.levels) && G
 }
 
 function getLevelConfig(lvNum) {
-    var MAX_GAME_LEVEL = 120;
+    var MAX_GAME_LEVEL = 60;
     lvNum = Math.max(1, Math.min(MAX_GAME_LEVEL, parseInt(lvNum, 10) || 1));
 
     var cfg = null;

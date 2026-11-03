@@ -5303,14 +5303,58 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: #4e7339 url('../assets/images/items_khutrai/bg_khutrai.jpg') center center / cover no-repeat;
+    background-color: #566443;
     z-index: 1050;
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
 }
 
-/* Lưới ô 1px màu đen (120px x 60px) với TÂM Ô 120PX CĂN CHÍNH GIỮA MÀN HÌNH */
+/* KHUNG VIEWPORT TƯƠNG TÁC: HỖ TRỢ KÉO (PAN) & ZOOM BÃI TRẠI */
+.mycamp-viewport {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+    z-index: 10;
+}
+
+.mycamp-viewport.is-grabbing {
+    cursor: grabbing;
+}
+
+/* SÂN KHẤU CẮM TRẠI: ĐƯỢC CĂN GIỮA MÀN HÌNH & KHÓA CHẶT ẢNH NỀN VỚI TẤT CẢ ITEM */
+.mycamp-stage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 400px;
+    height: 596px;
+    margin-left: -200px;
+    margin-top: -298px;
+    transform-origin: center center;
+    pointer-events: none;
+    will-change: transform;
+}
+
+/* ẢNH NỀN KHU TRẠI 400PX */
+.mycamp-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    display: block;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* LƯỚI Ô 1PX MÀU ĐEN CĂN CHỈNH (NẰM BÊN TRONG STAGE ĐỂ ZOOM ĐỒNG BỘ) */
 .mycamp-grid-overlay {
     position: absolute;
     top: 0;
@@ -5322,10 +5366,56 @@ body {
         linear-gradient(to right, #000000 1px, transparent 1px),
         linear-gradient(to bottom, #000000 1px, transparent 1px);
     background-size: 120px 60px;
-    background-position: center clamp(75px, 13vh, 120px);
+    background-position: 0 0;
     z-index: 5;
 }
 
+.mycamp-items-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* TỪNG ĐỒ VẬT TRÊN BÃI CẮM TRẠI (TỌA ĐỘ VÀ KÍCH THƯỚC ĐƯỢC ĐIỀU KHIỂN TỪ MYCAMP_CONFIG) */
+.mycamp-item {
+    position: absolute;
+    pointer-events: auto;
+    filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.24));
+    transition: filter 0.25s ease;
+}
+
+.mycamp-item:hover {
+    filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.35));
+}
+
+.mycamp-anim-item {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mycamp-anim-item:active {
+    filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.45)) brightness(1.05);
+}
+
+@keyframes petHeartFloat {
+    0% { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.6); }
+    25% { opacity: 1; transform: translateX(-50%) translateY(-6px) scale(1.1); }
+    70% { opacity: 1; transform: translateX(-50%) translateY(-14px) scale(1.0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-24px) scale(0.85); }
+}
+
+.mycamp-prop-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+}
+
+/* HEADER CỐ ĐỊNH TRÊN CÙNG */
 .mycamp-header {
     position: absolute;
     top: 18px;
@@ -5344,6 +5434,13 @@ body {
     flex-shrink: 0;
 }
 
+.mycamp-header-spacer {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
 .mycamp-title {
     flex: 1;
     text-align: center;
@@ -5356,115 +5453,6 @@ body {
     line-height: 1;
     margin: 0;
     padding: 0 8px;
-}
-
-.mycamp-header-spacer {
-    width: 42px;
-    height: 42px;
-    flex-shrink: 0;
-    pointer-events: none;
-}
-
-/* Sân khấu cắm trại (Camp Stage): 3 ô ngang = 360px căn chính giữa màn hình */
-.mycamp-stage {
-    position: absolute;
-    width: 360px;
-    height: 540px;
-    left: 50%;
-    top: clamp(75px, 13vh, 120px);
-    transform: translateX(-50%);
-    pointer-events: none;
-}
-
-/* Từng đồ vật trên bãi cỏ Trại của bạn */
-.mycamp-item {
-    position: absolute;
-    pointer-events: auto;
-    filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.24));
-    transition: filter 0.25s ease, transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-}
-
-.mycamp-item:hover {
-    filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.35));
-}
-
-.mycamp-prop-img {
-    display: block;
-    width: 100%;
-    height: auto;
-    pointer-events: none;
-}
-
-/* SẮP XẾP CHUẨN XÁC THEO LƯỚI 120PX x 60PX (TÂM Ô GIỮA MÀN HÌNH) */
-/* Cây thông 1: 0.4x1.7 ô (Ô 1 trái, hàng 1) */
-.mycamp-tree-1 {
-    width: 48px;
-    left: 36px;
-    top: 15px;
-    z-index: 9;
-}
-
-/* Cây thông 2: 0.4x1.7 ô (Ô 2 giữa, hàng 1 sau sống lưng lều) */
-.mycamp-tree-2 {
-    width: 48px;
-    left: 156px;
-    top: 15px;
-    z-index: 9;
-}
-
-/* Lều cắm trại: 2x3 ô (rộng 240px = 2 ô ngang, chiếm Ô 1 và Ô 2 từ hàng 1 đến hàng 3) */
-.mycamp-tent {
-    width: 240px;
-    left: 0px;
-    top: 60px;
-    z-index: 12;
-}
-
-/* Cột đèn dã ngoại: 0.3x1.8 ô (rộng 42px, Ô 3 phải, hàng 1 - 3) */
-.mycamp-lamp {
-    width: 42px;
-    left: 279px;
-    top: 50px;
-    z-index: 13;
-}
-
-/* Ghế 2: 1x2 ô (rộng 120px = 1 ô, Ô 3 phải, hàng 3 - 5 sau bàn) - Đẩy lên 8px, sang phải 8px */
-.mycamp-chair2 {
-    width: 120px;
-    left: 248px;
-    top: 172px;
-    z-index: 14;
-}
-
-/* Ghế 1: 1x2 ô (rộng 120px = 1 ô, Ô 2 giữa, hàng 4 - 6 cạnh lều) - Đẩy lên 8px, sang phải 8px */
-.mycamp-chair1 {
-    width: 120px;
-    left: 128px;
-    top: 232px;
-    z-index: 15;
-}
-
-/* Bàn dã ngoại: 1x2 ô (chiều cao 120px, rộng 120px, Ô 3 phải, hàng 5 - 7 trước ghế 2) - Đẩy lên 4px, sang phải 4px */
-.mycamp-table {
-    width: 120px;
-    height: 120px;
-    left: 244px;
-    top: 296px;
-    z-index: 16;
-}
-
-.mycamp-table .mycamp-prop-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-/* Bếp dã ngoại: 1x1 ô (rộng 96px, gọn trong ô 120x60px Ô 2 giữa, hàng 6 trước ghế 1) */
-.mycamp-stove {
-    width: 96px;
-    left: 132px;
-    top: 360px;
-    z-index: 17;
 }
 
 /* --- BADGE & NÚT TRANG BỊ TRONG TAB ĐỒ CẮM TRẠI --- */

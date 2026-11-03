@@ -605,6 +605,7 @@ function reconcileMyCampEquipped() {
     var slots = ['tent', 'chair1', 'chair2', 'table', 'stove'];
     var usedUids = {};
 
+    // Kiểm tra các slot đang có vật phẩm gắn -> BẮT BUỘC phải thực sự tồn tại trong kho SAVE.campItems
     slots.forEach(function (slot) {
         var val = eq[slot];
         if (!val) {
@@ -631,10 +632,50 @@ function reconcileMyCampEquipped() {
             usedUids[match.uid] = true;
             eq[slot] = { id: itemId, uid: match.uid };
         } else {
-            // Không tìm thấy trong kho (ví dụ đồ mặc định ban đầu), giữ id nhưng uid = null
-            eq[slot] = { id: itemId, uid: null };
+            // TUYỆT ĐỐI BỎ ĐỒ MẶC ĐỊNH: Nếu không có trong kho đồ cắm trại -> Gỡ bỏ khỏi slot hoàn toàn!
+            eq[slot] = null;
         }
     });
+}
+
+function autoEquipIfSlotEmpty(itemObj) {
+    if (!SAVE || !itemObj) return false;
+    if (!SAVE.myCampEquipped || typeof SAVE.myCampEquipped !== 'object') {
+        SAVE.myCampEquipped = {};
+    }
+    if (!SAVE.myCampUnequipped || typeof SAVE.myCampUnequipped !== 'object') {
+        SAVE.myCampUnequipped = {};
+    }
+    var eq = SAVE.myCampEquipped;
+    var uneq = SAVE.myCampUnequipped;
+    var itemId = itemObj.id;
+    var itemCfg = (typeof KHUTRAI_ITEMS !== 'undefined') ? KHUTRAI_ITEMS[itemId] : null;
+    if (!itemCfg) return false;
+
+    var type = itemCfg.type;
+    var entry = { id: itemId, uid: itemObj.uid };
+
+    if (type === 'tent') {
+        if (!eq.tent && !uneq.tent) { eq.tent = entry; return true; }
+    } else if (type === 'table') {
+        if (!eq.table && !uneq.table) { eq.table = entry; return true; }
+    } else if (type === 'stove') {
+        if (!eq.stove && !uneq.stove) { eq.stove = entry; return true; }
+    } else if (type === 'chair') {
+        if (!eq.chair1 && !uneq.chair1) {
+            eq.chair1 = entry;
+            return true;
+        } else if (!eq.chair2 && !uneq.chair2) {
+            if (!eq.chair1 || eq.chair1.uid !== itemObj.uid) {
+                eq.chair2 = entry;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+if (typeof window !== 'undefined') {
+    window.autoEquipIfSlotEmpty = autoEquipIfSlotEmpty;
 }
 
 function isItemEquippedInMyCamp(itemOrUid) {
@@ -665,33 +706,46 @@ function equipItemInMyCamp(item) {
 
     var type = itemCfg.type;
     var eq = SAVE.myCampEquipped;
+    if (!SAVE.myCampUnequipped || typeof SAVE.myCampUnequipped !== 'object') {
+        SAVE.myCampUnequipped = {};
+    }
     var entry = { id: itemId, uid: itemUid };
 
     // Nguyên tắc: Chỉ được sử dụng 1 lều, 2 ghế, 1 bàn, 1 bếp
     if (type === 'tent') {
         eq.tent = entry;
+        SAVE.myCampUnequipped.tent = false;
     } else if (type === 'table') {
         eq.table = entry;
+        SAVE.myCampUnequipped.table = false;
     } else if (type === 'stove') {
         eq.stove = entry;
+        SAVE.myCampUnequipped.stove = false;
     } else if (type === 'chair') {
         if (!eq.chair1) {
             eq.chair1 = entry;
+            SAVE.myCampUnequipped.chair1 = false;
         } else if (!eq.chair2) {
             if (eq.chair1.uid !== itemUid) {
                 eq.chair2 = entry;
+                SAVE.myCampUnequipped.chair2 = false;
             } else {
                 eq.chair1 = entry;
+                SAVE.myCampUnequipped.chair1 = false;
             }
         } else {
             // Đã có 2 ghế -> nếu đang là ghế 1 thì cập nhật ghế 1, nếu là ghế 2 cập nhật ghế 2, còn lại dồn ghế 2 sang ghế 1 và thay ghế 2
             if (eq.chair1.uid === itemUid) {
                 eq.chair1 = entry;
+                SAVE.myCampUnequipped.chair1 = false;
             } else if (eq.chair2.uid === itemUid) {
                 eq.chair2 = entry;
+                SAVE.myCampUnequipped.chair2 = false;
             } else {
                 eq.chair1 = eq.chair2;
                 eq.chair2 = entry;
+                SAVE.myCampUnequipped.chair1 = false;
+                SAVE.myCampUnequipped.chair2 = false;
             }
         }
     }
@@ -702,6 +756,9 @@ function equipItemInMyCamp(item) {
 
 function unequipItemInMyCamp(itemOrUid) {
     if (!SAVE || !SAVE.myCampEquipped || !itemOrUid) return false;
+    if (!SAVE.myCampUnequipped || typeof SAVE.myCampUnequipped !== 'object') {
+        SAVE.myCampUnequipped = {};
+    }
     var uid = (typeof itemOrUid === 'object' && itemOrUid) ? itemOrUid.uid : itemOrUid;
     var eq = SAVE.myCampEquipped;
     var slots = ['tent', 'chair1', 'chair2', 'table', 'stove'];
@@ -711,9 +768,11 @@ function unequipItemInMyCamp(itemOrUid) {
         var val = eq[slot];
         if (val && typeof val === 'object' && val.uid === uid) {
             eq[slot] = null;
+            SAVE.myCampUnequipped[slot] = true;
             changed = true;
         } else if (val === uid) {
             eq[slot] = null;
+            SAVE.myCampUnequipped[slot] = true;
             changed = true;
         }
     });
@@ -1721,18 +1780,18 @@ function openDiscoveryBook() {
     overlay.querySelector('#mb-close').onclick = closeModal;
 }
 
-// ---------- 6. BẢN ĐỒ HÀNH TRÌNH (WORLD MAP - LƯỚI 4 CỘT X 5 HÀNG, PHÂN CHẶNG 20 MÀN) ----------
+// ---------- 6. BẢN ĐỒ HÀNH TRÌNH (WORLD MAP - LƯỚI 4 CỘT X 5 HÀNG, PHÂN 3 CHẶNG X 20 MÀN = 60 MÀN) ----------
 function openWorldMap(currentLv, onSelectLevel) {
     var unlockAll = SAVE.settings && SAVE.settings.unlockAllLevels;
 
-    // Đảm bảo tối thiểu 120 level được sinh cấu hình
-    for (var genLv = RAW_LEVELS.length + 1; genLv <= 120; genLv++) {
+    // Đảm bảo tối thiểu 60 level được sinh cấu hình
+    for (var genLv = RAW_LEVELS.length + 1; genLv <= 60; genLv++) {
         getLevelConfig(genLv);
     }
 
     // Tự động chuyển tới chặng của màn hiện tại (hoặc maxLevel)
-    var cur = Math.min(120, currentLv || SAVE.maxLevel || 1);
-    var currentStage = Math.max(1, Math.min(6, Math.ceil(cur / 20)));
+    var cur = Math.min(60, currentLv || SAVE.maxLevel || 1);
+    var currentStage = Math.max(1, Math.min(3, Math.ceil(cur / 20)));
 
     var overlay = createModal(
         '<div class="map-nav-header">' +
@@ -1765,13 +1824,13 @@ function openWorldMap(currentLv, onSelectLevel) {
     var btnNext = overlay.querySelector('#map-btn-next');
 
     function renderStage(stage) {
-        currentStage = Math.max(1, Math.min(6, stage));
+        currentStage = Math.max(1, Math.min(3, stage));
         var stageSize = 20;
         var fromLv = (currentStage - 1) * stageSize + 1;
         var toLv = currentStage * stageSize;
 
         btnPrev.disabled = (currentStage <= 1);
-        btnNext.disabled = (currentStage >= 6);
+        btnNext.disabled = (currentStage >= 3);
 
         var stageStars = 0;
         var nodesHtml = '';
@@ -1810,7 +1869,7 @@ function openWorldMap(currentLv, onSelectLevel) {
         if (stageReqEl) {
             var starImgHtml = '<img src="assets/images/ui/icon_star.png" class="map-req-star-img" alt="">';
             var nextStage = currentStage + 1;
-            if (nextStage <= 6) {
+            if (nextStage <= 3) {
                 if (stageStars >= 30) {
                     stageReqEl.className = 'map-stage-req unlocked';
                     stageReqEl.innerHTML = starImgHtml + ' <span>Đã đạt <b>30</b> sao để mở chặng <b>' + nextStage + '</b></span>';
@@ -1850,7 +1909,7 @@ function openWorldMap(currentLv, onSelectLevel) {
     };
 
     btnNext.onclick = function () {
-        if (currentStage < 6) {
+        if (currentStage < 3) {
             if (typeof playSound === 'function') playSound('tap');
             renderStage(currentStage + 1);
         }
@@ -2855,11 +2914,180 @@ function showEditPlayerIdModal(opts) {
 // ==========================================
 // MÀN HÌNH "TRẠI CỦA BẠN" (MY CAMP SCREEN)
 // ==========================================
+var myCampState = {
+    panX: 0,
+    panY: 0,
+    zoom: 1.0,
+    isDragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    startPanX: 0,
+    startPanY: 0,
+    isPinching: false,
+    startPinchDist: 0,
+    startPinchZoom: 1.0,
+    hasMoved: false,
+    initialized: false
+};
+
+function applyMyCampTransform(smooth) {
+    var stage = document.getElementById('mycamp-stage');
+    if (!stage) return;
+    if (smooth) {
+        stage.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1)';
+        setTimeout(function () {
+            if (stage) stage.style.transition = '';
+        }, 300);
+    } else {
+        stage.style.transition = '';
+    }
+    stage.style.transform = 'translate(' + myCampState.panX + 'px, ' + myCampState.panY + 'px) scale(' + myCampState.zoom + ')';
+}
+
+function setMyCampZoom(targetZoom, smooth) {
+    var cfg = (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG) ? MYCAMP_CONFIG : null;
+    var vp = (cfg && cfg.viewport) ? cfg.viewport : {};
+    var minZ = vp.minZoom !== undefined ? vp.minZoom : 0.7;
+    var maxZ = vp.maxZoom !== undefined ? vp.maxZoom : 1.4;
+    var clamped = Math.min(maxZ, Math.max(minZ, targetZoom));
+    myCampState.zoom = Math.round(clamped * 1000) / 1000;
+    applyMyCampTransform(smooth);
+}
+
+function setMyCampPan(x, y, smooth) {
+    var limitX = Math.max(300, (typeof window !== 'undefined' && window.innerWidth ? window.innerWidth * 0.8 : 300));
+    var limitY = Math.max(350, (typeof window !== 'undefined' && window.innerHeight ? window.innerHeight * 0.8 : 350));
+    myCampState.panX = Math.min(limitX, Math.max(-limitX, Math.round(x)));
+    myCampState.panY = Math.min(limitY, Math.max(-limitY, Math.round(y)));
+    applyMyCampTransform(smooth);
+}
+
+function resetMyCampView(smooth) {
+    var cfg = (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG) ? MYCAMP_CONFIG : null;
+    var vp = (cfg && cfg.viewport) ? cfg.viewport : {};
+    myCampState.panX = vp.initialPanX !== undefined ? vp.initialPanX : 0;
+    myCampState.panY = vp.initialPanY !== undefined ? vp.initialPanY : 0;
+    myCampState.zoom = vp.defaultZoom !== undefined ? vp.defaultZoom : 1.0;
+    applyMyCampTransform(smooth !== false);
+}
+
+function initMyCampViewportInteractions() {
+    var viewport = document.getElementById('mycamp-viewport');
+    if (!viewport || viewport._panZoomInit) return;
+    viewport._panZoomInit = true;
+
+    // --- MOUSE DRAG ---
+    viewport.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var cfg = (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG) ? MYCAMP_CONFIG : null;
+        if (cfg && cfg.viewport && cfg.viewport.enablePan === false) return;
+
+        myCampState.isDragging = true;
+        myCampState.hasMoved = false;
+        myCampState.dragStartX = e.clientX;
+        myCampState.dragStartY = e.clientY;
+        myCampState.startPanX = myCampState.panX;
+        myCampState.startPanY = myCampState.panY;
+        viewport.classList.add('is-grabbing');
+    });
+
+    window.addEventListener('mousemove', function (e) {
+        if (!myCampState.isDragging) return;
+        var dx = e.clientX - myCampState.dragStartX;
+        var dy = e.clientY - myCampState.dragStartY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) myCampState.hasMoved = true;
+        setMyCampPan(myCampState.startPanX + dx, myCampState.startPanY + dy, false);
+    });
+
+    function endMouseDrag() {
+        if (myCampState.isDragging) {
+            myCampState.isDragging = false;
+            viewport.classList.remove('is-grabbing');
+        }
+    }
+    window.addEventListener('mouseup', endMouseDrag);
+
+    // --- MOUSE WHEEL ZOOM ---
+    viewport.addEventListener('wheel', function (e) {
+        var cfg = (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG) ? MYCAMP_CONFIG : null;
+        if (cfg && cfg.viewport && cfg.viewport.enableZoom === false) return;
+        e.preventDefault();
+        var delta = -Math.sign(e.deltaY) * 0.08;
+        setMyCampZoom(myCampState.zoom + delta, false);
+    }, { passive: false });
+
+    // --- TOUCH DRAG & PINCH-ZOOM ---
+    viewport.addEventListener('touchstart', function (e) {
+        var cfg = (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG) ? MYCAMP_CONFIG : null;
+        if (e.touches.length === 1) {
+            if (cfg && cfg.viewport && cfg.viewport.enablePan === false) return;
+            myCampState.isDragging = true;
+            myCampState.isPinching = false;
+            myCampState.hasMoved = false;
+            myCampState.dragStartX = e.touches[0].clientX;
+            myCampState.dragStartY = e.touches[0].clientY;
+            myCampState.startPanX = myCampState.panX;
+            myCampState.startPanY = myCampState.panY;
+        } else if (e.touches.length === 2) {
+            if (cfg && cfg.viewport && cfg.viewport.enableZoom === false) return;
+            myCampState.isDragging = false;
+            myCampState.isPinching = true;
+            var t1 = e.touches[0], t2 = e.touches[1];
+            myCampState.startPinchDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+            myCampState.startPinchZoom = myCampState.zoom;
+        }
+    }, { passive: false });
+
+    viewport.addEventListener('touchmove', function (e) {
+        if (e.cancelable) e.preventDefault();
+        if (myCampState.isPinching && e.touches.length === 2) {
+            var t1 = e.touches[0], t2 = e.touches[1];
+            var dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+            if (myCampState.startPinchDist > 0) {
+                var factor = dist / myCampState.startPinchDist;
+                setMyCampZoom(myCampState.startPinchZoom * factor, false);
+            }
+        } else if (myCampState.isDragging && e.touches.length === 1) {
+            var dx = e.touches[0].clientX - myCampState.dragStartX;
+            var dy = e.touches[0].clientY - myCampState.dragStartY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) myCampState.hasMoved = true;
+            setMyCampPan(myCampState.startPanX + dx, myCampState.startPanY + dy, false);
+        }
+    }, { passive: false });
+
+    function endTouch(e) {
+        if (e.touches.length === 1) {
+            myCampState.isPinching = false;
+            myCampState.isDragging = true;
+            myCampState.dragStartX = e.touches[0].clientX;
+            myCampState.dragStartY = e.touches[0].clientY;
+            myCampState.startPanX = myCampState.panX;
+            myCampState.startPanY = myCampState.panY;
+        } else if (e.touches.length === 0) {
+            myCampState.isDragging = false;
+            myCampState.isPinching = false;
+        }
+    }
+    viewport.addEventListener('touchend', endTouch);
+    viewport.addEventListener('touchcancel', endTouch);
+
+    // Double-click to reset view to center
+    viewport.addEventListener('dblclick', function () {
+        resetMyCampView(true);
+    });
+}
+
 function openMyCamp() {
     var screen = document.getElementById('my-camp-screen');
     if (!screen) return;
 
     reconcileMyCampEquipped();
+    initMyCampViewportInteractions();
+
+    if (!myCampState.initialized) {
+        resetMyCampView(false);
+        myCampState.initialized = true;
+    }
 
     renderMyCampScene();
     screen.style.display = 'block';
@@ -2872,16 +3100,212 @@ function closeMyCamp() {
     if (!screen) return;
     screen.style.display = 'none';
 
+    stopCampAnimators();
+
     if (typeof playSound === 'function') playSound('click');
+}
+
+var campAnimTimers = {};
+
+function stopCampAnimators() {
+    Object.keys(campAnimTimers).forEach(function (k) {
+        clearInterval(campAnimTimers[k]);
+        delete campAnimTimers[k];
+    });
+}
+
+function showPetHeartBubble(container) {
+    if (!container) return;
+    var bubble = document.createElement('div');
+    bubble.className = 'pet-heart-bubble';
+    bubble.innerHTML = '❤️ Gâu!';
+    bubble.style.cssText = 'position:absolute;top:-28px;left:50%;transform:translateX(-50%);' +
+        'background:rgba(255,255,255,0.92);padding:2px 8px;border-radius:12px;' +
+        'font-family:Nunito,sans-serif;font-weight:800;font-size:12px;color:#e74c3c;' +
+        'box-shadow:0 2px 8px rgba(0,0,0,0.25);pointer-events:none;z-index:99;' +
+        'animation:petHeartFloat 0.85s ease-out forwards;';
+    container.appendChild(bubble);
+    setTimeout(function () {
+        if (bubble && bubble.parentNode) bubble.parentNode.removeChild(bubble);
+    }, 900);
+}
+
+function startCampAnimators() {
+    stopCampAnimators();
+
+    var cfg = (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG) ? MYCAMP_CONFIG : null;
+    var itemsList = (cfg && Array.isArray(cfg.items)) ? cfg.items : [];
+
+    itemsList.forEach(function (item) {
+        if (item.type === 'anim_states') {
+            // Đối tượng hoạt ảnh nhiều trạng thái (Đứng 1 lúc rồi ngồi)
+            var elemId = 'mycamp-anim-' + item.id;
+            var imgElem = document.getElementById(elemId + '-img');
+            if (!imgElem) return;
+
+            var standFrames = item.standFrames || [];
+            var sitFrames = item.sitFrames || [];
+            if (!standFrames.length && !sitFrames.length) return;
+
+            // Preload toàn bộ ảnh đứng và ngồi vào bộ nhớ cache trình duyệt
+            standFrames.concat(sitFrames).forEach(function (src) {
+                var img = new Image();
+                img.src = src;
+            });
+
+            var fps = (item.fps && item.fps > 0) ? item.fps : 8;
+            var intervalMs = Math.round(1000 / fps);
+
+            var currentState = 'stand'; // Trạng thái ban đầu: Đứng
+            var currentFrameIdx = 0;
+            var stateElapsedMs = 0;
+            var standDurationMs = (item.standDuration || 5) * 1000;
+            var sitDurationMs = (item.sitDuration || 5) * 1000;
+
+            campAnimTimers[item.id] = setInterval(function () {
+                var img = document.getElementById(elemId + '-img');
+                if (!img) return;
+
+                var frames = (currentState === 'stand') ? standFrames : sitFrames;
+                if (!frames || !frames.length) return;
+
+                // Tiến 1 khung hình
+                currentFrameIdx = (currentFrameIdx + 1) % frames.length;
+                img.src = frames[currentFrameIdx];
+
+                // Cập nhật chiều rộng tương ứng với tư thế
+                var targetWidth = (currentState === 'stand')
+                    ? (item.standWidth || 56)
+                    : (item.sitWidth || 72);
+                if (img.style.width !== targetWidth + 'px') {
+                    img.style.width = targetWidth + 'px';
+                }
+
+                // Tính thời gian chuyển đổi động tác
+                stateElapsedMs += intervalMs;
+                var currentLimit = (currentState === 'stand') ? standDurationMs : sitDurationMs;
+
+                // Khi hết thời gian VÀ đã hoàn thành trọn vẹn 1 chu kỳ loop
+                if (stateElapsedMs >= currentLimit && currentFrameIdx === 0) {
+                    currentState = (currentState === 'stand') ? 'sit' : 'stand';
+                    stateElapsedMs = 0;
+                    currentFrameIdx = 0;
+                }
+            }, intervalMs);
+
+            // Tương tác chạm (Tap / Click)
+            var container = document.getElementById(elemId);
+            if (container && !container._tapInit) {
+                container._tapInit = true;
+                container.style.cursor = 'pointer';
+                container.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    if (typeof playSound === 'function') playSound('tap');
+
+                    // Nếu đang ngồi thì bật dậy đứng ngay
+                    if (currentState === 'sit') {
+                        currentState = 'stand';
+                        stateElapsedMs = 0;
+                        currentFrameIdx = 0;
+                    }
+
+                    container.style.transition = 'transform 0.18s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+                    container.style.transform = 'scale(1.18) translateY(-8px)';
+                    setTimeout(function () {
+                        if (container) container.style.transform = '';
+                    }, 200);
+
+                    showPetHeartBubble(container);
+                });
+            }
+            return;
+        }
+
+        if (item.type !== 'anim') return;
+
+        var framesList = item.frames || [];
+        if (!framesList.length && item.framesPrefix && item.frameCount) {
+            framesList = [];
+            for (var f = 1; f <= item.frameCount; f++) {
+                framesList.push(item.framesPrefix + f + (item.extension || '.png'));
+            }
+        }
+        if (!framesList.length) return;
+
+        // Preload frames to browser cache
+        framesList.forEach(function (src) {
+            var img = new Image();
+            img.src = src;
+        });
+
+        var elemId = 'mycamp-anim-' + item.id;
+        var fps = (item.fps && item.fps > 0) ? item.fps : 8;
+        var intervalMs = Math.round(1000 / fps);
+        var currentFrame = 0;
+
+        campAnimTimers[item.id] = setInterval(function () {
+            var img = document.getElementById(elemId + '-img');
+            if (!img) return;
+            currentFrame = (currentFrame + 1) % framesList.length;
+            img.src = framesList[currentFrame];
+        }, intervalMs);
+
+        // Tap reaction
+        var container = document.getElementById(elemId);
+        if (container && !container._tapInit) {
+            container._tapInit = true;
+            container.style.cursor = 'pointer';
+            container.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (typeof playSound === 'function') playSound('tap');
+
+                container.style.transition = 'transform 0.18s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+                container.style.transform = 'scale(1.18) translateY(-8px)';
+                setTimeout(function () {
+                    if (container) container.style.transform = '';
+                }, 200);
+
+                showPetHeartBubble(container);
+            });
+        }
+    });
 }
 
 function renderMyCampScene() {
     var stage = document.getElementById('mycamp-stage');
+    var itemsContainer = document.getElementById('mycamp-items-container') || stage;
+    var screen = document.getElementById('my-camp-screen');
     if (!stage) return;
 
     var cfg = (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG) ? MYCAMP_CONFIG : null;
+    var bgCfg = (cfg && cfg.background) ? cfg.background : {};
+    var bgWidth = (bgCfg.width !== undefined) ? bgCfg.width : 400;
+    var bgHeight = (bgCfg.height !== undefined) ? bgCfg.height : Math.round(bgWidth * 1640 / 1100);
+    var bgColor = bgCfg.color || '#566443';
+    var bgSrc = (typeof getMyCampBackgroundSrc === 'function')
+        ? getMyCampBackgroundSrc()
+        : (bgCfg.src || 'assets/images/items_khutrai/bg_khutrai.jpg');
 
-    // 1. Cấu hình lưới ô (Bật / Tắt / Kích thước)
+    // 1. Cấu hình màu nền toàn màn hình phần không có ảnh nền
+    if (screen) {
+        screen.style.backgroundColor = bgColor;
+    }
+
+    // 2. Cố định kích thước nền và căn giữa sân khấu cắm trại
+    stage.style.width = bgWidth + 'px';
+    stage.style.height = bgHeight + 'px';
+    stage.style.marginLeft = (-Math.round(bgWidth / 2)) + 'px';
+    stage.style.marginTop = (-Math.round(bgHeight / 2)) + 'px';
+
+    // 3. Ảnh nền khu trại (luôn nằm cùng tọa độ với các item)
+    var bgImg = document.getElementById('mycamp-bg-img');
+    if (bgImg) {
+        if (bgImg.getAttribute('src') !== bgSrc) bgImg.src = bgSrc;
+        bgImg.style.width = '100%';
+        bgImg.style.height = '100%';
+    }
+
+    // 4. Lưới ô căn chỉnh (Grid overlay)
     var gridOverlay = document.getElementById('mycamp-grid-overlay');
     if (gridOverlay && cfg && cfg.grid) {
         gridOverlay.style.display = cfg.grid.show ? 'block' : 'none';
@@ -2893,14 +3317,7 @@ function renderMyCampScene() {
         }
     }
 
-    // 2. Cấu hình khung sân khấu chính (Stage)
-    if (cfg && cfg.stage) {
-        if (cfg.stage.width) stage.style.width = (typeof cfg.stage.width === 'number' ? cfg.stage.width + 'px' : cfg.stage.width);
-        if (cfg.stage.height) stage.style.height = (typeof cfg.stage.height === 'number' ? cfg.stage.height + 'px' : cfg.stage.height);
-        if (cfg.stage.top) stage.style.top = cfg.stage.top;
-    }
-
-    // 3. Render danh sách tất cả các đối tượng (Decor & Slots) từ MYCAMP_CONFIG.items
+    // 5. Render danh sách các đối tượng từ MYCAMP_CONFIG.items
     var eq = (SAVE && SAVE.myCampEquipped) ? SAVE.myCampEquipped : {};
     var itemsList = (cfg && Array.isArray(cfg.items)) ? cfg.items : [];
 
@@ -2924,12 +3341,44 @@ function renderMyCampScene() {
             html += '<div id="' + elemId + '" class="mycamp-item mycamp-' + item.id + '" style="' + style + '" title="' + (item.name || '') + '">';
             html += '<img src="' + item.src + '" class="mycamp-prop-img" style="' + imgFit + '" alt="' + (item.name || '') + '">';
             html += '</div>';
+        } else if (item.type === 'anim_states') {
+            // Đối tượng hoạt ảnh nhiều trạng thái luân phiên (Đứng 1 lúc rồi ngồi)
+            var elemId = 'mycamp-anim-' + item.id;
+            var initialSrc = (item.standFrames && item.standFrames[0]) || (item.sitFrames && item.sitFrames[0]) || '';
+            var initialWidth = item.standWidth || 56;
+            html += '<div id="' + elemId + '" class="mycamp-item mycamp-anim-item mycamp-' + item.id + '" style="' + style + 'display:flex;align-items:flex-end;justify-content:center;" title="' + (item.name || '') + '">';
+            html += '<img id="' + elemId + '-img" src="' + initialSrc + '" class="mycamp-prop-img" style="display:block;width:' + initialWidth + 'px;height:auto;pointer-events:none;" alt="' + (item.name || '') + '">';
+            html += '</div>';
+        } else if (item.type === 'anim') {
+            // Đối tượng hoạt ảnh chuỗi hình (Sprite animation)
+            var elemId = 'mycamp-anim-' + item.id;
+            var framesList = item.frames || [];
+            if (!framesList.length && item.framesPrefix && item.frameCount) {
+                framesList = [];
+                for (var f = 1; f <= item.frameCount; f++) {
+                    framesList.push(item.framesPrefix + f + (item.extension || '.png'));
+                }
+            }
+            var initialSrc = framesList[0] || '';
+            html += '<div id="' + elemId + '" class="mycamp-item mycamp-anim-item mycamp-' + item.id + '" style="' + style + '" title="' + (item.name || '') + '">';
+            html += '<img id="' + elemId + '-img" src="' + initialSrc + '" class="mycamp-prop-img" style="' + imgFit + '" alt="' + (item.name || '') + '">';
+            html += '</div>';
         } else if (item.type === 'slot') {
             // Slot gắn đồ trang bị người chơi thu thập
             var elemId = 'mycamp-slot-' + item.slotKey;
             var equippedVal = eq[item.slotKey];
             var equippedId = (typeof equippedVal === 'object' && equippedVal) ? equippedVal.id : equippedVal;
-            var itemData = (equippedId && typeof KHUTRAI_ITEMS !== 'undefined' && KHUTRAI_ITEMS) ? KHUTRAI_ITEMS[equippedId] : null;
+
+            // BẢO VỆ TUYỆT ĐỐI: Chỉ hiển thị nếu itemUid thực sự nằm trong kho SAVE.campItems của người chơi
+            var itemUid = (typeof equippedVal === 'object' && equippedVal) ? equippedVal.uid : null;
+            var existsInCamp = false;
+            if (itemUid && SAVE && Array.isArray(SAVE.campItems)) {
+                existsInCamp = SAVE.campItems.some(function (it) { return it.uid === itemUid; });
+            }
+
+            var itemData = (existsInCamp && equippedId && typeof KHUTRAI_ITEMS !== 'undefined' && KHUTRAI_ITEMS)
+                ? KHUTRAI_ITEMS[equippedId]
+                : null;
 
             if (itemData) {
                 html += '<div id="' + elemId + '" class="mycamp-item mycamp-' + item.slotKey + '" style="' + style + '" title="' + (itemData.name || item.name || '') + '">';
@@ -2941,7 +3390,13 @@ function renderMyCampScene() {
         }
     });
 
-    stage.innerHTML = html;
+    itemsContainer.innerHTML = html;
+
+    // Khởi động các bộ chạy hoạt ảnh chuỗi hình
+    startCampAnimators();
+
+    // Áp dụng transform pan & zoom hiện tại
+    applyMyCampTransform();
 }
 
 // Tự động gắn sự kiện cho các nút điều khiển Trại Của Bạn
@@ -2965,6 +3420,13 @@ if (typeof document !== 'undefined' && typeof document.getElementById === 'funct
                 openCampItemsModal();
             };
         }
+        var resetBtn = document.getElementById('btn-mycamp-reset');
+        if (resetBtn) {
+            resetBtn.onclick = function () {
+                resetMyCampView(true);
+            };
+        }
+        initMyCampViewportInteractions();
     }
 
     if (document.readyState === 'loading') {

@@ -273,70 +273,68 @@ function getProceduralLeadLine(lv) {
 }
 
 function buildProceduralOrdersMap() {
-    var table = {};
-    table[1] = ['trai_lv4', 'ghe_lv2', 'ghe_lv2'];
-    table[2] = ['an_lv3', 'cafe_lv2', 'cafe_lv2'];
-    table[3] = ['tham_lv3', 'bep_lv2', 'bep_lv2'];
-    table[4] = ['ban_lv3', 'ghe_lv3', 'trai_lv3'];
-    table[5] = ['congcu_lv3', 'an_lv4'];
-    table[6] = ['bep_lv3', 'antoan_lv3', 'tham_lv3'];
-    table[7] = ['trai_lv4', 'ban_lv4', 'ghe_lv3'];
-    table[8] = ['cafe_lv3', 'congcu_lv4', 'an_lv3'];
-    table[9] = ['bep_lv4', 'tham_lv4'];
-
-    // Giai đoạn chuyển tiếp (Màn 10 - 19): 2 Generators / màn (6 nhánh vật phẩm)
-    // Luân phiên 3 cặp đôi: Xe Kéo + Ba Lô -> Ba Lô + Thùng Đồ -> Thùng Đồ + Xe Kéo
-    table[10] = ['ban_lv4', 'an_lv4', 'ghe_lv3'];                      // Xe Kéo + Ba Lô
-    table[11] = ['an_lv5', 'bep_lv4', 'congcu_lv3', 'tham_lv3'];      // Ba Lô + Thùng Đồ
-    table[12] = ['trai_lv5', 'antoan_lv4', 'ban_lv3', 'bep_lv3'];     // Thùng Đồ + Xe Kéo
-    table[13] = ['ghe_lv5', 'cafe_lv4', 'ban_lv4', 'an_lv3'];         // Xe Kéo + Ba Lô
-    table[14] = ['antoan_lv5', 'congcu_lv4', 'tham_lv4', 'cafe_lv3'];   // Ba Lô + Thùng Đồ
-    table[15] = ['bep_lv6', 'trai_lv4', 'antoan_lv3', 'ghe_lv3'];     // Thùng Đồ + Xe Kéo
-    table[16] = ['congcu_lv6', 'ban_lv4', 'an_lv3', 'ghe_lv3'];       // Xe Kéo + Ba Lô
-    table[17] = ['cafe_lv6', 'tham_lv4', 'an_lv4', 'bep_lv3'];        // Ba Lô + Thùng Đồ
-    table[18] = ['antoan_lv6', 'ghe_lv4', 'bep_lv4', 'ban_lv3'];      // Thùng Đồ + Xe Kéo
-    table[19] = ['an_lv6', 'trai_lv5', 'congcu_lv4', 'ban_lv3'];      // Xe Kéo + Ba Lô
-
-    // Cột mốc Màn 20: Tung trọn vẹn cả 3 Generators với đại tiệc Lều Gia Đình trai_lv6
-    table[20] = ['trai_lv6', 'cafe_lv5', 'bep_lv4', 'ghe_lv3'];       // Xe Kéo + Ba Lô + Thùng Đồ
-
-    var lastSeen = {};
-    for (var l = 1; l <= 20; l++) {
-        table[l].forEach(function (it) { lastSeen[it] = l; });
-    }
-
-    for (var lv = 21; lv <= 120; lv++) {
-        var tiers = getProceduralTiersForLevel(lv);
-        var count = tiers.length;
-        var lead = getProceduralLeadLine(lv);
-        var leadIdx = ALL_ITEM_LINES_9.indexOf(lead);
-
-        var currentOrders = [];
-        for (var k = 0; k < count; k++) {
-            var targetLv = tiers[k];
-
-            // Bước nhảy stride = 4 (nguyên tố cùng nhau với 9) đảm bảo tuần hoàn đủ 9 nhánh không bao giờ trùng
-            var lineIdx = (leadIdx + k * 4) % 9;
-            var line = ALL_ITEM_LINES_9[lineIdx];
-
-            var candidate = line + '_lv' + targetLv;
-
-            // Cooldown chống lặp: Nếu món đồ cùng cấp vừa xuất hiện trong vòng 4 màn, tự động điều chỉnh cấp độ (không chỉnh lead)
-            if (k > 0 && lastSeen[candidate] !== undefined && (lv - lastSeen[candidate]) < 4) {
-                if (targetLv > 3 && currentOrders.indexOf(line + '_lv' + (targetLv - 1)) === -1) {
-                    targetLv = targetLv - 1;
-                } else if (targetLv < 8 && currentOrders.indexOf(line + '_lv' + (targetLv + 1)) === -1) {
-                    targetLv = targetLv + 1;
-                }
-                candidate = line + '_lv' + targetLv;
-            }
-
-            currentOrders.push(candidate);
-        }
-
-        currentOrders.forEach(function (it) { lastSeen[it] = lv; });
-        table[lv] = currentOrders;
-    }
+    var table = {
+        1: ['ghe_lv4', 'ban_lv3', 'trai_lv3'], // Lv 1 (~15 ⚡)
+        2: ['an_lv4', 'cafe_lv3', 'congcu_lv3'], // Lv 2 (~19 ⚡)
+        3: ['tham_lv4', 'bep_lv3', 'antoan_lv3'], // Lv 3 (~24 ⚡)
+        4: ['ban_lv4', 'trai_lv4', 'ghe_lv3'], // Lv 4 (~28 ⚡)
+        5: ['an_lv3', 'cafe_lv4', 'congcu_lv4'], // Lv 5 (~33 ⚡)
+        6: ['tham_lv3', 'bep_lv4', 'antoan_lv4'], // Lv 6 (~37 ⚡)
+        7: ['ghe_lv5', 'ban_lv3', 'trai_lv3', 'ghe_lv4'], // Lv 7 (~42 ⚡)
+        8: ['an_lv5', 'cafe_lv3', 'congcu_lv3', 'an_lv4'], // Lv 8 (~46 ⚡)
+        9: ['tham_lv5', 'bep_lv3', 'antoan_lv3', 'tham_lv4'], // Lv 9 (~51 ⚡)
+        10: ['trai_lv5', 'ban_lv5', 'cafe_lv4', 'congcu_lv4'], // Lv 10 (~55 ⚡)
+        11: ['cafe_lv5', 'bep_lv4', 'antoan_lv4', 'an_lv3'], // Lv 11 (~60 ⚡)
+        12: ['congcu_lv5', 'ban_lv4', 'trai_lv4', 'ghe_lv3'], // Lv 12 (~64 ⚡)
+        13: ['bep_lv5', 'ghe_lv5', 'an_lv5', 'ban_lv3'], // Lv 13 (~69 ⚡)
+        14: ['antoan_lv5', 'tham_lv3', 'an_lv4', 'cafe_lv3'], // Lv 14 (~73 ⚡)
+        15: ['an_lv6', 'ghe_lv4', 'trai_lv3', 'tham_lv5'], // Lv 15 (~78 ⚡)
+        16: ['cafe_lv6', 'congcu_lv3', 'trai_lv5', 'ban_lv5'], // Lv 16 (~82 ⚡)
+        17: ['ban_lv6', 'tham_lv4', 'cafe_lv4', 'congcu_lv4'], // Lv 17 (~87 ⚡)
+        18: ['bep_lv6', 'antoan_lv4', 'ghe_lv5', 'ban_lv4'], // Lv 18 (~91 ⚡)
+        19: ['ghe_lv6', 'cafe_lv5', 'congcu_lv5', 'trai_lv4', 'an_lv3'], // Lv 19 (~96 ⚡)
+        20: ['trai_lv6', 'bep_lv5', 'an_lv5', 'antoan_lv3', 'ghe_lv3'], // Lv 20 (~100 ⚡)
+        21: ['tham_lv6', 'antoan_lv5', 'an_lv6', 'cafe_lv6', 'bep_lv4'], // Lv 21 (~105 ⚡)
+        22: ['congcu_lv6', 'ban_lv6', 'tham_lv5', 'ghe_lv4', 'an_lv4'], // Lv 22 (~109 ⚡)
+        23: ['bep_lv6', 'trai_lv5', 'ban_lv5', 'tham_lv3', 'cafe_lv3'], // Lv 23 (~114 ⚡)
+        24: ['antoan_lv6', 'ghe_lv6', 'tham_lv4', 'cafe_lv4', 'congcu_lv4'], // Lv 24 (~118 ⚡)
+        25: ['trai_lv6', 'ghe_lv5', 'ban_lv4', 'antoan_lv4', 'bep_lv3'], // Lv 25 (~123 ⚡)
+        26: ['an_lv7', 'cafe_lv5', 'tham_lv6', 'congcu_lv5', 'trai_lv4'], // Lv 26 (~127 ⚡)
+        27: ['an_lv6', 'congcu_lv6', 'cafe_lv6', 'ban_lv6', 'bep_lv5'], // Lv 27 (~132 ⚡)
+        28: ['cafe_lv7', 'bep_lv6', 'antoan_lv5', 'an_lv5', 'ban_lv3'], // Lv 28 (~136 ⚡)
+        29: ['antoan_lv6', 'ghe_lv6', 'tham_lv5', 'bep_lv4', 'an_lv4'], // Lv 29 (~141 ⚡)
+        30: ['ban_lv7', 'trai_lv6', 'ghe_lv4', 'congcu_lv3', 'antoan_lv3'], // Lv 30 (~145 ⚡)
+        31: ['an_lv7', 'tham_lv6', 'trai_lv5', 'ban_lv5', 'cafe_lv4'], // Lv 31 (~150 ⚡)
+        32: ['bep_lv7', 'congcu_lv6', 'an_lv6', 'cafe_lv6', 'ban_lv6'], // Lv 32 (~154 ⚡)
+        33: ['cafe_lv7', 'bep_lv6', 'congcu_lv5', 'ghe_lv5', 'tham_lv4'], // Lv 33 (~159 ⚡)
+        34: ['congcu_lv7', 'antoan_lv6', 'ghe_lv6', 'cafe_lv5', 'bep_lv5'], // Lv 34 (~163 ⚡)
+        35: ['ban_lv7', 'trai_lv6', 'antoan_lv5', 'an_lv5', 'congcu_lv4'], // Lv 35 (~168 ⚡)
+        36: ['tham_lv7', 'an_lv7', 'ban_lv4', 'trai_lv4', 'bep_lv4'], // Lv 36 (~172 ⚡)
+        37: ['tham_lv6', 'bep_lv7', 'congcu_lv6', 'an_lv6', 'cafe_lv6'], // Lv 37 (~177 ⚡)
+        38: ['ghe_lv7', 'cafe_lv7', 'ban_lv6', 'bep_lv6', 'tham_lv5'], // Lv 38 (~181 ⚡)
+        39: ['congcu_lv7', 'antoan_lv6', 'ghe_lv6', 'trai_lv5', 'ban_lv5'], // Lv 39 (~186 ⚡)
+        40: ['trai_lv7', 'ban_lv7', 'congcu_lv5', 'ghe_lv5', 'antoan_lv4'], // Lv 40 (~190 ⚡)
+        41: ['tham_lv7', 'an_lv7', 'trai_lv6', 'cafe_lv5', 'bep_lv5'], // Lv 41 (~195 ⚡)
+        42: ['antoan_lv7', 'bep_lv7', 'tham_lv6', 'congcu_lv6', 'an_lv6'], // Lv 42 (~199 ⚡)
+        43: ['ghe_lv7', 'cafe_lv7', 'antoan_lv5', 'ban_lv6', 'bep_lv6'], // Lv 43 (~204 ⚡)
+        44: ['an_lv8', 'congcu_lv7', 'cafe_lv6', 'antoan_lv6', 'ghe_lv6'], // Lv 44 (~208 ⚡)
+        45: ['trai_lv7', 'ban_lv7', 'an_lv5', 'tham_lv5', 'ghe_lv4'], // Lv 45 (~213 ⚡)
+        46: ['cafe_lv8', 'tham_lv7', 'an_lv7', 'trai_lv6', 'ban_lv5'], // Lv 46 (~217 ⚡)
+        47: ['antoan_lv7', 'bep_lv7', 'tham_lv6', 'congcu_lv6', 'trai_lv5'], // Lv 47 (~222 ⚡)
+        48: ['ban_lv8', 'ghe_lv7', 'cafe_lv7', 'congcu_lv5', 'bep_lv5'], // Lv 48 (~226 ⚡)
+        49: ['an_lv8', 'congcu_lv7', 'antoan_lv6', 'cafe_lv5', 'ban_lv6'], // Lv 49 (~231 ⚡)
+        50: ['bep_lv8', 'trai_lv7', 'ban_lv7', 'an_lv6', 'antoan_lv5'], // Lv 50 (~235 ⚡)
+        51: ['cafe_lv8', 'tham_lv7', 'an_lv7', 'bep_lv6', 'ghe_lv6'], // Lv 51 (~240 ⚡)
+        52: ['congcu_lv8', 'antoan_lv7', 'bep_lv7', 'cafe_lv6', 'trai_lv6'], // Lv 52 (~244 ⚡)
+        53: ['ban_lv8', 'ghe_lv7', 'cafe_lv7', 'tham_lv6', 'congcu_lv6'], // Lv 53 (~249 ⚡)
+        54: ['tham_lv8', 'congcu_lv7', 'antoan_lv6', 'an_lv8', 'ghe_lv5'], // Lv 54 (~253 ⚡)
+        55: ['bep_lv8', 'trai_lv7', 'ban_lv7', 'an_lv5', 'tham_lv5'], // Lv 55 (~258 ⚡)
+        56: ['ghe_lv8', 'tham_lv7', 'an_lv7', 'cafe_lv8', 'ban_lv6'], // Lv 56 (~262 ⚡)
+        57: ['congcu_lv8', 'antoan_lv7', 'bep_lv7', 'an_lv6', 'trai_lv5'], // Lv 57 (~267 ⚡)
+        58: ['antoan_lv8', 'ghe_lv7', 'cafe_lv7', 'ban_lv8', 'bep_lv6'], // Lv 58 (~271 ⚡)
+        59: ['tham_lv8', 'congcu_lv7', 'an_lv8', 'cafe_lv6', 'ghe_lv6'], // Lv 59 (~276 ⚡)
+        60: ['trai_lv8', 'ban_lv7', 'bep_lv8', 'tham_lv6', 'congcu_lv6']  // Lv 60 (~280 ⚡)
+    };
     return table;
 }
 
@@ -370,30 +368,30 @@ function generateLevelConfig(lvNum) {
     var patternName = ORGANIC_PATTERN_NAMES[patIdx];
     var patFn = ORGANIC_BOARD_PATTERNS[patternName] || ORGANIC_BOARD_PATTERNS.creek_bend;
 
-    // 2. Chọn số lượng và chủng loại nguồn phát (Generators)
-    // - Giai đoạn 1 (Màn 1 - 9): 1 Generator xen kẽ (3 nhánh vật phẩm)
-    // - Giai đoạn chuyển tiếp (Màn 10 - 19): 2 Generators / màn (6 nhánh vật phẩm)
-    // - Cột mốc Màn 20 trở đi: Chính thức tung cả 3 Generators lên bàn cờ (9 nhánh vật phẩm)
+    // 2. Danh sách nhiệm vụ theo bảng tiến trình 60 Level cân bằng tuyến tính
+    var orders = (PROCEDURAL_LEVEL_ORDERS && PROCEDURAL_LEVEL_ORDERS[lvNum])
+        ? PROCEDURAL_LEVEL_ORDERS[lvNum].slice()
+        : ['ghe_lv4', 'trai_lv3', 'ban_lv3'];
+    var orderCount = orders.length;
+
+    // 3. Chọn số lượng và chủng loại nguồn phát (Generators)
+    // Tự động suy ra chính xác từ các đơn hàng để đảm bảo 100% đồ đều sinh được từ nguồn phát:
+    // - Màn 1 - 9: 1 Generator duy nhất (tập trung thành thạo từng nhóm đồ)
+    // - Màn 10 - 19: 2 Generators kết hợp luân phiên
+    // - Màn 20 trở đi: Chính thức tung cả 3 Generators lên bàn cờ
     var chosenGenIds = [];
-    if (lvNum === 1 || lvNum === 4 || lvNum === 7) {
-        chosenGenIds = ['generator_cooler'];
-    } else if (lvNum === 2 || lvNum === 5 || lvNum === 8) {
-        chosenGenIds = ['generator_backpack'];
-    } else if (lvNum === 3 || lvNum === 6 || lvNum === 9) {
-        chosenGenIds = ['generator_crate'];
-    } else if (lvNum >= 10 && lvNum <= 19) {
-        // Giai đoạn chuyển tiếp (Màn 10 - 19): Luân phiên 3 cặp đôi 2 Generators
-        var pairIdx = (lvNum - 10) % 3;
-        if (pairIdx === 0) {
-            chosenGenIds = ['generator_cooler', 'generator_backpack']; // Xe Kéo & Ba Lô
-        } else if (pairIdx === 1) {
-            chosenGenIds = ['generator_backpack', 'generator_crate'];   // Ba Lô & Thùng Đồ
-        } else {
-            chosenGenIds = ['generator_crate', 'generator_cooler'];      // Thùng Đồ & Xe Kéo
-        }
-    } else {
-        // Từ Màn 20 trở đi: Cột mốc chính thức tung cả 3 Generators lên bàn cờ
+    if (lvNum >= 20) {
         chosenGenIds = ['generator_cooler', 'generator_backpack', 'generator_crate'];
+    } else {
+        var neededGenSet = new Set();
+        orders.forEach(function (oId) {
+            var line = oId.split('_lv')[0];
+            if (GENERATOR_POOLS['generator_cooler'].indexOf(line) !== -1) neededGenSet.add('generator_cooler');
+            if (GENERATOR_POOLS['generator_backpack'].indexOf(line) !== -1) neededGenSet.add('generator_backpack');
+            if (GENERATOR_POOLS['generator_crate'].indexOf(line) !== -1) neededGenSet.add('generator_crate');
+        });
+        neededGenSet.forEach(function (gId) { chosenGenIds.push(gId); });
+        if (chosenGenIds.length === 0) chosenGenIds = ['generator_cooler'];
     }
 
     // Thu thập các nhánh vật phẩm khả dụng từ nguồn phát của màn
@@ -404,87 +402,48 @@ function generateLevelConfig(lvNum) {
         });
     });
 
-    // 3. Danh sách nhiệm vụ theo nhịp điệu phân bổ tuần hoàn (2 - 6 nhiệm vụ/màn, hiển thị tối đa 4)
-    var orders = (PROCEDURAL_LEVEL_ORDERS && PROCEDURAL_LEVEL_ORDERS[lvNum])
-        ? PROCEDURAL_LEVEL_ORDERS[lvNum].slice()
-        : ['trai_lv4', 'an_lv4', 'bep_lv4'];
-    var orderCount = orders.length;
-
     // 4. Tạo danh sách vật phẩm hỗ trợ trong Mạng Nhện (webList) và Đồ Mồi Tự Do (freeList)
     var webList = [];
     var freeList = [];
 
-    if (lvNum === 1) {
-        freeList = ['trai_lv1', 'ghe_lv1'];
-        webList = ['trai_lv1', 'ghe_lv1', 'ghe_lv1', 'trai_lv2'];
-    } else if (lvNum === 2) {
-        freeList = ['an_lv1', 'cafe_lv1'];
-        webList = ['an_lv1', 'cafe_lv1', 'cafe_lv1', 'an_lv2'];
-    } else if (lvNum === 3) {
-        freeList = ['tham_lv1', 'bep_lv1'];
-        webList = ['tham_lv1', 'bep_lv1', 'bep_lv1', 'tham_lv2'];
-    } else if (lvNum === 4) {
-        freeList = ['ban_lv1', 'ghe_lv1'];
-        webList = ['ban_lv1', 'ghe_lv2', 'trai_lv2', 'ban_lv2'];
-    } else if (lvNum === 5) {
-        freeList = ['congcu_lv1', 'an_lv1'];
-        webList = ['congcu_lv1', 'an_lv2', 'an_lv3', 'congcu_lv2'];
-    } else if (lvNum === 6) {
-        freeList = ['bep_lv1', 'antoan_lv1'];
-        webList = ['bep_lv2', 'antoan_lv2', 'tham_lv2', 'bep_lv1'];
-    } else if (lvNum === 7) {
-        freeList = ['trai_lv1', 'ban_lv1'];
-        webList = ['trai_lv3', 'ban_lv3', 'ghe_lv2', 'ban_lv2'];
-    } else if (lvNum === 8) {
-        freeList = ['cafe_lv1', 'congcu_lv1'];
-        webList = ['cafe_lv2', 'congcu_lv3', 'an_lv2', 'cafe_lv1'];
-    } else if (lvNum === 9) {
-        freeList = ['bep_lv1', 'tham_lv1'];
-        webList = ['bep_lv3', 'tham_lv3', 'antoan_lv2', 'bep_lv2'];
-    } else if (lvNum === 10) {
-        freeList = ['ban_lv1', 'an_lv1'];
-        webList = ['ban_lv1', 'an_lv2', 'ghe_lv2', 'ban_lv2', 'an_lv1'];
-    } else {
-        orders.forEach(function (ordId, oIdx) {
-            var oLine = ordId.split('_lv')[0];
-            var oLv = parseInt(ordId.split('_lv')[1], 10) || 3;
+    orders.forEach(function (ordId, oIdx) {
+        var oLine = ordId.split('_lv')[0];
+        var oLv = parseInt(ordId.split('_lv')[1], 10) || 3;
 
-            if (oIdx === 0) {
-                var fLv0 = (oLv >= 5) ? 2 : 1;
-                var wLv0 = Math.max(1, oLv - 2);
-                freeList.push(oLine + '_lv' + fLv0);
-                webList.push(oLine + '_lv' + wLv0);
-                webList.push(oLine + '_lv' + wLv0);
-                if (oLv >= 6) {
-                    webList.push(oLine + '_lv' + Math.max(1, oLv - 3));
-                }
-            } else if (oIdx === 1) {
-                var fLv1 = 1;
-                var wLv1 = Math.max(1, oLv - 2);
-                freeList.push(oLine + '_lv' + fLv1);
-                webList.push(oLine + '_lv' + wLv1);
-                webList.push(oLine + '_lv' + wLv1);
-            } else if (oIdx === 2) {
-                var wLv2 = Math.max(1, oLv - 1);
-                webList.push(oLine + '_lv' + wLv2);
-                if (freeList.length < 3) {
-                    freeList.push(oLine + '_lv1');
-                }
-            } else if (webList.length < 13) {
-                // Trợ lực 50% cho các đơn hàng trong hàng đợi để nhịp độ mở khóa đơn mới luôn hào hứng
-                var qSub = Math.max(1, oLv - 1);
-                webList.push(oLine + '_lv' + qSub);
+        if (oIdx === 0) {
+            var fLv0 = 1;
+            var wLv0 = Math.max(1, oLv - 2);
+            freeList.push(oLine + '_lv' + fLv0);
+            webList.push(oLine + '_lv' + wLv0);
+            webList.push(oLine + '_lv' + wLv0);
+            if (oLv >= 6) {
+                webList.push(oLine + '_lv' + Math.max(1, oLv - 3));
             }
-        });
+        } else if (oIdx === 1) {
+            var fLv1 = 1;
+            var wLv1 = Math.max(1, oLv - 2);
+            freeList.push(oLine + '_lv' + fLv1);
+            webList.push(oLine + '_lv' + wLv1);
+            webList.push(oLine + '_lv' + wLv1);
+        } else if (oIdx === 2) {
+            var wLv2 = Math.max(1, oLv - 1);
+            webList.push(oLine + '_lv' + wLv2);
+            if (freeList.length < 3) {
+                freeList.push(oLine + '_lv1');
+            }
+        } else if (webList.length < 13) {
+            var qSub = Math.max(1, oLv - 1);
+            webList.push(oLine + '_lv' + qSub);
+        }
+    });
 
-        // BẢO VỆ TUYỆT ĐỐI: Đồ mồi tự do (freeList) chỉ là vật phẩm cấp thấp (Lv.1 - Lv.2) để người chơi có mồi ghép,
-        // TUYỆT ĐỐI KHÔNG BAO GIỜ trùng với bất kỳ đơn hàng nhiệm vụ nào (tránh việc vừa vào ván đã có sẵn đồ nộp ngay).
-        for (var fi = 0; fi < freeList.length; fi++) {
-            var fLine = freeList[fi].split('_lv')[0];
-            var fLv = parseInt(freeList[fi].split('_lv')[1], 10) || 1;
-            if (fLv >= 3 || orders.indexOf(freeList[fi]) !== -1) {
-                freeList[fi] = fLine + '_lv1';
-            }
+    // BẢO VỆ TUYỆT ĐỐI: Đồ mồi tự do (freeList) chỉ là vật phẩm cấp thấp (Lv.1 - Lv.2) để người chơi có mồi ghép,
+    // TUYỆT ĐỐI KHÔNG BAO GIỜ trùng với bất kỳ đơn hàng nhiệm vụ nào (tránh việc vừa vào ván đã có sẵn đồ nộp ngay).
+    for (var fi = 0; fi < freeList.length; fi++) {
+        var fLine = freeList[fi].split('_lv')[0];
+        var fLv = parseInt(freeList[fi].split('_lv')[1], 10) || 1;
+        if (fLv >= 3 || orders.indexOf(freeList[fi]) !== -1) {
+            freeList[fi] = fLine + '_lv1';
         }
     }
 
@@ -659,56 +618,60 @@ function generateLevelConfig(lvNum) {
     var leadNpc = npcList[(lvNum - 1) % 3];
     var storyDialoguesMap = {
         1: [
-            'Chào mừng bạn đến với khu trại nhỏ',
-            'Chạm vào xe kéo để lấy đồ cắm trại và ghép hoàn thành nhiệm vụ bạn nhé.'
+            'Chào mừng bạn đến với khu trại nhỏ!',
+            'Chạm vào Xe Kéo để lấy đồ cắm trại và ghép hoàn thành Ghế Xếp Cấp 4 bạn nhé.'
         ],
         2: [
-            'Đi đường xa chắc bạn đói rồi, mình cùng nghỉ ngơi ăn nhẹ nhé!',
-            'Chạm Ba Lô để lấy bánh mì và pha cà phê ấm nóng nào!'
+            'Cùng Xe Kéo hoàn thiện góc nghỉ ngơi với Bàn Gỗ và Ghế Xếp tiện nghi nào!',
+            'Ghép nhanh các món cùng loại để hoàn thành đơn hàng nhé!'
         ],
         3: [
-            'Gió rừng chiều se lạnh rồi, cần làm ấm khu trại thôi bạn ơi!',
-            'Chạm Thùng Đồ lấy thảm trải cỏ và bật bếp lửa sưởi ấm nhé!'
+            'Đi đường xa chắc bạn đói rồi, chạm Ba Lô chuẩn bị bữa mì sợi nóng và cà phê ấm nào!',
+            'Mở Ba Lô dã ngoại để khám phá các món ăn thức uống thơm ngon nhé!'
         ],
         4: [
-            'Có chỗ ngồi đẹp rồi, mình dựng thêm bàn ăn để bày tiệc nhé!',
-            'Chạm Xe Kéo để ghép bàn gỗ và ghế tựa êm ái nào!'
+            'Bữa ăn ấm cúng đã sẵn sàng, cùng Ba Lô dã ngoại pha thêm bình cà phê đậm đà nhé!',
+            'Tiếp tục ghép đồ ăn và thức uống nào bạn ơi!'
         ],
         5: [
-            'Trời sắp tối rồi, khu trại cần ánh đèn lung linh ấm áp!',
-            'Mở Ba Lô lấy dây đèn trang trí và làm bữa mì sợi nóng bạn nhé!'
+            'Gió rừng chiều se lạnh rồi, mở Thùng Đồ chuẩn bị bếp lửa trại và thảm êm thôi!',
+            'Chạm Thùng Đồ để lấy bếp than, thảm trải cỏ và đồ sinh tồn nhé!'
         ],
         6: [
-            'Đi cắm trại giữa thiên nhiên cần nguồn năng lượng dồi dào!',
-            'Mở Thùng Đồ chuẩn bị bếp lửa, thảm trải và sạc dự phòng nhé!'
+            'Giữ lửa trại luôn rực ấm và trang bị thêm thảm đệm ấm áp cho đêm nay nào!',
+            'Cùng Thùng Đồ hoàn thành các món tiện nghi dã ngoại bạn nhé!'
         ],
         7: [
-            'Khu trại của chúng mình trông ngày càng xịn sò như Glamping rồi!',
-            'Chạm Xe Kéo dựng thêm bạt che lớn và bàn tiệc hoành tráng nhé!'
+            'Khu trại trông ngày càng xịn sò, mở Xe Kéo dựng thêm Bàn Gỗ Cuộn lớn nhé!',
+            'Ghép bàn gỗ và bạt che để đón bạn bè ghé thăm nào!'
         ],
         8: [
-            'Gâu gâu! Nắng sớm lên rồi, cùng đón bình minh trong lành nào!',
-            'Mở Ba Lô pha bình cà phê nóng và lấy đèn pin đi dạo thôi!'
+            'Nắng sớm lên rồi, hoàn thiện bộ bàn ghế dã ngoại đón bình minh trong lành nhé!',
+            'Tiếp tục tạo nên góc cắm trại hoàn hảo nào!'
         ],
         9: [
-            'Bạn đã trở thành một chuyên gia cắm trại thực thụ rồi đấy!',
-            'Mở Thùng Đồ nhóm ngọn lửa trại rực rỡ cho đêm tiệc đáng nhớ nhé!'
+            'Trời sắp tối, mở Ba Lô lấy đèn măng sông và pin dự phòng dã ngoại thôi!',
+            'Ánh sáng ấm áp sẽ thắp sáng cả góc rừng đêm nay!'
         ],
         10: [
-            'Khu trại mở rộng rồi! Lần này hãy kết hợp cả Xe Kéo và Ba Lô nhé!',
+            'Khu trại mở rộng! Lần này hãy kết hợp cả Xe Kéo và Ba Lô dã ngoại nhé!',
             'Chạm 2 nguồn phát để lấy đồ cắm trại và hoàn thành đơn hàng nào!'
         ],
         11: [
-            'Thêm một trải nghiệm mới: Phối hợp Ba Lô và Thùng Đồ dã ngoại!',
-            'Chuẩn bị bữa ăn ấm cúng và trạm năng lượng dã ngoại bạn nhé!'
-        ],
-        12: [
-            'Đêm xuống bên bếp lửa trại ấm áp cùng bàn ghế tiện nghi!',
-            'Chạm Xe Kéo và Thùng Đồ để hoàn thành các đơn hàng nhé!'
+            'Khám phá trải nghiệm mới: Lều Vòm Cắm Trại 2 Người cao cấp!',
+            'Phối hợp nhịp nhàng các nguồn phát để dựng lều bạn nhé!'
         ],
         20: [
-            'Đại tiệc Glamping chính thức bắt đầu! Cả 3 nguồn phát đã hội tụ!',
-            'Hãy phối hợp nhịp nhàng Xe Kéo, Ba Lô và Thùng Đồ để dựng Lều Gia Đình nhé!'
+            'Đại tiệc Glamping Chặng 1! Cả 3 nguồn phát cùng hội tụ để dựng Lều Gia Đình!',
+            'Chúc mừng bạn đã chinh phục trọn vẹn Chặng 1 Khởi Đầu!'
+        ],
+        40: [
+            'Chinh phục đỉnh cao Chặng 2: Hoàn thành kiệt tác Lều Kim Tự Tháp Glamping!',
+            'Khu trại của bạn giờ đây đã đạt chuẩn Glamping sang trọng bậc nhất!'
+        ],
+        60: [
+            'ĐẠI KẾT CỤC: Khám phá Biệt Thự Lều Glamping Hoàng Gia!',
+            'Chúc mừng Bậc Thầy Cắm Trại đã xuất sắc hoàn thành trọn vẹn toàn bộ 60 màn chơi!'
         ]
     };
     var defaultTexts = storyDialoguesMap[lvNum] || null;
@@ -736,7 +699,7 @@ function generateLevelConfig(lvNum) {
     };
 }
 
-var TOTAL_INITIAL_LEVELS = 120;
+var TOTAL_INITIAL_LEVELS = 60;
 var GENERATED_LEVELS_LIST = [];
 for (var _lv = 1; _lv <= TOTAL_INITIAL_LEVELS; _lv++) {
     GENERATED_LEVELS_LIST.push(generateLevelConfig(_lv));
@@ -886,16 +849,17 @@ var GAME_CONFIG = {
         generatorClickWindowMs: 550,
         // Tỷ lệ rơi vật phẩm nâng cao từ thùng sinh đồ (Generator Tier Drop Rates)
         // Màn 1-10: 100% Cấp 1 để người chơi làm quen cơ chế ghép cơ bản
-        // Màn 11+: Mở tỷ lệ rơi Cấp 2 và Cấp 3 để giảm bớt số lần click, tạo cảm giác bất ngờ may mắn
+        // Màn 11-29: Rơi Cấp 1 và Cấp 2 (tuyệt đối không rơi Cấp 3 trước màn 30)
+        // Màn 30+: Mở khóa tỷ lệ rơi Cấp 3 để hỗ trợ ghép các item cấp cao
         generatorDrops: {
             minLevelForTierDrops: 11,
+            minLevelForLv3Drops: 30,
             tiers: [
                 { maxLevel: 10,  lv1: 1.00, lv2: 0.00, lv3: 0.00 }, // Màn 1-10: 100% Lv1 (Hướng dẫn)
-                { maxLevel: 20,  lv1: 0.78, lv2: 0.18, lv3: 0.04 }, // Màn 11-20: Mở nhẹ Lv2 (18%) & Lv3 (4%)
-                { maxLevel: 40,  lv1: 0.70, lv2: 0.23, lv3: 0.07 }, // Màn 21-40: Nhiệm vụ Lv6/7 (23% Lv2, 7% Lv3)
-                { maxLevel: 60,  lv1: 0.62, lv2: 0.26, lv3: 0.12 }, // Màn 41-60: Xuất hiện Lv8 (26% Lv2, 12% Lv3)
-                { maxLevel: 90,  lv1: 0.55, lv2: 0.30, lv3: 0.15 }, // Màn 61-90: Cao cấp (30% Lv2, 15% Lv3)
-                { maxLevel: 120, lv1: 0.50, lv2: 0.32, lv3: 0.18 }  // Màn 91-120: Đại kết cục (32% Lv2, 18% Lv3)
+                { maxLevel: 20,  lv1: 0.82, lv2: 0.18, lv3: 0.00 }, // Chặng 1 (11-20): 18% Lv2, 0% Lv3
+                { maxLevel: 29,  lv1: 0.74, lv2: 0.26, lv3: 0.00 }, // Chặng 2 đầu (21-29): 26% Lv2, 0% Lv3
+                { maxLevel: 45,  lv1: 0.68, lv2: 0.25, lv3: 0.07 }, // Chặng 2 sau (30-45): Mở khóa Lv3 (7%), 25% Lv2, 68% Lv1
+                { maxLevel: 60,  lv1: 0.58, lv2: 0.28, lv3: 0.14 }  // Chặng 3 (46-60): Đỉnh cao Lv7/8 (14% Lv3, 28% Lv2, 58% Lv1)
             ]
         },
         levelClear: {

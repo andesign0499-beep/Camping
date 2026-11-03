@@ -109,8 +109,15 @@
 
         <!-- MÀN HÌNH TRẠI CỦA BẠN (MY CAMP SCREEN) -->
         <div id="my-camp-screen" class="my-camp-screen" style="display: none;">
-            <!-- LƯỚI Ô 1PX MÀU ĐEN (DEBUG / CAN CHINH) -->
-            <div class="mycamp-grid-overlay" id="mycamp-grid-overlay"></div>
+            <!-- VIEWPORT KÉO (PAN) & ZOOM KHÔNG GIAN BÃI TRẠI -->
+            <div id="mycamp-viewport" class="mycamp-viewport">
+                <!-- SÂN KHẤU CẮM TRẠI: CHỨA CẢ ẢNH NỀN VÀ CÁC ITEM CÙNG TỌA ĐỘ CỐ ĐỊNH -->
+                <div id="mycamp-stage" class="mycamp-stage">
+                    <img id="mycamp-bg-img" class="mycamp-bg-img" src="assets/images/items_khutrai/bg_khutrai.jpg" alt="Khu trại">
+                    <div class="mycamp-grid-overlay" id="mycamp-grid-overlay"></div>
+                    <div id="mycamp-items-container" class="mycamp-items-container"></div>
+                </div>
+            </div>
 
             <div class="mycamp-header">
                 <button id="btn-mycamp-back" class="map-nav-btn mycamp-back-btn" type="button" title="Quay lại" aria-label="Quay lại">
@@ -118,10 +125,6 @@
                 </button>
                 <div class="mycamp-title">Trại của bạn</div>
                 <div class="mycamp-header-spacer" aria-hidden="true"></div>
-            </div>
-
-            <div class="mycamp-stage" id="mycamp-stage">
-                <!-- Nội dung được render tự động từ js/mycamp_config.js -->
             </div>
 
             <button id="btn-mycamp-decor" class="btn-3s btn-green size-44 mycamp-decor-btn" type="button" title="Đồ cắm trại">
@@ -136,14 +139,14 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-    <script src="js/i18n.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/data.js"></script>
-    <script src="js/engine.js"></script>
-    <script src="js/progress.js"></script>
-    <script src="js/firebase-sync.js"></script>
-    <script src="js/mycamp_config.js?v=3.0"></script>
-    <script src="js/camp.js?v=3.0"></script>
-    <script src="js/components/board.js"></script>
+    <script src="js/i18n.js?v=4.1"></script>
+    <script src="js/config.js?v=4.1"></script>
+    <script src="js/data.js?v=4.1"></script>
+    <script src="js/engine.js?v=4.1"></script>
+    <script src="js/progress.js?v=4.1"></script>
+    <script src="js/firebase-sync.js?v=4.1"></script>
+    <script src="js/mycamp_config.js?v=4.1"></script>
+    <script src="js/camp.js?v=4.1"></script>
+    <script src="js/components/board.js?v=4.1"></script>
 </body>
 </html>

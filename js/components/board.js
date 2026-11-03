@@ -1088,7 +1088,7 @@ function persistCurrentBoardState() {
 
 function loadLevel(lvNum, options) {
     options = options || {};
-    var MAX_GAME_LEVEL = 120;
+    var MAX_GAME_LEVEL = 60;
     lvNum = Math.max(1, Math.min(MAX_GAME_LEVEL, parseInt(lvNum, 10) || 1));
     closeModal();
     clearHintVisuals();
@@ -2579,7 +2579,7 @@ function updateSellButton(itemId) {
 
 function refreshLevelSelect() {
     if (!levelSelect) return;
-    var MAX_GAME_LEVEL = 120;
+    var MAX_GAME_LEVEL = 60;
     var unlockAll = SAVE.settings && SAVE.settings.unlockAllLevels;
     if (SAVE.maxLevel > MAX_GAME_LEVEL) {
         SAVE.maxLevel = MAX_GAME_LEVEL;
@@ -2664,7 +2664,7 @@ function finishLevel() {
             spawnFlyingCurrency(boardElement, 'energy', energy);
         }, 320);
     }
-    var MAX_GAME_LEVEL = 120;
+    var MAX_GAME_LEVEL = 60;
     SAVE.stars[currentLevel] = Math.max(SAVE.stars[currentLevel] || 0, stars);
     if (currentLevel < MAX_GAME_LEVEL) {
         if (currentLevel + 1 > SAVE.maxLevel) {
@@ -2685,10 +2685,24 @@ function finishLevel() {
         ? currentOrders.map(function (o) { return o.id; })
         : (currentLevelCfg && currentLevelCfg.orders ? currentLevelCfg.orders : []);
 
+    // Thu thập vật phẩm vào kho đồ cắm trại khi vượt màn lần đầu
+    if (firstTime && typeof addCampItem === 'function') {
+        if (Array.isArray(completedList) && completedList.length > 0) {
+            completedList.forEach(function (oId) {
+                addCampItem(oId, currentLevel);
+            });
+        } else {
+            var decor = getCampDecor(currentLevel);
+            if (decor && decor[1]) {
+                addCampItem(decor[1], currentLevel);
+            }
+        }
+    }
+
     var onNextAction = hasNext
         ? function () { loadLevel(currentLevel + 1); }
         : function () {
-            showToast('Chúc mừng bạn đã hoàn thành tất cả 120 màn chơi!', '#2e7d32');
+            showToast('Chúc mừng bạn đã hoàn thành tất cả 60 màn chơi!', '#2e7d32');
             loadLevel(currentLevel, { forceReset: true });
         };
 

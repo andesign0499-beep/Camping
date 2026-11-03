@@ -2,11 +2,12 @@
  * ==========================================================================
  * CẤU HÌNH MÀN HÌNH "TRẠI CỦA BẠN" (MY CAMP CONFIG)
  * ==========================================================================
- * File này giúp bạn dễ dàng:
- *  1. Tùy chỉnh vị trí (left, top), kích thước (width, height), phân lớp (zIndex) của từng item.
- *  2. Thêm bất kỳ đối tượng trang trí cố định hoặc slot trang bị mới vào bãi cắm trại.
- *  3. Bật / tắt lưới ô 120px x 60px để kiểm tra căn chỉnh.
- *  4. Thêm các vật phẩm mới trong thư mục images/items_khutrai vào game.
+ * File này giúp bạn chủ động tùy chỉnh:
+ *  1. Kích thước ảnh nền (chiều rộng 400px), màu nền xung quanh (#566443).
+ *  2. Thao tác Kéo (Pan) và Phóng to / Thu nhỏ (Zoom) lên/xuống tối đa 140%.
+ *  3. Vị trí (left, top), kích thước (width, height), phân lớp (zIndex) của từng item.
+ *  4. Thêm bất kỳ đối tượng trang trí cố định hoặc slot trang bị mới vào bãi trại.
+ *  5. Bật / tắt lưới ô để kiểm tra căn chỉnh khi cần.
  * ==========================================================================
  */
 
@@ -50,54 +51,69 @@ var KHUTRAI_ITEMS = {
     'ghe_lv8':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv8.png',  name: 'Ghế Đạo Diễn Cao Cấp' }
 };
 
-// 2. CẤU HÌNH SÂN KHẤU, LƯỚI Ô & CÁC ĐỐI TƯỢNG HIỂN THỊ
+// 2. CẤU HÌNH SÂN KHẤU, ẢNH NỀN, THAO TÁC KÉO/ZOOM & VỊ TRÍ ITEM
 var MYCAMP_CONFIG = {
-    // Cấu hình hiển thị lưới ô 120px x 60px
+    // -------------------------------------------------------------------------
+    // I. CẤU HÌNH ẢNH NỀN & MÀU NỀN MÀN HÌNH
+    // -------------------------------------------------------------------------
+    background: {
+        src: 'assets/images/items_khutrai/bg_khutrai.jpg', // File ảnh nền mặc định (nếu địa điểm chưa có ảnh _bg)
+        width: 460,             // Chiều rộng ảnh nền cố định (mặc định 400px - bạn có thể sửa tại đây)
+        height: 596,            // Chiều cao ảnh nền (tỷ lệ chuẩn 1100x1640 tương ứng 596px)
+        color: '#566443'        // Màu nền màn hình (phần bao quanh không có ảnh nền)
+    },
+
+    // LIÊN KẾT ĐỊA ĐIỂM NGƯỜI DÙNG MUA VỚI ẢNH NỀN KHU TRẠI (HẬU TỐ _bg)
+    // Khi người chơi mua và trang bị Điểm Đến trong Cửa Hàng, bãi trại sẽ tự động đổi sang ảnh nền tương ứng.
+    // Nếu địa điểm chưa có ảnh riêng thì hệ thống tự động sử dụng ảnh nền mặc định bg_khutrai.jpg.
+    locationBackgrounds: {
+        'loc_doibu': 'assets/images/ui/bg_03_bg.jpg',     // Đồi Bù (bg_03.jpg -> bg_03_bg.jpg)
+        'loc_matthan': 'assets/images/ui/bg07_bg.jpg',    // Núi Mắt Thần (bg07.jpg -> bg07_bg.jpg)
+        'loc_bangioc': 'assets/images/ui/bg05_bg.jpg'     // Thác Bản Giốc (bg05.jpg -> bg05_bg.jpg)
+    },
+
+    // -------------------------------------------------------------------------
+    // II. CẤU HÌNH KÉO (PAN) & PHÓNG TO / THU NHỎ (ZOOM) TOÀN BỘ KHÔNG GIAN
+    // -------------------------------------------------------------------------
+    viewport: {
+        enablePan: true,        // Bật thao tác giữ chuột / ngón tay để kéo không gian
+        enableZoom: true,       // Bật thao tác cuộn chuột / chụm 2 ngón tay để zoom
+        defaultZoom: 1.0,       // Tỷ lệ hiển thị mặc định ban đầu (1.0 = 100%)
+        minZoom: 0.7,           // Mức thu nhỏ tối thiểu (70%)
+        maxZoom: 1.4,           // Mức phóng to tối đa (140% theo yêu cầu)
+        initialPanX: 0,         // Độ lệch ngang ban đầu (0px = chính giữa màn hình)
+        initialPanY: 0          // Độ lệch dọc ban đầu (0px = chính giữa màn hình)
+    },
+
+    // -------------------------------------------------------------------------
+    // III. CẤU HÌNH LƯỚI Ô CĂN CHỈNH (GRID)
+    // -------------------------------------------------------------------------
     grid: {
-        show: false,             // Đặt false để tắt lưới ô đen (đổi thành true nếu cần căn chỉnh lại)
-        cellWidth: 120,          // Bề ngang mỗi ô (120px)
-        cellHeight: 60,          // Chiều cao mỗi ô (60px)
-        color: '#000000',        // Màu viền lưới
-        opacity: 1.0             // Độ đậm của lưới (0.0 đến 1.0)
+        show: false,            // Đổi thành true nếu bạn muốn hiện đường kẻ lưới để căn chỉnh
+        cellWidth: 120,         // Bề ngang mỗi ô lưới (px)
+        cellHeight: 60,         // Chiều cao mỗi ô lưới (px)
+        color: '#000000',       // Màu viền lưới
+        opacity: 0.5            // Độ mờ đục của đường kẻ
     },
 
-    // Cấu hình khung sân khấu chính (Stage - tổng bề ngang 3 ô = 360px)
-    stage: {
-        width: 400,
-        height: 540,
-        top: 'clamp(120px, 13vh, 120px)' // Khoảng cách từ đỉnh màn hình xuống
-    },
-
-    /**
-     * DANH SÁCH CÁC ĐỐI TƯỢNG TRÊN BÃI CẮM TRẠI:
-     * -------------------------------------------------------------
-     * Mỗi đối tượng gồm các thuộc tính:
-     *  - id: Mã định danh duy nhất của đối tượng
-     *  - name: Tên mô tả (dễ nhớ)
-     *  - type: 
-     *      + 'decor': Vật trang trí cố định (có thuộc tính 'src' trỏ đến file ảnh)
-     *      + 'slot' : Vị trí gắn đồ trang bị người chơi thu thập (có 'slotKey')
-     *  - left: Tọa độ ngang tính từ mép trái sân khấu (px)
-     *  - top: Tọa độ dọc tính từ đỉnh sân khấu (px)
-     *  - width: Chiều rộng (px hoặc 'auto')
-     *  - height: Chiều cao (px hoặc 'auto')
-     *  - zIndex: Độ ưu tiên lớp hiển thị (số càng lớn càng nằm đè lên trên)
-     *  - fit: (tùy chọn) 'contain' để giữ nguyên tỷ lệ không bị méo ảnh
-     * 
-     * ==> Bạn có thể tự do thêm mới bất kỳ vật trang trí nào bằng cách copy mẫu bên dưới!
-     */
+    // -------------------------------------------------------------------------
+    // IV. DANH SÁCH CÁC ĐỐI TƯỢNG TRÊN BÃI CẮM TRẠI (ĐÃ CĂN CHUẨN TRÊN NỀN 400PX)
+    // -------------------------------------------------------------------------
+    // Tọa độ left (ngang) và top (dọc) được tính trực tiếp từ góc trên-trái (0, 0)
+    // của ảnh nền 400px, đảm bảo ảnh nền và các item LUÔN CỐ ĐỊNH KHÔNG BỊ LỆCH NHAU!
+    // -------------------------------------------------------------------------
     items: [
         // ==========================================
-        // I. VẬT TRANG TRÍ MẶC ĐỊNH (CỐ ĐỊNH)
+        // 1. VẬT TRANG TRÍ MẶC ĐỊNH (CỐ ĐỊNH)
         // ==========================================
         {
             id: 'tree-1',
-            name: 'Cây thông bên trái',
+            name: 'Cây thông bên trái (mỏm đá trái)',
             type: 'decor',
             src: 'assets/images/items_khutrai/tree.png',
-            left: 0,
-            top: 30,
-            width: 48,
+            left: 45,
+            top: 235,
+            width: 38,
             height: 'auto',
             zIndex: 9
         },
@@ -106,35 +122,35 @@ var MYCAMP_CONFIG = {
             name: 'Cây thông ở giữa (sau lưng lều)',
             type: 'decor',
             src: 'assets/images/items_khutrai/tree.png',
-            left: 156,
-            top: 15,
-            width: 48,
+            left: 200,
+            top: 205,
+            width: 36,
             height: 'auto',
             zIndex: 9
         },
         {
             id: 'lamp',
-            name: 'Cột đèn dã ngoại',
+            name: 'Cột đèn dã ngoại (bên bờ suối)',
             type: 'decor',
             src: 'assets/images/items_khutrai/icon_den.png',
-            left: 279,
-            top: 60,
-            width: 42,
+            left: 298,
+            top: 245,
+            width: 34,
             height: 'auto',
             zIndex: 13
         },
 
         // ==========================================
-        // II. CÁC VẬT DỤNG TRANG BỊ LINH HOẠT (SLOTS)
+        // 2. CÁC VẬT DỤNG TRANG BỊ LINH HOẠT (SLOTS)
         // ==========================================
         {
             id: 'slot-tent',
-            name: 'Lều cắm trại (2x3 ô)',
+            name: 'Lều cắm trại (Bãi cỏ bên trái)',
             type: 'slot',
             slotKey: 'tent',
-            left: 0,
-            top: 60,
-            width: 240,
+            left: 85,
+            top: 250,
+            width: 140,
             height: 'auto',
             zIndex: 12
         },
@@ -143,50 +159,121 @@ var MYCAMP_CONFIG = {
             name: 'Ghế 2 (Bên phải, phía sau bàn)',
             type: 'slot',
             slotKey: 'chair2',
-            left: 236,
-            top: 180,
-            width: 120,
+            left: 242,
+            top: 310,
+            width: 66,
             height: 'auto',
             zIndex: 14
         },
         {
             id: 'slot-chair1',
-            name: 'Ghế 1 (Ghế trung tâm bên cạnh lều)',
+            name: 'Ghế 1 (Ghế trung tâm cạnh cửa lều)',
             type: 'slot',
             slotKey: 'chair1',
-            left: 128,
-            top: 232,
-            width: 120,
+            left: 178,
+            top: 338,
+            width: 66,
             height: 'auto',
             zIndex: 15
         },
         {
             id: 'slot-table',
-            name: 'Bàn dã ngoại (1x2 ô)',
+            name: 'Bàn dã ngoại (Phía trước ghế 2)',
             type: 'slot',
             slotKey: 'table',
-            left: 250,
-            top: 296,
-            width: 125,
-            height: 125,
+            left: 238,
+            top: 358,
+            width: 95,
+            height: 95,
             zIndex: 16,
             fit: 'contain'
         },
         {
             id: 'slot-stove',
-            name: 'Bếp nướng dã ngoại (1x1 ô)',
+            name: 'Bếp nướng dã ngoại (Phía trước ghế 1)',
             type: 'slot',
             slotKey: 'stove',
-            left: 132,
-            top: 350,
-            width: 80,
+            left: 180,
+            top: 395,
+            width: 58,
             height: 'auto',
             zIndex: 17
+        },
+
+        // ==========================================
+        // 3. THÚ CƯNG & NHÂN VẬT HOẠT HÌNH (ANIMATION)
+        // ==========================================
+        {
+            id: 'npc-dog-golden',
+            name: 'Chú chó Golden (Đứng 1 lúc rồi ngồi)',
+            type: 'anim_states',     // Hoạt ảnh chuyển đổi trạng thái (Đứng 1 lúc rồi ngồi)
+            left: 108,               // Tọa độ ngang (px) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            top: 320,                // Tọa độ dọc (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            width: 76,               // Chiều rộng khung bãi cỏ (px)
+            height: 90,              // Chiều cao khung bãi cỏ (px)
+            zIndex: 18,              // Phân lớp hiển thị (nằm trên bãi cỏ, cạnh bếp/ghế)
+
+            // Thời gian mỗi động tác: Đứng trong bao nhiêu giây rồi Ngồi trong bao nhiêu giây
+            standDuration: 14,        // Thời gian ĐỨNG (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            sitDuration: 3,          // Thời gian NGỒI (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            fps: 8,                  // Tốc độ chuyển hình (8 hình/giây)
+
+            // Độ rộng hiển thị của từng tư thế (px)
+            standWidth: 56,          // Bề rộng khi đứng (tỷ lệ 145x229)
+            sitWidth: 72,            // Bề rộng khi ngồi (tỷ lệ 200x205)
+
+            // Danh sách 20 khung hình động tác ĐỨNG (Idle)
+            standFrames: [
+                'assets/images/npc_anim/goden_idle1.png',
+                'assets/images/npc_anim/goden_idle2.png',
+                'assets/images/npc_anim/goden_idle3.png',
+                'assets/images/npc_anim/goden_idle4.png',
+                'assets/images/npc_anim/goden_idle5.png',
+                'assets/images/npc_anim/goden_idle6.png',
+                'assets/images/npc_anim/goden_idle7.png',
+                'assets/images/npc_anim/goden_idle8.png',
+                'assets/images/npc_anim/goden_idle9.png',
+                'assets/images/npc_anim/goden_idle10.png',
+                'assets/images/npc_anim/goden_idle11.png',
+                'assets/images/npc_anim/goden_idle12.png',
+                'assets/images/npc_anim/goden_idle13.png',
+                'assets/images/npc_anim/goden_idle14.png',
+                'assets/images/npc_anim/goden_idle15.png',
+                'assets/images/npc_anim/goden_idle16.png',
+                'assets/images/npc_anim/goden_idle17.png',
+                'assets/images/npc_anim/goden_idle18.png',
+                'assets/images/npc_anim/goden_idle19.png',
+                'assets/images/npc_anim/goden_idle20.png'
+            ],
+
+            // Danh sách 20 khung hình động tác NGỒI (Sit)
+            sitFrames: [
+                'assets/images/npc_anim/goden_sit1.png',
+                'assets/images/npc_anim/goden_sit2.png',
+                'assets/images/npc_anim/goden_sit3.png',
+                'assets/images/npc_anim/goden_sit4.png',
+                'assets/images/npc_anim/goden_sit5.png',
+                'assets/images/npc_anim/goden_sit6.png',
+                'assets/images/npc_anim/goden_sit7.png',
+                'assets/images/npc_anim/goden_sit8.png',
+                'assets/images/npc_anim/goden_sit9.png',
+                'assets/images/npc_anim/goden_sit10.png',
+                'assets/images/npc_anim/goden_sit11.png',
+                'assets/images/npc_anim/goden_sit12.png',
+                'assets/images/npc_anim/goden_sit13.png',
+                'assets/images/npc_anim/goden_sit14.png',
+                'assets/images/npc_anim/goden_sit15.png',
+                'assets/images/npc_anim/goden_sit16.png',
+                'assets/images/npc_anim/goden_sit17.png',
+                'assets/images/npc_anim/goden_sit18.png',
+                'assets/images/npc_anim/goden_sit19.png',
+                'assets/images/npc_anim/goden_sit20.png'
+            ]
         }
 
         // ==========================================
         // MẪU ĐỂ BẠN TỰ THÊM ĐỐI TƯỢNG MỚI:
-        // (Chỉ cần bỏ dấu comment // và điền thông số)
+        // (Chỉ cần copy mẫu dưới, bỏ // và điền thông số)
         // ==========================================
         /*
         ,{
