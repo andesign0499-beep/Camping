@@ -1,747 +1,253 @@
 // =============================================================================
-// CẤU HÌNH THÔNG SỐ & CÂN BẰNG KINH TẾ TRÒ CHƠI (GAME BALANCE CONFIG)
-// Hỗ trợ sinh tự động 120 Level hiện tại và mở rộng vô hạn trong tương lai.
+// FILE CẤU HÌNH TRÒ CHƠI TOÀN DIỆN (GAME CONFIGURATION HUB)
+// Người dùng có thể trực tiếp chỉnh sửa mọi thông số, vị trí bàn cờ, nhiệm vụ,
+// kinh tế, năng lượng, tỷ lệ rơi và phần thưởng tại đây.
 // =============================================================================
 
-// Bộ hàm địa hình tự nhiên bất đối xứng (tránh hoàn toàn kiểu sắp xếp đều 5x5, 5x6, 5x7)
-var ORGANIC_BOARD_PATTERNS = {
-    creek_bend: function (r, c) { return (r === 0 || r === 8 || (r === 1 && (c <= 1 || c >= 5)) || (r === 2 && (c === 0 || c === 6)) || (r === 3 && c === 0) || (r === 5 && c === 6) || (r === 6 && (c === 0 || c === 6)) || (r === 7 && (c <= 1 || c >= 5)) || (r === 2 && c === 4) || (r === 6 && c === 2)); },
-    pine_alcove: function (r, c) { return ((r === 0 && c !== 3) || (r === 8 && c !== 3) || (r === 1 && (c === 0 || c >= 5)) || (r === 2 && c === 6) || (r === 3 && c === 1) || (r === 4 && (c === 0 || c === 6)) || (r === 5 && c === 5) || (r === 6 && c === 0) || (r === 7 && (c <= 1 || c >= 6))); },
-    stepping_glade: function (r, c) { return ((r === 0 && (c <= 2 || c >= 5)) || (r === 1 && (c <= 1 || c === 6)) || (r === 2 && c === 0) || (r === 6 && c === 6) || (r === 7 && (c === 0 || c >= 5)) || (r === 8 && (c <= 1 || c >= 4)) || (r === 3 && c === 5) || (r === 5 && c === 1)); },
-    boulder_trail: function (r, c) { return ((r === 0 && c !== 2 && c !== 3) || (r === 8 && c !== 3 && c !== 4) || (c === 0 && (r <= 2 || r >= 6)) || (c === 6 && (r <= 2 || r >= 6)) || (r === 2 && c === 2) || (r === 4 && c === 5) || (r === 6 && c === 4)); },
-    zigzag: function (r, c) { return ((r === 0 && c <= 4) || (r === 1 && c <= 1) || (r === 3 && c === 6) || (r === 4 && c === 0) || (r === 5 && c === 6) || (r === 7 && c >= 5) || (r === 8 && c >= 2) || (r === 2 && c === 4) || (r === 6 && c === 2)); },
-    cross: function (r, c) { return (((r <= 1 || r >= 7) && (c <= 1 || c >= 5)) || (r === 0 && c === 3) || (r === 8 && c === 3) || (r === 3 && c === 1) || (r === 5 && c === 5)); },
-    hourglass: function (r, c) { return ((r === 0 && c !== 3) || (r === 8 && c !== 3) || (r >= 3 && r <= 5 && (c === 0 || c === 6)) || (r === 4 && (c === 1 || c === 5)) || (r === 1 && c === 0) || (r === 7 && c === 6)); },
-    pillars: function (r, c) { return ((r === 0 && (c <= 1 || c >= 5)) || (r === 8 && (c <= 1 || c >= 5)) || ((r === 2 || r === 6) && (c === 2 || c === 4)) || (r === 4 && (c === 0 || c === 6))); },
-    valley: function (r, c) { return ((c === 0 && r !== 3 && r !== 4) || (c === 6 && r !== 4 && r !== 5) || (r === 0 && (c <= 2 || c >= 5)) || (r === 8 && (c <= 1 || c >= 4)) || (r === 2 && c === 4) || (r === 6 && c === 2)); },
-    islands: function (r, c) { return ((r === 0 && c !== 2) || (r === 8 && c !== 4) || (r === 4 && c !== 2 && c !== 4) || (r === 2 && c === 0) || (r === 6 && c === 6)); },
-    fortress: function (r, c) { return ((r === 0 && c !== 3) || (r === 8 && c !== 3) || (c === 0 && r !== 4) || (c === 6 && r !== 4) || (r === 2 && c === 2) || (r === 6 && c === 4) || (r === 4 && c === 3)); },
-    open: function (r, c) { return (((r === 0 || r === 8) && (c <= 1 || c >= 5)) || ((r === 1 || r === 7) && (c === 0 || c === 6)) || (r === 2 && c === 1) || (r === 6 && c === 5) || (r === 3 && c === 5) || (r === 5 && c === 1)); }
-};
-
-var ORGANIC_PATTERN_NAMES = [
-    'creek_bend', 'pine_alcove', 'stepping_glade', 'boulder_trail',
-    'zigzag', 'cross', 'hourglass', 'pillars', 'valley', 'islands', 'fortress', 'open'
-];
-
-var GENERATOR_POOLS = {
-    'generator_backpack': ['an', 'cafe', 'congcu'],
-    'generator_cooler': ['ban', 'ghe', 'trai'],
-    'generator_crate': ['tham', 'antoan', 'bep']
-};
-
-var ALL_GENERATOR_IDS = ['generator_backpack', 'generator_cooler', 'generator_crate'];
-
 // =============================================================================
-// CÔNG THỨC PHÂN BỔ Ô TRỐNG TĂNG DẦN THEO MẠCH TIẾN TRÌNH NHIỆM VỤ
-// Đảm bảo số ô trống tăng mượt mà, người chơi bắt đầu với khu vực tinh gọn (16 ô)
-// và mở rộng dần không gian bàn chơi theo số lượng và độ phức tạp của đơn hàng.
 // =============================================================================
-function getTargetEmptyCells(lvNum, orderCount) {
-    if (lvNum === 1) return 5;
-    if (lvNum === 2) return 6;
-    if (lvNum === 3) return 7;
-    if (lvNum === 4) return 8;
-    if (lvNum === 5) return 9;
-    if (lvNum === 6) return 10;
-    if (lvNum === 7) return 12;
-    if (lvNum === 8) return 14;
-    if (lvNum === 9) return 16;
-    if (lvNum === 10) return 18;
-    if (lvNum <= 15) return 20 + (lvNum - 11) * 2; // Lv 11..15: 20..28
-    if (lvNum <= 24) return Math.min(34, 29 + Math.floor((lvNum - 16) * 5 / 8)); // Lv 16..24: 29..34
-    if (lvNum <= 40) return Math.min(38, 35 + Math.floor((lvNum - 25) * 3 / 15)); // Lv 25..40: 35..38
-    if (lvNum <= 60) return Math.min(42, 39 + Math.floor((lvNum - 41) * 3 / 19)); // Lv 41..60: 39..42
-    if (lvNum <= 85) return Math.min(45, 43 + Math.floor((lvNum - 61) * 2 / 24)); // Lv 61..85: 43..45
-    if (lvNum <= 105) return Math.min(47, 46 + Math.floor((lvNum - 86) * 1 / 19)); // Lv 86..105: 46..47
-    return Math.min(49, 48 + Math.floor((lvNum - 106) * 1 / 14)); // Lv 106..120+: 48..49
-}
-
+// SƠ ĐỒ TỌA ĐỘ BÀN CỜ 7x9 (63 Ô: TỪ Ô 0 ĐẾN Ô 62)
+// Thiết lập khởi đầu: Đúng 5 ô trống item ở tâm, bao quanh bởi vòng mạng nhện,
+// toàn bộ phía ngoài là các lớp đá tăng dần cấp độ để người chơi khám phá!
+//
+//          Cột 0   Cột 1   Cột 2   Cột 3   Cột 4   Cột 5   Cột 6
+// Hàng 0:  [Đá 0]  [Đá 1]  [Đá 2]  [Đá 3]  [Đá 4]  [Đá 5]  [Đá 6]
+// Hàng 1:  [Đá 7]  [Đá 8]  [Đá 9]  [Đá 10] [Đá 11] [Đá 12] [Đá 13]
+// Hàng 2:  [Đá 14] [Đá 15] [Nhện16][Nhện17][Nhện18][Đá 19] [Đá 20]
+// Hàng 3:  [Đá 21] [Nhện22][Trống23][XE KÉO][Trống25][Nhện26][Đá 27]
+// Hàng 4:  [BaLô28][Nhện29][Trống30][Trống31][Trống32][Nhện33][Thùng34]
+// Hàng 5:  [Đá 35] [Đá 36] [Nhện37][Nhện38][Nhện39][Đá 40] [Đá 41]
+// Hàng 6:  [Đá 42] [Đá 43] [Đá 44] [Đá 45] [Đá 46] [Đá 47] [Đá 48]
+// Hàng 7:  [Đá 49] [Đá 50] [Đá 51] [Đá 52] [Đá 53] [Đá 54] [Đá 55]
+// Hàng 8:  [Đá 56] [Đá 57] [Đá 58] [Đá 59] [Đá 60] [Đá 61] [Đá 62]
 // =============================================================================
-// HÀM KHẮC TẠO ĐÁ TỰ NHIÊN BẤT ĐỐI XỨNG THEO ĐÚNG SỐ LƯỢNG ĐÁ MỤC TIÊU (ROCK MASK)
-// - Giữ nguyên nét đặc trưng của từng địa hình tự nhiên (creek, alcove, trail...).
-// - Luôn bảo vệ 100% vùng trung tâm chơi game (r: 3..5, c: 2..4).
-// - Kiểm tra BFS flood-fill đảm bảo toàn bộ ô trống liên thông hoàn toàn (không bị cô lập).
-// =============================================================================
-function generateOrganicRockMask(patternName, patFn, targetRocks, rng) {
-    targetRocks = Math.max(2, Math.min(52, targetRocks));
-    var scores = [];
-    for (var idx = 0; idx < 63; idx++) {
-        var r = Math.floor(idx / 7);
-        var c = idx % 7;
-
-        // Vùng lõi trung tâm chơi cờ tuyệt đối an toàn, không bao giờ sinh đá
-        if (r >= 3 && r <= 5 && c >= 2 && c <= 4) {
-            scores.push({ idx: idx, score: -99999 });
-            continue;
-        }
-
-        var score = 0;
-        // 1. Dấu ấn địa hình tự nhiên gốc
-        if (patFn && patFn(r, c)) {
-            score += 35;
-        }
-
-        // 2. Khoảng cách xa tâm (ưu tiên đá viền ngoài và các góc)
-        var distFromCenter = Math.abs(r - 4) + Math.abs(c - 3);
-        score += distFromCenter * 5;
-
-        // 3. Ưu tiên mép cạnh và 4 góc bàn chơi
-        if (r === 0 || r === 8) score += 12;
-        if (c === 0 || c === 6) score += 10;
-        if ((r === 0 || r === 8) && (c === 0 || c === 6)) score += 15;
-        if ((r <= 1 || r >= 7) && (c <= 1 || c >= 5)) score += 8;
-
-        // 4. Độ gồ ghề bất đối xứng ngẫu nhiên tất định
-        score += (rng() * 4 - 2);
-        scores.push({ idx: idx, score: score });
-    }
-
-    scores.sort(function (a, b) { return b.score - a.score; });
-    var rockSet = new Set(scores.slice(0, targetRocks).map(function (s) { return s.idx; }));
-
-    // 5. Bảo đảm tính liên thông của các ô trống (không để bất kỳ ô trống đơn lẻ nào bị cô lập giữa đá)
-    while (true) {
-        var visited = new Set();
-        var queue = [31]; // Ô trung tâm (4, 3)
-        visited.add(31);
-        while (queue.length > 0) {
-            var curr = queue.shift();
-            var cr = Math.floor(curr / 7), cc = curr % 7;
-            var neighbors = [];
-            if (cr > 0) neighbors.push(curr - 7);
-            if (cr < 8) neighbors.push(curr + 7);
-            if (cc > 0) neighbors.push(curr - 1);
-            if (cc < 6) neighbors.push(curr + 1);
-            for (var ni = 0; ni < neighbors.length; ni++) {
-                var n = neighbors[ni];
-                if (!rockSet.has(n) && !visited.has(n)) {
-                    visited.add(n);
-                    queue.push(n);
-                }
-            }
-        }
-
-        var disconnected = [];
-        for (var i = 0; i < 63; i++) {
-            if (!rockSet.has(i) && !visited.has(i)) {
-                disconnected.push(i);
-            }
-        }
-        if (disconnected.length === 0) break;
-
-        // Biến các ô cô lập thành đá
-        for (var di = 0; di < disconnected.length; di++) {
-            rockSet.add(disconnected[di]);
-        }
-
-        // Bù trừ un-rock lại các ô đá gần vùng mở và gần tâm nhất để giữ đúng targetRocks
-        while (rockSet.size > targetRocks) {
-            var bestCand = -1, bestDist = 999;
-            rockSet.forEach(function (rk) {
-                var rr = Math.floor(rk / 7), rc = rk % 7;
-                var bordersVisited = (rr > 0 && visited.has(rk - 7)) ||
-                                     (rr < 8 && visited.has(rk + 7)) ||
-                                     (rc > 0 && visited.has(rk - 1)) ||
-                                     (rc < 6 && visited.has(rk + 1));
-                if (bordersVisited) {
-                    var d = Math.abs(rr - 4) + Math.abs(rc - 3);
-                    if (d < bestDist) {
-                        bestDist = d;
-                        bestCand = rk;
-                    }
-                }
-            });
-            if (bestCand !== -1) {
-                rockSet.delete(bestCand);
-                visited.add(bestCand);
-            } else {
-                break;
-            }
-        }
-    }
-
-    var rockArr = [];
-    rockSet.forEach(function (idx) { rockArr.push(idx); });
-    rockArr.sort(function (a, b) { return a - b; });
-    return rockArr;
-}
-
-// =============================================================================
-// CÔNG THỨC SINH LEVEL TỰ ĐỘNG & NHỊP ĐIỆU PHÂN BỔ TUẦN HOÀN (PROCEDURAL LEVEL GENERATOR)
-// - Cân bằng nhịp điệu phân bổ đều toàn bộ các item nhiệm vụ (trừ 9 level hướng dẫn).
-// - Số lượng nhiệm vụ mỗi màn: 2 - 6 nhiệm vụ (bàn chơi hiển thị tối đa 4, ẩn phần còn lại).
-// - Vật phẩm Cấp 8 xuất hiện làm nhiệm vụ từ Level 30.
-// - Đảm bảo tới Level 120 toàn bộ 9 nhánh cắm trại đều xuất hiện đều đặn ở Cấp 8.
-// - Cơ chế Cooldown chống lặp: Không bao giờ lặp cùng 1 vật phẩm ở các màn liền kề.
-// - Không sử dụng tên level.
-// =============================================================================
-
-// Danh sách 9 nhánh vật phẩm cắm trại tương ứng 72 vật phẩm
-var ALL_ITEM_LINES_9 = [
-    'trai',   // 0: Xe Kéo (Cooler)
-    'an',     // 1: Ba Lô (Backpack)
-    'ban',    // 2: Xe Kéo (Cooler)
-    'cafe',   // 3: Ba Lô (Backpack)
-    'tham',   // 4: Thùng Dụng Cụ (Crate)
-    'congcu', // 5: Ba Lô (Backpack)
-    'ghe',    // 6: Xe Kéo (Cooler)
-    'bep',    // 7: Thùng Dụng Cụ (Crate)
-    'antoan'  // 8: Thùng Dụng Cụ (Crate)
-];
-
-// Cấu trúc cấp độ nhiệm vụ tăng tuyến tính mượt mà từ Màn 1 đến Màn 120
-// Ưu tiên lều trại (trai) làm tiêu điểm kết thúc 3 chặng đầu:
-// - Kết thúc Chặng 1 (Màn 20): Món tiêu điểm là trai_lv6 (Lều Gia Đình Chống Gió)
-// - Kết thúc Chặng 2 (Màn 40): Món tiêu điểm là trai_lv7 (Lều Kim Tự Tháp Glamping)
-// - Kết thúc Chặng 3 (Màn 60): Món tiêu điểm là trai_lv8 (Biệt Thự Lều Glamping)
-// - Kết thúc Chặng 6 (Màn 120): Món tiêu điểm là trai_lv8 (Đỉnh Cao Cắm Trại)
-// Loại bỏ lặp trai_lv4 ở Lv 1-10 (chỉ xuất hiện duy nhất 1 lần ở Màn 1)
-function getProceduralTiersForLevel(lv) {
-    if (lv === 1) return [4, 3];
-    if (lv === 2) return [4, 3];
-    if (lv === 3) return [4, 3, 3];
-    if (lv === 4) return [4, 3];
-    if (lv === 5) return [4, 4, 3];
-    if (lv === 6) return [5, 4, 3];
-    if (lv === 7) return [4, 3, 3];
-    if (lv === 8) return [4, 4, 3];
-    if (lv === 9) return [5, 4, 4];
-    if (lv === 10) return [4, 4, 4];
-
-    // Chặng 1: Màn 11 - 20 (Năng lượng: 14 NL -> 22 NL, kết thúc tại Màn 20 với trai_lv6)
-    if (lv <= 12) return [5, 4, 3, 3];
-    if (lv <= 14) return [5, 4, 4, 3];
-    if (lv <= 16) return [6, 4, 3, 3];
-    if (lv <= 18) return [6, 4, 4, 3];
-    if (lv <= 20) return [6, 5, 4, 3]; // Màn 20: trai_lv6
-
-    // Chặng 2: Màn 21 - 40 (Năng lượng: 24 NL -> 44 NL, kết thúc tại Màn 40 với trai_lv7)
-    if (lv <= 23) return [6, 5, 4, 4];
-    if (lv <= 26) return [6, 5, 5, 4];
-    if (lv <= 29) return [6, 6, 5, 4];
-    if (lv <= 32) return [7, 5, 4, 3];
-    if (lv <= 35) return [7, 5, 4, 4];
-    if (lv <= 38) return [7, 5, 5, 4];
-    if (lv <= 40) return [7, 6, 4, 4]; // Màn 40: trai_lv7
-
-    // Chặng 3: Màn 41 - 60 (Năng lượng: 46 NL -> 116 NL, kết thúc tại Màn 60 với trai_lv8)
-    if (lv <= 44) return [7, 6, 5, 4];
-    if (lv <= 48) return [7, 6, 5, 5];
-    if (lv <= 52) return [7, 6, 6, 5];
-    if (lv <= 56) return [7, 6, 6, 5, 4];
-    if (lv <= 59) return [7, 7, 5, 5, 4];
-    if (lv === 60) return [8, 6, 5, 5, 4]; // Màn 60 climax: trai_lv8!
-
-    // Chặng 4: Màn 61 - 80 (Năng lượng: 92 NL -> 148 NL, Cấp 8 tiếp nối cho các nhánh còn lại)
-    if (lv <= 65) return [8, 6, 5, 4, 3];
-    if (lv <= 70) return [8, 6, 5, 5, 4];
-    if (lv <= 75) return [8, 6, 6, 5, 4];
-    if (lv <= 80) return [8, 7, 5, 5, 4];
-
-    // Chặng 5: Màn 81 - 100 (Năng lượng: 164 NL -> 204 NL)
-    if (lv <= 85) return [8, 7, 6, 5, 4];
-    if (lv <= 90) return [8, 7, 6, 5, 5];
-    if (lv <= 95) return [8, 7, 6, 6, 5];
-    if (lv <= 100) return [8, 7, 7, 5, 5];
-
-    // Chặng 6: Màn 101 - 120 (Năng lượng: 220 NL -> 284 NL, Cấp 8 kép và kết thúc tại 120 với trai_lv8)
-    if (lv <= 105) return [8, 7, 7, 6, 5];
-    if (lv <= 110) return [8, 7, 7, 6, 5, 5];
-    if (lv <= 115) return [8, 8, 6, 6, 5, 5];
-    return [8, 8, 7, 6, 5, 5]; // Màn 116 - 120
-}
-
-function getProceduralLeadLine(lv) {
-    if (lv === 20 || lv === 40 || lv === 60 || lv === 120) return 'trai';
-
-    if (lv <= 20) {
-        var lines1 = ['an', 'ban', 'cafe', 'tham', 'congcu', 'ghe', 'bep', 'antoan', 'an'];
-        return lines1[lv - 11];
-    }
-    if (lv < 40) {
-        var lines2 = ['ban', 'cafe', 'tham', 'congcu', 'ghe', 'bep', 'antoan', 'trai', 'an'];
-        return lines2[(lv - 21) % 9];
-    }
-    if (lv < 60) {
-        var lines3 = ['cafe', 'tham', 'congcu', 'ghe', 'bep', 'antoan', 'trai', 'an', 'ban'];
-        return lines3[(lv - 41) % 9];
-    }
-    var lines4 = ['tham', 'congcu', 'ghe', 'bep', 'antoan', 'trai', 'an', 'ban', 'cafe'];
-    if (lv === 119) return 'antoan';
-    return lines4[(lv - 61) % 9];
-}
-
-function buildProceduralOrdersMap() {
-    var table = {
-        1: ['ghe_lv4', 'ban_lv3', 'trai_lv3'], // Lv 1 (~15 ⚡)
-        2: ['an_lv4', 'cafe_lv3', 'congcu_lv3'], // Lv 2 (~19 ⚡)
-        3: ['tham_lv4', 'bep_lv3', 'antoan_lv3'], // Lv 3 (~24 ⚡)
-        4: ['ban_lv4', 'trai_lv4', 'ghe_lv3'], // Lv 4 (~28 ⚡)
-        5: ['an_lv3', 'cafe_lv4', 'congcu_lv4'], // Lv 5 (~33 ⚡)
-        6: ['tham_lv3', 'bep_lv4', 'antoan_lv4'], // Lv 6 (~37 ⚡)
-        7: ['ghe_lv5', 'ban_lv3', 'trai_lv3', 'ghe_lv4'], // Lv 7 (~42 ⚡)
-        8: ['an_lv5', 'cafe_lv3', 'congcu_lv3', 'an_lv4'], // Lv 8 (~46 ⚡)
-        9: ['tham_lv5', 'bep_lv3', 'antoan_lv3', 'tham_lv4'], // Lv 9 (~51 ⚡)
-        10: ['trai_lv5', 'ban_lv5', 'cafe_lv4', 'congcu_lv4'], // Lv 10 (~55 ⚡)
-        11: ['cafe_lv5', 'bep_lv4', 'antoan_lv4', 'an_lv3'], // Lv 11 (~60 ⚡)
-        12: ['congcu_lv5', 'ban_lv4', 'trai_lv4', 'ghe_lv3'], // Lv 12 (~64 ⚡)
-        13: ['bep_lv5', 'ghe_lv5', 'an_lv5', 'ban_lv3'], // Lv 13 (~69 ⚡)
-        14: ['antoan_lv5', 'tham_lv3', 'an_lv4', 'cafe_lv3'], // Lv 14 (~73 ⚡)
-        15: ['an_lv6', 'ghe_lv4', 'trai_lv3', 'tham_lv5'], // Lv 15 (~78 ⚡)
-        16: ['cafe_lv6', 'congcu_lv3', 'trai_lv5', 'ban_lv5'], // Lv 16 (~82 ⚡)
-        17: ['ban_lv6', 'tham_lv4', 'cafe_lv4', 'congcu_lv4'], // Lv 17 (~87 ⚡)
-        18: ['bep_lv6', 'antoan_lv4', 'ghe_lv5', 'ban_lv4'], // Lv 18 (~91 ⚡)
-        19: ['ghe_lv6', 'cafe_lv5', 'congcu_lv5', 'trai_lv4', 'an_lv3'], // Lv 19 (~96 ⚡)
-        20: ['trai_lv6', 'bep_lv5', 'an_lv5', 'antoan_lv3', 'ghe_lv3'], // Lv 20 (~100 ⚡)
-        21: ['tham_lv6', 'antoan_lv5', 'an_lv6', 'cafe_lv6', 'bep_lv4'], // Lv 21 (~105 ⚡)
-        22: ['congcu_lv6', 'ban_lv6', 'tham_lv5', 'ghe_lv4', 'an_lv4'], // Lv 22 (~109 ⚡)
-        23: ['bep_lv6', 'trai_lv5', 'ban_lv5', 'tham_lv3', 'cafe_lv3'], // Lv 23 (~114 ⚡)
-        24: ['antoan_lv6', 'ghe_lv6', 'tham_lv4', 'cafe_lv4', 'congcu_lv4'], // Lv 24 (~118 ⚡)
-        25: ['trai_lv6', 'ghe_lv5', 'ban_lv4', 'antoan_lv4', 'bep_lv3'], // Lv 25 (~123 ⚡)
-        26: ['an_lv7', 'cafe_lv5', 'tham_lv6', 'congcu_lv5', 'trai_lv4'], // Lv 26 (~127 ⚡)
-        27: ['an_lv6', 'congcu_lv6', 'cafe_lv6', 'ban_lv6', 'bep_lv5'], // Lv 27 (~132 ⚡)
-        28: ['cafe_lv7', 'bep_lv6', 'antoan_lv5', 'an_lv5', 'ban_lv3'], // Lv 28 (~136 ⚡)
-        29: ['antoan_lv6', 'ghe_lv6', 'tham_lv5', 'bep_lv4', 'an_lv4'], // Lv 29 (~141 ⚡)
-        30: ['ban_lv7', 'trai_lv6', 'ghe_lv4', 'congcu_lv3', 'antoan_lv3'], // Lv 30 (~145 ⚡)
-        31: ['an_lv7', 'tham_lv6', 'trai_lv5', 'ban_lv5', 'cafe_lv4'], // Lv 31 (~150 ⚡)
-        32: ['bep_lv7', 'congcu_lv6', 'an_lv6', 'cafe_lv6', 'ban_lv6'], // Lv 32 (~154 ⚡)
-        33: ['cafe_lv7', 'bep_lv6', 'congcu_lv5', 'ghe_lv5', 'tham_lv4'], // Lv 33 (~159 ⚡)
-        34: ['congcu_lv7', 'antoan_lv6', 'ghe_lv6', 'cafe_lv5', 'bep_lv5'], // Lv 34 (~163 ⚡)
-        35: ['ban_lv7', 'trai_lv6', 'antoan_lv5', 'an_lv5', 'congcu_lv4'], // Lv 35 (~168 ⚡)
-        36: ['tham_lv7', 'an_lv7', 'ban_lv4', 'trai_lv4', 'bep_lv4'], // Lv 36 (~172 ⚡)
-        37: ['tham_lv6', 'bep_lv7', 'congcu_lv6', 'an_lv6', 'cafe_lv6'], // Lv 37 (~177 ⚡)
-        38: ['ghe_lv7', 'cafe_lv7', 'ban_lv6', 'bep_lv6', 'tham_lv5'], // Lv 38 (~181 ⚡)
-        39: ['congcu_lv7', 'antoan_lv6', 'ghe_lv6', 'trai_lv5', 'ban_lv5'], // Lv 39 (~186 ⚡)
-        40: ['trai_lv7', 'ban_lv7', 'congcu_lv5', 'ghe_lv5', 'antoan_lv4'], // Lv 40 (~190 ⚡)
-        41: ['tham_lv7', 'an_lv7', 'trai_lv6', 'cafe_lv5', 'bep_lv5'], // Lv 41 (~195 ⚡)
-        42: ['antoan_lv7', 'bep_lv7', 'tham_lv6', 'congcu_lv6', 'an_lv6'], // Lv 42 (~199 ⚡)
-        43: ['ghe_lv7', 'cafe_lv7', 'antoan_lv5', 'ban_lv6', 'bep_lv6'], // Lv 43 (~204 ⚡)
-        44: ['an_lv8', 'congcu_lv7', 'cafe_lv6', 'antoan_lv6', 'ghe_lv6'], // Lv 44 (~208 ⚡)
-        45: ['trai_lv7', 'ban_lv7', 'an_lv5', 'tham_lv5', 'ghe_lv4'], // Lv 45 (~213 ⚡)
-        46: ['cafe_lv8', 'tham_lv7', 'an_lv7', 'trai_lv6', 'ban_lv5'], // Lv 46 (~217 ⚡)
-        47: ['antoan_lv7', 'bep_lv7', 'tham_lv6', 'congcu_lv6', 'trai_lv5'], // Lv 47 (~222 ⚡)
-        48: ['ban_lv8', 'ghe_lv7', 'cafe_lv7', 'congcu_lv5', 'bep_lv5'], // Lv 48 (~226 ⚡)
-        49: ['an_lv8', 'congcu_lv7', 'antoan_lv6', 'cafe_lv5', 'ban_lv6'], // Lv 49 (~231 ⚡)
-        50: ['bep_lv8', 'trai_lv7', 'ban_lv7', 'an_lv6', 'antoan_lv5'], // Lv 50 (~235 ⚡)
-        51: ['cafe_lv8', 'tham_lv7', 'an_lv7', 'bep_lv6', 'ghe_lv6'], // Lv 51 (~240 ⚡)
-        52: ['congcu_lv8', 'antoan_lv7', 'bep_lv7', 'cafe_lv6', 'trai_lv6'], // Lv 52 (~244 ⚡)
-        53: ['ban_lv8', 'ghe_lv7', 'cafe_lv7', 'tham_lv6', 'congcu_lv6'], // Lv 53 (~249 ⚡)
-        54: ['tham_lv8', 'congcu_lv7', 'antoan_lv6', 'an_lv8', 'ghe_lv5'], // Lv 54 (~253 ⚡)
-        55: ['bep_lv8', 'trai_lv7', 'ban_lv7', 'an_lv5', 'tham_lv5'], // Lv 55 (~258 ⚡)
-        56: ['ghe_lv8', 'tham_lv7', 'an_lv7', 'cafe_lv8', 'ban_lv6'], // Lv 56 (~262 ⚡)
-        57: ['congcu_lv8', 'antoan_lv7', 'bep_lv7', 'an_lv6', 'trai_lv5'], // Lv 57 (~267 ⚡)
-        58: ['antoan_lv8', 'ghe_lv7', 'cafe_lv7', 'ban_lv8', 'bep_lv6'], // Lv 58 (~271 ⚡)
-        59: ['tham_lv8', 'congcu_lv7', 'an_lv8', 'cafe_lv6', 'ghe_lv6'], // Lv 59 (~276 ⚡)
-        60: ['trai_lv8', 'ban_lv7', 'bep_lv8', 'tham_lv6', 'congcu_lv6']  // Lv 60 (~280 ⚡)
-    };
-    return table;
-}
-
-var PROCEDURAL_LEVEL_ORDERS = buildProceduralOrdersMap();
-
-function generateLevelConfig(lvNum) {
-    lvNum = Math.max(1, parseInt(lvNum, 10) || 1);
-
-    // Bộ sinh số giả ngẫu nhiên tất định theo seed lvNum (luôn cho ra cùng 1 màn cố định cho mỗi số lvNum)
-    var seed = ((lvNum * 2654435761) ^ 0x9E3779B9) >>> 0;
-    function rng() {
-        seed = (seed + 0x6D2B79F5) >>> 0;
-        var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    }
-
-    // 1. Chọn địa hình bất đối xứng (không bao giờ trùng địa hình với màn liền trước)
-    var patIdx;
-    if (lvNum <= 6) {
-        patIdx = lvNum - 1;
-    } else {
-        patIdx = (lvNum * 5 + Math.floor(lvNum / 4)) % ORGANIC_PATTERN_NAMES.length;
-        var prevIdx = ((lvNum - 1) <= 6)
-            ? (lvNum - 2)
-            : (((lvNum - 1) * 5 + Math.floor((lvNum - 1) / 4)) % ORGANIC_PATTERN_NAMES.length);
-        if (patIdx === prevIdx) {
-            patIdx = (patIdx + 1) % ORGANIC_PATTERN_NAMES.length;
-        }
-    }
-    var patternName = ORGANIC_PATTERN_NAMES[patIdx];
-    var patFn = ORGANIC_BOARD_PATTERNS[patternName] || ORGANIC_BOARD_PATTERNS.creek_bend;
-
-    // 2. Danh sách nhiệm vụ theo bảng tiến trình 60 Level cân bằng tuyến tính
-    var orders = (PROCEDURAL_LEVEL_ORDERS && PROCEDURAL_LEVEL_ORDERS[lvNum])
-        ? PROCEDURAL_LEVEL_ORDERS[lvNum].slice()
-        : ['ghe_lv4', 'trai_lv3', 'ban_lv3'];
-    var orderCount = orders.length;
-
-    // 3. Chọn số lượng và chủng loại nguồn phát (Generators)
-    // Tự động suy ra chính xác từ các đơn hàng để đảm bảo 100% đồ đều sinh được từ nguồn phát:
-    // - Màn 1 - 9: 1 Generator duy nhất (tập trung thành thạo từng nhóm đồ)
-    // - Màn 10 - 19: 2 Generators kết hợp luân phiên
-    // - Màn 20 trở đi: Chính thức tung cả 3 Generators lên bàn cờ
-    var chosenGenIds = [];
-    if (lvNum >= 20) {
-        chosenGenIds = ['generator_cooler', 'generator_backpack', 'generator_crate'];
-    } else {
-        var neededGenSet = new Set();
-        orders.forEach(function (oId) {
-            var line = oId.split('_lv')[0];
-            if (GENERATOR_POOLS['generator_cooler'].indexOf(line) !== -1) neededGenSet.add('generator_cooler');
-            if (GENERATOR_POOLS['generator_backpack'].indexOf(line) !== -1) neededGenSet.add('generator_backpack');
-            if (GENERATOR_POOLS['generator_crate'].indexOf(line) !== -1) neededGenSet.add('generator_crate');
-        });
-        neededGenSet.forEach(function (gId) { chosenGenIds.push(gId); });
-        if (chosenGenIds.length === 0) chosenGenIds = ['generator_cooler'];
-    }
-
-    // Thu thập các nhánh vật phẩm khả dụng từ nguồn phát của màn
-    var availLines = [];
-    chosenGenIds.forEach(function (gId) {
-        (GENERATOR_POOLS[gId] || []).forEach(function (line) {
-            if (availLines.indexOf(line) === -1) availLines.push(line);
-        });
-    });
-
-    // 4. Tạo danh sách vật phẩm hỗ trợ trong Mạng Nhện (webList) và Đồ Mồi Tự Do (freeList)
-    var webList = [];
-    var freeList = [];
-
-    orders.forEach(function (ordId, oIdx) {
-        var oLine = ordId.split('_lv')[0];
-        var oLv = parseInt(ordId.split('_lv')[1], 10) || 3;
-
-        if (oIdx === 0) {
-            var fLv0 = 1;
-            var wLv0 = Math.max(1, oLv - 2);
-            freeList.push(oLine + '_lv' + fLv0);
-            webList.push(oLine + '_lv' + wLv0);
-            webList.push(oLine + '_lv' + wLv0);
-            if (oLv >= 6) {
-                webList.push(oLine + '_lv' + Math.max(1, oLv - 3));
-            }
-        } else if (oIdx === 1) {
-            var fLv1 = 1;
-            var wLv1 = Math.max(1, oLv - 2);
-            freeList.push(oLine + '_lv' + fLv1);
-            webList.push(oLine + '_lv' + wLv1);
-            webList.push(oLine + '_lv' + wLv1);
-        } else if (oIdx === 2) {
-            var wLv2 = Math.max(1, oLv - 1);
-            webList.push(oLine + '_lv' + wLv2);
-            if (freeList.length < 3) {
-                freeList.push(oLine + '_lv1');
-            }
-        } else if (webList.length < 13) {
-            var qSub = Math.max(1, oLv - 1);
-            webList.push(oLine + '_lv' + qSub);
-        }
-    });
-
-    // BẢO VỆ TUYỆT ĐỐI: Đồ mồi tự do (freeList) chỉ là vật phẩm cấp thấp (Lv.1 - Lv.2) để người chơi có mồi ghép,
-    // TUYỆT ĐỐI KHÔNG BAO GIỜ trùng với bất kỳ đơn hàng nhiệm vụ nào (tránh việc vừa vào ván đã có sẵn đồ nộp ngay).
-    for (var fi = 0; fi < freeList.length; fi++) {
-        var fLine = freeList[fi].split('_lv')[0];
-        var fLv = parseInt(freeList[fi].split('_lv')[1], 10) || 1;
-        if (fLv >= 3 || orders.indexOf(freeList[fi]) !== -1) {
-            freeList[fi] = fLine + '_lv1';
-        }
-    }
-
-    // Giới hạn hợp lý số lượng mạng nhện để không gian bàn cờ mở rộng thoáng đãng ở các level cao
-    var maxWebs = (lvNum <= 2) ? 4 : (lvNum <= 4 ? 6 : Math.min(6, 4 + Math.floor(orderCount / 3)));
-    if (webList.length > maxWebs) {
-        webList = webList.slice(0, maxWebs);
-    }
-
-    // 5. Xác định số ô trống tăng dần và tạo mặt nạ đá tự nhiên (Rock Mask)
-    var targetEmpty = getTargetEmptyCells(lvNum, orderCount);
-    var targetRocks = Math.max(2, Math.min(52, 63 - (targetEmpty + chosenGenIds.length + webList.length + freeList.length)));
-    var rocks = generateOrganicRockMask(patternName, patFn, targetRocks, rng);
-    var rockSet = new Set(rocks);
-
-    var openCells = [];
-    var isOpenMap = {};
-    for (var idx = 0; idx < 63; idx++) {
-        if (!rockSet.has(idx)) {
-            openCells.push(idx);
-            isOpenMap[idx] = true;
-        }
-    }
-
-    function getNeighbors(cellIdx) {
-        var row = Math.floor(cellIdx / 7), col = cellIdx % 7;
-        var out = [];
-        if (row > 0) out.push((row - 1) * 7 + col);
-        if (row < 8) out.push((row + 1) * 7 + col);
-        if (col > 0) out.push(row * 7 + (col - 1));
-        if (col < 6) out.push(row * 7 + (col + 1));
-        return out;
-    }
-
-    // Đặt vị trí nguồn phát theo bố cục lệch tự nhiên (tránh xếp hàng ngang cứng nhắc)
-    var genFormations1 = [[31], [24], [38], [30], [32]];
-    var genFormations2 = [[23, 39], [25, 37], [17, 45], [24, 37], [30, 25], [23, 32]];
-    var genFormations3 = [[24, 30, 32], [23, 31, 39], [23, 25, 38], [17, 31, 45], [24, 37, 39], [25, 30, 38]];
-
-    var rawGenPos = chosenGenIds.length === 1
-        ? genFormations1[lvNum % genFormations1.length]
-        : (chosenGenIds.length === 2
-            ? genFormations2[lvNum % genFormations2.length]
-            : genFormations3[lvNum % genFormations3.length]);
-
-    var usedCells = {};
-    var generators = [];
-    rawGenPos.forEach(function (preferredIdx, gIdx) {
-        var finalIdx = preferredIdx;
-        if (!isOpenMap[finalIdx] || usedCells[finalIdx]) {
-            // Tìm ô trống gần tâm (4,3) nhất
-            var bestDist = 999;
-            openCells.forEach(function (cand) {
-                if (usedCells[cand]) return;
-                var cr = Math.floor(cand / 7), cc = cand % 7;
-                var d = Math.abs(cr - 4) + Math.abs(cc - 3);
-                if (d < bestDist) {
-                    bestDist = d;
-                    finalIdx = cand;
-                }
-            });
-        }
-        usedCells[finalIdx] = true;
-        generators.push([finalIdx, chosenGenIds[gIdx]]);
-    });
-
-    // 6. Đặt vị trí Mạng Nhện và Đồ Mồi theo cụm tự nhiên bất đối xứng (tránh xếp hàng đều đặn)
-    // Giữ tối thiểu 2 ô trống sát nguồn phát để nguồn phát luôn thông thoáng
-    var reservedBreathing = {};
-    generators.forEach(function (g) {
-        var gNeighbors = getNeighbors(g[0]).filter(function (nIdx) {
-            return isOpenMap[nIdx] && !usedCells[nIdx];
-        });
-        gNeighbors.sort(function () { return rng() - 0.5; });
-        for (var b = 0; b < Math.min(2, gNeighbors.length); b++) {
-            reservedBreathing[gNeighbors[b]] = true;
-        }
-    });
-
-    var shapeMode = lvNum % 6;
-    var candidateWebCells = openCells.filter(function (cIdx) {
-        return !usedCells[cIdx] && !reservedBreathing[cIdx];
-    });
-
-    candidateWebCells.sort(function (a, b) {
-        var ra = Math.floor(a / 7), ca = a % 7;
-        var rb = Math.floor(b / 7), cb = b % 7;
-        var scoreA = 0, scoreB = 0;
-        if (shapeMode === 0) {
-            scoreA = (ra + ca) * 0.7 + Math.sin(a * 1.3) * 2.5;
-            scoreB = (rb + cb) * 0.7 + Math.sin(b * 1.3) * 2.5;
-        } else if (shapeMode === 1) {
-            scoreA = Math.hypot(ra - 4, ca - 3) + (ca % 2) * 1.4;
-            scoreB = Math.hypot(rb - 4, cb - 3) + (cb % 2) * 1.4;
-        } else if (shapeMode === 2) {
-            scoreA = Math.abs(ra - ca) * 0.9 + Math.cos(a * 0.9) * 2.0;
-            scoreB = Math.abs(rb - cb) * 0.9 + Math.cos(b * 0.9) * 2.0;
-        } else if (shapeMode === 3) {
-            scoreA = ((ra * 3 + ca * 5) % 7) + Math.hypot(ra - 3.5, ca - 3) * 0.5;
-            scoreB = ((rb * 3 + cb * 5) % 7) + Math.hypot(rb - 3.5, cb - 3) * 0.5;
-        } else if (shapeMode === 4) {
-            scoreA = Math.abs(ra - 4) * 1.1 + ((ra + ca) % 3) * 1.3;
-            scoreB = Math.abs(rb - 4) * 1.1 + ((rb + cb) % 3) * 1.3;
-        } else {
-            scoreA = Math.abs(ca - 3) * 1.2 + Math.sin(ra * 2.1 + ca) * 2.2;
-            scoreB = Math.abs(cb - 3) * 1.2 + Math.sin(rb * 2.1 + cb) * 2.2;
-        }
-        return (scoreB + rng() * 1.2) - (scoreA + rng() * 1.2);
-    });
-
-    // Đảm bảo luôn có đủ ô trống khả dụng để đặt toàn bộ webList
-    if (candidateWebCells.length < webList.length) {
-        var extra = openCells.filter(function (cIdx) {
-            return !usedCells[cIdx] && candidateWebCells.indexOf(cIdx) === -1;
-        });
-        candidateWebCells = candidateWebCells.concat(extra);
-    }
-
-    var webItems = [];
-    for (var w = 0; w < webList.length && w < candidateWebCells.length; w++) {
-        var wCell = candidateWebCells[w];
-        usedCells[wCell] = true;
-        webItems.push([wCell, webList[w]]);
-    }
-
-    // Đặt freeItems ngay sát cạnh ô mạng nhện cùng loại (để đầu ván người chơi có thể kéo ghép phá nhện ngay)
-    var freeItems = [];
-    freeList.forEach(function (fId) {
-        var placedCell = -1;
-        // Ưu tiên 1: Ô trống kề sát ô nhện có cùng mã vật phẩm fId
-        for (var i = 0; i < webItems.length; i++) {
-            if (webItems[i][1] === fId) {
-                var adj = getNeighbors(webItems[i][0]).filter(function (nIdx) {
-                    return isOpenMap[nIdx] && !usedCells[nIdx];
-                });
-                if (adj.length > 0) {
-                    placedCell = adj[Math.floor(rng() * adj.length)];
-                    break;
-                }
-            }
-        }
-        // Ưu tiên 2: Ô trống kề sát bất kỳ ô nhện nào
-        if (placedCell === -1) {
-            for (var j = 0; j < webItems.length; j++) {
-                var adjAny = getNeighbors(webItems[j][0]).filter(function (nIdx) {
-                    return isOpenMap[nIdx] && !usedCells[nIdx];
-                });
-                if (adjAny.length > 0) {
-                    placedCell = adjAny[Math.floor(rng() * adjAny.length)];
-                    break;
-                }
-            }
-        }
-        // Ưu tiên 3: Ô trống bất kỳ
-        if (placedCell === -1) {
-            var remOpen = openCells.filter(function (cIdx) { return !usedCells[cIdx]; });
-            if (remOpen.length > 0) {
-                placedCell = remOpen[Math.floor(rng() * remOpen.length)];
-            }
-        }
-        if (placedCell !== -1) {
-            usedCells[placedCell] = true;
-            freeItems.push([placedCell, fId]);
-        }
-    });
-
-    var adjWeb = lvNum >= 3;
-    var bonus = (lvNum === 10 || lvNum === 15 || lvNum === 20 || lvNum === 25 || lvNum >= 26);
-    var spreadEvery = (lvNum >= 33 && (lvNum % 4 === 0 || lvNum % 7 === 0)) ? (lvNum >= 40 ? 15 : 16) : 0;
-
-    var npcList = ['gau', 'cao', 'de'];
-    var leadNpc = npcList[(lvNum - 1) % 3];
-    var storyDialoguesMap = {
-        1: [
-            'Chào mừng bạn đến với khu trại nhỏ!',
-            'Chạm vào Xe Kéo để lấy đồ cắm trại và ghép hoàn thành Ghế Xếp Cấp 4 bạn nhé.'
-        ],
-        2: [
-            'Cùng Xe Kéo hoàn thiện góc nghỉ ngơi với Bàn Gỗ và Ghế Xếp tiện nghi nào!',
-            'Ghép nhanh các món cùng loại để hoàn thành đơn hàng nhé!'
-        ],
-        3: [
-            'Đi đường xa chắc bạn đói rồi, chạm Ba Lô chuẩn bị bữa mì sợi nóng và cà phê ấm nào!',
-            'Mở Ba Lô dã ngoại để khám phá các món ăn thức uống thơm ngon nhé!'
-        ],
-        4: [
-            'Bữa ăn ấm cúng đã sẵn sàng, cùng Ba Lô dã ngoại pha thêm bình cà phê đậm đà nhé!',
-            'Tiếp tục ghép đồ ăn và thức uống nào bạn ơi!'
-        ],
-        5: [
-            'Gió rừng chiều se lạnh rồi, mở Thùng Đồ chuẩn bị bếp lửa trại và thảm êm thôi!',
-            'Chạm Thùng Đồ để lấy bếp than, thảm trải cỏ và đồ sinh tồn nhé!'
-        ],
-        6: [
-            'Giữ lửa trại luôn rực ấm và trang bị thêm thảm đệm ấm áp cho đêm nay nào!',
-            'Cùng Thùng Đồ hoàn thành các món tiện nghi dã ngoại bạn nhé!'
-        ],
-        7: [
-            'Khu trại trông ngày càng xịn sò, mở Xe Kéo dựng thêm Bàn Gỗ Cuộn lớn nhé!',
-            'Ghép bàn gỗ và bạt che để đón bạn bè ghé thăm nào!'
-        ],
-        8: [
-            'Nắng sớm lên rồi, hoàn thiện bộ bàn ghế dã ngoại đón bình minh trong lành nhé!',
-            'Tiếp tục tạo nên góc cắm trại hoàn hảo nào!'
-        ],
-        9: [
-            'Trời sắp tối, mở Ba Lô lấy đèn măng sông và pin dự phòng dã ngoại thôi!',
-            'Ánh sáng ấm áp sẽ thắp sáng cả góc rừng đêm nay!'
-        ],
-        10: [
-            'Khu trại mở rộng! Lần này hãy kết hợp cả Xe Kéo và Ba Lô dã ngoại nhé!',
-            'Chạm 2 nguồn phát để lấy đồ cắm trại và hoàn thành đơn hàng nào!'
-        ],
-        11: [
-            'Khám phá trải nghiệm mới: Lều Vòm Cắm Trại 2 Người cao cấp!',
-            'Phối hợp nhịp nhàng các nguồn phát để dựng lều bạn nhé!'
-        ],
-        20: [
-            'Đại tiệc Glamping Chặng 1! Cả 3 nguồn phát cùng hội tụ để dựng Lều Gia Đình!',
-            'Chúc mừng bạn đã chinh phục trọn vẹn Chặng 1 Khởi Đầu!'
-        ],
-        40: [
-            'Chinh phục đỉnh cao Chặng 2: Hoàn thành kiệt tác Lều Kim Tự Tháp Glamping!',
-            'Khu trại của bạn giờ đây đã đạt chuẩn Glamping sang trọng bậc nhất!'
-        ],
-        60: [
-            'ĐẠI KẾT CỤC: Khám phá Biệt Thự Lều Glamping Hoàng Gia!',
-            'Chúc mừng Bậc Thầy Cắm Trại đã xuất sắc hoàn thành trọn vẹn toàn bộ 60 màn chơi!'
-        ]
-    };
-    var defaultTexts = storyDialoguesMap[lvNum] || null;
-    var defaultText = defaultTexts ? defaultTexts[0] : 'Ghép các món cùng loại để hoàn thành nhiệm vụ nhé!';
-
-    return {
-        level: lvNum,
-        name: '',
-        pattern: patternName,
-        rocks: rocks,
-        generators: generators,
-        freeItems: freeItems,
-        webItems: webItems,
-        orders: orders,
-        mechanics: {
-            adjWeb: adjWeb,
-            bonus: bonus,
-            spreadEvery: spreadEvery
-        },
-        dialogue: {
-            npc: leadNpc,
-            text: defaultText,
-            texts: defaultTexts || [defaultText]
-        }
-    };
-}
-
-var TOTAL_INITIAL_LEVELS = 60;
-var GENERATED_LEVELS_LIST = [];
-for (var _lv = 1; _lv <= TOTAL_INITIAL_LEVELS; _lv++) {
-    GENERATED_LEVELS_LIST.push(generateLevelConfig(_lv));
-}
 
 var GAME_CONFIG = {
-    totalLevels: TOTAL_INITIAL_LEVELS,
-    levels: GENERATED_LEVELS_LIST,
-    generateLevelConfig: generateLevelConfig,
+    // -------------------------------------------------------------------------
+    // 1. CẤU HÌNH VỊ TRÍ CÁC ITEM VÀ MÁY PHÁT TRÊN BÀN CHƠI BAN ĐẦU
+    // (Bàn cờ 7 cột x 9 hàng = 63 ô)
+    // -------------------------------------------------------------------------
+    initialBoard: {
+        cols: 7,
+        rows: 9,
+        totalCells: 63,
+        layoutVersion: 8,
 
-    // -------------------------------------------------------------------------
-    // 0. CẤU HÌNH GOOGLE FIREBASE CLOUD SYNC (LƯU TRỮ ĐÁM MÂY MIỄN PHÍ)
-    // -------------------------------------------------------------------------
-    firebase: {
-        apiKey: "AIzaSyDUdvkcYYSzuOt4snJHLPhQWbVM-I_emLI",
-        authDomain: "merge-camp-pets.firebaseapp.com",
-        projectId: "merge-camp-pets",
-        storageBucket: "merge-camp-pets.firebasestorage.app",
-        messagingSenderId: "793303900011",
-        appId: "1:793303900011:web:8cad0bb37b64514775b62e",
-        measurementId: "G-GVZ3LWVREF"
+        // A. VỊ TRÍ MÁY PHÁT MỞ SẴN BAN ĐẦU (CHỈ DUY NHẤT XE KÉO CẮM TRẠI Ở Ô 24)
+        // Mở sẵn ngay đầu game, sinh nhánh: Bàn ('ban'), Ghế ('ghe'), Lều ('trai')
+        generators: [
+            { cell: 24, id: 'generator_cooler', name: 'Xe Kéo Cắm Trại (Mở sẵn ở ô 24)' }
+        ],
+
+        // B. LỘ TRÌNH MỞ KHÓA MÁY PHÁT MỚI THEO CẤP ĐỘ NGƯỜI CHƠI (LEVEL UNLOCK DOCK)
+        // Không đặt sẵn Ba Lô và Thùng Đồ trên bàn chơi nữa!
+        // - Level 1, 2, 3 : Chỉ có Xe Kéo ('generator_cooler') để người chơi hiểu rõ luật chơi.
+        // - Đạt Level 4   : Xuất hiện icon Ba Lô ('generator_backpack') bên trái chú chó (có viền focus) để người chơi lôi vào bàn!
+        // - Đạt Level 5   : Xuất hiện icon Thùng Đồ ('generator_crate') bên trái chú chó (có viền focus) để người chơi lôi vào bàn!
+        generatorUnlockLevels: {
+            generator_cooler: 1,
+            generator_backpack: 4,
+            generator_crate: 5
+        },
+        hiddenGenerators: [],
+
+        // C. CÁC Ô TRỐNG ITEM BAN ĐẦU (5 Ô TRỐNG Ở TÂM: 23, 25, 30, 31, 32)
+        freeItems: [],
+
+        // D. VÒNG MẠNG NHỆN BAO QUANH VÙNG TÂM (9 Ô NHỆN CẤP 1-2 THUỘC NHÁNH XE KÉO)
+        // (Các ô 22, 26, 33 là Ô Đá Khóa mở ở Level 3 theo sơ đồ thiết kế)
+        webItems: [
+            { cell: 16, id: 'trai_lv1', name: 'Cọc Cắm Trại dính nhện (Lv.1)' },
+            { cell: 17, id: 'ban_lv1',  name: 'Bàn Xếp dính nhện (Lv.1)' },
+            { cell: 18, id: 'ghe_lv1',  name: 'Ghế Xếp dính nhện (Lv.1)' },
+            { cell: 29, id: 'ban_lv1',  name: 'Bàn Xếp dính nhện (Lv.1)' },
+            { cell: 36, id: 'ghe_lv1',  name: 'Ghế Xếp dính nhện (Lv.1)' },
+            { cell: 37, id: 'ghe_lv2',  name: 'Ghế Xếp dính nhện (Lv.2)' },
+            { cell: 38, id: 'trai_lv2', name: 'Cọc Cắm Trại dính nhện (Lv.2)' },
+            { cell: 39, id: 'ban_lv2',  name: 'Bàn Xếp dính nhện (Lv.2)' },
+            { cell: 40, id: 'trai_lv1', name: 'Cọc Cắm Trại dính nhện (Lv.1)' }
+        ],
+
+        // E. DANH SÁCH 48 Ô ĐÁ KHỞI ĐẦU (BAO GỒM ĐÁ THƯỜNG VÀ ĐÁ KHÓA THEO LEVEL)
+        rocks: [
+            0, 1, 2, 3, 4, 5, 6,
+            7, 8, 9, 10, 11, 12, 13,
+            14, 15, 19, 20,
+            21, 22, 26, 27,
+            28, 33, 34,
+            35, 41,
+            42, 43, 44, 45, 46, 47, 48,
+            49, 50, 51, 52, 53, 54, 55,
+            56, 57, 58, 59, 60, 61, 62
+        ],
+
+        // F. DANH SÁCH Ô ĐÁ CÓ BIỂU TƯỢNG KHÓA (board_cell_rock_lock.png) THEO LEVEL NGƯỜI CHƠI
+        // Mạng nhện nổ bên cạnh KHÔNG THỂ phá vỡ các ô đá này khi người chơi chưa đạt đủ Level yêu cầu!
+        lockedRocks: {
+            // Mở khóa ở Level 3 (8 ô)
+            19: 3, 22: 3, 26: 3, 33: 3, 47: 3, 58: 3, 59: 3, 60: 3,
+            // Mở khóa ở Level 5 (3 ô cụm trái giữa)
+            14: 5, 21: 5, 28: 5,
+            // Mở khóa ở Level 7 (7 ô: 3 ô cụm phải giữa + 4 ô góc dưới trái)
+            20: 7, 27: 7, 34: 7, 42: 7, 49: 7, 56: 7, 57: 7,
+            // Mở khóa ở Level 11 (4 ô góc dưới phải)
+            54: 11, 55: 11, 61: 11, 62: 11,
+            // Mở khóa ở Level 15 (5 ô góc trên trái)
+            0: 15, 1: 15, 7: 15, 8: 15, 9: 15,
+            // Mở khóa ở Level 18 (5 ô góc trên phải)
+            5: 18, 6: 18, 11: 18, 12: 18, 13: 18
+        }
     },
 
     // -------------------------------------------------------------------------
-    // 1. HỆ THỐNG NĂNG LƯỢNG (ENERGY SYSTEM)
+    // 2. HỆ THỐNG NHIỆM VỤ LAI (HYBRID ORDER SYSTEM: SLOT 1 CỐ ĐỊNH + SLOT 2 & 3 ĐỘNG QUÉT BÀN CỜ)
+    // - Slot 1 (Món Khó - Cố định 100%): "Nhiệm vụ Cốt truyện" (Main Quest) lấy từ món đầu tiên của curatedOrders.
+    // - Slot 2 & 3 (Món Vừa & Dễ - Động 100%): "Nhiệm vụ Tiêu thụ" (Side Quests) dùng thuật toán Board Scanner
+    //   quét toàn bộ 63 ô trên bàn cờ (lọc đồ Lv.2 -> Lv.6), ưu tiên nhánh đang bị ứ đọng nhiều nhất,
+    //   giao nhiệm vụ "Mồi" (+1 cấp kích thích chập đôi) hoặc "May mắn" (đòi đúng món đang găm trên bàn),
+    //   và tự động bật chế độ "Giải cứu" (Van xả áp suất ở Slot 3) khi bàn cờ đầy trên 85%-90%!
+    // -------------------------------------------------------------------------
+    hybridOrders: {
+        enabled: true,
+        slot1FixedMainQuest: true,          // Slot 1 lấy cố định 100% món đầu tiên trong curatedOrders
+        slot1OverMergeProtection: true,     // Nếu người chơi lỡ tay ghép vượt 1 cấp so với Slot 1, tự động nhận món vượt cấp đó!
+        minScanLevel: 2,                    // Chỉ quét vật phẩm từ Level 2 trở lên (không lấy đồ Lv.1 vì quá dễ)
+        maxScanLevel: 6,                    // Quét đến tối đa Level 6 cho nhiệm vụ phụ (Lv.7+ dành cho Slot 1)
+        absorbOverMergedInSlot2: true,      // Nếu trên bàn có món Lv.6-Lv.7 bị ghép lỡ tay nằm thừa, Slot 2 ưu tiên hấp thụ ngay!
+        teasingProbability: 0.55,           // Xác suất giao nhiệm vụ "Mồi" (cao hơn 1 cấp so với món cao nhất đang có của nhánh đó)
+        serendipityProbability: 0.45,       // Xác suất đòi chính xác món người chơi đang găm trên bàn (tạo cảm giác "May mắn")
+        rescueFillThreshold: 0.85,          // Khi vùng mở bị lấp đầy >= 85% (hoặc còn <= 3 ô trống): Slot 3 bật chế độ "Giải cứu"
+        liveRescueFillThreshold: 0.90       // Khi đang chơi mà bàn cờ đầy >= 90% (<= 2 ô trống): Slot 3 lập tức đổi sang món có sẵn trên bàn!
+    },
+
+    // Danh sách 63 đơn hàng định hướng tiến trình:
+    // - Phần tử [0] (Slot 1): Cố định 100% làm Nhiệm vụ Cốt truyện (Main Quest).
+    // - Phần tử [1], [2] (Slot 2 & 3): Làm mốc tham chiếu cấp độ / mặc định khi bàn cờ đang trống hoàn toàn.
+    // - Tự động thích ứng: Nếu người chơi chưa đạt Level 4 (Ba Lô) hoặc Level 5 (Thùng Đồ) / chưa lôi máy phát vào bàn,
+    //   đơn hàng sẽ chỉ lấy các nhánh thuộc máy phát ĐANG CÓ TRÊN BÀN CHƠI!
+    curatedOrders: {
+        // GIAI ĐOẠN 1: LÀM QUEN LUẬT CHƠI VỚI XE KÉO (Level 1 -> Level 3 | Order 1 - 12)
+        // ---------------------------------------------------------
+        // Chỉ xuất hiện 3 nhánh Xe Kéo (ban, ghe, trai) để người chơi hiểu rõ luật ghép và phá nhện mở bàn cờ
+        1:  ['trai_lv3', 'ghe_lv2', 'ban_lv2'],
+        2:  ['ban_lv3',  'ghe_lv2', 'trai_lv2'],
+        3:  ['ghe_lv3',  'trai_lv2', 'ban_lv2'],
+        4:  ['trai_lv4', 'ban_lv3', 'ghe_lv2'],
+        5:  ['ban_lv4',  'ghe_lv3', 'trai_lv2'],
+        6:  ['ghe_lv4',  'trai_lv3', 'ban_lv2'],
+        7:  ['trai_lv4', 'ghe_lv3', 'ban_lv3'],
+        8:  ['ban_lv4',  'trai_lv3', 'ghe_lv3'],
+        9:  ['ghe_lv5',  'ban_lv3', 'trai_lv3'],
+        10: ['trai_lv5', 'ghe_lv4', 'ban_lv3'],
+        11: ['ban_lv5',  'trai_lv4', 'ghe_lv3'],
+        12: ['ghe_lv5',  'ban_lv4', 'trai_lv3'],
+
+        // Order 13-20 (Giai đoạn Level 4 - Sau khi lôi Ba Lô vào bàn: Thêm an, cafe, congcu)
+        13: ['an_lv3',     'cafe_lv2',   'ghe_lv3'],
+        14: ['congcu_lv3', 'an_lv3',     'ban_lv3'],
+        15: ['cafe_lv4',   'trai_lv3',   'congcu_lv2'],
+        16: ['an_lv4',     'ghe_lv4',    'cafe_lv3'],
+        17: ['congcu_lv4', 'ban_lv4',    'an_lv3'],
+        18: ['cafe_lv5',   'trai_lv4',   'congcu_lv3'],
+        19: ['an_lv5',     'ghe_lv4',    'ban_lv3'],
+        20: ['congcu_lv5', 'cafe_lv4',   'trai_lv3'],
+
+        // ---------------------------------------------------------
+        // GIAI ĐOẠN 2: ĐẦY ĐỦ 3 MÁY PHÁT (Level 5+ - Sau khi lôi Thùng Đồ vào bàn | Order 21 - 33)
+        // ---------------------------------------------------------
+        21: ['bep_lv3',    'tham_lv2',   'trai_lv3'],   // Mở quen nhánh Thùng Đồ
+        22: ['tham_lv4',   'an_lv4',     'ban_lv3'],
+        23: ['antoan_lv4', 'congcu_lv4', 'ghe_lv3'],
+        24: ['bep_lv5',    'cafe_lv4',   'ban_lv3'],
+        25: ['tham_lv5',   'an_lv4',     'ghe_lv3'],
+        26: ['ban_lv6',    'antoan_lv4', 'congcu_lv3'],
+        27: ['ghe_lv6',    'cafe_lv5',   'bep_lv3'],
+        28: ['congcu_lv6', 'tham_lv4',   'ban_lv4'],
+        29: ['an_lv6',     'antoan_lv4', 'trai_lv3'],
+        30: ['cafe_lv6',   'bep_lv5',    'ghe_lv3'],
+        31: ['trai_lv6',   'congcu_lv5', 'tham_lv3'],
+        32: ['bep_lv6',    'an_lv5',     'ban_lv4'],
+        33: ['antoan_lv6', 'cafe_lv5',   'ghe_lv4'],
+
+        // ---------------------------------------------------------
+        // GIAI ĐOẠN 3: CHinh PHỤC CẤP CAO (Order 34 - 48)
+        // - Slot 1: Lv.6 -> Lv.7 (Tối đa 1 món Lv.7/đơn) | Slot 2: Lv.4-5 | Slot 3: Lv.3-4
+        // ---------------------------------------------------------
+        34: ['ban_lv6', 'an_lv5', 'tham_lv4'],         // Máy phát: G1, G2, G3
+        35: ['ghe_lv6', 'congcu_lv5', 'bep_lv4'],      // Máy phát: G1, G2, G3
+        36: ['tham_lv6', 'trai_lv5', 'cafe_lv4'],      // Máy phát: G3, G1, G2
+        37: ['bep_lv7', 'an_lv5', 'ban_lv4'],          // Máy phát: G3, G2, G1
+        38: ['cafe_lv7', 'ghe_lv5', 'tham_lv4'],       // Máy phát: G2, G1, G3
+        39: ['an_lv7', 'trai_lv5', 'bep_lv4'],         // Máy phát: G2, G1, G3
+        40: ['trai_lv7', 'congcu_lv5', 'antoan_lv4'],  // Máy phát: G1, G2, G3
+        41: ['tham_lv6', 'cafe_lv5', 'ban_lv4'],       // Máy phát: G3, G2, G1
+        42: ['antoan_lv7', 'an_lv5', 'ghe_lv4'],       // Máy phát: G3, G2, G1
+        43: ['ban_lv7', 'congcu_lv5', 'tham_lv4'],     // Máy phát: G1, G2, G3
+        44: ['congcu_lv7', 'trai_lv5', 'bep_lv4'],     // Máy phát: G2, G1, G3
+        45: ['bep_lv7', 'an_lv5', 'ghe_lv4'],          // Máy phát: G3, G2, G1
+        46: ['tham_lv7', 'trai_lv5', 'cafe_lv4'],      // Máy phát: G3, G1, G2
+        47: ['cafe_lv7', 'ban_lv5', 'antoan_lv4'],     // Máy phát: G2, G1, G3
+        48: ['ghe_lv7', 'an_lv5', 'bep_lv4'],          // Máy phát: G1, G2, G3
+
+        // ---------------------------------------------------------
+        // GIAI ĐOẠN 4: END GAME ĐỀU ĐẶN & THƯ GIÃN (Order 49 - 63)
+        // - Slot 1: Lv.7 -> Lv.8 (Chỉ duy nhất 1 món đỉnh cao ở Slot 1)
+        // - Slot 2: Lv.5 (Món vừa) | Slot 3: Lv.3 -> Lv.4 (Van xả chống kẹt bàn cờ)
+        // ---------------------------------------------------------
+        49: ['bep_lv7', 'trai_lv5', 'cafe_lv4'],       // Máy phát: G3, G1, G2
+        50: ['antoan_lv7', 'congcu_lv5', 'ban_lv4'],   // Máy phát: G3, G2, G1
+        51: ['ban_lv8', 'tham_lv5', 'an_lv4'],         // Máy phát: G1, G3, G2
+        52: ['an_lv7', 'ghe_lv5', 'bep_lv4'],          // Máy phát: G2, G1, G3
+        53: ['trai_lv8', 'cafe_lv5', 'antoan_lv4'],    // Máy phát: G1, G2, G3
+        54: ['tham_lv7', 'ban_lv5', 'congcu_lv4'],     // Máy phát: G3, G1, G2
+        55: ['congcu_lv8', 'antoan_lv5', 'trai_lv4'],  // Máy phát: G2, G3, G1
+        56: ['bep_lv8', 'an_lv5', 'ghe_lv4'],          // Máy phát: G3, G2, G1
+        57: ['cafe_lv7', 'tham_lv5', 'ban_lv4'],       // Máy phát: G2, G3, G1
+        58: ['ban_lv8', 'cafe_lv5', 'antoan_lv4'],     // Máy phát: G1, G2, G3
+        59: ['ghe_lv8', 'bep_lv5', 'an_lv4'],          // Máy phát: G1, G3, G2
+        60: ['antoan_lv8', 'congcu_lv5', 'trai_lv4'],  // Máy phát: G3, G2, G1
+        61: ['an_lv8', 'ban_lv5', 'tham_lv4'],         // Máy phát: G2, G1, G3
+        62: ['tham_lv8', 'ghe_lv5', 'cafe_lv4'],       // Máy phát: G3, G1, G2
+        63: ['trai_lv8', 'bep_lv5', 'congcu_lv4']      // Máy phát: G1, G3, G2
+    },
+
+    // Cấu hình nhóm nhiệm vụ mặc định khi chưa bắt đầu chơi (khớp với Đơn số 1)
+    initialOrders: {
+        petId: 'character01',
+        orders: [
+            { id: 'trai_lv3', slotType: 'hard', desc: 'Slot 1: Món Khó (Lều trại Lv.3)' },
+            { id: 'ghe_lv2', slotType: 'medium', desc: 'Slot 2: Món Vừa (Ghế xếp Lv.2)' },
+            { id: 'ban_lv2', slotType: 'easy', desc: 'Slot 3: Món Dễ (Bàn xếp Lv.2)' }
+        ]
+    },
+
+    // -------------------------------------------------------------------------
+    // 3. TÀI NGUYÊN TÀI KHOẢN MỚI BAN ĐẦU (INITIAL PLAYER PROFILE)
+    // -------------------------------------------------------------------------
+    initialProfile: {
+        coins: 1500,    // Vàng khởi đầu
+        gems: 25,       // Kim Cương khởi đầu
+        energy: 150     // Năng lượng khởi đầu dồi dào
+    },
+
+    // -------------------------------------------------------------------------
+    // 4. HỆ THỐNG NĂNG LƯỢNG (ENERGY SYSTEM)
     // -------------------------------------------------------------------------
     energy: {
-        startEnergy: 80,
-        maxEnergyBase: 70,
-        maxEnergyPerLevel: 4,
-        maxEnergyCap: 200,
-        regenIntervalSec: 30
+        startEnergy: 150,           // Năng lượng ban đầu khi tạo tài khoản
+        maxEnergyBase: 120,         // Năng lượng tối đa ở Level 1
+        maxEnergyPerLevel: 5,       // Mỗi cấp độ tăng thêm giới hạn năng lượng tối đa
+        maxEnergyCap: 250,          // Giới hạn kịch trần thanh năng lượng tự hồi
+        regenIntervalSec: 20        // Thời gian hồi phục 1 điểm Năng lượng nhanh hơn (20 giây)
     },
 
     // -------------------------------------------------------------------------
-    // 2. TRẠM TIẾP NĂNG LƯỢNG (ENERGY SHOP)
+    // 5. TRẠM TIẾP NĂNG LƯỢNG (ENERGY SHOP)
     // -------------------------------------------------------------------------
     energyShop: {
-        // Cân bằng: 160 Vàng/1 NL (gói lẻ) - 150 Vàng/1 NL (gói lớn) để Vàng bù ~75-95% năng lượng
         coinPacks: [
-            { energy: 25, coinCost: 4000, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' },
-            { energy: 50, coinCost: 7500, desc: 'Dùng Vàng nhận thêm Năng Lượng chơi game' }
+            { energy: 25, coinCost: 4000, desc: 'Dùng Vàng mua 25 Năng Lượng' },
+            { energy: 50, coinCost: 7500, desc: 'Dùng Vàng mua 50 Năng Lượng' }
         ],
         coinPack: {
             energy: 25,
@@ -753,46 +259,12 @@ var GAME_CONFIG = {
         },
         rescue: {
             enabled: true,
-            amount: 20
+            amount: 20              // Cứu trợ khẩn cấp khi hết sạch năng lượng
         }
     },
 
     // -------------------------------------------------------------------------
-    // 3. QUẢNG CÁO XEM THƯỞNG & QUÀ TIẾP TẾ HÀNG NGÀY (REWARDED ADS & GIFTS)
-    // Mô hình Free-to-Play 100% tuân thủ chính sách Google Play Store
-    // -------------------------------------------------------------------------
-    adRewards: {
-        energy: {
-            amount: 30,
-            dailyLimit: 6
-        },
-        gem: {
-            amount: 8,
-            dailyLimit: 6
-        },
-        coin: {
-            amount: 2500,
-            dailyLimit: 5
-        },
-        dailyGift: {
-            amount: 5,
-            doubleAmount: 10
-        },
-        mysteryChest: {
-            minGems: 12,
-            maxGems: 25,
-            dailyLimit: 3
-        }
-    },
-
-    // -------------------------------------------------------------------------
-    // 4. GÓI NẠP IAP: ĐÃ LOẠI BỎ (100% FREE-TO-PLAY VỚI QUẢNG CÁO TÀI TRỢ)
-    // -------------------------------------------------------------------------
-    iapPacks: [],
-    starterPack: null,
-
-    // -------------------------------------------------------------------------
-    // 5. NGÂN HÀNG ĐỔI VÀNG (ĐỔI KIM CƯƠNG RA VÀNG - KINH TẾ X10)
+    // 6. NGÂN HÀNG ĐỔI KIM CƯƠNG RA VÀNG (COIN EXCHANGE)
     // -------------------------------------------------------------------------
     coinExchangePacks: [
         {
@@ -822,63 +294,111 @@ var GAME_CONFIG = {
     ],
 
     // -------------------------------------------------------------------------
-    // 6. THƯỞNG KINH TẾ TRONG VÁN CHƠI (GAMEPLAY ECONOMY)
+    // 7. CÂN BẰNG THƯỞNG TRONG VÁN CHƠI (GAMEPLAY ECONOMY & REWARDS)
     // -------------------------------------------------------------------------
     gameplay: {
-        orderRewardMultiplier: 24,
+        // Hệ số thưởng Vàng khi nộp đơn hàng: Vàng = 28 * itemUnits(id)
+        orderRewardMultiplier: 28,
+
+        // Hệ số tính giá bán vật phẩm trên bàn cờ: Giá bán = itemUnits(id) * 18
+        sellMultiplier: 18,
         sellMinLevel: 1,
-        sellMultiplier: 15,
         sellDivisor: 1,
+
+        // Thưởng Vàng và Kim Cương khi tạo ra vật phẩm cấp cao
         mergeRewards: {
             2: { coins: 0, gems: 0 },
-            3: { coins: 0, gems: 0 },
-            4: { coins: 15, gems: 0 },
-            5: { coins: 35, gems: 0 },
-            6: { coins: 80, gems: 0 },
-            7: { coins: 180, gems: 0 },
-            8: { coins: 400, gems: 1 }
+            3: { coins: 5, gems: 0 },
+            4: { coins: 20, gems: 0 },
+            5: { coins: 45, gems: 0 },
+            6: { coins: 100, gems: 0 },
+            7: { coins: 220, gems: 1 },
+            8: { coins: 500, gems: 2 }
         },
+
+        // Thưởng chuỗi Combo ghép đồ liên tiếp
         combo: {
             enabled: true,
-            windowSec: 3.5,
-            baseCoins: 10,
-            stepCoins: 15,
-            maxCoins: 200
+            windowSec: 4.0,
+            baseCoins: 15,
+            stepCoins: 20,
+            maxCoins: 250
         },
+
+        // Nhấp liên tiếp vào thùng sinh đồ
         generatorBulkClicks: 6,
         generatorClickWindowMs: 550,
-        // Tỷ lệ rơi vật phẩm nâng cao từ thùng sinh đồ (Generator Tier Drop Rates)
-        // Màn 1-10: 100% Cấp 1 để người chơi làm quen cơ chế ghép cơ bản
-        // Màn 11-29: Rơi Cấp 1 và Cấp 2 (tuyệt đối không rơi Cấp 3 trước màn 30)
-        // Màn 30+: Mở khóa tỷ lệ rơi Cấp 3 để hỗ trợ ghép các item cấp cao
+
+        // Tỷ lệ rơi vật phẩm từ 3 nguồn phát (Thùng chứa / Xe kéo / Ba lô)
+        // Tăng tỷ lệ rơi thẳng Lv.2 và Lv.3 ngay từ đầu game để giảm 55% số lượng đồ Lv.1 gây chật bàn cờ!
         generatorDrops: {
-            minLevelForTierDrops: 11,
-            minLevelForLv3Drops: 30,
+            // Chia đều tuyệt đối tỷ lệ sinh đồ giữa 3 nhánh vật phẩm trong mỗi thùng chứa (1/3 : 1/3 : 1/3 = 33.33% mỗi món)
+            equalBranchDistribution: true,
+            // Ưu tiên chọn món trong túi cân bằng khớp với món lẻ đang nằm chờ ghép trên bàn cờ khi bàn sắp đầy
+            smartPairAssist: true,
+            branchWeights: {
+                generator_cooler:   { ban: 1, ghe: 1, trai: 1 },      // Xe Kéo: 33.3% Bàn, 33.3% Ghế, 33.3% Lều
+                generator_backpack: { an: 1, cafe: 1, congcu: 1 },    // Ba Lô: 33.3% Ăn, 33.3% Cà Phê, 33.3% Công Cụ
+                generator_crate:    { tham: 1, antoan: 1, bep: 1 }    // Thùng Chứa: 33.3% Thảm, 33.3% An Toàn, 33.3% Bếp
+            },
+            minLevelForTierDrops: 5,    // Chỉ bắt đầu sinh đồ Lv.2 từ khi người chơi đạt Level 5 trở lên (Level 1-4 sinh 100% đồ Lv.1)
+            minLevelForLv3Drops: 10,    // Từ Level 10 trở lên mới có xác suất sinh đồ Lv.3
             tiers: [
-                { maxLevel: 10,  lv1: 1.00, lv2: 0.00, lv3: 0.00 }, // Màn 1-10: 100% Lv1 (Hướng dẫn)
-                { maxLevel: 20,  lv1: 0.82, lv2: 0.18, lv3: 0.00 }, // Chặng 1 (11-20): 18% Lv2, 0% Lv3
-                { maxLevel: 29,  lv1: 0.74, lv2: 0.26, lv3: 0.00 }, // Chặng 2 đầu (21-29): 26% Lv2, 0% Lv3
-                { maxLevel: 45,  lv1: 0.68, lv2: 0.25, lv3: 0.07 }, // Chặng 2 sau (30-45): Mở khóa Lv3 (7%), 25% Lv2, 68% Lv1
-                { maxLevel: 60,  lv1: 0.58, lv2: 0.28, lv3: 0.14 }  // Chặng 3 (46-60): Đỉnh cao Lv7/8 (14% Lv3, 28% Lv2, 58% Lv1)
+                { maxLevel: 4,  lv1: 1.00, lv2: 0.00, lv3: 0.00 }, // Level 1-4:  100% Lv.1 (Không sinh đồ Lv.2)
+                { maxLevel: 9,  lv1: 0.72, lv2: 0.28, lv3: 0.00 }, // Level 5-9:  72% Lv.1, 28% Lv.2
+                { maxLevel: 20, lv1: 0.58, lv2: 0.32, lv3: 0.10 }, // Level 10-20: 58% Lv.1, 32% Lv.2, 10% Lv.3
+                { maxLevel: 35, lv1: 0.45, lv2: 0.37, lv3: 0.18 }, // Level 21-35: 45% Lv.1, 37% Lv.2, 18% Lv.3
+                { maxLevel: 60, lv1: 0.35, lv2: 0.40, lv3: 0.25 }  // Level 36-60: 35% Lv.1, 40% Lv.2, 25% Lv.3
             ]
         },
+
+        // Cấu hình vật phẩm ẩn dưới lớp đá khi nứt thành mạng nhện:
+        // Chỉ sinh ra các nhánh thuộc máy phát ĐANG ĐẶT TRÊN BÀN CHƠI và tăng dần cấp độ theo từng tầng đá từ trong ra ngoài (Lv.2 -> Lv.7)
+        // để giữ nhịp độ mở rộng bàn cờ có thử thách, không bị mở bàn cờ quá nhanh.
+        rockWebConfig: {
+            onlyUseActiveGenerators: true,
+            layerLevels: {
+                1: [2, 3], // Tầng đá 1 (sát vùng nhện ban đầu): Lv.2 - Lv.3
+                2: [3, 4], // Tầng đá 2: Lv.3 - Lv.4
+                3: [4, 5], // Tầng đá 3: Lv.4 - Lv.5
+                4: [5, 6]  // Tầng đá 4+ (rìa & góc bàn cờ): Lv.5 - Lv.6 (Ô bất ngờ lên tới Lv.7)
+            },
+            maxWebLevel: 6,
+            surpriseMaxLevel: 7
+        },
+
+        // Thưởng qua màn chơi
         levelClear: {
             baseCoins: 150,
             perLevelCoins: 25,
             perStarCoins: 50,
             gems3Stars: 2,
             gems1Or2Stars: 1,
-            energyPerStar: {
-                1: 3,
-                2: 5,
-                3: 7
-            },
+            energyPerStar: { 1: 3, 2: 5, 3: 7 },
             allowReplayReward: false
         }
     },
 
     // -------------------------------------------------------------------------
-    // 7. THƯỞNG SỔ TAY CẨM NANG
+    // 8. BẢNG KINH NGHIỆM EXP YÊU CẦU LÊN LEVEL (LEVEL EXP TABLE)
+    // -------------------------------------------------------------------------
+    expTable: {
+        1: 100, 2: 250, 3: 450, 4: 700, 5: 1000,
+        6: 1400, 7: 1900, 8: 2500, 9: 3200, 10: 4000,
+        11: 5000, 12: 6200, 13: 7600, 14: 9200, 15: 11000,
+        16: 13000, 17: 15200, 18: 17600, 19: 20200, 20: 23000,
+        21: 26000, 22: 29000, 23: 32000, 24: 35000, 25: 38000,
+        26: 41000, 27: 44000, 28: 47000, 29: 50000, 30: 53000,
+        31: 56000, 32: 59000, 33: 62000, 34: 65000, 35: 68000,
+        36: 71000, 37: 74000, 38: 77000, 39: 80000, 40: 83000,
+        41: 86000, 42: 89000, 43: 92000, 44: 95000, 45: 98000,
+        46: 101000, 47: 104000, 48: 107000, 49: 110000, 50: 113000,
+        51: 116000, 52: 119000, 53: 122000, 54: 125000, 55: 128000,
+        56: 131000, 57: 134000, 58: 137000, 59: 140000, 60: 143000
+    },
+
+    // -------------------------------------------------------------------------
+    // 9. THƯỞNG SỔ TAY CẨM NANG KHÁM PHÁ (DISCOVERY BOOK)
     // -------------------------------------------------------------------------
     discoveryBook: {
         coinsMultiplier: 50,
@@ -887,18 +407,208 @@ var GAME_CONFIG = {
     },
 
     // -------------------------------------------------------------------------
-    // 8. TÀI KHOẢN MỚI BAN ĐẦU
+    // 10. QUẢNG CÁO XEM THƯỞNG & QUÀ TẶNG HÀNG NGÀY (REWARDED ADS)
     // -------------------------------------------------------------------------
-    initialProfile: {
-        coins: 1000,
-        gems: 8
+    adRewards: {
+        energy: { amount: 30, dailyLimit: 6 },
+        gem: { amount: 8, dailyLimit: 6 },
+        coin: { amount: 2500, dailyLimit: 5 },
+        dailyGift: { amount: 5, doubleAmount: 10 },
+        mysteryChest: { minGems: 12, maxGems: 25, dailyLimit: 3 }
     },
 
     // -------------------------------------------------------------------------
-    // 9. DANH SÁCH 120 LEVEL SINH TỰ ĐỘNG (VÀ TỰ ĐỘNG MỞ RỘNG TRONG TƯƠNG LAI)
+    // 11. CẤU HÌNH GOOGLE FIREBASE CLOUD SYNC (LƯU TRỮ ĐÁM MÂY)
     // -------------------------------------------------------------------------
-    levels: GENERATED_LEVELS_LIST
+    firebase: {
+        apiKey: "AIzaSyDUdvkcYYSzuOt4snJHLPhQWbVM-I_emLI",
+        authDomain: "merge-camp-pets.firebaseapp.com",
+        projectId: "merge-camp-pets",
+        storageBucket: "merge-camp-pets.firebasestorage.app",
+        messagingSenderId: "793303900011",
+        appId: "1:793303900011:web:8cad0bb37b64514775b62e",
+        measurementId: "G-GVZ3LWVREF"
+    }
 };
+
+// =============================================================================
+// CÁC HÀM XỬ LÝ NỘI BỘ VÀ TẠO LEVEL NỀN (INTERNAL PROCEDURAL GENERATORS)
+// =============================================================================
+
+var ORGANIC_BOARD_PATTERNS = {
+    creek_bend: function (r, c) { return (r === 0 || r === 8 || (r === 1 && (c <= 1 || c >= 5)) || (r === 2 && (c === 0 || c === 6)) || (r === 3 && c === 0) || (r === 5 && c === 6) || (r === 6 && (c === 0 || c === 6)) || (r === 7 && (c <= 1 || c >= 5)) || (r === 2 && c === 4) || (r === 6 && c === 2)); },
+    pine_alcove: function (r, c) { return ((r === 0 && c !== 3) || (r === 8 && c !== 3) || (r === 1 && (c === 0 || c >= 5)) || (r === 2 && c === 6) || (r === 3 && c === 1) || (r === 4 && (c === 0 || c === 6)) || (r === 5 && c === 5) || (r === 6 && c === 0) || (r === 7 && (c <= 1 || c >= 6))); },
+    stepping_glade: function (r, c) { return ((r === 0 && (c <= 2 || c >= 5)) || (r === 1 && (c <= 1 || c === 6)) || (r === 2 && c === 0) || (r === 6 && c === 6) || (r === 7 && (c === 0 || c >= 5)) || (r === 8 && (c <= 1 || c >= 4)) || (r === 3 && c === 5) || (r === 5 && c === 1)); },
+    boulder_trail: function (r, c) { return ((r === 0 && c !== 2 && c !== 3) || (r === 8 && c !== 3 && c !== 4) || (c === 0 && (r <= 2 || r >= 6)) || (c === 6 && (r <= 2 || r >= 6)) || (r === 2 && c === 2) || (r === 4 && c === 5) || (r === 6 && c === 4)); },
+    zigzag: function (r, c) { return ((r === 0 && c <= 4) || (r === 1 && c <= 1) || (r === 3 && c === 6) || (r === 4 && c === 0) || (r === 5 && c === 6) || (r === 7 && c >= 5) || (r === 8 && c >= 2) || (r === 2 && c === 4) || (r === 6 && c === 2)); },
+    cross: function (r, c) { return (((r <= 1 || r >= 7) && (c <= 1 || c >= 5)) || (r === 0 && c === 3) || (r === 8 && c === 3) || (r === 3 && c === 1) || (r === 5 && c === 5)); },
+    hourglass: function (r, c) { return ((r === 0 && c !== 3) || (r === 8 && c !== 3) || (r >= 3 && r <= 5 && (c === 0 || c === 6)) || (r === 4 && (c === 1 || c === 5)) || (r === 1 && c === 0) || (r === 7 && c === 6)); },
+    pillars: function (r, c) { return ((r === 0 && (c <= 1 || c >= 5)) || (r === 8 && (c <= 1 || c >= 5)) || ((r === 2 || r === 6) && (c === 2 || c === 4)) || (r === 4 && (c === 0 || c === 6))); },
+    valley: function (r, c) { return ((c === 0 && r !== 3 && r !== 4) || (c === 6 && r !== 4 && r !== 5) || (r === 0 && (c <= 2 || c >= 5)) || (r === 8 && (c <= 1 || c >= 4)) || (r === 2 && c === 4) || (r === 6 && c === 2)); },
+    islands: function (r, c) { return ((r === 0 && c !== 2) || (r === 8 && c !== 4) || (r === 4 && c !== 2 && c !== 4) || (r === 2 && c === 0) || (r === 6 && c === 6)); },
+    fortress: function (r, c) { return ((r === 0 && c !== 3) || (r === 8 && c !== 3) || (c === 0 && r !== 4) || (c === 6 && r !== 4) || (r === 2 && c === 2) || (r === 6 && c === 4) || (r === 4 && c === 3)); },
+    open: function (r, c) { return (((r === 0 || r === 8) && (c <= 1 || c >= 5)) || ((r === 1 || r === 7) && (c === 0 || c === 6)) || (r === 2 && c === 1) || (r === 6 && c === 5) || (r === 3 && c === 5) || (r === 5 && c === 1)); }
+};
+
+var ORGANIC_PATTERN_NAMES = [
+    'creek_bend', 'pine_alcove', 'stepping_glade', 'boulder_trail',
+    'zigzag', 'cross', 'hourglass', 'pillars', 'valley', 'islands', 'fortress', 'open'
+];
+
+var GENERATOR_POOLS = {
+    'generator_backpack': ['an', 'cafe', 'congcu'],
+    'generator_cooler': ['ban', 'ghe', 'trai'],
+    'generator_crate': ['tham', 'antoan', 'bep']
+};
+
+var ALL_GENERATOR_IDS = ['generator_cooler', 'generator_backpack', 'generator_crate'];
+
+function getTargetEmptyCells(lvNum, orderCount) {
+    var base = 5;
+    var target = base + (Math.max(1, parseInt(lvNum, 10) || 1) - 1);
+    return Math.min(46, target);
+}
+
+function generateOrganicRockMask(patternName, patFn, targetRocks, rng) {
+    targetRocks = Math.max(2, Math.min(52, targetRocks));
+    var scores = [];
+    for (var idx = 0; idx < 63; idx++) {
+        var r = Math.floor(idx / 7);
+        var c = idx % 7;
+
+        if (r >= 3 && r <= 5 && c >= 2 && c <= 4) {
+            scores.push({ idx: idx, score: -99999 });
+            continue;
+        }
+
+        var score = 0;
+        if (patFn && patFn(r, c)) score += 35;
+        var distFromCenter = Math.abs(r - 4) + Math.abs(c - 3);
+        score += distFromCenter * 5;
+        if (r === 0 || r === 8) score += 12;
+        if (c === 0 || c === 6) score += 10;
+        if ((r === 0 || r === 8) && (c === 0 || c === 6)) score += 15;
+        if ((r <= 1 || r >= 7) && (c <= 1 || c >= 5)) score += 8;
+        score += (rng() * 4 - 2);
+        scores.push({ idx: idx, score: score });
+    }
+
+    scores.sort(function (a, b) { return b.score - a.score; });
+    var rockSet = new Set(scores.slice(0, targetRocks).map(function (s) { return s.idx; }));
+
+    while (true) {
+        var visited = new Set();
+        var queue = [31];
+        visited.add(31);
+        while (queue.length > 0) {
+            var curr = queue.shift();
+            var cr = Math.floor(curr / 7), cc = curr % 7;
+            var neighbors = [];
+            if (cr > 0) neighbors.push(curr - 7);
+            if (cr < 8) neighbors.push(curr + 7);
+            if (cc > 0) neighbors.push(curr - 1);
+            if (cc < 6) neighbors.push(curr + 1);
+
+            for (var n = 0; n < neighbors.length; n++) {
+                var nb = neighbors[n];
+                if (!rockSet.has(nb) && !visited.has(nb)) {
+                    visited.add(nb);
+                    queue.push(nb);
+                }
+            }
+        }
+
+        var isolated = [];
+        for (var check = 0; check < 63; check++) {
+            if (!rockSet.has(check) && !visited.has(check)) {
+                isolated.push(check);
+            }
+        }
+        if (isolated.length === 0) break;
+
+        var fixedAny = false;
+        isolated.forEach(function (isoIdx) {
+            var ir = Math.floor(isoIdx / 7), ic = isoIdx % 7;
+            var inbs = [];
+            if (ir > 0) inbs.push(isoIdx - 7);
+            if (ir < 8) inbs.push(isoIdx + 7);
+            if (ic > 0) inbs.push(isoIdx - 1);
+            if (ic < 6) inbs.push(isoIdx + 1);
+
+            var bridgeCandidate = inbs.filter(function (bIdx) {
+                return rockSet.has(bIdx) && visited.has(bIdx);
+            });
+            if (bridgeCandidate.length > 0) {
+                rockSet.delete(bridgeCandidate[0]);
+                fixedAny = true;
+            } else {
+                rockSet.add(isoIdx);
+                fixedAny = true;
+            }
+        });
+        if (!fixedAny) break;
+    }
+
+    return Array.from(rockSet);
+}
+
+// Bảng đơn hàng cấp cơ sở cho 60 Level
+var PROCEDURAL_LEVEL_ORDERS = {
+    1: ['ghe_lv4', 'trai_lv3', 'ban_lv3'],
+    2: ['ban_lv4', 'ghe_lv4', 'trai_lv3'],
+    3: ['an_lv4', 'cafe_lv3', 'ghe_lv3'],
+    4: ['cafe_lv4', 'an_lv4', 'ban_lv3'],
+    5: ['bep_lv4', 'tham_lv3', 'an_lv3'],
+    6: ['tham_lv4', 'bep_lv4', 'cafe_lv3'],
+    7: ['trai_lv5', 'ban_lv4', 'ghe_lv3'],
+    8: ['ghe_lv5', 'trai_lv4', 'bep_lv3'],
+    9: ['congcu_lv4', 'an_lv4', 'tham_lv3'],
+    10: ['trai_lv5', 'an_lv5', 'ban_lv4']
+};
+
+function generateLevelConfig(lvNum) {
+    var seed = lvNum * 1234567 + 98765;
+    function rng() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+    }
+
+    var patIdx = (lvNum === 1) ? 0 : (((lvNum - 1) * 5 + Math.floor((lvNum - 1) / 4)) % ORGANIC_PATTERN_NAMES.length);
+    var patternName = ORGANIC_PATTERN_NAMES[patIdx];
+    var patFn = ORGANIC_BOARD_PATTERNS[patternName] || ORGANIC_BOARD_PATTERNS.creek_bend;
+
+    var orders = (PROCEDURAL_LEVEL_ORDERS && PROCEDURAL_LEVEL_ORDERS[lvNum])
+        ? PROCEDURAL_LEVEL_ORDERS[lvNum].slice()
+        : ['ghe_lv4', 'trai_lv3', 'ban_lv3'];
+
+    var chosenGenIds = ALL_GENERATOR_IDS.slice();
+    var targetEmpty = getTargetEmptyCells(lvNum, orders.length);
+    var targetRocks = Math.max(2, Math.min(52, 63 - (targetEmpty + chosenGenIds.length + 8)));
+    var rocks = generateOrganicRockMask(patternName, patFn, targetRocks, rng);
+
+    return {
+        level: lvNum,
+        name: '',
+        pattern: patternName,
+        rocks: rocks,
+        generators: GAME_CONFIG.initialBoard.generators.map(function (g) { return [g.cell, g.id]; }),
+        freeItems: GAME_CONFIG.initialBoard.freeItems.map(function (f) { return [f.cell, f.id]; }),
+        webItems: GAME_CONFIG.initialBoard.webItems.map(function (w) { return [w.cell, w.id]; }),
+        orders: orders,
+        mechanics: { adjWeb: false, bonus: false, spreadEvery: 0 },
+        dialogue: null
+    };
+}
+
+var TOTAL_INITIAL_LEVELS = 60;
+var GENERATED_LEVELS_LIST = [];
+for (var _lv = 1; _lv <= TOTAL_INITIAL_LEVELS; _lv++) {
+    GENERATED_LEVELS_LIST.push(generateLevelConfig(_lv));
+}
+
+GAME_CONFIG.totalLevels = TOTAL_INITIAL_LEVELS;
+GAME_CONFIG.levels = GENERATED_LEVELS_LIST;
+GAME_CONFIG.generateLevelConfig = generateLevelConfig;
 
 if (typeof window !== 'undefined') {
     window.GAME_CONFIG = GAME_CONFIG;

@@ -6,24 +6,24 @@
 // - Lv 36 - 45: Mở khóa trọn bộ 9 vật phẩm tối thượng Lv.8
 // ==========================================
 
-// Danh sách ảnh nền màn chơi (Tự động lặp tuần hoàn 1..N theo thứ tự mặc định)
+// Danh sách ảnh nền màn chơi (Tự động lặp tuần hoàn theo bộ ảnh WebP 3D mới)
 var LEVEL_BACKGROUNDS = [
-    'assets/images/ui/bg_01.jpg',
-    'assets/images/ui/bg_03.jpg',
-    'assets/images/ui/bg04.jpg',
-    'assets/images/ui/bg05.jpg',
-    'assets/images/ui/bg07.jpg',
-    'assets/images/ui/bg10.jpg'
+    'assets/images/background/bg_doibu.webp',          // Level 1: Đồi Bù (Đứng đầu)
+    'assets/images/background/bg_hodongdo.webp',       // Level 2: Cao nguyên Lâm Viên (Đứng thứ 2)
+    'assets/images/background/bg_nuimatthan.webp',     // Level 3: Núi Mắt Thần
+    'assets/images/background/bg_thacbandoc.webp',     // Level 4: Thác Bản Giốc
+    'assets/images/background/bg_doichatmuine.webp',   // Level 5: Đồi Cát Mũi Né
+    'assets/images/background/bg_songnuocbinhba.webp'  // Level 6: Sóng nước Bình Ba
 ];
 
-// Danh sách Điểm Đến cắm trại bán trong Khu Trại (Mỗi địa điểm đều có ảnh nền 3D khu trại _bg tương ứng)
+// Danh sách Điểm Đến cắm trại bán trong Khu Trại (Mỗi địa điểm đều có ảnh nền 3D khu trại WebP tương ứng)
 var CAMP_LOCATIONS = [
-    { id: 'loc_dongdo', nameKey: 'dest_dongdo', name: 'Hồ Đồng Đò', img: 'assets/images/ui/bg_01.jpg', campBg: 'assets/images/ui/bg_01_bg.jpg', price: 0 },
-    { id: 'loc_doibu', nameKey: 'dest_doibu', name: 'Đồi Bù', img: 'assets/images/ui/bg_03.jpg', campBg: 'assets/images/ui/bg_03_bg.jpg', price: 12000 },
-    { id: 'loc_matthan', nameKey: 'dest_matthan', name: 'Núi Mắt Thần', img: 'assets/images/ui/bg07.jpg', campBg: 'assets/images/ui/bg07_bg.jpg', price: 25000 },
-    { id: 'loc_bangioc', nameKey: 'dest_bangioc', name: 'Thác Bản Giốc', img: 'assets/images/ui/bg05.jpg', campBg: 'assets/images/ui/bg05_bg.jpg', price: 45000 },
-    { id: 'loc_muine', nameKey: 'dest_muine', name: 'Đồi Cát Mũi Né', img: 'assets/images/ui/bg04.jpg', campBg: 'assets/images/ui/bg04_bg.jpg', price: 68000 },
-    { id: 'loc_songnuocbinhba', nameKey: 'dest_songnuocbinhba', name: 'Sóng nước Bình Ba', img: 'assets/images/ui/bg10.jpg', campBg: 'assets/images/ui/bg10_bg.jpg', price: 88000 }
+    { id: 'loc_doibu', nameKey: 'dest_doibu', name: 'Đồi Bù', img: 'assets/images/background/bg_doibu.webp', campBg: 'assets/images/background/bg_doibu.webp', price: 0 },
+    { id: 'loc_dongdo', nameKey: 'dest_dongdo', name: 'Cao nguyên Lâm Viên', img: 'assets/images/background/bg_hodongdo.webp', campBg: 'assets/images/background/bg_hodongdo.webp', price: 12000 },
+    { id: 'loc_matthan', nameKey: 'dest_matthan', name: 'Núi Mắt Thần', img: 'assets/images/background/bg_nuimatthan.webp', campBg: 'assets/images/background/bg_nuimatthan.webp', price: 25000 },
+    { id: 'loc_bangioc', nameKey: 'dest_bangioc', name: 'Thác Bản Giốc', img: 'assets/images/background/bg_thacbandoc.webp', campBg: 'assets/images/background/bg_thacbandoc.webp', price: 45000 },
+    { id: 'loc_muine', nameKey: 'dest_muine', name: 'Đồi Cát Mũi Né', img: 'assets/images/background/bg_doichatmuine.webp', campBg: 'assets/images/background/bg_doichatmuine.webp', price: 68000 },
+    { id: 'loc_songnuocbinhba', nameKey: 'dest_songnuocbinhba', name: 'Sóng nước Bình Ba', img: 'assets/images/background/bg_songnuocbinhba.webp', campBg: 'assets/images/background/bg_songnuocbinhba.webp', price: 88000 }
 ];
 
 function getActiveLocationBackground() {
@@ -69,11 +69,37 @@ function updateActiveLocationBackground() {
     var topSceneEl = document.getElementById('top-scene');
     if (topSceneEl) {
         var customBg = getActiveLocationBackground();
-        if (customBg) {
-            topSceneEl.style.backgroundImage = "url('" + customBg + "')";
-        } else if (typeof currentLevel !== 'undefined') {
-            topSceneEl.style.backgroundImage = "url('" + getLevelBackground(currentLevel) + "')";
+        var bgUrl = customBg || (typeof currentLevel !== 'undefined' ? getLevelBackground(currentLevel) : 'assets/images/background/bg_hodongdo.webp');
+        if (bgUrl) {
+            // Lấy màu dải gradient 3 màu cấu hình từ MYCAMP_CONFIG
+            var c1 = '#2c3d28', c2 = '#475e3e', c3 = '#1f2b1c';
+            if (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG.background && MYCAMP_CONFIG.background.gradient) {
+                var g = MYCAMP_CONFIG.background.gradient;
+                if (g.color1) c1 = g.color1;
+                if (g.color2) c2 = g.color2;
+                if (g.color3) c3 = g.color3;
+            }
+            var playPos = 'center 0px';
+            var playSize = 'max(375px, 80%) auto';
+            if (typeof MYCAMP_CONFIG !== 'undefined' && MYCAMP_CONFIG.mainPlayScene) {
+                if (MYCAMP_CONFIG.mainPlayScene.position) playPos = MYCAMP_CONFIG.mainPlayScene.position;
+                if (MYCAMP_CONFIG.mainPlayScene.size) playSize = MYCAMP_CONFIG.mainPlayScene.size;
+            }
+
+            // Căn giữa theo chiều ngang, padding-top = 0 để không bị tràn mép trên
+            topSceneEl.style.backgroundImage = "url('" + bgUrl + "'), linear-gradient(180deg, " + c1 + " 0%, " + c2 + " 50%, " + c3 + " 100%)";
+            topSceneEl.style.backgroundPosition = playPos + ", center center";
+            topSceneEl.style.backgroundRepeat = "no-repeat, no-repeat";
+            topSceneEl.style.backgroundSize = playSize + ", cover";
         }
+    }
+
+    // Đồng bộ mây bay ở màn chơi
+    var cloudsEl = document.getElementById('top-scene-clouds');
+    if (cloudsEl) {
+        var curBg = getActiveLocationBackground() || (typeof currentLevel !== 'undefined' ? getLevelBackground(currentLevel) : '');
+        var isMatThan = (curBg && curBg.indexOf('bg_nuimatthan') !== -1) || (typeof SAVE !== 'undefined' && SAVE && SAVE.activeLocation === 'loc_matthan');
+        cloudsEl.style.display = isMatThan ? 'block' : 'none';
     }
 
     // Cập nhật đồng bộ ảnh nền Trại của bạn nếu đang mở hoặc sau khi đổi điểm đến
@@ -89,70 +115,10 @@ function updateActiveLocationBackground() {
 function getLevelBackground(lvNum) {
     var customBg = getActiveLocationBackground();
     if (customBg) return customBg;
-    if (!LEVEL_BACKGROUNDS || !LEVEL_BACKGROUNDS.length) return 'assets/images/ui/bg_01.jpg';
+    if (!LEVEL_BACKGROUNDS || !LEVEL_BACKGROUNDS.length) return 'assets/images/background/bg_hodongdo.webp';
     var idx = (Math.max(1, parseInt(lvNum, 10) || 1) - 1) % LEVEL_BACKGROUNDS.length;
     return LEVEL_BACKGROUNDS[idx];
 }
-
-// Tự động quét và phát hiện các ảnh nền mới (bg08, bg09, bg10... hoặc bg_08, bg_09...)
-// Khi người dùng thêm file ảnh nền mới vào assets/images/ui/, hàm này sẽ tự động nhận diện và cập nhật danh sách tuần hoàn
-(function autoScanBackgrounds() {
-    if (typeof window === 'undefined') return;
-    var scanned = [];
-    var maxProbe = 50;
-    var consecutiveMisses = 0;
-
-    function probe(num) {
-        if (num > maxProbe || consecutiveMisses >= 3) {
-            if (scanned.length >= 3) {
-                LEVEL_BACKGROUNDS = scanned;
-                if (typeof currentLevel !== 'undefined') {
-                    var topSceneEl = document.getElementById('top-scene');
-                    if (topSceneEl && typeof getLevelBackground === 'function') {
-                        topSceneEl.style.backgroundImage = "url('" + getLevelBackground(currentLevel) + "')";
-                    }
-                }
-            }
-            return;
-        }
-
-        var s2 = String(num).padStart(2, '0');
-        var candidates = [
-            'assets/images/ui/bg' + s2 + '.jpg',
-            'assets/images/ui/bg_' + s2 + '.jpg',
-            'assets/images/ui/bg' + num + '.jpg',
-            'assets/images/ui/bg_' + num + '.jpg',
-            'assets/images/ui/bg' + s2 + '.png',
-            'assets/images/ui/bg_' + s2 + '.png'
-        ];
-
-        function tryCandidate(cIdx) {
-            if (cIdx >= candidates.length) {
-                consecutiveMisses++;
-                probe(num + 1);
-                return;
-            }
-            var testUrl = candidates[cIdx];
-            var img = new Image();
-            img.onload = function () {
-                scanned.push(testUrl);
-                consecutiveMisses = 0;
-                probe(num + 1);
-            };
-            img.onerror = function () {
-                tryCandidate(cIdx + 1);
-            };
-            img.src = testUrl;
-        }
-
-        tryCandidate(0);
-    }
-
-    // Chạy ngầm sau khi trang tải xong
-    setTimeout(function () {
-        probe(1);
-    }, 100);
-})();
 
 // ==========================================
 // HỆ THỐNG DỮ LIỆU LEVEL TỰ ĐỘNG (60 LEVEL TRONG 3 CHẶNG)
@@ -288,4 +254,15 @@ if (typeof GAME_CONFIG !== 'undefined' && Array.isArray(GAME_CONFIG.levels)) {
             LEVEL_STORY_DIALOGUES[l.level] = l.dialogue;
         }
     });
+}
+
+// Tự động khởi tạo ảnh nền màn chơi và mây bay khi trang sẵn sàng
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            updateActiveLocationBackground();
+        });
+    } else {
+        updateActiveLocationBackground();
+    }
 }

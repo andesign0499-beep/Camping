@@ -62,6 +62,10 @@ function defaultSave() {
         currentBoardState: null,
         level: 1,
         maxLevel: 1,
+        playerLevel: 1,
+        playerExp: 0,
+        persistentBoard: null,
+        totalOrdersDelivered: 0,
         coins: initCoins,
         gems: initGems,
         energy: initEnergy,
@@ -71,8 +75,8 @@ function defaultSave() {
         claimedBook: {},
         ownedPets: ['character01'],
         activePet: 'character01',
-        ownedLocations: ['loc_dongdo'],
-        activeLocation: 'loc_dongdo',
+        ownedLocations: ['loc_doibu'],
+        activeLocation: 'loc_doibu',
         campItems: [],
         campItemsMigrated: false,
         myCampEquipped: {},
@@ -87,8 +91,10 @@ function defaultSave() {
             unlockAllLevels: false,
             lang: (typeof I18N !== 'undefined') ? I18N.currentLang : 'vi'
         },
+        petOrderGroups: [],
         lastEnergyTs: Date.now(),
-        lastPetRewardTime: 0
+        lastPetRewardTime: 0,
+        recentOrdersHistory: []
     };
 }
 
@@ -98,6 +104,7 @@ function loadSave() {
         if (raw) {
             var parsed = JSON.parse(raw);
             var s = Object.assign(defaultSave(), parsed);
+            if (!Array.isArray(s.petOrderGroups)) s.petOrderGroups = [];
             if (s.settings && typeof I18N !== 'undefined') {
                 var explicit = (typeof localStorage !== 'undefined') ? localStorage.getItem('camping_lang_explicit') : null;
                 if (explicit === '1') {
@@ -116,6 +123,22 @@ function loadSave() {
             if (!s.playerId) s.playerId = generatePlayerId();
             if (!s.googleUser || typeof s.googleUser !== 'object') s.googleUser = null;
             if (s.currentBoardState && typeof s.currentBoardState !== 'object') s.currentBoardState = null;
+            if (typeof s.playerLevel !== 'number' || s.playerLevel < 1) s.playerLevel = s.level || 1;
+            if (typeof s.playerExp !== 'number' || s.playerExp < 0) s.playerExp = 0;
+            if (typeof s.totalOrdersDelivered !== 'number') s.totalOrdersDelivered = 0;
+            if (s.persistentBoard && typeof s.persistentBoard !== 'object') s.persistentBoard = null;
+
+            // Tự động chuyển đổi sang cấu hình bàn cờ mới nhất (layoutVersion 8: Ô đá khóa theo cấp độ 3, 5, 7, 11, 15, 18 sử dụng board_cell_rock_lock.png)
+            var targetLayoutVer = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.initialBoard && GAME_CONFIG.initialBoard.layoutVersion) || 8;
+            if (s.persistentBoard && s.persistentBoard.layoutVersion !== targetLayoutVer) {
+                s.persistentBoard = null;
+                s.currentBoardState = null;
+                s.petOrderGroups = [];
+                s.totalOrdersDelivered = 0;
+                s.playerLevel = 1;
+                s.level = 1;
+                s.playerExp = 0;
+            }
             if (!s.stars || typeof s.stars !== 'object') s.stars = {};
             if (!s.discovered || typeof s.discovered !== 'object') s.discovered = {};
             if (!s.claimedBook || typeof s.claimedBook !== 'object') s.claimedBook = {};
@@ -123,8 +146,11 @@ function loadSave() {
             if (!Array.isArray(s.ownedPets) || !s.ownedPets.length) s.ownedPets = ['character01'];
             if (!s.activePet) s.activePet = 'character01';
             if (typeof s.lastPetRewardTime !== 'number') s.lastPetRewardTime = 0;
-            if (!Array.isArray(s.ownedLocations) || !s.ownedLocations.length) s.ownedLocations = ['loc_dongdo'];
-            if (!s.activeLocation) s.activeLocation = 'loc_dongdo';
+            if (!Array.isArray(s.recentOrdersHistory)) s.recentOrdersHistory = [];
+            if (!Array.isArray(s.petOrderGroups)) s.petOrderGroups = [];
+            if (!Array.isArray(s.ownedLocations) || !s.ownedLocations.length) s.ownedLocations = ['loc_doibu'];
+            if (!s.ownedLocations.includes('loc_doibu')) s.ownedLocations.unshift('loc_doibu');
+            if (!s.activeLocation) s.activeLocation = 'loc_doibu';
             if (!Array.isArray(s.campItems)) s.campItems = [];
             if (!s.myCampEquipped || typeof s.myCampEquipped !== 'object') {
                 s.myCampEquipped = {};
@@ -344,18 +370,18 @@ function importSyncCode(codeStr) {
 }
 
 // ---------- DANH SÁCH THÚ CƯNG ĐỒNG HÀNH (PETS) ----------
-var PET_PRICE = 12000;
+var PET_PRICE = 8000;
 var PET_CHARACTERS = [
     { id: 'character01', name: 'Golden', img: 'assets/images/ui/character01.png', price: 0 },
-    { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 12000 },
-    { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 15000 },
-    { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 22000 },
-    { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 28000 },
-    { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 35000 },
-    { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 42000 },
-    { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 50000 },
-    { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 58000 },
-    { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 65000 }
+    { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 8000 },
+    { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 16000 },
+    { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 28000 },
+    { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 42000 },
+    { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 60000 },
+    { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 85000 },
+    { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 115000 },
+    { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 150000 },
+    { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 200000 }
 ];
 
 // ---------- HỒI NĂNG LƯỢNG THEO TƯƠNG TÁC (ACTIVE INTERACTION REGEN) ----------
@@ -407,6 +433,78 @@ function orderReward(id) {
         return Math.round(base * 1.1);
     }
     return base;
+}
+
+// Thưởng Điểm Kinh Nghiệm (EXP) khi nộp đơn hàng cho Thú Cưng
+// Mỗi bậc vật phẩm tăng theo lũy tiến độ khó chế tạo:
+// Tier 1: 5 EXP, Tier 2: 10 EXP, Tier 3: 20 EXP, Tier 4: 40 EXP, Tier 5: 80 EXP, Tier 6: 160 EXP...
+function orderExp(id) {
+    var units = (typeof itemUnits === 'function') ? itemUnits(id) : 1;
+    return Math.max(5, units * 5);
+}
+
+// Yêu cầu điểm EXP cần thiết để thăng cấp Level người chơi tiếp theo (Pacing chuẩn thị trường Merge-2)
+function getExpRequiredForLevel(lv) {
+    var l = Math.max(1, parseInt(lv, 10) || 1);
+    if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.expTable && typeof GAME_CONFIG.expTable[l] === 'number') {
+        return GAME_CONFIG.expTable[l];
+    }
+    if (l === 1) return 100;
+    if (l === 2) return 250;
+    if (l === 3) return 450;
+    if (l === 4) return 700;
+    if (l === 5) return 1000;
+    if (l === 6) return 1400;
+    if (l === 7) return 1900;
+    if (l === 8) return 2500;
+    if (l === 9) return 3200;
+    if (l === 10) return 4000;
+    if (l === 11) return 5000;
+    if (l === 12) return 6200;
+    if (l === 13) return 7600;
+    if (l === 14) return 9200;
+    if (l === 15) return 11000;
+    if (l === 16) return 13000;
+    if (l === 17) return 15200;
+    if (l === 18) return 17600;
+    if (l === 19) return 20200;
+    if (l === 20) return 23000;
+    return Math.floor(23000 + (l - 20) * 3000);
+}
+
+// Cộng điểm kinh nghiệm và xử lý thăng cấp tài khoản
+function addPlayerExp(amount, onLevelUpCallback) {
+    if (!amount || amount <= 0) return false;
+    SAVE.playerExp = (SAVE.playerExp || 0) + amount;
+    SAVE.totalOrdersDelivered = (SAVE.totalOrdersDelivered || 0) + 1;
+    var didLevelUp = false;
+    var currentExpNeeded = getExpRequiredForLevel(SAVE.playerLevel || 1);
+    
+    while (SAVE.playerExp >= currentExpNeeded) {
+        SAVE.playerExp -= currentExpNeeded;
+        SAVE.playerLevel = (SAVE.playerLevel || 1) + 1;
+        SAVE.level = SAVE.playerLevel;
+        didLevelUp = true;
+        currentExpNeeded = getExpRequiredForLevel(SAVE.playerLevel);
+        if (typeof onLevelUpCallback === 'function') {
+            onLevelUpCallback(SAVE.playerLevel);
+        }
+    }
+    saveGame();
+    return didLevelUp;
+}
+
+// Ghi nhận đơn hàng vừa hoàn thành vào bộ đệm FIFO lịch sử chống lặp (tối đa 15 đơn gần nhất)
+function recordOrderDelivered(itemId) {
+    if (!itemId || typeof SAVE === 'undefined' || !SAVE) return;
+    if (!Array.isArray(SAVE.recentOrdersHistory)) {
+        SAVE.recentOrdersHistory = [];
+    }
+    SAVE.recentOrdersHistory.push(itemId);
+    if (SAVE.recentOrdersHistory.length > 15) {
+        SAVE.recentOrdersHistory.splice(0, SAVE.recentOrdersHistory.length - 15);
+    }
+    saveGame();
 }
 
 // Thưởng Vàng khi tạo chuỗi Combo ghép liên tiếp
@@ -635,43 +733,78 @@ function calcStars(energyLeft, budget) {
     return r >= 0.30 ? 3 : (r >= 0.15 ? 2 : 1);
 }
 
-// ---------- SỔ TAY SƯU TẬP 72 VẬT PHẨM (9 DÒNG x 8 CẤP) ----------
+// ---------- SỔ TAY SƯU TẬP VẬT PHẨM (9 DÒNG x 12 CẤP) ----------
 var ITEM_CHAINS = [
     {
         line: 'an', icon: '', title: 'Ẩm Thực Dã Ngoại',
-        names: ['Quả Táo Đỏ', 'Ổ Bánh Mì Dài', 'Bánh Sandwich Kẹp', 'Tô Mì Sợi Nóng', 'Đĩa Trái Cây Tươi', 'Tô Hoa Quả Thập Cẩm', 'Đĩa Bánh Quy Nướng', 'Đại Tiệc BBQ Xiên Nướng']
+        names: [
+            'Quả Táo Đỏ', 'Ổ Bánh Mì Dài', 'Bánh Sandwich Kẹp', 'Tô Mì Sợi Nóng',
+            'Đĩa Trái Cây Tươi', 'Tô Hoa Quả Thập Cẩm', 'Đĩa Bánh Quy Nướng', 'Đại Tiệc BBQ Xiên Nướng',
+            'Đĩa Bò Wagyu Thượng Hạng', 'Cua Hoàng Đế Hấp Dã Ngoại', 'Tiệc Cua Hoàng Đế Thượng Hạng', 'Đại Tiệc Hải Sản Cung Đình'
+        ]
     },
     {
         line: 'ban', icon: '', title: 'Bàn Dã Ngoại',
-        names: ['Bàn Nhôm Vuông Mini', 'Bàn Vải Gấp Dã Ngoại', 'Bàn Trà Dã Ngoại', 'Bàn Gỗ Cuộn Dã Ngoại', 'Bàn Dã Ngoại Kèm Giá Lưới', 'Bàn Cắm Trại Đa Năng', 'Bàn Chiến Thuật IGT', 'Trạm Bếp Nấu Ăn Glamping']
+        names: [
+            'Bàn Nhôm Vuông Mini', 'Bàn Vải Gấp Dã Ngoại', 'Bàn Trà Dã Ngoại', 'Bàn Gỗ Cuộn Dã Ngoại',
+            'Bàn Dã Ngoại Kèm Giá Lưới', 'Bàn Cắm Trại Đa Năng', 'Bàn Chiến Thuật IGT', 'Trạm Bếp Nấu Ăn Glamping',
+            'Trạm Bếp Dã Ngoại Đôi', 'Bàn Đảo Bếp Dã Ngoại Inox', 'Bàn Đảo Bếp Glamping Đa Năng', 'Đại Trạm Bếp Glamping Hoàng Gia'
+        ]
     },
     {
         line: 'cafe', icon: '', title: 'Cà Phê Sương Sớm',
-        names: ['Hạt Cà Phê Robusta', 'Cối Xay Cà Phê Tay Gỗ', 'Ấm Rót Cổ Ngỗng', 'Tách Cà Phê Nóng', 'Gói Cà Phê Specialty', 'Cối Xay Cầm Tay Inox', 'Ấm Pha Moka Pot Ý', 'Cốc Cà Phê Men Đỏ']
+        names: [
+            'Hạt Cà Phê Robusta', 'Cối Xay Cà Phê Tay Gỗ', 'Ấm Rót Cổ Ngỗng', 'Tách Cà Phê Nóng',
+            'Gói Cà Phê Specialty', 'Cối Xay Cầm Tay Inox', 'Ấm Pha Moka Pot Ý', 'Cốc Cà Phê Men Đỏ',
+            'Phin Cà Phê Dã Ngoại Đồng', 'Máy Pha Espresso Dã Ngoại', 'Máy Pha Cà Phê Áp Suất Glamping', 'Quầy Barista Cà Phê Glamping'
+        ]
     },
     {
         line: 'trai', icon: '', title: 'Lều Trại Trú Ngụ',
-        names: ['Cọc Ghim Lều Kim Loại', 'Cuộn Dây Dù Căng Lều', 'Bộ Khung Cọc Chống Lều', 'Bạt Tăng Che Mưa Nắng', 'Lều Vòm Cắm Trại 2 Người', 'Lều Gia Đình Chống Gió', 'Lều Kim Tự Tháp Glamping', 'Biệt Thự Lều Glamping']
+        names: [
+            'Cọc Ghim Lều Kim Loại', 'Cuộn Dây Dù Căng Lều', 'Bộ Khung Cọc Chống Lều', 'Bạt Tăng Che Mưa Nắng',
+            'Lều Vòm Cắm Trại 2 Người', 'Lều Gia Đình Chống Gió', 'Lều Kim Tự Tháp Glamping', 'Biệt Thự Lều Glamping',
+            'Lều Chuông Glamping', 'Lều Bán Cầu Geodesic', 'Kén Nghỉ Dưỡng Mái Vòm', 'Biệt Thự Lều Safari Sang Trọng'
+        ]
     },
     {
         line: 'tham', icon: '', title: 'Chỗ Ngủ Êm Ái',
-        names: ['Bạt Trải Đất Dã Ngoại', 'Thảm Xốp Cuộn Cách Nhiệt', 'Thảm Thổ Cẩm Dã Ngoại', 'Chăn Đệm Gấp Ấm Áp', 'Túi Ngủ Dã Ngoại', 'Võng Dù Giữa Rừng', 'Sofa Hơi Dã Ngoại', 'Đệm Hơi Đôi Cao Cấp']
+        names: [
+            'Bạt Trải Đất Dã Ngoại', 'Thảm Xốp Cuộn Cách Nhiệt', 'Thảm Thổ Cẩm Dã Ngoại', 'Chăn Đệm Gấp Ấm Áp',
+            'Túi Ngủ Dã Ngoại', 'Võng Dù Giữa Rừng', 'Sofa Hơi Dã Ngoại', 'Đệm Hơi Đôi Cao Cấp'
+        ]
     },
     {
         line: 'ghe', icon: '', title: 'Ghế Nghỉ Ngơi',
-        names: ['Ghế Đôn Xếp Mini', 'Ghế Xếp Tựa Lưng Xanh', 'Ghế Xếp Dã Ngoại Màu Cát', 'Ghế Xếp Có Tay Vịn', 'Ghế Câu Cá Có Khay', 'Ghế Mặt Trăng Moon Chair', 'Ghế Tựa Lưng Cao Có Gối', 'Ghế Đạo Diễn Cao Cấp']
+        names: [
+            'Ghế Đôn Xếp Mini', 'Ghế Xếp Tựa Lưng Xanh', 'Ghế Xếp Dã Ngoại Màu Cát', 'Ghế Xếp Có Tay Vịn',
+            'Ghế Câu Cá Có Khay', 'Ghế Mặt Trăng Moon Chair', 'Ghế Tựa Lưng Cao Có Gối', 'Ghế Đạo Diễn Cao Cấp',
+            'Ghế Xếp Thư Giãn Bập Bênh', 'Ghế Sofa Đôi Glamping', 'Giường Ghế Xếp Đa Năng', 'Ghế Bành Glamping Sang Trọng'
+        ]
     },
     {
         line: 'bep', icon: '', title: 'Lửa & Bếp Trại',
-        names: ['Nhánh Củi Khô', 'Khúc Gỗ Tròn', 'Bó Củi Buộc Dây', 'Hố Đá Xếp Lửa', 'Đống Củi Trại Vòng Đá', 'Lửa Trại Rực Hồng', 'Lò Nướng Than Hoa Tròn', 'Bếp Nướng BBQ Chữ Nhật']
+        names: [
+            'Nhánh Củi Khô', 'Khúc Gỗ Tròn', 'Bó Củi Buộc Dây', 'Hố Đá Xếp Lửa',
+            'Đống Củi Trại Vòng Đá', 'Lửa Trại Rực Hồng', 'Lò Nướng Than Hoa Tròn', 'Bếp Nướng BBQ Chữ Nhật',
+            'Bếp Gas Dã Ngoại Đôi', 'Lò Nướng Bánh Pizza Dã Ngoại', 'Bếp Nấu Đa Năng Glamping', 'Bếp Hoàng Gia Lửa Trại Glamping'
+        ]
     },
     {
         line: 'congcu', icon: '', title: 'Chiếu Sáng Dã Ngoại',
-        names: ['Bóng Đèn LED Treo Lều', 'Đèn Pin Cầm Tay Dã Ngoại', 'Dây Đèn LED Đom Đóm', 'Đèn Lồng Dã Ngoại', 'Đèn Bảng LED Dã Ngoại', 'Đèn Bão Dã Ngoại Vintage', 'Đèn Cắm Trại Chân Cao Tripod', 'Đèn Bão Cổ Điển Retro']
+        names: [
+            'Bóng Đèn LED Treo Lều', 'Đèn Pin Cầm Tay Dã Ngoại', 'Dây Đèn LED Đom Đóm', 'Đèn Lồng Dã Ngoại',
+            'Đèn Bảng LED Dã Ngoại', 'Đèn Bão Dã Ngoại Vintage', 'Đèn Cắm Trại Chân Cao Tripod', 'Đèn Bão Cổ Điển Retro',
+            'Cột Đèn Glamping Đôi', 'Đèn Thao Tác Chuyên Dụng', 'Hệ Thống Chiếu Sáng Trại Glamping', 'Đèn Cực Quang Glamping Thượng Hạng'
+        ]
     },
     {
         line: 'antoan', icon: '', title: 'Nguồn Điện & Trạm Năng Lượng',
-        names: ['Cáp Sạc Dã Ngoại Bọc Dù', 'Củ Sạc Nhanh Dã Ngoại', 'Pin Sạc Dự Phòng Bỏ Túi', 'Pin Sạc Dự Phòng Chống Sốc', 'Quạt Tích Điện Dã Ngoại', 'Tấm Pin Năng Lượng Mặt Trời', 'Trạm Điện Di Động Mini', 'Trạm Điện Dã Ngoại Glamping']
+        names: [
+            'Cáp Sạc Dã Ngoại Bọc Dù', 'Củ Sạc Nhanh Dã Ngoại', 'Pin Sạc Dự Phòng Bỏ Túi', 'Pin Sạc Dự Phòng Chống Sốc',
+            'Quạt Tích Điện Dã Ngoại', 'Tấm Pin Năng Lượng Mặt Trời', 'Trạm Điện Di Động Mini', 'Trạm Điện Dã Ngoại Glamping',
+            'Bộ Lưu Điện Dung Lượng Cao', 'Trạm Điện Mặt Trời Công Suất Lớn', 'Máy Phát Điện Siêu Cách Âm', 'Trạm Năng Lượng Glamping Hoàng Gia'
+        ]
     }
 ];
 

@@ -16,14 +16,9 @@ var levelUnwantedClicks = 0; // Số lượt nguồn phát rơi lệch sang nhá
 var isAutoEnabled = false; // AUTO chỉ là chế độ debug, mặc định tắt
 var levelWon = false;
 
-// Kiểm tra xem màn chơi đã hoàn thành toàn bộ nhiệm vụ hay chưa (kể cả trong thời gian chờ hoạt ảnh bay và popup chiến thắng)
+// Mô hình B: Bàn cờ duy nhất liên tục (Continuous Board), không bao giờ ngắt quãng hay khóa máy phát
 function isLevelCompleted() {
-    if (levelWon) return true;
-    if (!currentOrders || !currentOrders.length) return false;
-    var allDone = currentOrders.every(function (o) { return o.done; });
-    if (!allDone) return false;
-    var webs = (typeof countWebs === 'function' && boardData) ? countWebs(boardData) : 0;
-    return webs === 0;
+    return false;
 }
 
 // Thông báo nhắc nhở nhẹ nhàng khi người chơi vẫn bấm vào thùng sinh đồ sau khi đã xong nhiệm vụ
@@ -50,7 +45,7 @@ function notifyLevelDoneOnGenerator(cellElement) {
 function markGeneratorsCompleted() {
     if (!boardElement || !boardData) return;
     boardData.forEach(function (c, idx) {
-        if (c && c.id && GENERATORS[c.id]) {
+        if (c && c.id && !c.isRock && GENERATORS[c.id]) {
             var cell = boardElement.children[idx];
             if (cell) {
                 cell.classList.add('generator-done');
@@ -353,6 +348,11 @@ function playSound(type, itemId) {
                 playFluteNote(freq, now + idx * 0.05, 0.12, 0.10, 0.96);
             });
             triggerVibrate(20);
+        } else if (type === 'rock_crack') {
+            // Âm thanh đá nứt vỡ giòn tan: G3 mộc trầm kết hợp nốt E5 vang nhẹ
+            playFluteNote(196.00, now, 0.12, 0.12, 0.90);
+            playFluteNote(659.25, now + 0.04, 0.18, 0.10, 0.95);
+            triggerVibrate([20, 30]);
         } else if (type === 'win') {
             // Khúc hòa tấu khải hoàn 5 nốt ngũ cung Đô Trưởng (C5, E5, G5, A5, C6)
             var winNotes = [523.25, 659.25, 783.99, 880.00, 1046.50];
@@ -704,17 +704,363 @@ var tutMergeCount = 0;
 var tutDeliveredOnce = false;
 var tutNewGenTapped = false;
 
+// =============================================================================
+// HỆ THỐNG HOẠT ẢNH SPRITESHEET ĐA THÚ CƯNG (PET SPRITESHEET ANIMATIONS)
+// =============================================================================
+var PET_ANIMATION_CONFIGS = {
+    'character01': {
+        idle: {
+            sheet: 'assets/images/npc_sheets/goden_idle_sheet.webp',
+            frames: 20, frameW: 145, frameH: 229, cols: 5, rows: 4, fps: 12
+        },
+        action: {
+            sheet: 'assets/images/npc_sheets/goden_sit_sheet.webp',
+            frames: 20, frameW: 200, frameH: 205, cols: 5, rows: 4, fps: 12
+        }
+    },
+    'character07': {
+        idle: {
+            sheet: 'assets/images/npc_sheets/meoanh_idle_sheet.webp',
+            frames: 15, frameW: 180, frameH: 214, cols: 5, rows: 3, fps: 12
+        },
+        action: {
+            sheet: 'assets/images/npc_sheets/meoanh_hello_sheet.webp',
+            frames: 20, frameW: 180, frameH: 214, cols: 5, rows: 4, fps: 12
+        }
+    }
+};
+
+var _petSheetImages = {};
+function getPetSheetImage(url) {
+    if (!_petSheetImages[url]) {
+        var img = new Image();
+        img.src = url;
+        _petSheetImages[url] = img;
+    }
+    return _petSheetImages[url];
+}
+
+// Khởi tạo và kích hoạt tải trước các file sheet WebP
+if (typeof window !== 'undefined') {
+    Object.keys(PET_ANIMATION_CONFIGS).forEach(function (k) {
+        var c = PET_ANIMATION_CONFIGS[k];
+        if (c.idle) getPetSheetImage(c.idle.sheet);
+        if (c.action) getPetSheetImage(c.action.sheet);
+    });
+}
+
+// Tạo phần tử hiển thị thú cưng: Canvas hoạt ảnh mượt nếu có sheet, hoặc Thẻ Img tĩnh nếu chưa có
+function createPetAvatarElement(petId, petName, defaultImgSrc) {
+    var animCfg = PET_ANIMATION_CONFIGS[petId];
+    if (!animCfg || !animCfg.idle) {
+        var img = document.createElement('img');
+        img.className = 'pet-group-avatar-img';
+        img.src = defaultImgSrc || ('assets/images/ui/' + (petId || 'character01') + '.png');
+        img.alt = petName || 'Bạn đồng hành';
+        return {
+            element: img,
+            playAction: function () {}
+        };
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.className = 'pet-group-avatar-canvas';
+    var defaultCfg = animCfg.idle;
+    canvas.width = defaultCfg.frameW;
+    canvas.height = defaultCfg.frameH;
+    var ctx = canvas.getContext('2d');
+
+    var currentAnimKey = 'idle';
+    var currentCfg = animCfg.idle;
+    var currentImg = getPetSheetImage(currentCfg.sheet);
+    var currentFrame = 0;
+    var lastTime = 0;
+    var actionLoopsLeft = 0;
+    var rafId = null;
+
+    function render(time) {
+        if (!canvas.isConnected) {
+            if (rafId) cancelAnimationFrame(rafId);
+            return;
+        }
+
+        rafId = requestAnimationFrame(render);
+        var fps = currentCfg.fps || 12;
+        if (time - lastTime < (1000 / fps)) return;
+        lastTime = time;
+
+        if (!currentImg.complete) return;
+
+        var col = currentFrame % currentCfg.cols;
+        var row = Math.floor(currentFrame / currentCfg.cols);
+        var sx = col * currentCfg.frameW;
+        var sy = row * currentCfg.frameH;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(currentImg, sx, sy, currentCfg.frameW, currentCfg.frameH, 0, 0, canvas.width, canvas.height);
+
+        currentFrame++;
+        if (currentFrame >= currentCfg.frames) {
+            currentFrame = 0;
+            if (currentAnimKey === 'action') {
+                actionLoopsLeft--;
+                if (actionLoopsLeft <= 0) {
+                    currentAnimKey = 'idle';
+                    currentCfg = animCfg.idle;
+                    currentImg = getPetSheetImage(currentCfg.sheet);
+                    canvas.width = currentCfg.frameW;
+                    canvas.height = currentCfg.frameH;
+                }
+            }
+        }
+    }
+
+    rafId = requestAnimationFrame(render);
+
+    function playAction(loops) {
+        // Chỉ diễn hoạt ảnh idle trên màn chơi theo yêu cầu của người chơi
+        return;
+    }
+
+    return {
+        element: canvas,
+        playAction: playAction
+    };
+}
+
 function updateCompanionAvatar() {
     var activeId = (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) ? SAVE.activePet : 'character01';
     var pet = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS.find(function (p) { return p.id === activeId; }) : null;
     var imgPath = pet ? pet.img : ('assets/images/ui/' + activeId + '.png');
-    if (!npcAvatarImg) npcAvatarImg = document.getElementById('npc-avatar-img');
-    if (npcAvatarImg) {
-        npcAvatarImg.src = imgPath;
-        if (pet) npcAvatarImg.alt = pet.name;
+    var petName = pet ? pet.name : 'Bạn đồng hành';
+    var container = document.getElementById('npc-avatar-btn');
+    if (container) {
+        container.innerHTML = '';
+        var av = createPetAvatarElement(activeId, petName, imgPath);
+        container.appendChild(av.element);
     }
 }
 window.updateCompanionAvatar = updateCompanionAvatar;
+
+// =============================================================================
+// HỆ THỐNG THOẠI & ĐẶT ĐƠN ĐA THÚ CƯNG (MULTI-PET DIALOGUE & SPEECH)
+// =============================================================================
+var PET_DIALOGUES = {
+    'character01': {
+        name: 'Golden',
+        sound: 'Gâu gâu!',
+        requests: [
+            'Gâu! Ông chủ ơi, chúng ta cần {item} để cắm trại nè!',
+            'Gâu gâu! Hãy giúp em ghép một chiếc {item} nhé!',
+            'Gâu! Bão tuyết ở quê lâu quá, có {item} mình sẽ cắm trại thật vui!'
+        ],
+        thanks: [
+            'Gâu gâu! {item} tuyệt vời quá, thương ông chủ nhiều!',
+            'Gâu! Có {item} rồi, khu trại ấm cúng hẳn lên!',
+            'Gâu gâu! Ông chủ ghép đỉnh thật đấy!'
+        ]
+    },
+    'character05': {
+        name: 'Labrador',
+        sound: 'Woof!',
+        requests: [
+            'Woof! Mình đánh hơi thấy {item} ở gần đây, tìm giúp mình với!',
+            'Gâu! Đợt dã ngoại này không thể thiếu {item} được đâu!',
+            'Woof woof! Mau ghép {item} để cùng mình khám phá rừng nào!'
+        ],
+        thanks: [
+            'Woof! Đúng chiếc {item} mình cần rồi, cảm ơn bạn!',
+            'Gâu gâu! {item} này xịn thật sự, tiếp tục nào!',
+            'Tuyệt cú mèo! Có {item} rồi mình an tâm khám phá tiếp!'
+        ]
+    },
+    'character04': {
+        name: 'Poodle',
+        sound: 'Áng áng!',
+        requests: [
+            'Áng áng! Cho em xin một phần {item} xinh xắn đi mà~',
+            'Hihi, có {item} thì buổi cắm trại mới nên thơ chứ!',
+            'Bạn ơi, ghép giúp bé {item} đáng yêu này nha!'
+        ],
+        thanks: [
+            'Hihi sướng quá! Em mê {item} này nhất trần đời!',
+            'Áng áng! Cảm ơn bạn, {item} xinh xẻo y như em vậy!',
+            'Yêu bạn quá đi! Có {item} rồi em vui cả ngày luôn!'
+        ]
+    },
+    'character03': {
+        name: 'Bulldog',
+        sound: 'Hực hực!',
+        requests: [
+            'Hực! Cần một chiếc {item} thật bền chắc để giữ trại an toàn!',
+            'Gừm, chuẩn bị {item} kỹ lưỡng thì bão tuyết cũng không sợ!',
+            'Tôi cần {item} cho ca trực bảo vệ đêm nay, giúp một tay nhé!'
+        ],
+        thanks: [
+            'Hực hực! Tốt lắm, {item} rất kiên cố và chuẩn bài!',
+            'Gâu! Trại của chúng ta giờ đã vững như bàn thạch!',
+            'Rất đáng khen! {item} này chất lượng ngoài mong đợi!'
+        ]
+    },
+    'character02': {
+        name: 'Béc-giê',
+        sound: 'Gâu!',
+        requests: [
+            'Gâu! Báo cáo: Khu trại đang cần bổ sung {item}!',
+            'Kỷ luật là sức mạnh! Hãy hoàn thành {item} đúng tiến độ nhé!',
+            'Gâu gâu! {item} là trang bị dã ngoại thiết yếu cho hành trình!'
+        ],
+        thanks: [
+            'Tuyệt hảo! Đã bổ sung {item} vào quân trang khu trại!',
+            'Nhiệm vụ hoàn thành xuất sắc! Tác phong rất chuyên nghiệp!',
+            'Gâu! Cảm ơn đồng chí, {item} đã sẵn sàng cho chuyến đi!'
+        ]
+    },
+    'character10': {
+        name: 'Ba Tư',
+        sound: 'Meo~',
+        requests: [
+            'Meo~ Ta muốn có {item} quý phái để nằm ngắm cảnh, mau làm đi~',
+            'Purr... Một chút {item} sang trọng sẽ hợp với khí chất của ta hơn!',
+            'Này bạn, đừng để ta phải chờ {item} lâu quá đấy nhé~'
+        ],
+        thanks: [
+            'Purr~ Khá lắm con sen, chiếc {item} này làm ta hài lòng!',
+            'Meo meo~ Đồ tốt đấy, ta tạm thời công nhận tài nghệ của bạn!',
+            'Hừm, chiếc {item} này cũng vừa ý ta rồi đó~'
+        ]
+    },
+    'character09': {
+        name: 'Maine Coon',
+        sound: 'Ngoao!',
+        requests: [
+            'Ngoao! Cần một chiếc {item} thật hoành tráng cho bữa tiệc dã ngoại!',
+            'Gừ... Khám phá thiên nhiên Việt Nam phải có {item} mới đã!',
+            'Ngoao ngoao! Ghép {item} to nhất cho ta nào!'
+        ],
+        thanks: [
+            'Ngoao! Quá đã! {item} chất lừ, ta ưng cái bụng rồi đó!',
+            'Hahaha! Có {item} này thì chấp cả bão tuyết luôn!',
+            'Tuyệt vời! Ta sẽ cùng {item} này chinh phục mọi đỉnh núi!'
+        ]
+    },
+    'character08': {
+        name: 'Ragdoll',
+        sound: 'Meo meo...',
+        requests: [
+            'Meo meo... Có {item} để mình cuộn tròn ngủ trưa không bạn ơi?',
+            'Ưm... Ở đây hơi lạnh, có {item} thì ấm áp biết mấy~',
+            'Cho bé xin {item} nhé, bé hứa sẽ ngoan mà~'
+        ],
+        thanks: [
+            'Ngoan ngoan~ {item} mềm thích quá, cho bé dụi đầu miếng nha!',
+            'Meo meo! Ấm áp quá rồi, cảm ơn bạn tốt bụng!',
+            'Purr... Giờ bé có thể ngủ một giấc thật ngon cùng {item} rồi!'
+        ]
+    },
+    'character07': {
+        name: 'Mèo Anh',
+        sound: 'Meo!',
+        requests: [
+            'Meo! Một chút {item} ấm cúng cho buổi chiều cắm trại nào!',
+            'Nắng đẹp thế này mà có {item} thì chill phải biết!',
+            'Meo meo~ Ghép xong {item} mình cùng thưởng thức nhé!'
+        ],
+        thanks: [
+            'Meo meo! Xong rồi, {item} xịn đét luôn!',
+            'Chill thật đấy! Cảm ơn bạn vì món {item} tuyệt vời này!',
+            'Meo! Đời cắm trại thế này thì bão tuyết mấy năm cũng chịu!'
+        ]
+    },
+    'character06': {
+        name: 'Xiêm',
+        sound: 'Meow!',
+        requests: [
+            'Meow! Nhanh tay ghép {item} nào, ta đang háo hức khám phá đây!',
+            'Món {item} này sẽ là chìa khóa cho điểm đến tiếp theo đó!',
+            'Nhanh lên nào bạn ơi, ta vừa phát hiện chỗ dùng {item} cực hay!'
+        ],
+        thanks: [
+            'Meow! Tuyệt cú mèo! {item} đến vừa đúng lúc luôn!',
+            'Cực kỳ nhanh nhẹn! Tiến lên điểm đến tiếp theo thôi!',
+            'Meow meow! Có {item} rồi, lên đường thôi ông chủ!'
+        ]
+    }
+};
+
+function getPetOrderDialogue(orderId, petId) {
+    var pId = petId || (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) || 'character01';
+    var petData = PET_DIALOGUES[pId] || PET_DIALOGUES['character01'];
+    var itemName = (typeof getItemDisplayName === 'function') ? getItemDisplayName(orderId) : 'vật phẩm';
+    var reqs = petData.requests;
+    var raw = reqs[Math.floor(Math.random() * reqs.length)];
+    return raw.replace('{item}', itemName);
+}
+window.getPetOrderDialogue = getPetOrderDialogue;
+
+function getPetThankDialogue(petId, orderId) {
+    var pId = petId || (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) || 'character01';
+    var petData = PET_DIALOGUES[pId] || PET_DIALOGUES['character01'];
+    var itemName = (typeof getItemDisplayName === 'function') ? getItemDisplayName(orderId) : 'món đồ';
+    var thks = petData.thanks;
+    var raw = thks[Math.floor(Math.random() * thks.length)];
+    return raw.replace('{item}', itemName);
+}
+window.getPetThankDialogue = getPetThankDialogue;
+
+function setPetSpeech(petId, speechText, autoHideMs) {
+    var pId = petId || (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) || 'character01';
+    var pet = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS.find(function (p) { return p.id === pId; }) : null;
+
+    // Tìm phần tử avatar của con vật tương ứng trên màn hình để đặt bong bóng lên đúng trên đầu
+    var groupEl = document.querySelector('.pet-order-group[data-pet-id="' + pId + '"]');
+    var targetWrap = groupEl ? groupEl.querySelector('.pet-group-avatar-wrap') : null;
+    if (!targetWrap) {
+        targetWrap = document.querySelector('.pet-group-avatar-wrap') || document.getElementById('npc-avatar-btn');
+    }
+
+    if (npcBubbleTimer) {
+        clearTimeout(npcBubbleTimer);
+        npcBubbleTimer = null;
+    }
+    if (document.getElementById('modal-overlay')) {
+        hideNpcBubble();
+        return;
+    }
+
+    if (!npcSpeechBubble) npcSpeechBubble = document.getElementById('npc-speech-bubble');
+    if (!npcSpeechText) npcSpeechText = document.getElementById('npc-speech-text');
+
+    if (speechText && typeof speechText === 'string') {
+        speechText = speechText.trim();
+        if (speechText.length > 90) {
+            speechText = speechText.slice(0, 87) + '...';
+        }
+    }
+
+    if (speechText && npcSpeechBubble && npcSpeechText) {
+        npcSpeechText.textContent = speechText;
+        if (targetWrap && npcSpeechBubble.parentNode !== targetWrap) {
+            targetWrap.appendChild(npcSpeechBubble);
+        }
+        npcSpeechBubble.style.display = 'flex';
+
+        // Tắt talking trên các con vật khác, chỉ bật cho con vật đang nói
+        document.querySelectorAll('.pet-group-avatar-wrap.talking').forEach(function (el) {
+            el.classList.remove('talking');
+        });
+        if (targetWrap) {
+            targetWrap.classList.add('talking');
+        }
+
+        if (autoHideMs && autoHideMs > 0) {
+            npcBubbleTimer = setTimeout(hideNpcBubble, autoHideMs);
+        }
+    } else {
+        hideNpcBubble();
+    }
+}
+window.setPetSpeech = setPetSpeech;
 
 function getNpcById(npcId) {
     return (typeof NPC_CHARACTERS !== 'undefined' && NPC_CHARACTERS[npcId])
@@ -787,34 +1133,8 @@ function showTutorialHandDrag(fromEl, toEl) {
 }
 
 function setNpcState(npcId, moodEmoji, speechText, autoHideMs) {
-    if (npcMoodDot) {
-        npcMoodDot.textContent = '';
-        npcMoodDot.style.display = 'none';
-    }
-    if (npcBubbleTimer) {
-        clearTimeout(npcBubbleTimer);
-        npcBubbleTimer = null;
-    }
-    if (document.getElementById('modal-overlay')) {
-        hideNpcBubble();
-        return;
-    }
-    if (speechText && typeof speechText === 'string') {
-        speechText = speechText.trim();
-        if (speechText.length > 120) {
-            speechText = speechText.slice(0, 117) + '...';
-        }
-    }
-    if (speechText && npcSpeechBubble && npcSpeechText) {
-        npcSpeechText.textContent = speechText;
-        npcSpeechBubble.style.display = 'flex';
-        if (npcAvatarBtn) npcAvatarBtn.classList.add('talking');
-        if (autoHideMs && autoHideMs > 0) {
-            npcBubbleTimer = setTimeout(hideNpcBubble, autoHideMs);
-        }
-    } else {
-        hideNpcBubble();
-    }
+    var pId = (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) ? SAVE.activePet : 'character01';
+    setPetSpeech(pId, speechText, autoHideMs);
 }
 
 function hideNpcBubble() {
@@ -823,6 +1143,9 @@ function hideNpcBubble() {
         npcBubbleTimer = null;
     }
     if (npcSpeechBubble) npcSpeechBubble.style.display = 'none';
+    document.querySelectorAll('.pet-group-avatar-wrap.talking').forEach(function (el) {
+        el.classList.remove('talking');
+    });
     if (npcAvatarBtn) npcAvatarBtn.classList.remove('talking');
 }
 
@@ -863,7 +1186,7 @@ function showStoryStep(step, texts, dlg) {
     if (isLast && currentLevel <= 10 && !tutNewGenTapped) {
         // Câu cuối hướng dẫn chạm nguồn phát: hiển thị bàn tay chỉ vào nguồn phát
         var genIdx = boardData.findIndex(function (c) {
-            return c && GENERATORS[c.id] && !c.isLocked;
+            return c && GENERATORS[c.id] && !c.isLocked && !c.isRock;
         });
         if (genIdx !== -1 && boardElement.children[genIdx]) {
             var genCell = boardElement.children[genIdx];
@@ -1041,7 +1364,7 @@ function showIdleHint(isManualClick) {
     var empties = getEmptyIndexes(boardData);
     if (playerEnergy > 0 && empties.length > 0) {
         boardData.forEach((c, idx) => {
-            if (c && GENERATORS[c.id] && !c.isLocked && boardElement.children[idx]) {
+            if (c && GENERATORS[c.id] && !c.isLocked && !c.isRock && boardElement.children[idx]) {
                 boardElement.children[idx].classList.add('hint-pulse');
             }
         });
@@ -1063,105 +1386,130 @@ function showIdleHint(isManualClick) {
 // ==========================================
 // TẢI LEVEL & VẼ BÀN CỜ (CÓ LƯU & KHÔI PHỤC TRẠNG THÁI ĐANG CHƠI)
 // ==========================================
+// TẢI & LƯU BÀN CỜ DUY NHẤT VĨNH VIỄN (MODEL B: PERSISTENT BOARD + EXP LEVEL)
+// - Bàn cờ giữ nguyên 100% đồ thừa, không bao giờ bị dọn sạch.
+// - Tiến trình được ghi nhận liên tục qua Cấp Độ Người Chơi (SAVE.playerLevel) & EXP (SAVE.playerExp).
+// ==========================================
 function persistCurrentBoardState() {
-    if (levelWon) {
-        SAVE.currentBoardState = null;
-    } else if (boardData && boardData.length) {
-        SAVE.currentBoardState = {
-            level: currentLevel,
+    if (boardData && boardData.length) {
+        var pLv = (typeof SAVE !== 'undefined' && SAVE.playerLevel) ? SAVE.playerLevel : (currentLevel || 1);
+        var requiredLayoutVersion = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.initialBoard && GAME_CONFIG.initialBoard.layoutVersion) || 3;
+        SAVE.persistentBoard = {
+            layoutVersion: requiredLayoutVersion,
             boardData: boardData.map(function (c) {
-                return c ? { id: c.id, isRock: !!c.isRock, isLocked: !!c.isLocked } : makeEmptyCell();
+                return c ? {
+                    id: c.id,
+                    isRock: !!c.isRock,
+                    isLocked: !!c.isLocked,
+                    isSurprise: !!c.isSurprise,
+                    rockLayer: c.rockLayer,
+                    isGeneratorRock: !!c.isGeneratorRock
+                } : makeEmptyCell();
             }),
-            currentOrders: (currentOrders || []).map(function (o) {
-                return { id: o.id, done: !!o.done };
+            activeOrders: (currentOrders || []).map(function (o) {
+                return {
+                    id: o.id,
+                    done: false,
+                    gold: o.gold || ((typeof orderReward === 'function') ? orderReward(o.id) : 50),
+                    exp: o.exp || ((typeof orderExp === 'function') ? orderExp(o.id) : 15)
+                };
             }),
-            levelClicks: levelClicks,
-            levelUnwantedClicks: levelUnwantedClicks,
-            levelBudget: levelBudget,
-            isReplayLevel: isReplayLevel,
             savedAt: Date.now()
         };
-        SAVE.level = currentLevel;
+        SAVE.currentBoardState = SAVE.persistentBoard;
+        SAVE.level = pLv;
+        SAVE.playerLevel = pLv;
     }
     saveGame();
 }
 
 function loadLevel(lvNum, options) {
     options = options || {};
-    var MAX_GAME_LEVEL = 60;
-    lvNum = Math.max(1, Math.min(MAX_GAME_LEVEL, parseInt(lvNum, 10) || 1));
     closeModal();
     clearHintVisuals();
     hideNpcBubble();
     updateCompanionAvatar();
-    currentLevel = lvNum;
-    currentLevelCfg = getLevelConfig(lvNum);
-    var topSceneEl = document.getElementById('top-scene');
-    if (topSceneEl && typeof getLevelBackground === 'function') {
-        topSceneEl.style.backgroundImage = "url('" + getLevelBackground(lvNum) + "')";
+
+    var pLv = (typeof SAVE !== 'undefined' && SAVE.playerLevel) ? SAVE.playerLevel : (parseInt(lvNum, 10) || 1);
+    currentLevel = pLv;
+    SAVE.level = pLv;
+    SAVE.playerLevel = pLv;
+    currentLevelCfg = getLevelConfig(1);
+
+    if (typeof updateActiveLocationBackground === 'function') {
+        updateActiveLocationBackground();
+    } else {
+        var topSceneEl = document.getElementById('top-scene');
+        if (topSceneEl && typeof getLevelBackground === 'function') {
+            topSceneEl.style.backgroundImage = "url('" + getLevelBackground(1) + "')";
+        }
     }
+
     levelClicks = 0;
     levelUnwantedClicks = 0;
-    if (typeof resetGeneratorPity === 'function') {
-        resetGeneratorPity();
-    }
     tutMergeCount = 0;
     tutDeliveredOnce = false;
     tutNewGenTapped = false;
     levelIntroShown = false;
     levelWon = false;
-
-    if (typeof LEVEL_STORY_DIALOGUES !== 'undefined' && LEVEL_STORY_DIALOGUES[lvNum]) {
-        var leadNpc = LEVEL_STORY_DIALOGUES[lvNum].npc;
-        var idx = (typeof NPC_ORDER !== 'undefined') ? NPC_ORDER.indexOf(leadNpc) : 0;
-        currentNpcIndex = idx >= 0 ? idx : 0;
-    }
-
-    if (levelSelect) levelSelect.value = lvNum;
     selectedIndex = null;
     updateSellButton(null);
 
-    // Phục hồi nguyên trạng bàn cờ và đơn hàng người chơi đang chơi dở từ localStorage
-    var hasSavedState = !options.forceReset &&
-        SAVE.currentBoardState &&
-        SAVE.currentBoardState.level === lvNum &&
-        Array.isArray(SAVE.currentBoardState.boardData) &&
-        SAVE.currentBoardState.boardData.length === TOTAL_CELLS &&
-        Array.isArray(SAVE.currentBoardState.currentOrders);
+    // Phục hồi bàn cờ duy nhất từ localStorage
+    var requiredLayoutVersion = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.initialBoard && GAME_CONFIG.initialBoard.layoutVersion) || 3;
+    var hasPersistent = !options.forceReset &&
+        SAVE.persistentBoard &&
+        SAVE.persistentBoard.layoutVersion === requiredLayoutVersion &&
+        Array.isArray(SAVE.persistentBoard.boardData) &&
+        SAVE.persistentBoard.boardData.length === TOTAL_CELLS;
 
-    // Nếu cấu hình đơn hàng của màn chơi khác với bàn cờ đã lưu (do vừa cập nhật kịch bản nhiệm vụ), tải mới màn
-    if (hasSavedState && currentLevelCfg && Array.isArray(currentLevelCfg.orders)) {
-        var savedOrderIds = (SAVE.currentBoardState.currentOrders || []).map(function (o) { return o.id; }).join(',');
-        var cfgOrderIds = currentLevelCfg.orders.join(',');
-        if (savedOrderIds !== cfgOrderIds) {
-            hasSavedState = false;
+    if (hasPersistent) {
+        boardData = SAVE.persistentBoard.boardData.map(function (c) {
+            return c ? {
+                id: c.id,
+                isRock: !!c.isRock,
+                isLocked: !!c.isLocked,
+                isSurprise: !!c.isSurprise,
+                rockLayer: c.rockLayer,
+                isGeneratorRock: !!c.isGeneratorRock
+            } : makeEmptyCell();
+        });
+
+        // Nạp danh sách đơn hàng cho thú cưng trước để đồng bộ máy phát theo đơn
+        if (typeof ensurePetOrderGroups === 'function') {
+            ensurePetOrderGroups(SAVE.playerLevel || currentLevel || 1);
         }
-    }
+        syncCurrentOrdersFromGroups();
 
-    if (hasSavedState) {
-        boardData = SAVE.currentBoardState.boardData.map(function (c) {
-            return c ? { id: c.id, isRock: !!c.isRock, isLocked: !!c.isLocked } : makeEmptyCell();
-        });
-        currentOrders = SAVE.currentBoardState.currentOrders.map(function (o) {
-            return { id: o.id, done: !!o.done };
-        });
-        levelClicks = SAVE.currentBoardState.levelClicks || 0;
-        levelUnwantedClicks = SAVE.currentBoardState.levelUnwantedClicks || 0;
-        levelBudget = SAVE.currentBoardState.levelBudget || computeEnergyBudget(boardData, currentOrders.map(o => o.id), currentLevelCfg);
-        isReplayLevel = SAVE.currentBoardState.isReplayLevel !== undefined ? SAVE.currentBoardState.isReplayLevel : !!SAVE.stars[lvNum];
-        if (levelClicks > 0) {
-            tutNewGenTapped = true;
+        if (typeof checkAndUnlockGeneratorsByMilestone === 'function') {
+            checkAndUnlockGeneratorsByMilestone(boardData);
+        }
+        if (typeof ensureAllGeneratorsOnBoard === 'function') {
+            ensureAllGeneratorsOnBoard(boardData, currentOrders);
+        }
+        if (typeof populateRockHiddenItems === 'function') {
+            populateRockHiddenItems(boardData);
         }
     } else {
-        boardData = buildBoard(currentLevelCfg);
-        var orderIds = tuneOrders(currentLevelCfg.rawOrders, lvNum, currentLevelCfg);
-        currentOrders = orderIds.map(id => ({ id: id, done: false }));
+        // Khởi tạo bàn cờ xuất phát từ cấu hình ban đầu
+        var baseLevelCfg = getLevelConfig(1);
+        boardData = buildBoard(baseLevelCfg);
 
-        // Khởi tạo cặp vật phẩm mồi thuộc đúng nhánh đơn hàng đang cần (từ Lv.3 trở đi)
-        populateInitialBoardItems();
+        if (typeof ensurePetOrderGroups === 'function') {
+            ensurePetOrderGroups(SAVE.playerLevel || currentLevel || 1);
+        }
+        syncCurrentOrdersFromGroups();
 
-        levelBudget = computeEnergyBudget(boardData, orderIds, currentLevelCfg);
-        isReplayLevel = !!SAVE.stars[lvNum];
+        if (typeof checkAndUnlockGeneratorsByMilestone === 'function') {
+            checkAndUnlockGeneratorsByMilestone(boardData);
+        }
+        if (typeof ensureAllGeneratorsOnBoard === 'function') {
+            ensureAllGeneratorsOnBoard(boardData, currentOrders);
+        }
+        if (typeof populateRockHiddenItems === 'function') {
+            populateRockHiddenItems(boardData);
+        }
+
         persistCurrentBoardState();
     }
 
@@ -1170,11 +1518,16 @@ function loadLevel(lvNum, options) {
     }
 
     renderBoard();
+    updateUIStats();
 
-    // Hiển thị lời thoại cốt truyện của màn chơi khi vào màn
+    // Lời thoại mở đầu ấm áp của thú cưng
     if (!levelIntroShown) {
         levelIntroShown = true;
-        playLevelStory(lvNum);
+        var petType = (typeof SAVE !== 'undefined' && SAVE.activePet === 'character06') ? 'cat' : 'dog';
+        var welcomeMsg = petType === 'cat'
+            ? 'Meo! Cùng chuẩn bị đồ nghề dựng khu trại xinh đẹp nhé!'
+            : 'Gâu! Chào bạn, cùng thu thập đồ đạc dựng khu trại dã ngoại nào!';
+        setNpcState('gau', '', welcomeMsg, 3800);
     }
 }
 
@@ -1187,7 +1540,7 @@ function populateInitialBoardItems() {
 
     var generators = [];
     boardData.forEach((c, idx) => {
-        if (c && GENERATORS[c.id] && !c.isLocked) generators.push(idx);
+        if (c && GENERATORS[c.id] && !c.isLocked && !c.isRock) generators.push(idx);
     });
     if (!generators.length) return;
 
@@ -1239,7 +1592,7 @@ function fillBoardInstantly() {
     if (isLevelCompleted()) return;
     var generators = [];
     boardData.forEach((c, idx) => {
-        if (c && GENERATORS[c.id] && !c.isLocked) generators.push(idx);
+        if (c && GENERATORS[c.id] && !c.isLocked && !c.isRock) generators.push(idx);
     });
     if (!generators.length) return;
 
@@ -1298,9 +1651,16 @@ function renderBoard() {
         var itemData = boardData[i];
 
         // Xác định class nền
+        var pLvForRock = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number')
+            ? SAVE.playerLevel
+            : (currentLevel || 1);
+        var rockLockLv = (itemData && itemData.isRock && typeof isRockCellLockedByLevel === 'function' && isRockCellLockedByLevel(i, itemData, pLvForRock))
+            ? getRockUnlockLevel(i, itemData)
+            : 0;
+
         var bgClass = 'bg-empty';
         if (itemData && itemData.isRock) {
-            bgClass = 'bg-rock';
+            bgClass = (rockLockLv > 0) ? 'bg-rock-lock' : 'bg-rock';
         } else if (itemData && itemData.id && GENERATORS[itemData.id]) {
             bgClass = 'bg-' + itemData.id;
         } else if (itemData && itemData.id) {
@@ -1310,9 +1670,17 @@ function renderBoard() {
         var isSelected = (selectedIndex === i);
         var isReady = readyCellIndexes.has(i);
         var isLocked = !!(itemData && itemData.isLocked);
-        var isGen = !!(itemData && itemData.id && GENERATORS[itemData.id]);
+        var isGen = !!(itemData && itemData.id && GENERATORS[itemData.id] && !itemData.isRock);
+        if (isGen) {
+            isLocked = false;
+            if (itemData) {
+                itemData.isLocked = false;
+            }
+        }
+        // Item được nộp: giữ nguyên nền của ô bàn cờ khi có dấu tích xanh
+        var cellBg = bgClass;
 
-        var targetClass = 'cell ' + bgClass +
+        var targetClass = 'cell' + (cellBg ? (' ' + cellBg) : '') +
             (isSelected ? ' selected' : '') +
             (isReady ? ' order-ready-item' : '') +
             (isLocked ? ' locked' : '') +
@@ -1324,7 +1692,7 @@ function renderBoard() {
         }
 
         // Cập nhật nội dung bên trong ô
-        if (!itemData || !itemData.id) {
+        if (!itemData || !itemData.id || itemData.isRock) {
             if (cell.firstElementChild) {
                 cell.innerHTML = '';
             }
@@ -1349,26 +1717,29 @@ function renderBoard() {
                 if (img.style.visibility) img.style.visibility = '';
             }
 
-            // Mạng nhện khóa ô
+            // Mạng nhện khóa ô (Tuyệt đối không bao giờ phủ mạng nhện lên nguồn phát)
             var web = cell.querySelector('.web-overlay');
-            if (isLocked) {
+            if (isLocked && !isGen) {
                 if (!web) {
                     web = document.createElement('img');
                     web.src = 'assets/images/board/board_cell_web.png';
                     web.className = 'web-overlay';
                     cell.appendChild(web);
                 }
-            } else if (web) {
-                web.remove();
+            } else {
+                if (web) web.remove();
             }
+            var oldStarBadge = cell.querySelector('.surprise-star-badge');
+            if (oldStarBadge) oldStarBadge.remove();
 
-            // Dấu tích sẵn sàng nộp đơn
-            var chk = cell.querySelector('.order-ready-badge');
+            // Dấu tích xanh icon_check.png sẵn sàng nộp đơn (đẩy ra góc ảnh)
+            var chk = cell.querySelector('.board-item-ready-tick');
             if (isReady && !isLocked) {
                 if (!chk) {
-                    chk = document.createElement('div');
-                    chk.className = 'order-ready-badge';
-                    chk.textContent = '✓';
+                    chk = document.createElement('img');
+                    chk.className = 'board-item-ready-tick';
+                    chk.src = 'assets/images/ui/icon_check.png';
+                    chk.alt = '✓';
                     cell.appendChild(chk);
                 }
             } else if (chk) {
@@ -1413,6 +1784,24 @@ function renderBoard() {
                 }
             }
         }
+
+        // Dọn sạch nút bán cũ trên từng ô nếu còn tồn tại trong DOM
+        var oldFloatingSellBtn = cell.querySelector('.cell-floating-sell-btn');
+        if (oldFloatingSellBtn) {
+            oldFloatingSellBtn.remove();
+        }
+    }
+
+    // Đồng bộ nút Bán cố định ở giữa bàn chơi, cách hệ 3 nút Cửa hàng/Cẩm nang/Trại của bạn 80px
+    if (selectedIndex !== null && boardData[selectedIndex]) {
+        var selItem = boardData[selectedIndex];
+        if (selItem && selItem.id && !selItem.isRock && !selItem.isLocked && !GENERATORS[selItem.id]) {
+            updateSellButton(selItem.id);
+        } else {
+            updateSellButton(null);
+        }
+    } else {
+        updateSellButton(null);
     }
 
     // Ghi nhận khám phá sổ tay âm thầm qua chấm đỏ #book-badge, không bắn Toast gây chồng popup khi đang ghép đồ
@@ -1445,7 +1834,7 @@ function flyCompletedOrderToPet(cardEl, onComplete) {
     flyer.classList.add('order-card-flying-away');
 
     // Dọn các badge con không cần thiết
-    var badges = flyer.querySelectorAll('.order-ready-badge, .floating-badge');
+    var badges = flyer.querySelectorAll('.order-deliver-btn, .board-item-ready-tick, .order-ready-badge, .floating-badge');
     badges.forEach(function (b) { b.remove(); });
 
     flyer.style.cssText = 'position:fixed;pointer-events:none;z-index:180010;' +
@@ -1486,7 +1875,10 @@ function flyCompletedOrderToPet(cardEl, onComplete) {
             ], { duration: 460, easing: 'cubic-bezier(.175, .885, .32, 1.275)' });
 
             triggerParticleBurst(petEl, ['#ff6b81', '#ffd166', '#a8e6cf', '#2ecc71', '#ffffff']);
-            showFloatingBadge(petEl, 'Gâu!', '#2e7d32');
+            var cardPetId = (cardEl && cardEl.dataset && cardEl.dataset.petId) ? cardEl.dataset.petId : ((typeof SAVE !== 'undefined' && SAVE) ? SAVE.activePet : 'character01');
+            var petData = (typeof PET_DIALOGUES !== 'undefined' && PET_DIALOGUES[cardPetId]) ? PET_DIALOGUES[cardPetId] : null;
+            var cheerMsg = petData ? (petData.sound + ' Cảm ơn bạn!') : 'Gâu! Cảm ơn bạn!';
+            showFloatingBadge(petEl, cheerMsg, '#2e7d32');
 
             if (onComplete) onComplete();
         };
@@ -1514,15 +1906,10 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
     orderObj.done = true;
     tutDeliveredOnce = true;
 
-    // Nếu vừa hoàn thành xong nhiệm vụ cuối cùng của màn, lập tức vô hiệu hóa bấm thùng sinh đồ
-    if (isLevelCompleted()) {
-        markGeneratorsCompleted();
-    }
-
     var cellEl = boardElement && boardElement.children[boardCellIdx];
     var cellImg = cellEl && cellEl.querySelector('.item-img');
     var itemId = boardData[boardCellIdx].id;
-    var rw = isReplayLevel ? 0 : orderReward(itemId);
+    var rw = (typeof orderReward === 'function') ? orderReward(itemId) : 50;
 
     if (cellEl && targetCardEl && cellImg) {
         var srcRect = cellEl.getBoundingClientRect();
@@ -1540,7 +1927,7 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
         // Xóa dữ liệu và ẩn item trên ô bàn cờ ngay lập tức
         boardData[boardCellIdx] = makeEmptyCell();
         cellImg.style.visibility = 'hidden';
-        var oldBadge = cellEl.querySelector('.order-ready-badge');
+        var oldBadge = cellEl.querySelector('.board-item-ready-tick, .order-ready-badge');
         if (oldBadge) oldBadge.remove();
         cellEl.classList.remove('order-ready-item');
 
@@ -1557,6 +1944,17 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
             flyingItem.remove();
             playerCoins += rw;
             spawnFlyingCurrency(targetCardEl, 'gold', rw);
+
+            // Thưởng EXP cho người chơi và kiểm tra Lên Cấp
+            var expGain = (orderObj && orderObj.exp) || ((typeof orderExp === 'function') ? orderExp(itemId) : 15);
+            if (typeof addPlayerExp === 'function') {
+                addPlayerExp(expGain, function (newLevel) {
+                    setTimeout(function () {
+                        triggerLevelUp(newLevel);
+                    }, 650);
+                });
+            }
+
             playSound('win');
             updateUIStats();
             selectedIndex = null;
@@ -1564,18 +1962,39 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
 
             // Nổ hiệu ứng ngôi sao hoàn thành tại thẻ nhiệm vụ
             triggerParticleBurst(targetCardEl, ['#2ecc71', '#a8e6cf', '#ffd54f', '#ffffff']);
-            showFloatingBadge(targetCardEl, 'HOÀN THÀNH!', '#2e7d32');
+            showFloatingBadge(targetCardEl, '+' + rw + ' Vàng | +' + expGain + ' XP', '#2e7d32');
 
-            // Bê vật phẩm nhiệm vụ đã hoàn thành vào Khu cắm trại (chỉ lần đầu thắng màn để chống farm)
-            if (!isReplayLevel && typeof addCampItem === 'function') {
-                addCampItem(itemId, currentLevel);
+            // Bê vật phẩm nhiệm vụ đã hoàn thành vào Khu cắm trại
+            if (typeof addCampItem === 'function') {
+                addCampItem(itemId);
             }
 
             if (isAutoEnabled) fillBoardInstantly();
-            hideNpcBubble();
 
-            // Thẻ nhiệm vụ hoàn thành bay sang chú chó rồi mất đi, đồng thời lộ diện nhiệm vụ tiếp theo trong hàng đợi
+            // Thú cưng vui vẻ gửi lời cảm ơn khi nhận được đúng món đồ
+            var orderPetId = (orderObj && orderObj.petId) || (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) || 'character01';
+            var thankQuote = (typeof getPetThankDialogue === 'function')
+                ? getPetThankDialogue(orderPetId, itemId)
+                : 'Cảm ơn bạn nhiều nhé!';
+            setPetSpeech(orderPetId, thankQuote, 2800);
+
+            // Thẻ nhiệm vụ hoàn thành bay sang thú cưng rồi đổi sang đơn hàng mới ngay lập tức
             flyCompletedOrderToPet(targetCardEl, function () {
+                if (typeof recordOrderDelivered === 'function') {
+                    recordOrderDelivered(itemId);
+                }
+                var oIdx = currentOrders.indexOf(orderObj);
+                if (oIdx !== -1) {
+                    var existingIds = currentOrders.filter(function (o) { return o !== orderObj; }).map(function (o) { return o.id; });
+                    var existingPetIds = currentOrders.filter(function (o) { return o !== orderObj && o.petId; }).map(function (o) { return o.petId; });
+                    var tierHint = oIdx === 0 ? 'easy' : (oIdx === 1 ? 'medium' : 'hard');
+                    var hist = (typeof SAVE !== 'undefined' && Array.isArray(SAVE.recentOrdersHistory)) ? SAVE.recentOrdersHistory : [];
+                    currentOrders[oIdx] = (typeof generateContinuousOrder === 'function')
+                        ? generateContinuousOrder(SAVE.playerLevel || 1, existingIds, tierHint, itemId, hist, existingPetIds)
+                        : { id: 'ghe_lv2', done: false, gold: 48, exp: 15, petId: 'character01' };
+                }
+                persistCurrentBoardState();
+                renderOrders();
                 renderBoard();
                 checkAutoDeliverRevealedOrders();
             });
@@ -1584,58 +2003,66 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
         boardData[boardCellIdx] = makeEmptyCell();
         playerCoins += rw;
         if (targetCardEl) spawnFlyingCurrency(targetCardEl, 'gold', rw);
+
+        var expGainFallback = (orderObj && orderObj.exp) || ((typeof orderExp === 'function') ? orderExp(itemId) : 15);
+        if (typeof addPlayerExp === 'function') {
+            addPlayerExp(expGainFallback, function (newLevel) {
+                setTimeout(function () {
+                    triggerLevelUp(newLevel);
+                }, 650);
+            });
+        }
+
         playSound('win');
         updateUIStats();
         selectedIndex = null;
         updateSellButton(null);
 
-        // Bê vật phẩm nhiệm vụ đã hoàn thành vào Khu cắm trại (chỉ lần đầu thắng màn để chống farm)
-        if (!isReplayLevel && typeof addCampItem === 'function') {
-            addCampItem(itemId, currentLevel);
+        if (typeof addCampItem === 'function') {
+            addCampItem(itemId);
         }
 
         if (isAutoEnabled) fillBoardInstantly();
-        hideNpcBubble();
 
-        if (targetCardEl) {
-            flyCompletedOrderToPet(targetCardEl, function () {
-                renderBoard();
-                checkAutoDeliverRevealedOrders();
-            });
-        } else {
+        var fallbackPetId = (orderObj && orderObj.petId) || (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) || 'character01';
+        var fallbackThankQuote = (typeof getPetThankDialogue === 'function')
+            ? getPetThankDialogue(fallbackPetId, itemId)
+            : 'Cảm ơn bạn nhiều nhé!';
+        setPetSpeech(fallbackPetId, fallbackThankQuote, 2800);
+
+        var onDoneOrder = function () {
+            if (typeof recordOrderDelivered === 'function') {
+                recordOrderDelivered(itemId);
+            }
+            var oIdx = currentOrders.indexOf(orderObj);
+            if (oIdx !== -1) {
+                var existingIds = currentOrders.filter(function (o) { return o !== orderObj; }).map(function (o) { return o.id; });
+                var existingPetIds = currentOrders.filter(function (o) { return o !== orderObj && o.petId; }).map(function (o) { return o.petId; });
+                var tierHint = oIdx === 0 ? 'easy' : (oIdx === 1 ? 'medium' : 'hard');
+                var hist = (typeof SAVE !== 'undefined' && Array.isArray(SAVE.recentOrdersHistory)) ? SAVE.recentOrdersHistory : [];
+                currentOrders[oIdx] = (typeof generateContinuousOrder === 'function')
+                    ? generateContinuousOrder(SAVE.playerLevel || 1, existingIds, tierHint, itemId, hist, existingPetIds)
+                    : { id: 'ghe_lv2', done: false, gold: 48, exp: 15, petId: 'character01' };
+            }
+            persistCurrentBoardState();
+            renderOrders();
             renderBoard();
             checkAutoDeliverRevealedOrders();
+        };
+
+        if (targetCardEl) {
+            flyCompletedOrderToPet(targetCardEl, onDoneOrder);
+        } else {
+            onDoneOrder();
         }
     }
 }
 
-// Khi 1 nhiệm vụ hoàn thành làm lộ nhiệm vụ tiếp theo (vốn đang ẩn sau 4 ô đầu),
-// nếu trên bàn cờ đã có sẵn vật phẩm khớp với nhiệm vụ mới lộ ra thì tự động bay lên giao luôn
+// Cập nhật lại giao diện đơn hàng & bàn cờ khi có sự kiện mới (người chơi chủ động bấm nút NỘP để giao)
 function checkAutoDeliverRevealedOrders() {
     if (levelWon || !currentOrders || !ordersContainer) return;
-    var maxVis = (typeof MAX_VISIBLE_ORDERS === 'number') ? MAX_VISIBLE_ORDERS : 4;
-    var visCount = 0;
-    for (var i = 0; i < currentOrders.length; i++) {
-        var o = currentOrders[i];
-        if (o.done) continue;
-        if (visCount >= maxVis) break;
-        visCount++;
-        var matchIdx = findOrderMatch(boardData, o.id);
-        if (matchIdx !== -1) {
-            var cardEl = ordersContainer.querySelector('.order-card[data-order-idx="' + i + '"]') ||
-                         ordersContainer.querySelector('.order-card[data-order-id="' + o.id + '"]:not(.done)');
-            if (cardEl) {
-                (function (ord, mIdx, cEl) {
-                    setTimeout(function () {
-                        if (!ord.done) {
-                            deliverReadyOrderWithFlight(ord, mIdx, cEl);
-                        }
-                    }, 220);
-                })(o, matchIdx, cardEl);
-                break;
-            }
-        }
-    }
+    renderOrders();
+    renderBoard();
 }
 
 // Tính phần trăm tiến độ màn chơi (0 -> 100%) theo số nhiệm vụ đã hoàn thành & cấp vật phẩm đang chế tạo trên bàn
@@ -1697,82 +2124,721 @@ function updateUIStats() {
     if (energyUI) energyUI.innerText = playerEnergy.toLocaleString('vi-VN');
     if (coinUI) coinUI.innerText = playerCoins.toLocaleString('vi-VN');
     if (gemUI) gemUI.innerText = playerGems.toLocaleString('vi-VN');
+
+    var pLv = (typeof SAVE !== 'undefined' && SAVE.playerLevel) ? SAVE.playerLevel : (currentLevel || 1);
+    var pExp = (typeof SAVE !== 'undefined' && SAVE.playerExp) ? SAVE.playerExp : 0;
+    var expNeeded = (typeof getExpRequiredForLevel === 'function') ? getExpRequiredForLevel(pLv) : 50;
+    var progPct = Math.min(100, Math.floor((pExp / expNeeded) * 100));
+
     if (currentLvBadgeUI) {
         var numEl = currentLvBadgeUI.querySelector('.lv-map-num');
-        if (numEl) numEl.innerText = currentLevel;
-        else currentLvBadgeUI.innerText = currentLevel;
-        var progPct = computeLevelProgressPct();
+        if (numEl) numEl.innerText = pLv;
+        else currentLvBadgeUI.innerText = pLv;
         currentLvBadgeUI.style.setProperty('--lv-prog', progPct);
     }
+
     SAVE.coins = playerCoins;
     SAVE.gems = playerGems;
     SAVE.energy = playerEnergy;
-    SAVE.level = currentLevel;
+    SAVE.level = pLv;
+    SAVE.playerLevel = pLv;
     saveGame();
+}
+
+// ==========================================
+// ĐỒNG BỘ ĐƠN HÀNG THEO NHÓM THÚ CƯNG (PET ORDER GROUPS)
+// ==========================================
+function syncCurrentOrdersFromGroups() {
+    if (typeof ensurePetOrderGroups === 'function') {
+        ensurePetOrderGroups(SAVE.playerLevel || 1);
+    }
+    var flat = [];
+    if (SAVE && Array.isArray(SAVE.petOrderGroups)) {
+        SAVE.petOrderGroups.forEach(function (group, gIdx) {
+            if (group && Array.isArray(group.orders)) {
+                group.orders.forEach(function (o, oIdx) {
+                    o.petId = group.petId;
+                    o.groupIdx = gIdx;
+                    o.orderIdx = oIdx;
+                    flat.push(o);
+                });
+            }
+        });
+    }
+    currentOrders = flat;
+    return currentOrders;
+}
+
+// Hiệu ứng vật phẩm bay từ bàn cờ lên khay đơn hàng (khi double-click hoặc chạm ô)
+function flyItemToTraySlot(fromCellIdx, targetSlotEl, onFinish) {
+    if (fromCellIdx === -1 || !boardData[fromCellIdx] || !targetSlotEl) {
+        if (onFinish) onFinish();
+        return;
+    }
+
+    var cellEl = boardElement && boardElement.children[fromCellIdx];
+    var cellImg = cellEl && cellEl.querySelector('.item-img');
+    if (!cellEl || !cellImg) {
+        if (onFinish) onFinish();
+        return;
+    }
+
+    var srcRect = cellEl.getBoundingClientRect();
+    var tgtRect = targetSlotEl.getBoundingClientRect();
+
+    var flyer = document.createElement('img');
+    flyer.src = cellImg.src;
+    flyer.style.cssText = 'position:fixed;pointer-events:none;z-index:180020;' +
+        'width:' + (srcRect.width * 0.85) + 'px;height:' + (srcRect.height * 0.85) + 'px;' +
+        'left:' + (srcRect.left + srcRect.width * 0.075) + 'px;top:' + (srcRect.top + srcRect.height * 0.075) + 'px;' +
+        'filter:drop-shadow(0 0 10px #2ecc71);transition:none;';
+    document.body.appendChild(flyer);
+
+    // Xóa item trên bàn cờ ngay lập tức để người chơi có thêm ô trống
+    boardData[fromCellIdx] = makeEmptyCell();
+    cellImg.style.visibility = 'hidden';
+    var oldBadge = cellEl.querySelector('.board-item-ready-tick');
+    if (oldBadge) oldBadge.remove();
+    cellEl.classList.remove('order-ready-item');
+
+    var dx = (tgtRect.left + tgtRect.width * 0.5) - (srcRect.left + srcRect.width * 0.5);
+    var dy = (tgtRect.top + tgtRect.height * 0.5) - (srcRect.top + srcRect.height * 0.5);
+
+    var anim = flyer.animate([
+        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        { transform: 'translate(' + (dx * 0.45) + 'px, ' + (dy * 0.45 - 28) + 'px) scale(1.22)', opacity: 1, offset: 0.5 },
+        { transform: 'translate(' + dx + 'px, ' + dy + 'px) scale(0.85)', opacity: 0.95 }
+    ], { duration: 380, easing: 'cubic-bezier(.2,.85,.32,1.15)', fill: 'forwards' });
+
+    playSound('spawn');
+
+    anim.onfinish = function () {
+        flyer.remove();
+        triggerParticleBurst(targetSlotEl, ['#2ecc71', '#a8e6cf', '#ffd54f', '#ffffff']);
+        if (onFinish) onFinish();
+    };
+}
+
+// Xử lý Double Click / Double Tap vào ô chứa vật phẩm hoàn thành trên bàn cờ
+function handleCellDoubleClick(cellIdx, cellEl) {
+    if (cellIdx < 0 || cellIdx >= TOTAL_CELLS) return false;
+    var cellData = boardData[cellIdx];
+    if (!cellData || !cellData.id || cellData.isRock || cellData.isLocked || GENERATORS[cellData.id]) return false;
+
+    if (!SAVE || !Array.isArray(SAVE.petOrderGroups)) return false;
+    var targetGroup = null;
+    var targetOrder = null;
+
+    for (var gi = 0; gi < SAVE.petOrderGroups.length; gi++) {
+        var g = SAVE.petOrderGroups[gi];
+        if (!g || !Array.isArray(g.orders)) continue;
+        for (var oi = 0; oi < g.orders.length; oi++) {
+            var o = g.orders[oi];
+            if (o && o.id === cellData.id && !o.stashed) {
+                targetGroup = g;
+                targetOrder = o;
+                break;
+            }
+        }
+        if (targetOrder) break;
+    }
+
+    if (!targetOrder) return false;
+
+    var slotEl = document.querySelector('.tray-item-slot[data-order-id="' + targetOrder.id + '"]:not(.stashed)');
+    if (!slotEl) slotEl = document.querySelector('.tray-item-slot[data-order-id="' + targetOrder.id + '"]');
+
+    targetOrder.stashed = true;
+    flyItemToTraySlot(cellIdx, slotEl, function () {
+        persistCurrentBoardState();
+        renderOrders();
+        renderBoard();
+    });
+
+    return true;
+}
+
+// Giao toàn bộ nhóm nhiệm vụ của 1 thú cưng khi đủ điều kiện
+function deliverPetOrderGroup(groupIdx) {
+    if (!SAVE || !Array.isArray(SAVE.petOrderGroups) || !SAVE.petOrderGroups[groupIdx]) return;
+    var group = SAVE.petOrderGroups[groupIdx];
+    var groupEls = document.querySelectorAll('.pet-order-group');
+    var trayEl = groupEls[groupIdx];
+
+    // 1. Nếu có món nào chưa stashed mà đang có trên bàn cờ, cho bay lên khay trước
+    var unstashed = group.orders.filter(function (o) { return !o.stashed; });
+    var flightPromises = [];
+
+    unstashed.forEach(function (o) {
+        var matchIdx = findOrderMatch(boardData, o.id);
+        if (matchIdx !== -1) {
+            var slotEl = trayEl && trayEl.querySelector('.tray-item-slot[data-order-id="' + o.id + '"]');
+            o.stashed = true;
+            flightPromises.push(new Promise(function (resolve) {
+                flyItemToTraySlot(matchIdx, slotEl, resolve);
+            }));
+        }
+    });
+
+    var finishDelivery = function () {
+        var totalGold = 0;
+        var totalExp = 0;
+
+        group.orders.forEach(function (o) {
+            var rw = (typeof orderReward === 'function') ? orderReward(o.id) : 50;
+            var ex = (typeof orderExp === 'function') ? orderExp(o.id) : 15;
+            totalGold += (o.gold || rw);
+            totalExp += (o.exp || ex);
+
+            if (typeof recordOrderDelivered === 'function') {
+                recordOrderDelivered(o.id);
+            }
+            if (typeof addCampItem === 'function') {
+                addCampItem(o.id);
+            }
+        });
+
+        playerCoins += totalGold;
+        if (trayEl) {
+            spawnFlyingCurrency(trayEl, 'gold', totalGold);
+            triggerParticleBurst(trayEl, ['#2ecc71', '#a8e6cf', '#ffd54f', '#ffffff']);
+            showFloatingBadge(trayEl, '+' + totalGold + ' Vàng | +' + totalExp + ' XP', '#2e7d32');
+        }
+
+        if (typeof addPlayerExp === 'function') {
+            addPlayerExp(totalExp, function (newLevel) {
+                setTimeout(function () { triggerLevelUp(newLevel); }, 650);
+            });
+        }
+
+        playSound('win');
+        updateUIStats();
+        selectedIndex = null;
+        updateSellButton(null);
+
+        var thankQuote = (typeof getPetThankDialogue === 'function')
+            ? getPetThankDialogue(group.petId, (group.orders[0] ? group.orders[0].id : ''))
+            : 'Cảm ơn bạn nhiều nhé!';
+        setPetSpeech(group.petId, thankQuote, 3000);
+
+        if (trayEl) {
+            trayEl.animate([
+                { transform: 'scale(1)', opacity: 1 },
+                { transform: 'scale(1.08) translateY(-8px)', opacity: 1, offset: 0.3 },
+                { transform: 'scale(0.8) translateY(-30px)', opacity: 0 }
+            ], { duration: 400, easing: 'ease-in-out', fill: 'forwards' });
+        }
+
+        setTimeout(function () {
+            var currentIdx = SAVE.petOrderGroups.indexOf(group);
+            if (currentIdx !== -1) {
+                SAVE.petOrderGroups.splice(currentIdx, 1);
+            }
+            // Xuất hiện nhóm nhiệm vụ mới lần lượt
+            ensurePetOrderGroups(SAVE.playerLevel || 1);
+            syncCurrentOrdersFromGroups();
+
+            // Kiểm tra và giải phóng máy phát nếu đạt mốc đơn hàng (Đơn 7 mở Ba Lô, Đơn 10 mở Thùng Chứa)
+            if (typeof checkAndUnlockGeneratorsByMilestone === 'function') {
+                var unlocked = checkAndUnlockGeneratorsByMilestone(boardData);
+                if (Array.isArray(unlocked) && unlocked.length > 0) {
+                    unlocked.forEach(function (genId) {
+                        var genIdx = boardData.findIndex(function (c) { return c && c.id === genId; });
+                        var genName = (genId === 'generator_backpack') ? 'Ba Lô Dã Ngoại' : ((genId === 'generator_crate') ? 'Thùng Bếp & Sinh Tồn' : 'Máy Phát Mới');
+                        if (genIdx !== -1 && boardElement && boardElement.children[genIdx]) {
+                            var rCell = boardElement.children[genIdx];
+                            triggerParticleBurst(rCell, ['#ffd700', '#ffeb3b', '#e91e63', '#00e676', '#00b0ff', '#ffffff']);
+                            showFloatingBadge(rCell, '🎉 ĐÃ MỞ KHÓA ' + genName.toUpperCase() + '! 🎉', '#e67e22');
+                        }
+                        if (typeof showToast === 'function') {
+                            showToast('🎉 Đã mở khóa ' + genName + '! Sẵn sàng nhận nhiệm vụ mới!', 4000);
+                        }
+                        if (typeof setPetSpeech === 'function') {
+                            setPetSpeech(null, 'Oa! ' + genName + ' đã lộ diện! Hãy chạm vào để chuẩn bị đồ nhé!', 4500);
+                        }
+                    });
+                }
+            }
+            if (typeof ensureAllGeneratorsOnBoard === 'function') {
+                ensureAllGeneratorsOnBoard(boardData, currentOrders);
+            }
+            if (typeof populateRockHiddenItems === 'function') {
+                populateRockHiddenItems(boardData);
+            }
+            persistCurrentBoardState();
+            renderOrders();
+            renderBoard();
+        }, 420);
+    };
+
+    if (flightPromises.length > 0) {
+        Promise.all(flightPromises).then(finishDelivery);
+    } else {
+        finishDelivery();
+    }
 }
 
 function renderOrders() {
     if (!ordersContainer) return;
-    ordersContainer.innerHTML = '';
+
+    syncCurrentOrdersFromGroups();
+
     var webs = countWebs(boardData);
     if (webCountUI) webCountUI.innerText = `${webs}`;
 
-    // Hiển thị tối đa 4 vật phẩm nhiệm vụ chưa hoàn thành; ẩn các nhiệm vụ còn lại trong hàng đợi.
-    // Khi người chơi hoàn thành 1 nhiệm vụ, nhiệm vụ tiếp theo tự động xuất hiện.
-    var maxVisible = (typeof MAX_VISIBLE_ORDERS === 'number') ? MAX_VISIBLE_ORDERS : 4;
-    var visibleCount = 0;
+    var groups = (SAVE && Array.isArray(SAVE.petOrderGroups)) ? SAVE.petOrderGroups : [];
+    if (!groups.length) {
+        ordersContainer.innerHTML = '';
+        return;
+    }
 
-    currentOrders.forEach((o, idx) => {
-        if (o.done) return;
-        if (visibleCount >= maxVisible) return;
-        visibleCount++;
+    // Đếm các vật phẩm khả dụng trên bàn cờ
+    var availableBoardItems = {};
+    if (boardData && boardData.length) {
+        boardData.forEach(function (c) {
+            if (c && c.id && !c.isLocked && !c.isRock && !GENERATORS[c.id]) {
+                availableBoardItems[c.id] = (availableBoardItems[c.id] || 0) + 1;
+            }
+        });
+    }
 
-        var card = document.createElement('div');
-        var line = itemLine(o.id);
-        var bgClass = getCellBgClass(line);
-        card.className = 'order-card ' + bgClass;
-        card.dataset.orderIdx = idx;
-        card.dataset.orderId = o.id;
-        card.title = getItemDisplayName(o.id);
-        var img = document.createElement('img');
-        img.src = getItemImagePath(o.id);
-        card.appendChild(img);
+    // Hiển thị tối đa 2 nhóm thú cưng trên màn hình
+    var visibleGroups = groups.slice(0, 2);
 
-        var parts = o.id.split('_lv');
-        if (parts.length === 2) {
-            var tag = document.createElement('span');
-            tag.className = 'lv-tag';
-            tag.innerText = 'Lv.' + parts[1];
-            card.appendChild(tag);
+    // TỐI ƯU HÓA DOM RECONCILIATION: Tránh xóa innerHTML gây giật nháy khi bấm máy sinh đồ
+    var existingGroupEls = ordersContainer.querySelectorAll('.pet-order-group');
+    var canReconcile = (existingGroupEls.length === visibleGroups.length);
+    if (canReconcile) {
+        for (var ci = 0; ci < visibleGroups.length; ci++) {
+            var vg = visibleGroups[ci];
+            var eg = existingGroupEls[ci];
+            if (!eg || eg.dataset.petId !== vg.petId) {
+                canReconcile = false;
+                break;
+            }
+            var itemSlots = eg.querySelectorAll('.tray-item-slot');
+            if (itemSlots.length !== (vg.orders ? vg.orders.length : 0)) {
+                canReconcile = false;
+                break;
+            }
+            for (var si = 0; si < vg.orders.length; si++) {
+                if (itemSlots[si].dataset.orderId !== vg.orders[si].id) {
+                    canReconcile = false;
+                    break;
+                }
+            }
+            if (!canReconcile) break;
         }
-        var matchIdx = findOrderMatch(boardData, o.id);
-        if (matchIdx !== -1) {
-            card.classList.add('ready');
-            card.addEventListener('click', () => {
-                deliverReadyOrderWithFlight(o, matchIdx, card);
+    }
+
+    if (canReconcile) {
+        // Cập nhật trạng thái trực tiếp trên DOM hiện có (giữ nguyên Canvas hoạt ảnh, không bị giật nháy)
+        visibleGroups.forEach(function (group, gIdx) {
+            var groupEl = existingGroupEls[gIdx];
+            var trayWrap = groupEl.querySelector('.pet-group-tray-wrap');
+            var itemSlots = groupEl.querySelectorAll('.tray-item-slot');
+            var allReady = true;
+
+            group.orders.forEach(function (o, oIdx) {
+                var isReady = false;
+                if (o.stashed) {
+                    isReady = true;
+                } else if (availableBoardItems[o.id] && availableBoardItems[o.id] > 0) {
+                    isReady = true;
+                    availableBoardItems[o.id]--;
+                } else {
+                    isReady = false;
+                    allReady = false;
+                }
+
+                var slot = itemSlots[oIdx];
+                if (slot) {
+                    var lineBg = (typeof getCellBgClass === 'function' && typeof itemLine === 'function')
+                        ? getCellBgClass(itemLine(o.id))
+                        : 'cell-bg-01';
+                    for (var bi = 1; bi <= 9; bi++) {
+                        slot.classList.remove('cell-bg-0' + bi);
+                    }
+                    slot.classList.add(lineBg);
+
+                    if (isReady) {
+                        if (!slot.classList.contains('ready-glow')) slot.classList.add('ready-glow');
+                        if (!slot.querySelector('.tray-check-icon')) {
+                            var chk = document.createElement('img');
+                            chk.className = 'tray-check-icon';
+                            chk.src = 'assets/images/ui/icon_check.png';
+                            chk.alt = '✓';
+                            slot.appendChild(chk);
+                        }
+                    } else {
+                        slot.classList.remove('ready-glow');
+                        var oldChk = slot.querySelector('.tray-check-icon');
+                        if (oldChk) oldChk.remove();
+                    }
+
+                    if (o.stashed) {
+                        if (!slot.classList.contains('stashed')) slot.classList.add('stashed');
+                    } else {
+                        slot.classList.remove('stashed');
+                    }
+                }
             });
-        } else {
-            card.addEventListener('click', () => {
-                var askNpc = getNextNpcId();
-                var targetName = (typeof getItemCleanName === 'function') ? getItemCleanName(o.id) : getItemDisplayName(o.id);
-                var needMsg = (typeof I18N !== 'undefined') ? I18N.t('npc.need_item', { item: targetName }) : ('Cần ' + targetName + '! Hãy ghép nhé!');
-                setNpcState(askNpc, '', needMsg, 1800);
+
+            // Cập nhật nút GIAO phía trên khay
+            if (trayWrap) {
+                var existingDeliverBtn = trayWrap.querySelector('.btn-group-deliver');
+                if (allReady && group.orders.length > 0) {
+                    if (!existingDeliverBtn) {
+                        var petObj = (typeof PET_CHARACTERS !== 'undefined')
+                            ? PET_CHARACTERS.find(function (p) { return p.id === group.petId; })
+                            : null;
+                        var petName = petObj ? petObj.name : 'Bạn đồng hành';
+
+                        var deliverBtn = document.createElement('button');
+                        deliverBtn.className = 'btn-3s btn-green btn-group-deliver';
+                        deliverBtn.type = 'button';
+                        deliverBtn.title = 'Nhấn để giao toàn bộ đơn hàng cho ' + petName + '!';
+                        deliverBtn.innerHTML = '<span class="btn-3s-bg" aria-hidden="true">' +
+                            '<span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span>' +
+                            '</span><span class="btn-3s-text">Giao</span>';
+
+                        deliverBtn.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            deliverPetOrderGroup(gIdx);
+                        });
+                        trayWrap.insertBefore(deliverBtn, trayWrap.firstChild);
+                    }
+                } else {
+                    if (existingDeliverBtn) existingDeliverBtn.remove();
+                }
+            }
+        });
+        syncPendingGeneratorDock();
+        return;
+    }
+
+    // Bảo toàn bong bóng thoại nếu đang hiển thị
+    if (npcSpeechBubble && ordersContainer.contains(npcSpeechBubble)) {
+        var rightCol = document.getElementById('scene-right-column');
+        if (rightCol) rightCol.appendChild(npcSpeechBubble);
+    }
+
+    ordersContainer.innerHTML = '';
+
+    visibleGroups.forEach(function (group, gIdx) {
+        var petObj = (typeof PET_CHARACTERS !== 'undefined')
+            ? PET_CHARACTERS.find(function (p) { return p.id === group.petId; })
+            : null;
+        var petName = petObj ? petObj.name : 'Bạn đồng hành';
+        var petImgSrc = petObj ? petObj.img : ('assets/images/ui/' + (group.petId || 'character01') + '.png');
+
+        var groupEl = document.createElement('div');
+        groupEl.className = 'pet-order-group';
+        groupEl.dataset.groupIdx = gIdx;
+        groupEl.dataset.petId = group.petId;
+
+        // 1. Hình ảnh / Hoạt ảnh Thú cưng đứng cạnh khay (Canvas nếu có spritesheet, Img nếu dùng ảnh tĩnh)
+        var avatarWrap = document.createElement('div');
+        avatarWrap.className = 'pet-group-avatar-wrap';
+        avatarWrap.title = 'Chạm để trò chuyện cùng ' + petName;
+
+        var petAvatarObj = createPetAvatarElement(group.petId, petName, petImgSrc);
+        avatarWrap.appendChild(petAvatarObj.element);
+        groupEl._petAvatarObj = petAvatarObj;
+
+        avatarWrap.addEventListener('click', function () {
+            var sampleOrder = (group.orders && group.orders[0]) ? group.orders[0].id : '';
+            var quote = (typeof getPetOrderDialogue === 'function')
+                ? getPetOrderDialogue(sampleOrder, group.petId)
+                : ('Chào bạn! Hãy giúp mình chuẩn bị đồ dã ngoại nhé!');
+            setPetSpeech(group.petId, quote, 2800);
+        });
+
+        groupEl.appendChild(avatarWrap);
+
+        // 2. Khay đơn hàng
+        var trayWrap = document.createElement('div');
+        trayWrap.className = 'pet-group-tray-wrap';
+
+        var allReady = true;
+        var groupOrderStates = [];
+
+        group.orders.forEach(function (o) {
+            var ready = false;
+            if (o.stashed) {
+                ready = true;
+            } else if (availableBoardItems[o.id] && availableBoardItems[o.id] > 0) {
+                ready = true;
+                availableBoardItems[o.id]--;
+            } else {
+                ready = false;
+                allReady = false;
+            }
+            groupOrderStates.push(ready);
+        });
+
+        // Nút GIAO phía trên khay (khi đủ nhóm)
+        if (allReady && group.orders.length > 0) {
+            var deliverBtn = document.createElement('button');
+            deliverBtn.className = 'btn-3s btn-green btn-group-deliver';
+            deliverBtn.type = 'button';
+            deliverBtn.title = 'Nhấn để giao toàn bộ đơn hàng cho ' + petName + '!';
+            deliverBtn.innerHTML = '<span class="btn-3s-bg" aria-hidden="true">' +
+                '<span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span>' +
+                '</span><span class="btn-3s-text">Giao</span>';
+
+            deliverBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                deliverPetOrderGroup(gIdx);
             });
+            trayWrap.appendChild(deliverBtn);
         }
-        ordersContainer.appendChild(card);
+
+        // 3. Khay 3-slice bằng ảnh bg_giao_left/center/right
+        var trayEl = document.createElement('div');
+        trayEl.className = 'pet-group-tray';
+
+        var trayBg = document.createElement('div');
+        trayBg.className = 'tray-bg';
+        trayBg.innerHTML = '<div class="tray-bg-left"></div><div class="tray-bg-mid"></div><div class="tray-bg-right"></div>';
+        trayEl.appendChild(trayBg);
+
+        var itemsEl = document.createElement('div');
+        itemsEl.className = 'tray-items';
+
+        group.orders.forEach(function (o, oIdx) {
+            var isReady = groupOrderStates[oIdx];
+            var lineBg = (typeof getCellBgClass === 'function' && typeof itemLine === 'function')
+                ? getCellBgClass(itemLine(o.id))
+                : 'cell-bg-01';
+            var slot = document.createElement('div');
+            slot.className = 'tray-item-slot ' + lineBg + (isReady ? ' ready-glow' : '') + (o.stashed ? ' stashed' : '');
+            slot.dataset.groupIdx = gIdx;
+            slot.dataset.orderIdx = oIdx;
+            slot.dataset.orderId = o.id;
+            slot.title = getItemDisplayName(o.id) + (isReady ? ' (Sẵn sàng nộp)' : ' (Cần chế tạo)');
+
+            var img = document.createElement('img');
+            img.className = 'item-icon';
+            img.src = getItemImagePath(o.id);
+            img.alt = getItemDisplayName(o.id);
+            slot.appendChild(img);
+
+            // Dấu tích xanh icon_check.png ở góc ảnh khi hoàn thành
+            if (isReady) {
+                var chk = document.createElement('img');
+                chk.className = 'tray-check-icon';
+                chk.src = 'assets/images/ui/icon_check.png';
+                chk.alt = '✓';
+                slot.appendChild(chk);
+            }
+
+            // Chạm vào ô đơn hàng trên khay
+            slot.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (!o.stashed) {
+                    var matchIdx = findOrderMatch(boardData, o.id);
+                    if (matchIdx !== -1) {
+                        o.stashed = true;
+                        flyItemToTraySlot(matchIdx, slot, function () {
+                            persistCurrentBoardState();
+                            renderOrders();
+                            renderBoard();
+                        });
+                    } else {
+                        var quote = (typeof getPetOrderDialogue === 'function')
+                            ? getPetOrderDialogue(o.id, group.petId)
+                            : ('Hãy giúp mình ghép ' + getItemDisplayName(o.id) + ' nhé!');
+                        setPetSpeech(group.petId, quote, 2800);
+                    }
+                } else {
+                    setPetSpeech(group.petId, 'Món này đã nằm sẵn trong khay rồi nè!', 2000);
+                }
+            });
+
+            itemsEl.appendChild(slot);
+        });
+
+        trayEl.appendChild(itemsEl);
+        trayWrap.appendChild(trayEl);
+        groupEl.appendChild(trayWrap);
+        ordersContainer.appendChild(groupEl);
     });
 
-    var allDone = currentOrders.every(o => o.done);
-    if (allDone && webs > 0 && !levelWon) {
-        var clearWebMsg = (typeof I18N !== 'undefined') ? I18N.t('npc.clear_webs_win', { count: webs }) : ('Phá nốt ' + webs + ' ô Nhện để thắng nhé!');
-        setNpcState('de', '', clearWebMsg, 2200);
+    syncPendingGeneratorDock();
+}
+
+// ==========================================
+// Ô CHỜ MÁY PHÁT MỚI BÊN TRÁI CHÚ CHÓ (LEVEL 4 -> BA LÔ, LEVEL 5 -> THÙNG ĐỒ)
+// ==========================================
+function syncPendingGeneratorDock() {
+    if (!ordersContainer) return;
+    var firstGroup = ordersContainer.querySelector('.pet-order-group');
+    if (!firstGroup) return;
+
+    var pLv = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number')
+        ? SAVE.playerLevel
+        : (currentLevel || 1);
+    var pendingGens = (typeof getPendingDockGenerators === 'function')
+        ? getPendingDockGenerators(boardData, pLv)
+        : [];
+
+    var existingDock = firstGroup.querySelector('.pending-gen-dock');
+    if (!pendingGens || pendingGens.length === 0) {
+        if (existingDock) existingDock.remove();
+        return;
     }
-    if (allDone && webs === 0 && !levelWon) {
-        levelWon = true;
-        hideNpcBubble();
-        clearHintVisuals();
-        setTimeout(finishLevel, 650);
+
+    var key = pendingGens.join(',');
+    if (existingDock && existingDock.dataset.gensKey === key) {
+        return;
     }
+    if (existingDock) existingDock.remove();
+
+    var dock = document.createElement('div');
+    dock.className = 'pending-gen-dock';
+    dock.dataset.gensKey = key;
+
+    pendingGens.forEach(function (genId) {
+        var genName = (genId === 'generator_backpack') ? 'Ba Lô Dã Ngoại' : 'Thùng Bếp & Sinh Tồn';
+        var slot = document.createElement('div');
+        slot.className = 'pending-gen-slot';
+        slot.dataset.genId = genId;
+        slot.title = genName + ' mới mở khóa! Kéo thả vào ô trống trên bàn chơi!';
+
+        var focusRing = document.createElement('span');
+        focusRing.className = 'pending-gen-focus-ring';
+        slot.appendChild(focusRing);
+
+        var label = document.createElement('span');
+        label.className = 'pending-gen-label';
+        label.textContent = 'Kéo vào bàn';
+        slot.appendChild(label);
+
+        var img = document.createElement('img');
+        img.className = 'pending-gen-img';
+        img.src = getItemImagePath(genId);
+        img.alt = genName;
+        img.draggable = false;
+        slot.appendChild(img);
+
+        var badge = document.createElement('img');
+        badge.className = 'generator-energy-badge';
+        badge.src = 'assets/images/board/icon_nangluong_tao.png';
+        badge.alt = '⚡';
+        badge.draggable = false;
+        slot.appendChild(badge);
+
+        slot.addEventListener('pointerdown', function (e) {
+            onPendingGenPointerDown(e, genId, slot);
+        });
+
+        dock.appendChild(slot);
+    });
+
+    // Đặt ngay bên trái chú chó (trước .pet-group-avatar-wrap)
+    firstGroup.insertBefore(dock, firstGroup.firstChild);
+}
+
+function placePendingGeneratorOnBoard(genId, preferredCellIdx) {
+    if (!boardData || !boardData.length || !genId) return false;
+    // Kiểm tra xem đã có trên bàn cờ chưa
+    var alreadyIdx = boardData.findIndex(function (c) {
+        return c && c.id === genId && !c.isRock && !c.isLocked;
+    });
+    if (alreadyIdx !== -1) {
+        syncPendingGeneratorDock();
+        return true;
+    }
+
+    var empties = getEmptyIndexes(boardData);
+    var targetIdx = -1;
+
+    if (typeof preferredCellIdx === 'number' && preferredCellIdx >= 0 && preferredCellIdx < boardData.length) {
+        var tc = boardData[preferredCellIdx];
+        if (tc && !tc.isRock && !tc.isLocked) {
+            if (!tc.id) {
+                targetIdx = preferredCellIdx;
+            } else if (!GENERATORS[tc.id] && empties.length > 0) {
+                // Nếu người chơi thả vào ô đang có vật phẩm thường, dời vật phẩm đó sang ô trống gần nhất
+                boardData[empties[0]] = tc;
+                targetIdx = preferredCellIdx;
+            }
+        }
+    }
+
+    if (targetIdx === -1) {
+        if (empties.length > 0) {
+            // Ưu tiên ô trống gần trung tâm bàn cờ
+            empties.sort(function (a, b) {
+                var ra = Math.floor(a / 7), ca = a % 7;
+                var rb = Math.floor(b / 7), cb = b % 7;
+                return (Math.abs(ra - 3) + Math.abs(ca - 3)) - (Math.abs(rb - 3) + Math.abs(cb - 3));
+            });
+            targetIdx = empties[0];
+        } else {
+            if (typeof showToast === 'function') {
+                showToast('⚠️ Bàn cờ đã đầy! Hãy ghép hoặc bán bớt 1 món đồ để lấy chỗ đặt máy phát nhé!');
+            }
+            return false;
+        }
+    }
+
+    boardData[targetIdx] = {
+        id: genId,
+        isRock: false,
+        isLocked: false,
+        isGeneratorRock: false,
+        isNewGenUnlocked: true
+    };
+
+    if (typeof populateRockHiddenItems === 'function') {
+        populateRockHiddenItems(boardData);
+    }
+
+    persistCurrentBoardState();
+    renderBoard();
+    renderOrders();
+
+    playSound('win');
+    triggerVibrate([40, 60, 40]);
+
+    var genName = (genId === 'generator_backpack') ? 'Ba Lô Dã Ngoại' : 'Thùng Bếp & Sinh Tồn';
+    if (boardElement && boardElement.children[targetIdx]) {
+        var placedCell = boardElement.children[targetIdx];
+        triggerParticleBurst(placedCell, ['#ffd700', '#ffeb3b', '#00e676', '#00b0ff', '#ffffff']);
+        showFloatingBadge(placedCell, '🎉 ĐÃ ĐẶT ' + genName.toUpperCase() + '! 🎉', '#e67e22');
+    }
+    if (typeof showToast === 'function') {
+        showToast('🎉 Đã đặt ' + genName + ' vào bàn chơi! Chạm vào để nhận nguyên liệu mới!', 3500);
+    }
+    if (typeof setPetSpeech === 'function') {
+        setPetSpeech(null, 'Tuyệt vời! Bạn đã đặt ' + genName + ' lên bàn rồi, chạm vào để lấy đồ mới nhé!', 4000);
+    }
+    return true;
+}
+
+function onPendingGenPointerDown(e, genId, slotEl) {
+    if (dragState) endDrag();
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.stopPropagation();
+
+    clearHintVisuals();
+    hideNpcBubble();
+
+    dragState = {
+        from: -1,
+        fromPendingGen: genId,
+        sourceEl: slotEl,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        active: false,
+        ghost: null
+    };
+    document.addEventListener('pointermove', onPointerMove, { passive: false });
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerCancel);
 }
 
 // ==========================================
@@ -1794,6 +2860,22 @@ function executeMoveAndEffects(fromIdx, toIdx) {
         playSound('merge', res.newId);
         clearedWebs = clearAdjacentWebs(boardData, res.index, currentLevelCfg);
         bonusIdx = bonusDrop(boardData, currentLevelCfg, res.newId);
+
+        // THU THẬP TẤT CẢ Ô NHỆN VỪA BỊ PHÁ (TRỰC TIẾP & LIỀN KỀ) ĐỂ BIẾN Ô ĐÁ LIỀN KỀ THÀNH Ô NHỆN
+        var brokenWebIndices = [];
+        if (res.brokeDirectWeb) {
+            brokenWebIndices.push(res.index);
+        }
+        if (Array.isArray(clearedWebs)) {
+            clearedWebs.forEach(function (w) {
+                if (brokenWebIndices.indexOf(w) === -1) brokenWebIndices.push(w);
+            });
+        }
+
+        var revealedRocks = [];
+        if (typeof revealAdjacentRocksAsWebs === 'function' && brokenWebIndices.length > 0) {
+            revealedRocks = revealAdjacentRocksAsWebs(boardData, brokenWebIndices);
+        }
 
         // Thưởng khi ghép (ECON v3 - xem mergeReward & getComboReward trong js/progress.js):
         // - Ghép ra đồ Lv.4+ thưởng Vàng, Lv.7-8 tặng thêm Kim cương
@@ -1844,6 +2926,41 @@ function executeMoveAndEffects(fromIdx, toIdx) {
             triggerParticleBurst(wCell, ['#ffffff', '#cfd8dc', '#80deea']);
             showFloatingBadge(wCell, 'Rách nhện!', '#00897b');
         });
+
+        // HIỆU ỨNG NỨT VỠ ĐÁ THÀNH MẠNG NHỆN KHI PHÁ Ô NHỆN LIỀN KỀ
+        if (revealedRocks && revealedRocks.length > 0) {
+            playSound('rock_crack');
+            revealedRocks.forEach(function (rIdx) {
+                var rCell = boardElement.children[rIdx];
+                if (rCell) {
+                    rCell.classList.remove('rock-reveal-anim');
+                    void rCell.offsetWidth;
+                    rCell.classList.add('rock-reveal-anim');
+                    var cellObj = boardData[rIdx];
+                    if (cellObj && (cellObj.id === 'generator_backpack' || cellObj.id === 'generator_crate')) {
+                        playSound('win');
+                        triggerVibrate([40, 60, 40]);
+                        triggerParticleBurst(rCell, ['#ffd700', '#ffeb3b', '#e91e63', '#00e676', '#00b0ff', '#ffffff']);
+                        var genName = (cellObj.id === 'generator_backpack') ? 'Ba Lô Dã Ngoại' : 'Thùng Bếp Trại';
+                        showFloatingBadge(rCell, '🎉 ĐÃ TÌM THẤY ' + genName.toUpperCase() + '! 🎉', '#e67e22');
+                        var cheerMsg = (cellObj.id === 'generator_backpack')
+                            ? 'Oa! Bạn đã khai quật được Ba Lô Dã Ngoại rồi nè! Hãy chạm vào để nhận đồ dã ngoại mới!'
+                            : 'Tuyệt cú mèo! Thùng Bếp Trại đã xuất hiện! Toàn đồ dã ngoại xịn sò!';
+                        if (typeof setPetSpeech === 'function') {
+                            setPetSpeech(null, cheerMsg, 4500);
+                        }
+                    } else if (cellObj && cellObj.isSurprise) {
+                        playSound('bonus');
+                        triggerParticleBurst(rCell, ['#ffd700', '#ffeb3b', '#ff9800', '#ffffff', '#e91e63']);
+                        showFloatingBadge(rCell, '★ Bất ngờ! ' + getItemDisplayName(cellObj.id) + ' ★', '#f39c12');
+                    } else {
+                        triggerParticleBurst(rCell, ['#8d6e63', '#a1887f', '#d7ccc8', '#b0bec5']);
+                        showFloatingBadge(rCell, 'Lộ mạng nhện!', '#8d6e63');
+                    }
+                }
+            });
+            persistCurrentBoardState();
+        }
         if (bonusIdx !== -1) {
             playSound('bonus');
             var bCell = boardElement.children[bonusIdx];
@@ -1851,36 +2968,20 @@ function executeMoveAndEffects(fromIdx, toIdx) {
             showFloatingBadge(bCell, '+1 Tiếp tế!', '#f57c00');
         }
 
-        // Tự động giao đơn hàng khi ghép ra đúng món nhiệm vụ đang hiển thị (trong tối đa 4 ô nhiệm vụ hiện tại)
-        var maxVis = (typeof MAX_VISIBLE_ORDERS === 'number') ? MAX_VISIBLE_ORDERS : 4;
-        var visCount = 0;
-        var matchingOrderIdx = -1;
-        for (var oi = 0; oi < currentOrders.length; oi++) {
-            if (currentOrders[oi].done) continue;
-            if (visCount < maxVis && currentOrders[oi].id === res.newId) {
-                matchingOrderIdx = oi;
-                break;
+        // Cập nhật lại giao diện bàn cờ và đơn hàng (hiện nút NỘP sáng đèn nếu món vừa ghép khớp nhiệm vụ)
+        renderBoard();
+        renderOrders();
+
+        // Kiểm tra xem món vừa ghép có hoàn thành đơn hàng nào không để phát âm thanh & nảy thẻ nhiệm vụ
+        var matchingOrder = currentOrders.find(function (o) { return !o.done && o.id === res.newId; });
+        if (matchingOrder) {
+            playSound('bonus');
+            var cardEl = ordersContainer && ordersContainer.querySelector('.order-card[data-order-id="' + res.newId + '"].ready');
+            if (cardEl) {
+                cardEl.classList.remove('order-card-bounce-attention');
+                void cardEl.offsetWidth; // Force reflow
+                cardEl.classList.add('order-card-bounce-attention');
             }
-            visCount++;
-            if (visCount >= maxVis) break;
-        }
-        if (matchingOrderIdx !== -1) {
-            var matchingOrder = currentOrders[matchingOrderIdx];
-            var finalIndex = res.index;
-            // Delay 260ms để người chơi nhìn thấy rõ món mới được ghép thành công trên bàn cờ trước khi bay vút lên
-            setTimeout(function () {
-                var freshCard = ordersContainer && (
-                    ordersContainer.querySelector('.order-card[data-order-idx="' + matchingOrderIdx + '"]') ||
-                    ordersContainer.querySelector('.order-card[data-order-id="' + matchingOrder.id + '"]:not(.done)') ||
-                    ordersContainer.querySelector('.order-card.ready')
-                );
-                deliverReadyOrderWithFlight(matchingOrder, finalIndex, freshCard);
-            }, 260);
-        } else {
-            // Kiểm tra xem có nhiệm vụ nào khác sẵn sàng (ví dụ sau khi phá mạng nhện ra item nhiệm vụ)
-            setTimeout(function () {
-                checkAutoDeliverRevealedOrders();
-            }, 260);
         }
     }
 }
@@ -1900,11 +3001,16 @@ function cellFromPoint(x, y) {
 function clearDragVisuals() {
     boardElement.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
     boardElement.querySelectorAll('.dragging-source').forEach(c => c.classList.remove('dragging-source'));
+    boardElement.querySelectorAll('.pending-gen-drop-hint').forEach(c => c.classList.remove('pending-gen-drop-hint'));
+    if (ordersContainer) {
+        ordersContainer.querySelectorAll('.pending-gen-slot.dragging-source').forEach(s => s.classList.remove('dragging-source'));
+    }
 }
 
 function onPointerDown(e) {
     if (dragState) endDrag();
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.target.closest('.cell-floating-sell-btn')) return;
     var cell = e.target.closest('.cell');
     if (!cell) return;
     var idx = parseInt(cell.dataset.index);
@@ -1920,12 +3026,35 @@ function onPointerDown(e) {
 }
 
 function startDragging() {
-    var item = boardData[dragState.from];
-    var srcCell = boardElement.children[dragState.from];
-    var size = srcCell.getBoundingClientRect().width;
+    var imgSrc = '';
+    var size = 56;
+
+    if (dragState.fromPendingGen) {
+        imgSrc = getItemImagePath(dragState.fromPendingGen);
+        var refCell = boardElement.children[24] || boardElement.children[0];
+        if (refCell) {
+            size = refCell.getBoundingClientRect().width || 56;
+        }
+        if (dragState.sourceEl) {
+            dragState.sourceEl.classList.add('dragging-source');
+        }
+        // Làm nổi bật các ô trống trên bàn cờ để người chơi biết nơi thả máy phát mới
+        for (var i = 0; i < boardData.length; i++) {
+            var c = boardData[i];
+            if (c && !c.isRock && !c.isLocked && !c.id && boardElement.children[i]) {
+                boardElement.children[i].classList.add('pending-gen-drop-hint');
+            }
+        }
+    } else {
+        var item = boardData[dragState.from];
+        var srcCell = boardElement.children[dragState.from];
+        size = srcCell.getBoundingClientRect().width;
+        imgSrc = getItemImagePath(item.id);
+        srcCell.classList.add('dragging-source');
+    }
 
     var ghost = document.createElement('img');
-    ghost.src = getItemImagePath(item.id);
+    ghost.src = imgSrc;
     ghost.style.cssText = 'position:fixed;left:0;top:0;z-index:100000;pointer-events:none;' +
         'width:' + size + 'px;height:' + size + 'px;object-fit:contain;' +
         'filter:drop-shadow(0 6px 6px rgba(0,0,0,.45));transform-origin:center;';
@@ -1934,7 +3063,6 @@ function startDragging() {
     dragState.ghost = ghost;
     dragState.size = size;
     dragState.active = true;
-    srcCell.classList.add('dragging-source');
     selectedIndex = null;
     updateSellButton(null);
 }
@@ -1973,10 +3101,34 @@ function onPointerUp(e) {
     if (!dragState || e.pointerId !== dragState.pointerId) return;
     var wasActive = dragState.active;
     var from = dragState.from;
+    var pendingGenId = dragState.fromPendingGen || null;
     var target = wasActive ? cellFromPoint(e.clientX, e.clientY) : null;
     var underPoint = wasActive ? document.elementFromPoint(e.clientX, e.clientY) : null;
     var draggedCard = underPoint ? underPoint.closest('.order-card') : null;
     endDrag();
+
+    // Nếu người chơi kéo thả (hoặc chạm vào) máy phát mới ở bên trái chú chó để đưa vào bàn chơi
+    if (pendingGenId) {
+        suppressNextClick = true;
+        setTimeout(() => { suppressNextClick = false; }, 0);
+        if (wasActive) {
+            if (target && boardElement.contains(target)) {
+                placePendingGeneratorOnBoard(pendingGenId, parseInt(target.dataset.index));
+            } else if (underPoint && boardElement && boardElement.contains(underPoint)) {
+                placePendingGeneratorOnBoard(pendingGenId, -1);
+            } else {
+                // Nếu kéo chưa tới bàn cờ, nhắc nhẹ người chơi kéo vào ô trống trên bàn
+                var gName = (pendingGenId === 'generator_backpack') ? 'Ba Lô Dã Ngoại' : 'Thùng Bếp & Sinh Tồn';
+                if (typeof showToast === 'function') {
+                    showToast('👇 Hãy kéo ' + gName + ' thả vào ô trống trên bàn chơi nhé!');
+                }
+            }
+        } else {
+            // Chạm trực tiếp vào icon máy phát bên trái chú chó cũng tự động đặt vào ô trống trên bàn chơi!
+            placePendingGeneratorOnBoard(pendingGenId, -1);
+        }
+        return;
+    }
 
     if (wasActive) {
         suppressNextClick = true;
@@ -2013,9 +3165,29 @@ boardElement.addEventListener('dragstart', e => e.preventDefault());
 boardElement.addEventListener('contextmenu', e => { if (dragState) e.preventDefault(); });
 boardElement.addEventListener('click', function (e) {
     if (suppressNextClick) return;
+    if (e.target.closest('.cell-floating-sell-btn')) return;
     var cell = e.target.closest('.cell');
     if (cell && boardElement.contains(cell)) {
         handleCellClick(e, cell);
+    }
+});
+
+// Chạm ra ngoài bàn cờ sẽ bỏ chọn item và ẩn nút Bán
+document.addEventListener('pointerdown', function (e) {
+    if (selectedIndex === null) return;
+    if (e.target.closest('#grid-board')) return;
+    if (e.target.closest('#btn-sell')) return;
+    selectedIndex = null;
+    updateSellButton(null);
+    renderBoard();
+});
+boardElement.addEventListener('dblclick', function (e) {
+    var cell = e.target.closest('.cell');
+    if (cell && boardElement.contains(cell)) {
+        var cellIdx = parseInt(cell.dataset.index, 10);
+        if (!isNaN(cellIdx) && typeof handleCellDoubleClick === 'function') {
+            handleCellDoubleClick(cellIdx, cell);
+        }
     }
 });
 
@@ -2341,11 +3513,29 @@ function bulkSpawnFromGenerator(gen, cellElement) {
     }
 }
 
+var lastTapCellIdx = -1;
+var lastTapTime = 0;
+
 function handleCellClick(e, cellElement) {
     var index = parseInt(cellElement.dataset.index);
+
+    // Phát hiện chạm 2 lần liên tiếp (double-tap trên màn hình cảm ứng)
+    var now = Date.now();
+    if (index === lastTapCellIdx && (now - lastTapTime) < 380) {
+        if (typeof handleCellDoubleClick === 'function' && handleCellDoubleClick(index, cellElement)) {
+            lastTapCellIdx = -1;
+            lastTapTime = 0;
+            selectedIndex = null;
+            updateSellButton(null);
+            return;
+        }
+    }
+    lastTapCellIdx = index;
+    lastTapTime = now;
+
     var clickedItem = boardData[index];
 
-    if (clickedItem && clickedItem.id && !clickedItem.isLocked && GENERATORS[clickedItem.id] && !isAutoEnabled) {
+    if (clickedItem && clickedItem.id && !clickedItem.isLocked && !clickedItem.isRock && GENERATORS[clickedItem.id] && !isAutoEnabled) {
         selectedIndex = null;
         updateSellButton(null);
         if (isLevelCompleted()) {
@@ -2357,6 +3547,21 @@ function handleCellClick(e, cellElement) {
     }
 
     if (selectedIndex === null) {
+        if (clickedItem && clickedItem.isRock) {
+            cellElement.classList.remove('rock-tap-shake');
+            void cellElement.offsetWidth;
+            cellElement.classList.add('rock-tap-shake');
+            var pLvClick = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number') ? SAVE.playerLevel : (currentLevel || 1);
+            var reqRockLv = (typeof isRockCellLockedByLevel === 'function' && isRockCellLockedByLevel(index, clickedItem, pLvClick))
+                ? getRockUnlockLevel(index, clickedItem)
+                : 0;
+            if (reqRockLv > 0) {
+                showToast('🔒 Ô đá khóa! Đạt Cấp ' + reqRockLv + ' để mở khóa ô này!');
+            } else {
+                showToast('Ghép ô mạng nhện liền kề để giải phóng ô đá!');
+            }
+            return;
+        }
         if (clickedItem && clickedItem.id && !clickedItem.isLocked) {
             selectedIndex = index;
             updateSellButton(clickedItem.id);
@@ -2378,6 +3583,13 @@ function handleCellClick(e, cellElement) {
         updateSellButton(null);
 
         if (toItem && toItem.isRock) {
+            var targetCell = boardElement.children[toIdx];
+            if (targetCell) {
+                targetCell.classList.remove('rock-tap-shake');
+                void targetCell.offsetWidth;
+                targetCell.classList.add('rock-tap-shake');
+            }
+            showToast('Ghép ô mạng nhện liền kề để giải phóng ô đá!');
             renderBoard();
             return;
         }
@@ -2564,17 +3776,51 @@ function openLuckyDrop() {
 
 function updateSellButton(itemId) {
     if (!btnSell) return;
-    var sellWord = (typeof I18N !== 'undefined') ? I18N.t('hud.btn_sell') : 'BÁN';
+    var sellWord = (typeof I18N !== 'undefined') ? I18N.t('hud.btn_sell') : 'Bán';
     if (!itemId || GENERATORS[itemId]) {
         btnSell.classList.add('disabled');
+        btnSell.style.display = 'none';
         if (sellPriceUI) sellPriceUI.innerText = '0';
         if (sellBtnTextUI) sellBtnTextUI.innerText = sellWord;
     } else {
-        var p = sellPrice(itemId);
+        var p = (typeof sellPrice === 'function') ? sellPrice(itemId) : 10;
+        if (p <= 0) p = 10;
         if (sellPriceUI) sellPriceUI.innerText = p;
-        if (sellBtnTextUI) sellBtnTextUI.innerText = p > 0 ? (sellWord + ' (+' + p + ')') : sellWord;
+        if (sellBtnTextUI) sellBtnTextUI.innerText = sellWord + ' (+' + p + ')';
+        btnSell.title = 'Bán nhận +' + p + ' Vàng';
         btnSell.classList.remove('disabled');
+        btnSell.style.display = 'inline-flex';
     }
+}
+
+// Bán vật phẩm tại vị trí index: Cộng vàng, hiệu ứng bay tiền, giải phóng ô
+function sellItemAtIndex(idx) {
+    if (idx === null || idx === undefined || idx < 0 || idx >= TOTAL_CELLS) return;
+    var item = boardData[idx];
+    if (!item || !item.id || item.isRock || item.isLocked || GENERATORS[item.id]) return;
+
+    var soldCell = boardElement.children[idx];
+    var price = (typeof sellPrice === 'function') ? sellPrice(item.id) : 10;
+    if (price <= 0) price = 10;
+
+    playerCoins += price;
+    SAVE.coins = playerCoins;
+    saveGame();
+
+    if (soldCell) {
+        spawnFlyingCurrency(soldCell, 'gold', price);
+        triggerParticleBurst(soldCell, ['#ffd700', '#ffeb3b', '#00e676', '#ffffff']);
+        showFloatingBadge(soldCell, '+' + price.toLocaleString('vi-VN') + ' 🪙', '#2e7d32');
+    }
+    playSound('bonus');
+
+    boardData[idx] = makeEmptyCell();
+    selectedIndex = null;
+    updateSellButton(null);
+
+    if (isAutoEnabled) fillBoardInstantly();
+    renderBoard();
+    updateUIStats();
 }
 
 function refreshLevelSelect() {
@@ -2730,183 +3976,7 @@ function toggleAutoDebug() {
 }
 
 // ==========================================
-// TÍNH NĂNG DỌN DẸP BÀN CỜ (CÂY CHỔI DỌN DẸP)
-// ==========================================
-// TÍNH NĂNG DỌN DẸP BÀN CỜ (CÂY CHỔI THẦN KỲ)
-// - Tự động bán tất cả vật phẩm thừa mà màn chơi không yêu cầu
-// - Sắp xếp các vật phẩm cần thiết cùng họ lại gần nhau theo cấp độ tăng dần
-// - Tiêu tốn: 3 Năng lượng
-// ==========================================
-var TIDY_ENERGY_COST = 3;
-var LINE_ORDER = ['an', 'cafe', 'congcu', 'ban', 'ghe', 'trai', 'tham', 'antoan', 'bep'];
-
-function handleTidyBoard() {
-    // 1. Kiểm tra năng lượng của người chơi
-    if (playerEnergy < TIDY_ENERGY_COST) {
-        showToast('Không đủ Năng lượng dọn dẹp!');
-        var broomBtn = document.getElementById('btn-tidy-board');
-        if (broomBtn) {
-            broomBtn.classList.remove('broom-shake-warn');
-            void broomBtn.offsetWidth;
-            broomBtn.classList.add('broom-shake-warn');
-        }
-        return;
-    }
-
-    // 2. Xác định các nhiệm vụ chưa hoàn thành trong màn chơi
-    var neededMaxLvByLine = {};
-    var activeOrders = (currentOrders || []).filter(function (o) {
-        return o && !o.done && o.id;
-    });
-
-    activeOrders.forEach(function (o) {
-        var line = itemLine(o.id);
-        var lv = itemLv(o.id);
-        if (!neededMaxLvByLine[line] || lv > neededMaxLvByLine[line]) {
-            neededMaxLvByLine[line] = lv;
-        }
-    });
-
-    // Hàm kiểm tra xem 1 vật phẩm có phải là vật phẩm thừa mà màn chơi không yêu cầu hay không
-    function isSurplusItem(itemId) {
-        if (!itemId) return false;
-        var line = itemLine(itemId);
-        var lv = itemLv(itemId);
-        var maxNeeded = neededMaxLvByLine[line];
-        // Nhánh sản phẩm không có trong bất kỳ nhiệm vụ nào còn lại của màn chơi
-        if (!maxNeeded) return true;
-        // Hoặc cấp độ đã vượt quá cấp tối đa của nhiệm vụ yêu cầu (không thể ghép ngược lại để nộp)
-        if (lv > maxNeeded) return true;
-        return false;
-    }
-
-    // 3. Phân loại các vật phẩm trên bàn cờ
-    var surplusItems = []; // Các vật phẩm thừa sẽ tự động bán
-    var movableItems = []; // Các vật phẩm cần giữ lại để sắp xếp
-    var availableSlotIndexes = [];
-
-    boardData.forEach(function (cell, idx) {
-        if (!cell) return;
-        if (cell.isRock) return; // Đá cố định
-        if (cell.isLocked) return; // Mạng nhện cố định
-        if (cell.id && GENERATORS[cell.id]) return; // Thùng chứa đồ / máy sinh đồ cố định
-
-        availableSlotIndexes.push(idx);
-        if (cell.id) {
-            if (isSurplusItem(cell.id)) {
-                surplusItems.push({
-                    idx: idx,
-                    id: cell.id
-                });
-            } else {
-                movableItems.push({
-                    id: cell.id,
-                    isRock: false,
-                    isLocked: false
-                });
-            }
-        }
-    });
-
-    // Nếu không có vật phẩm thừa nào để bán VÀ bàn cờ cũng không có nhiều hơn 1 vật phẩm để sắp xếp
-    if (surplusItems.length === 0 && movableItems.length <= 1) {
-        showToast('Bàn cờ chưa có vật phẩm cần dọn!');
-        return;
-    }
-
-    // 4. Trừ 3 năng lượng
-    playerEnergy -= TIDY_ENERGY_COST;
-    if (SAVE) SAVE.energy = playerEnergy;
-
-    // 5. Tự động bán tất cả các vật phẩm thừa
-    var totalSoldCoins = 0;
-    var soldCount = surplusItems.length;
-    if (soldCount > 0) {
-        surplusItems.forEach(function (item) {
-            var price = sellPrice(item.id);
-            if (price <= 0) price = 10;
-            totalSoldCoins += price;
-        });
-        playerCoins += totalSoldCoins;
-        if (SAVE) SAVE.coins = playerCoins;
-    }
-    updateUIStats();
-
-    // 6. Hiệu ứng âm thanh & hoạt ảnh cho cây chổi & tiền vàng
-    playSound('sweep');
-    if (totalSoldCoins > 0) {
-        setTimeout(function () {
-            playSound('bonus');
-        }, 160);
-    }
-
-    var broomEl = document.getElementById('btn-tidy-board');
-    if (broomEl) {
-        broomEl.classList.remove('broom-sweeping');
-        void broomEl.offsetWidth;
-        broomEl.classList.add('broom-sweeping');
-
-        // Hiển thị huy hiệu bay "-3 NL" từ vị trí cây chổi
-        showFloatingBadge(broomEl, '-' + TIDY_ENERGY_COST + ' NL', '#f39c12');
-    }
-
-    if (totalSoldCoins > 0) {
-        var coinTarget = document.getElementById('coin-count') || broomEl;
-        spawnFlyingCurrency(broomEl || boardElement, 'gold', Math.min(totalSoldCoins, 60));
-        showFloatingBadge(coinTarget, '+' + totalSoldCoins.toLocaleString('vi-VN') + ' Vàng', '#f1c40f');
-    }
-
-    // 7. Sắp xếp các vật phẩm cần giữ lại:
-    // - Gom nhóm theo họ / màu nền (LINE_ORDER)
-    // - Trong cùng họ: sắp xếp theo cấp độ tăng dần để các item giống nhau nằm sát nhau
-    movableItems.sort(function (a, b) {
-        var lineA = itemLine(a.id);
-        var lineB = itemLine(b.id);
-        var orderA = LINE_ORDER.indexOf(lineA);
-        var orderB = LINE_ORDER.indexOf(lineB);
-        if (orderA === -1) orderA = 999;
-        if (orderB === -1) orderB = 999;
-        if (orderA !== orderB) return orderA - orderB;
-
-        var lvA = itemLv(a.id);
-        var lvB = itemLv(b.id);
-        return lvA - lvB;
-    });
-
-    // 8. Xếp lại các vật phẩm vào các ô hợp lệ theo thứ tự gọn gàng
-    availableSlotIndexes.forEach(function (slotIdx, k) {
-        if (k < movableItems.length) {
-            boardData[slotIdx] = movableItems[k];
-        } else {
-            boardData[slotIdx] = makeEmptyCell();
-        }
-    });
-
-    // Bỏ chọn ô hiện tại nếu có
-    selectedIndex = null;
-    updateSellButton(null);
-
-    // Lưu dữ liệu & render lại bàn cờ
-    persistCurrentBoardState();
-    renderBoard();
-
-    // Hiệu ứng hoạt ảnh gọn gàng cho các ô vừa được xếp
-    availableSlotIndexes.forEach(function (slotIdx, k) {
-        if (k < movableItems.length && boardElement.children[slotIdx]) {
-            var itemImg = boardElement.children[slotIdx].querySelector('.item-img');
-            if (itemImg) {
-                itemImg.classList.add('item-tidy-settle');
-            }
-        }
-    });
-
-    // Thông báo toast
-    if (soldCount > 0) {
-        showToast('Đã dọn ' + soldCount + ' món (+' + totalSoldCoins.toLocaleString('vi-VN') + ' Vàng)!');
-    } else {
-        showToast('Bàn cờ đã gọn gàng!');
-    }
-}
+// (Tính năng dọn dẹp bàn cờ tốn 3 năng lượng đã được gỡ bỏ theo yêu cầu)
 
 // Đồng bộ chiều rộng và vị trí khung bàn chơi lên biến CSS ở cả 2 khoảng (<=600px và >600px)
 function syncBoardFooterWidth() {
@@ -2918,6 +3988,200 @@ function syncBoardFooterWidth() {
         document.documentElement.style.setProperty('--board-actual-left', Math.round(rect.left) + 'px');
         document.documentElement.style.setProperty('--board-actual-top', Math.round(rect.top) + 'px');
         document.documentElement.style.setProperty('--board-actual-h', Math.round(rect.height) + 'px');
+    }
+}
+
+// ==========================================
+// HỆ THỐNG THĂNG CẤP TRẠI VIÊN & HÀNH TRÌNH DÃ NGOẠI (LEVEL UP & CAMP JOURNEY)
+// ==========================================
+
+function triggerLevelUp(newLevel) {
+    playSound('bonus');
+    currentLevel = newLevel;
+
+    // 1. Thưởng Năng Lượng (+80 năng lượng)
+    var energyBonus = 80;
+    playerEnergy += energyBonus;
+    SAVE.energy = playerEnergy;
+
+    // 2. Thưởng Vàng (500 * level)
+    var coinBonus = 500 * newLevel;
+    playerCoins += coinBonus;
+    SAVE.coins = playerCoins;
+
+    // 3. Thưởng Kim Cương (+3)
+    var gemBonus = 3;
+    playerGems += gemBonus;
+    SAVE.gems = playerGems;
+
+    // 4. Kiểm tra và mở khóa các ô đá khóa (board_cell_rock_lock.png) tương ứng với cấp độ mới (Lv.3, 5, 7, 11, 15, 18)
+    var unlockedRockCells = (typeof checkAndUnlockRocksByPlayerLevel === 'function')
+        ? checkAndUnlockRocksByPlayerLevel(boardData, newLevel)
+        : [];
+
+    persistCurrentBoardState();
+    updateUIStats();
+    renderBoard();
+    renderOrders();
+
+    if (unlockedRockCells && unlockedRockCells.length > 0) {
+        playSound('rock_crack');
+        unlockedRockCells.forEach(function (rIdx) {
+            var rCell = boardElement && boardElement.children[rIdx];
+            if (rCell) {
+                rCell.classList.remove('rock-reveal-anim');
+                void rCell.offsetWidth;
+                rCell.classList.add('rock-reveal-anim');
+                triggerParticleBurst(rCell, ['#ffd700', '#ffeb3b', '#8d6e63', '#00e676', '#ffffff']);
+                showFloatingBadge(rCell, '🔓 Mở khóa Lv.' + newLevel + '!', '#ff9800');
+            }
+        });
+    }
+
+    // Thông báo thăng cấp vui tươi dạng Toast (không hiện popup chặn game theo yêu cầu)
+    playSound('win');
+    if (newLevel === 4) {
+        showToast('🎒 Đạt Cấp 4! Mở khóa Ba Lô Dã Ngoại (bên trái chú chó) — Hãy kéo vào bàn chơi!', 4500);
+        if (typeof setPetSpeech === 'function') {
+            setPetSpeech(null, 'Gâu! Ba Lô Dã Ngoại đã xuất hiện bên trái mình kìa! Bạn hãy kéo nó vào bàn chơi nhé!', 5000);
+        }
+    } else if (newLevel === 5) {
+        showToast('🧰 Đạt Cấp 5! Mở khóa Thùng Bếp & Sinh Tồn (bên trái chú chó) — Hãy kéo vào bàn chơi!', 4500);
+        if (typeof setPetSpeech === 'function') {
+            setPetSpeech(null, 'Tuyệt quá! Thùng Đồ Sinh Tồn đã xuất hiện bên trái mình! Hãy kéo nó xuống bàn chơi nhé!', 5000);
+        }
+    } else {
+        showToast('🎉 Thăng cấp Lv.' + newLevel + '! (+80 ⚡, +' + coinBonus.toLocaleString('vi-VN') + ' 🪙, +3 💎)');
+    }
+
+    // Hiệu ứng nhấp nháy phát sáng ở huy hiệu cấp độ trên thanh HUD để người chơi chủ động bấm vào xem
+    var lvBadge = document.getElementById('current-lv-badge');
+    if (lvBadge) {
+        lvBadge.classList.remove('lv-badge-levelup-pulse');
+        void lvBadge.offsetWidth;
+        lvBadge.classList.add('lv-badge-levelup-pulse');
+    }
+}
+
+function showLevelUpModal(info) {
+    var genHtml = '';
+    if (info.newGen === 'generator_backpack') {
+        genHtml = '<div class="level-up-gen-unlock">' +
+            '<img src="assets/images/items/generator_backpack.png" alt="Ba Lô" class="level-up-gen-img">' +
+            '<div class="level-up-gen-desc">🎉 <b>MỞ KHÓA BA LÔ DÃ NGOẠI!</b><br>Nhận thêm nhánh: <i>Cà phê, Bánh mì kẹp & Bộ dụng cụ</i></div>' +
+        '</div>';
+    } else if (info.newGen === 'generator_crate') {
+        genHtml = '<div class="level-up-gen-unlock">' +
+            '<img src="assets/images/items/generator_crate.png" alt="Thùng Bếp" class="level-up-gen-img">' +
+            '<div class="level-up-gen-desc">🎉 <b>MỞ KHÓA THÙNG BẾP TRẠI!</b><br>Nhận thêm nhánh: <i>Bếp nướng, Thảm dã ngoại & Đèn bão</i></div>' +
+        '</div>';
+    }
+
+    var petMsg = (typeof SAVE !== 'undefined' && SAVE.activePet === 'character06')
+        ? 'Meo meo! Tuyệt vời quá! Khu trại của chúng mình vừa thăng cấp rồi!'
+        : 'Gâu gâu! Tuyệt vời quá! Trại viên vừa đạt cột mốc cấp độ mới!';
+
+    var html = '<div class="level-up-popup">' +
+        '<div class="level-up-badge-wrap">' +
+            '<div class="level-up-big-num">Lv.' + info.level + '</div>' +
+        '</div>' +
+        '<div class="level-up-title">THĂNG CẤP TRẠI VIÊN!</div>' +
+        '<div class="level-up-sub">' + petMsg + '</div>' +
+        genHtml +
+        '<div class="level-up-rewards-grid">' +
+            '<div class="level-up-rw-item">' +
+                '<img src="assets/images/ui/icon_nangluong.png" alt="Năng lượng">' +
+                '<span>+' + info.energy + ' Năng Lượng</span>' +
+            '</div>' +
+            '<div class="level-up-rw-item">' +
+                '<img src="assets/images/ui/icon_glod.png" alt="Vàng">' +
+                '<span>+' + info.coins.toLocaleString('vi-VN') + ' Vàng</span>' +
+            '</div>' +
+            '<div class="level-up-rw-item">' +
+                '<img src="assets/images/ui/icon_ruby.png" alt="Kim Cương">' +
+                '<span>+' + info.gems + ' Kim Cương</span>' +
+            '</div>' +
+        '</div>' +
+        '<div class="modal-buttons">' +
+            '<button class="modal-btn primary btn-levelup-confirm" id="btn-levelup-confirm">TIẾP TỤC</button>' +
+        '</div>' +
+    '</div>';
+
+    var overlay = createModal(html, 'level-up-modal-card', 'CHÚC MỪNG LÊN CẤP!');
+    var confirmBtn = overlay.querySelector('#btn-levelup-confirm');
+    if (confirmBtn) {
+        confirmBtn.onclick = closeModal;
+    }
+}
+
+function openCampJourneyModal(playerLevel, playerExp) {
+    playerLevel = playerLevel || (SAVE && SAVE.playerLevel) || 1;
+    playerExp = playerExp || (SAVE && SAVE.playerExp) || 0;
+    var expNeeded = (typeof getExpRequiredForLevel === 'function') ? getExpRequiredForLevel(playerLevel) : 100;
+    var pct = Math.min(100, Math.floor((playerExp / expNeeded) * 100));
+
+    var milestones = [
+        { lv: 1, title: 'Khu Trại Khởi Đầu', desc: 'Thùng đá dã ngoại, khám phá khu trại', icon: '🏕️' },
+        { lv: 2, title: 'Đón Ánh Hoàng Hôn', desc: '+80 Năng lượng, +1.000 Vàng, +3 Kim cương', icon: '⛏️' },
+        { lv: 3, title: 'Bên Lửa Trại Nhỏ', desc: '+80 Năng lượng, +1.500 Vàng, +3 Kim cương', icon: '🔥' },
+        { lv: 4, title: 'Bãi Cỏ Xanh Rờn', desc: '+80 Năng lượng, +2.000 Vàng, +3 Kim cương', icon: '🌿' },
+        { lv: 5, title: 'Khai Quật Ba Lô Dã Ngoại', desc: 'Tìm thấy Ba Lô Dã Ngoại ẩn sâu dưới tầng đá', icon: '🎒', special: true },
+        { lv: 6, title: 'Đường Mòn Ven Suối', desc: '+80 Năng lượng, +3.000 Vàng, +3 Kim cương', icon: '💧' },
+        { lv: 8, title: 'Mở Khóa Siêu Phẩm Cấp 9', desc: 'Bò Wagyu Thượng Hạng & Lều Chuông Glamping', icon: '🥩', special: true },
+        { lv: 10, title: 'Khai Quật Thùng Bếp Trại', desc: 'Tìm thấy Thùng Bếp Trại ẩn sâu dưới tầng đá', icon: '📦', special: true },
+        { lv: 12, title: 'Mở Khóa Siêu Phẩm Cấp 10', desc: 'Đại Tiệc Cua Hoàng Đế & Lều Bán Cầu Geodesic', icon: '🦀', special: true },
+        { lv: 15, title: 'Mở Khóa Siêu Phẩm Cấp 11', desc: 'Kén Nghỉ Dưỡng Mái Vòm Sang Trọng', icon: '⭐', special: true },
+        { lv: 20, title: 'Đỉnh Cao Dã Ngoại Cấp 12', desc: 'Biệt Thự Lều Safari & Danh hiệu Thủ Lĩnh Dã Ngoại', icon: '👑', special: true }
+    ];
+
+    var listHtml = milestones.map(function (m) {
+        var isPassed = playerLevel > m.lv;
+        var isCurrent = playerLevel === m.lv;
+        var statusClass = isPassed ? 'passed' : (isCurrent ? 'current' : 'locked');
+        var badgeText = isPassed ? '✓ Đã mở' : (isCurrent ? 'Đang tiến tới' : 'Cần Lv.' + m.lv);
+        return '<div class="journey-item ' + statusClass + (m.special ? ' special-milestone' : '') + '">' +
+            '<div class="journey-info">' +
+                '<div class="journey-title">Cấp ' + m.lv + ': ' + m.title + '</div>' +
+                '<div class="journey-desc">' + m.desc + '</div>' +
+            '</div>' +
+            '<div class="journey-status-badge">' + badgeText + '</div>' +
+        '</div>';
+    }).join('');
+
+    var petImg = (typeof SAVE !== 'undefined' && SAVE.activePet === 'character06')
+        ? 'assets/images/ui/character06.png'
+        : 'assets/images/ui/character01.png';
+    var petName = (typeof SAVE !== 'undefined' && SAVE.activePet === 'character06') ? 'Mèo Anh' : 'Chú Chó Golden';
+
+    var html = '<div class="camp-journey-popup">' +
+        '<div class="journey-header-card">' +
+            '<img src="' + petImg + '" alt="Thú cưng" class="journey-pet-avatar">' +
+            '<div class="journey-header-info">' +
+                '<div class="journey-player-title">Trại Viên & ' + petName + '</div>' +
+                '<div class="journey-level-val">Cấp Độ Hiện Tại: <b>Lv.' + playerLevel + '</b></div>' +
+                '<div class="journey-exp-bar-wrap">' +
+                    '<div class="journey-exp-fill" style="width:' + pct + '%"></div>' +
+                    '<span class="journey-exp-text">' + playerExp + ' / ' + expNeeded + ' EXP (' + pct + '%)</span>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="journey-sub-title">CỘT MỐC HÀNH TRÌNH DÃ NGOẠI</div>' +
+        '<div class="journey-milestones-list">' + listHtml + '</div>' +
+        '<div class="modal-buttons">' +
+            '<button class="modal-btn primary" id="btn-journey-close">ĐÓNG</button>' +
+        '</div>' +
+    '</div>';
+
+    var overlay = createModal(html, 'journey-modal-card', 'HÀNH TRÌNH CẮM TRẠI');
+    var closeBtn = overlay.querySelector('#btn-journey-close');
+    if (closeBtn) closeBtn.onclick = closeModal;
+
+    // Tự động cuộn nhẹ đến cột mốc cấp độ hiện tại để người chơi dễ quan sát
+    var curEl = overlay.querySelector('.journey-item.current');
+    if (curEl) {
+        setTimeout(function () {
+            curEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 120);
     }
 }
 
@@ -2962,10 +4226,6 @@ function initGame() {
         openLuckyDrop();
     };
 
-    var btnTidy = document.getElementById('btn-tidy-board');
-    if (btnTidy) {
-        btnTidy.onclick = handleTidyBoard;
-    }
 
     var btnCamp = document.getElementById('btn-camp');
     if (btnCamp) btnCamp.onclick = () => {
@@ -2985,9 +4245,7 @@ function initGame() {
     if (btnMap) {
         btnMap.onclick = () => {
             if (document.getElementById('modal-overlay')) return;
-            openWorldMap(currentLevel, function (lv) {
-                loadLevel(lv);
-            });
+            openCampJourneyModal(SAVE.playerLevel, SAVE.playerExp);
         };
     }
 
@@ -3024,21 +4282,20 @@ function initGame() {
         };
     }
 
-    if (btnSell) btnSell.onclick = () => {
-        if (btnSell.classList.contains('disabled') || selectedIndex === null) return;
-        var soldCell = boardElement.children[selectedIndex];
-        var soldId = boardData[selectedIndex].id;
-        var price = sellPrice(soldId);
-        playerCoins += price;
-        spawnFlyingCurrency(soldCell, 'gold', price);
-        playSound('bonus');
-        boardData[selectedIndex] = makeEmptyCell();
-        selectedIndex = null;
-        updateSellButton(null);
-
-        if (isAutoEnabled) fillBoardInstantly();
-        renderBoard();
-    };
+    if (btnSell) {
+        var onSellBtnClick = function (e) {
+            if (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+            if (btnSell.classList.contains('disabled') || selectedIndex === null) return;
+            sellItemAtIndex(selectedIndex);
+        };
+        btnSell.onclick = onSellBtnClick;
+        btnSell.addEventListener('pointerdown', function (e) {
+            e.stopPropagation();
+        });
+    }
 
     var btnMyCamp = document.getElementById('btn-my-camp');
     if (btnMyCamp) {
@@ -3086,6 +4343,7 @@ function initGame() {
     window.loadLevel = loadLevel;
     window.persistCurrentBoardState = persistCurrentBoardState;
     window.executeMoveAndEffects = executeMoveAndEffects;
+    window.sellItemAtIndex = sellItemAtIndex;
 
     if (typeof enhanceAll3sButtons === 'function') {
         enhanceAll3sButtons(document.body);

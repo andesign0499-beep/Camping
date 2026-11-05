@@ -16,7 +16,6 @@ var I18N_DATA = {
         gem_title: { vi: 'Bấm để mở Cửa Hàng Kim Cương', en: 'Tap to open Diamond Shop' },
         settings_title: { vi: 'Cài đặt trò chơi & Lưu trữ', en: 'Game Settings & Sync' },
         npc_avatar_title: { vi: 'Chạm vào nhân vật để trò chuyện & xem gợi ý', en: 'Tap character to chat & see hints' },
-        broom_title: { vi: 'Dọn dẹp bàn cờ: Bán vật phẩm thừa & gom nhóm gọn gàng (-3 Năng lượng)', en: 'Clean Board: Sell extras & tidy up (-3 Energy)' },
         btn_camp: { vi: 'CỬA HÀNG', en: 'SHOP' },
         btn_camp_title: { vi: 'Cửa Hàng', en: 'Shop' },
         btn_book: { vi: 'CẨM NANG', en: 'HANDBOOK' },
@@ -53,6 +52,10 @@ var I18N_DATA = {
         an_lv6: { vi: 'Tô Hoa Quả Thập Cẩm', en: 'Mixed Fruit Bowl' },
         an_lv7: { vi: 'Đĩa Bánh Quy Nướng', en: 'Baked Cookies' },
         an_lv8: { vi: 'Đại Tiệc BBQ Xiên Nướng', en: 'BBQ Skewer Feast' },
+        an_lv9: { vi: 'Đĩa Bò Wagyu Thượng Hạng', en: 'Premium Wagyu Beef' },
+        an_lv10: { vi: 'Cua Hoàng Đế Hấp Dã Ngoại', en: 'King Crab Picnic Feast' },
+        an_lv11: { vi: 'Tiệc Cua Hoàng Đế Thượng Hạng', en: 'Royal King Crab Feast' },
+        an_lv12: { vi: 'Đại Tiệc Hải Sản Cung Đình', en: 'Imperial Seafood Banquet' },
 
         // Dòng 2: Bàn (ban)
         ban_lv1: { vi: 'Bàn Nhôm Vuông Mini', en: 'Mini Aluminum Table' },
@@ -63,6 +66,10 @@ var I18N_DATA = {
         ban_lv6: { vi: 'Bàn Cắm Trại Đa Năng', en: 'Multi-purpose Table' },
         ban_lv7: { vi: 'Bàn Chiến Thuật IGT', en: 'Tactical IGT Table' },
         ban_lv8: { vi: 'Trạm Bếp Nấu Ăn Glamping', en: 'Glamping Kitchen Station' },
+        ban_lv9: { vi: 'Trạm Bếp Dã Ngoại Đôi', en: 'Twin Camp Cooking Station' },
+        ban_lv10: { vi: 'Bàn Đảo Bếp Dã Ngoại Inox', en: 'Stainless Steel Camp Island Table' },
+        ban_lv11: { vi: 'Bàn Đảo Bếp Glamping Đa Năng', en: 'Versatile Glamping Kitchen Island' },
+        ban_lv12: { vi: 'Đại Trạm Bếp Glamping Hoàng Gia', en: 'Royal Glamping Master Kitchen' },
 
         // Dòng 3: Cà phê (cafe)
         cafe_lv1: { vi: 'Hạt Cà Phê Robusta', en: 'Robusta Coffee Beans' },
@@ -73,6 +80,10 @@ var I18N_DATA = {
         cafe_lv6: { vi: 'Cối Xay Cầm Tay Inox', en: 'Stainless Steel Grinder' },
         cafe_lv7: { vi: 'Ấm Pha Moka Pot Ý', en: 'Italian Moka Pot' },
         cafe_lv8: { vi: 'Cốc Cà Phê Men Đỏ', en: 'Red Enamel Mug' },
+        cafe_lv9: { vi: 'Phin Cà Phê Dã Ngoại Đồng', en: 'Copper Camp Coffee Dripper' },
+        cafe_lv10: { vi: 'Máy Pha Espresso Dã Ngoại', en: 'Portable Camp Espresso Maker' },
+        cafe_lv11: { vi: 'Máy Pha Cà Phê Áp Suất Glamping', en: 'Glamping Pressure Coffee Machine' },
+        cafe_lv12: { vi: 'Quầy Barista Cà Phê Glamping', en: 'Glamping Barista Coffee Bar' },
 
         // Dòng 4: Lều trại (trai)
         trai_lv1: { vi: 'Cọc Ghim Lều Kim Loại', en: 'Metal Tent Peg' },
@@ -83,6 +94,10 @@ var I18N_DATA = {
         trai_lv6: { vi: 'Lều Gia Đình Chống Gió', en: 'Windproof Family Tent' },
         trai_lv7: { vi: 'Lều Kim Tự Tháp Glamping', en: 'Glamping Teepee Tent' },
         trai_lv8: { vi: 'Biệt Thự Lều Glamping', en: 'Luxury Glamping Villa' },
+        trai_lv9: { vi: 'Lều Chuông Glamping', en: 'Bell Glamping Tent' },
+        trai_lv10: { vi: 'Lều Bán Cầu Geodesic', en: 'Geodesic Dome Tent' },
+        trai_lv11: { vi: 'Kén Nghỉ Dưỡng Mái Vòm', en: 'Luxury Dome Glamping Pod' },
+        trai_lv12: { vi: 'Biệt Thự Lều Safari Sang Trọng', en: 'Royal Safari Tent Villa' },
 
         // Dòng 5: Chỗ ngủ (tham)
         tham_lv1: { vi: 'Bạt Trải Đất Dã Ngoại', en: 'Ground Tarp' },
@@ -103,6 +118,10 @@ var I18N_DATA = {
         ghe_lv6: { vi: 'Ghế Mặt Trăng Moon Chair', en: 'Moon Chair' },
         ghe_lv7: { vi: 'Ghế Tựa Lưng Cao Có Gối', en: 'High-back Pillow Chair' },
         ghe_lv8: { vi: 'Ghế Đạo Diễn Cao Cấp', en: 'Director Camping Chair' },
+        ghe_lv9: { vi: 'Ghế Xếp Thư Giãn Bập Bênh', en: 'Rocking Camp Chair' },
+        ghe_lv10: { vi: 'Ghế Sofa Đôi Glamping', en: 'Double Glamping Sofa' },
+        ghe_lv11: { vi: 'Giường Ghế Xếp Đa Năng', en: 'Versatile Camp Daybed' },
+        ghe_lv12: { vi: 'Ghế Bành Glamping Sang Trọng', en: 'Royal Glamping Armchair' },
 
         // Dòng 7: Bếp & Lửa (bep)
         bep_lv1: { vi: 'Nhánh Củi Khô', en: 'Dry Twigs' },
@@ -113,6 +132,10 @@ var I18N_DATA = {
         bep_lv6: { vi: 'Lửa Trại Rực Hồng', en: 'Blazing Bonfire' },
         bep_lv7: { vi: 'Lò Nướng Than Hoa Tròn', en: 'Round Charcoal Grill' },
         bep_lv8: { vi: 'Bếp Nướng BBQ Chữ Nhật', en: 'BBQ Grill Station' },
+        bep_lv9: { vi: 'Bếp Gas Dã Ngoại Đôi', en: 'Dual Burner Camp Stove' },
+        bep_lv10: { vi: 'Lò Nướng Bánh Pizza Dã Ngoại', en: 'Outdoor Pizza Oven' },
+        bep_lv11: { vi: 'Bếp Nấu Đa Năng Glamping', en: 'Glamping Cooking System' },
+        bep_lv12: { vi: 'Bếp Hoàng Gia Lửa Trại Glamping', en: 'Royal Bonfire Camp Kitchen' },
 
         // Dòng 8: Chiếu sáng dã ngoại (congcu)
         congcu_lv1: { vi: 'Bóng Đèn LED Treo Lều', en: 'Hanging Tent Bulb' },
@@ -123,6 +146,10 @@ var I18N_DATA = {
         congcu_lv6: { vi: 'Đèn Bão Dã Ngoại Vintage', en: 'Vintage Storm Lantern' },
         congcu_lv7: { vi: 'Đèn Cắm Trại Chân Cao Tripod', en: 'Tripod Camp Light' },
         congcu_lv8: { vi: 'Đèn Bão Cổ Điển Retro', en: 'Classic Hurricane Lantern' },
+        congcu_lv9: { vi: 'Cột Đèn Glamping Đôi', en: 'Dual Glamping Light Pole' },
+        congcu_lv10: { vi: 'Đèn Thao Tác Chuyên Dụng', en: 'Tactical Camp Worklight' },
+        congcu_lv11: { vi: 'Hệ Thống Chiếu Sáng Trại Glamping', en: 'Glamping Illumination System' },
+        congcu_lv12: { vi: 'Đèn Cực Quang Glamping Thượng Hạng', en: 'Aurora Master Glamping Light' },
 
         // Dòng 9: Nguồn điện & Trạm năng lượng (antoan)
         antoan_lv1: { vi: 'Cáp Sạc Dã Ngoại Bọc Dù', en: 'Braided Charging Cable' },
@@ -132,7 +159,11 @@ var I18N_DATA = {
         antoan_lv5: { vi: 'Quạt Tích Điện Dã Ngoại', en: 'Rechargeable Camp Fan' },
         antoan_lv6: { vi: 'Tấm Pin Năng Lượng Mặt Trời', en: 'Solar Charging Panel' },
         antoan_lv7: { vi: 'Trạm Điện Di Động Mini', en: 'Compact Power Station' },
-        antoan_lv8: { vi: 'Trạm Điện Dã Ngoại Glamping', en: 'Glamping Power Station' }
+        antoan_lv8: { vi: 'Trạm Điện Dã Ngoại Glamping', en: 'Glamping Power Station' },
+        antoan_lv9: { vi: 'Bộ Lưu Điện Dung Lượng Cao', en: 'High Capacity Power Station' },
+        antoan_lv10: { vi: 'Trạm Điện Mặt Trời Công Suất Lớn', en: 'Mega Solar Power Hub' },
+        antoan_lv11: { vi: 'Máy Phát Điện Siêu Cách Âm', en: 'Silent Glamping Generator' },
+        antoan_lv12: { vi: 'Trạm Năng Lượng Glamping Hoàng Gia', en: 'Imperial Glamping Power Hub' }
     },
 
     // -------------------------------------------------------------------------
@@ -203,7 +234,7 @@ var I18N_DATA = {
         dest_owned: { vi: 'Đã sở hữu', en: 'Owned' },
         dest_buy: { vi: 'Mua', en: 'Buy' },
         dest_price: { vi: 'Giá: {coins} Vàng', en: 'Price: {coins} Gold' },
-        dest_dongdo: { vi: 'Hồ Đồng Đò', en: 'Dong Do Lake' },
+        dest_dongdo: { vi: 'Cao nguyên Lâm Viên', en: 'Lam Vien Plateau' },
         dest_doibu: { vi: 'Đồi Bù', en: 'Doi Bu Hill' },
         dest_matthan: { vi: 'Núi Mắt Thần', en: 'God Eye Mountain' },
         dest_bangioc: { vi: 'Thác Bản Giốc', en: 'Ban Gioc Waterfall' },
@@ -342,8 +373,6 @@ var I18N_DATA = {
         not_enough_gold: { vi: 'Chưa đủ Vàng! Hãy ghép thêm nhé.', en: 'Not enough Gold! Merge to earn.' },
         not_enough_gems: { vi: 'Chưa đủ Kim Cương!', en: 'Not enough Diamonds!' },
         board_full: { vi: 'Bàn cờ đầy! Hãy ghép bớt đồ nhé.', en: 'Board is full! Merge to clear.' },
-        tidy_sold: { vi: 'Đã dọn {count} món (+{coins} Vàng)!', en: 'Cleaned {count} items (+{coins} Gold)!' },
-        tidy_clean: { vi: 'Bàn cờ đã gọn gàng!', en: 'Board is clean and organized!' },
         camp_sold: { vi: 'Đã bán {item} (+{coins} Vàng)!', en: 'Sold {item} (+{coins} Gold)!' },
         id_copied: { vi: 'Đã sao chép ID!', en: 'Player ID copied!' },
         lang_switched_vi: { vi: 'Đã đổi sang Tiếng Việt', en: 'Switched to Vietnamese' },
@@ -529,10 +558,6 @@ var I18N = (function () {
                 var myCampLabel = myCampBtn.querySelector('.footer-btn-label');
                 if (myCampLabel) myCampLabel.textContent = this.t('hud.btn_mycamp') || 'Trại của bạn';
             }
-
-            // Nút Cây chổi dọn dẹp
-            var broomBtn = document.getElementById('btn-tidy-board');
-            if (broomBtn) broomBtn.title = this.t('hud.broom_title');
 
             // Header titles
             var mapBtn = document.getElementById('btn-world-map');

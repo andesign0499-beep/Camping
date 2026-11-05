@@ -785,15 +785,15 @@ function unequipItemInMyCamp(itemOrUid) {
 function openCamp(highlightLevel, onBack, initialTab) {
     var petsList = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS : [
         { id: 'character01', name: 'Golden', img: 'assets/images/ui/character01.png', price: 0 },
-        { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 12000 },
-        { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 15000 },
-        { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 22000 },
-        { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 28000 },
-        { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 35000 },
-        { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 42000 },
-        { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 50000 },
-        { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 58000 },
-        { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 65000 }
+        { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 8000 },
+        { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 16000 },
+        { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 28000 },
+        { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 42000 },
+        { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 60000 },
+        { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 85000 },
+        { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 115000 },
+        { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 150000 },
+        { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 200000 }
     ];
 
     var defaultTab = (initialTab === 'pets') ? 'pets' : 'locations';
@@ -948,10 +948,11 @@ function openCamp(highlightLevel, onBack, initialTab) {
     }
 
     function renderLocationsList() {
-        if (!SAVE.ownedLocations || !Array.isArray(SAVE.ownedLocations)) SAVE.ownedLocations = ['loc_dongdo'];
+        if (!SAVE.ownedLocations || !Array.isArray(SAVE.ownedLocations)) SAVE.ownedLocations = ['loc_doibu'];
+        if (!SAVE.ownedLocations.includes('loc_doibu')) SAVE.ownedLocations.unshift('loc_doibu');
         var locations = (typeof CAMP_LOCATIONS !== 'undefined') ? CAMP_LOCATIONS : [];
         if (!SAVE.activeLocation || !locations.some(function (l) { return l.id === SAVE.activeLocation; })) {
-            SAVE.activeLocation = 'loc_dongdo';
+            SAVE.activeLocation = 'loc_doibu';
         }
         var ownedCount = SAVE.ownedLocations.length;
         if (locSub) {
@@ -997,9 +998,17 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 '</button>';
             }
 
+            var cloudHtml = (loc.id === 'loc_matthan')
+                ? '<div class="loc-card-clouds">' +
+                    '<img src="assets/images/background/may2.webp" class="loc-card-cloud loc-card-cloud-top" alt="Mây đỉnh">' +
+                    '<img src="assets/images/background/may1.webp" class="loc-card-cloud loc-card-cloud-bottom" alt="Mây sườn">' +
+                  '</div>'
+                : '';
+
             html += '<div class="' + cardCls + '">' +
                 '<div class="loc-card-img-wrap">' +
                     '<img src="' + loc.img + '" alt="' + locName + '" class="loc-card-img">' +
+                    cloudHtml +
                 '</div>' +
                 '<div class="loc-card-footer">' +
                     '<div class="loc-info-col">' +
@@ -1711,24 +1720,25 @@ function showLuckyDropModal(onReward) {
     };
 }
 
-// ---------- 5. CẨM NANG SƯU TẬP 72 VẬT PHẨM ----------
+// ---------- 5. CẨM NANG SƯU TẬP VẬT PHẨM DÃ NGOẠI ----------
 function openDiscoveryBook() {
-    var totalItems = ITEM_CHAINS.length * 8;
+    var totalItems = ITEM_CHAINS.reduce(function (sum, ch) { return sum + (ch.names ? ch.names.length : 8); }, 0);
     var discCount = countDiscoveredItems();
 
     var chainsHtml = '';
     ITEM_CHAINS.forEach(function (ch) {
         var slotsHtml = '';
         var chainDisc = 0;
+        var maxChainLv = ch.names ? ch.names.length : 8;
         var bgClass = typeof getCellBgClass === 'function' ? getCellBgClass(ch.line) : 'cell-bg-01';
-        for (var lv = 1; lv <= 8; lv++) {
+        for (var lv = 1; lv <= maxChainLv; lv++) {
             var id = ch.line + '_lv' + lv;
             var imgPath = id === 'ban_lv8' ? 'assets/images/items/ban_level8.png' : ('assets/images/items/' + id + '.png');
             var isDisc = !!SAVE.discovered[id];
             if (isDisc) chainDisc++;
 
             var cls = 'book-slot ' + bgClass + (isDisc ? ' discovered' : ' locked');
-            slotsHtml += '<div class="' + cls + '" data-id="' + id + '" data-name="' + ch.names[lv - 1] + '" data-lv="' + lv + '">' +
+            slotsHtml += '<div class="' + cls + '" data-id="' + id + '" data-name="' + (ch.names[lv - 1] || id) + '" data-lv="' + lv + '">' +
                 '<img src="' + imgPath + '" alt="' + id + '">' +
                 '<span class="book-lv">Lv.' + lv + '</span>' +
             '</div>';
@@ -1741,7 +1751,7 @@ function openDiscoveryBook() {
                     '<span class="book-chain-title">' + ch.title + '</span>' +
                     '<span class="book-chest-tag">' + gen.name + '</span>' +
                 '</div>' +
-                '<small class="book-chain-count">' + chainDisc + '/8</small>' +
+                '<small class="book-chain-count">' + chainDisc + '/' + maxChainLv + '</small>' +
             '</div>' +
             '<div class="book-grid">' + slotsHtml + '</div>' +
         '</div>';
@@ -3152,16 +3162,33 @@ function startCampAnimators() {
     if (petConfig) {
         var f1 = petConfig.state1Frames || petConfig.standFrames || petConfig.idleFrames || [];
         var f2 = petConfig.state2Frames || petConfig.sitFrames || petConfig.helloFrames || [];
+        var sheet1 = petConfig.state1Sheet || null;
+        var sheet2 = petConfig.state2Sheet || null;
+        var hasSheet = !!(sheet1 || sheet2);
 
-        if (f1.length || f2.length) {
+        if (f1.length || f2.length || hasSheet) {
             var elemId = 'mycamp-anim-pet';
+            var canvasElem = document.getElementById(elemId + '-canvas');
             var imgElem = document.getElementById(elemId + '-img');
-            if (imgElem) {
-                // Preload toàn bộ frames của pet
-                f1.concat(f2).forEach(function (src) {
-                    var img = new Image();
-                    img.src = src;
-                });
+
+            if (canvasElem || imgElem) {
+                var sheet1Img = null;
+                var sheet2Img = null;
+                if (sheet1) {
+                    sheet1Img = new Image();
+                    sheet1Img.src = sheet1.image;
+                }
+                if (sheet2) {
+                    sheet2Img = new Image();
+                    sheet2Img.src = sheet2.image;
+                }
+                if (!hasSheet) {
+                    // Preload toàn bộ frames PNG nếu dùng ảnh rời
+                    f1.concat(f2).forEach(function (src) {
+                        var img = new Image();
+                        img.src = src;
+                    });
+                }
 
                 var fps = (petConfig.fps && petConfig.fps > 0) ? petConfig.fps : 8;
                 var intervalMs = Math.round(1000 / fps);
@@ -3171,27 +3198,65 @@ function startCampAnimators() {
                 var s1Width = petConfig.state1Width || petConfig.standWidth || petConfig.idleWidth || 60;
                 var s2Width = petConfig.state2Width || petConfig.sitWidth || petConfig.helloWidth || 60;
 
-                var currentState = f1.length ? 'state1' : 'state2';
+                var currentState = (sheet1 || f1.length) ? 'state1' : 'state2';
                 var currentFrameIdx = 0;
                 var stateElapsedMs = 0;
 
+                function drawSheetFrame(canvas, sheet, sheetImg, frameIdx, displayWidth) {
+                    if (!canvas || !sheet || !sheetImg || !sheetImg.complete) return;
+                    if (canvas.width !== sheet.frameWidth || canvas.height !== sheet.frameHeight) {
+                        canvas.width = sheet.frameWidth;
+                        canvas.height = sheet.frameHeight;
+                    }
+                    if (canvas.style.width !== displayWidth + 'px') {
+                        canvas.style.width = displayWidth + 'px';
+                    }
+                    var col = frameIdx % sheet.cols;
+                    var row = Math.floor(frameIdx / sheet.cols);
+                    var sx = col * sheet.frameWidth;
+                    var sy = row * sheet.frameHeight;
+                    var ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(sheetImg, sx, sy, sheet.frameWidth, sheet.frameHeight, 0, 0, sheet.frameWidth, sheet.frameHeight);
+                }
+
+                // Vẽ ngay frame đầu tiên nếu dùng Sprite Sheet
+                if (canvasElem && sheet1 && sheet1Img) {
+                    if (sheet1Img.complete) {
+                        drawSheetFrame(canvasElem, sheet1, sheet1Img, 0, s1Width);
+                    } else {
+                        sheet1Img.onload = function () {
+                            if (currentState === 'state1') drawSheetFrame(canvasElem, sheet1, sheet1Img, 0, s1Width);
+                        };
+                    }
+                }
+
                 campAnimTimers['pet'] = setInterval(function () {
+                    var canvas = document.getElementById(elemId + '-canvas');
                     var img = document.getElementById(elemId + '-img');
-                    if (!img) return;
+                    if (!canvas && !img) return;
 
+                    var activeSheet = (currentState === 'state1') ? sheet1 : sheet2;
+                    var activeSheetImg = (currentState === 'state1') ? sheet1Img : sheet2Img;
                     var frames = (currentState === 'state1') ? f1 : f2;
-                    if (!frames || !frames.length) return;
+                    var totalCount = activeSheet ? activeSheet.totalFrames : (frames ? frames.length : 0);
+                    if (totalCount <= 0) return;
 
-                    currentFrameIdx = (currentFrameIdx + 1) % frames.length;
-                    img.src = frames[currentFrameIdx];
-
+                    currentFrameIdx = (currentFrameIdx + 1) % totalCount;
                     var targetWidth = (currentState === 'state1') ? s1Width : s2Width;
-                    if (img.style.width !== targetWidth + 'px') {
-                        img.style.width = targetWidth + 'px';
+
+                    if (canvas && activeSheet && activeSheetImg) {
+                        drawSheetFrame(canvas, activeSheet, activeSheetImg, currentFrameIdx, targetWidth);
+                    } else if (img && frames && frames.length) {
+                        img.src = frames[currentFrameIdx];
+                        if (img.style.width !== targetWidth + 'px') {
+                            img.style.width = targetWidth + 'px';
+                        }
                     }
 
                     // Nếu có cả 2 trạng thái và không đang giữ vuốt ve thì luân phiên
-                    if (f1.length && f2.length && !petHoldState.isHolding) {
+                    var canAlternate = (sheet1 && sheet2) || (f1.length && f2.length);
+                    if (canAlternate && !petHoldState.isHolding) {
                         stateElapsedMs += intervalMs;
                         var currentLimit = (currentState === 'state1') ? s1DurationMs : s2DurationMs;
 
@@ -3253,13 +3318,17 @@ function startCampAnimators() {
                         e.stopPropagation();
 
                         // 1. Chuyển ngay sang động tác anim thứ 2 khi người chơi chạm vào
-                        if (f2.length) {
+                        if (f2.length || sheet2) {
                             currentState = 'state2';
                             stateElapsedMs = 0;
                             currentFrameIdx = 0;
                             var img = document.getElementById(elemId + '-img');
                             if (img && f2[0]) img.src = f2[0];
                             if (img) img.style.width = s2Width + 'px';
+                            var canvas = document.getElementById(elemId + '-canvas');
+                            if (canvas && sheet2 && sheet2Img) {
+                                drawSheetFrame(canvas, sheet2, sheet2Img, 0, s2Width);
+                            }
                         }
 
                         container.style.transition = 'transform 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
@@ -3399,6 +3468,8 @@ function startCampAnimators() {
     var itemsList = (cfg && Array.isArray(cfg.items)) ? cfg.items : [];
 
     itemsList.forEach(function (item) {
+        // Nếu item bị ẩn trong mycamp_config.js thì không chạy hoạt ảnh
+        if (item.visible === false || item.hidden === true || item.enabled === false) return;
         if (item.type === 'pet' || item.id === 'slot-pet' || item.id === 'npc-dog-golden') return;
         if (item.type === 'anim_states') {
             // Đối tượng hoạt ảnh nhiều trạng thái (Đứng 1 lúc rồi ngồi)
@@ -3549,9 +3620,45 @@ function renderMyCampScene() {
         ? getMyCampBackgroundSrc()
         : (bgCfg.src || 'assets/images/items_khutrai/bg_khutrai.jpg');
 
-    // 1. Cấu hình màu nền toàn màn hình phần không có ảnh nền
+    // 1. Cấu hình màu nền / Gradient 3 màu toàn màn hình
     if (screen) {
-        screen.style.backgroundColor = bgColor;
+        if (bgCfg.gradient && bgCfg.gradient.enabled) {
+            var grad = bgCfg.gradient;
+            var angle = (grad.angle !== undefined) ? grad.angle : 180;
+            var c1 = grad.color1 || '#2c3d28';
+            var c2 = grad.color2 || '#475e3e';
+            var c3 = grad.color3 || '#1f2b1c';
+            screen.style.backgroundImage = 'linear-gradient(' + angle + 'deg, ' + c1 + ' 0%, ' + c2 + ' 50%, ' + c3 + ' 100%)';
+            screen.style.backgroundColor = c2;
+        } else {
+            screen.style.backgroundImage = 'none';
+            screen.style.backgroundColor = bgColor;
+        }
+
+        // Hiệu ứng ánh sáng nhẹ (Lighting Effect)
+        var lightOverlay = document.getElementById('mycamp-lighting-overlay');
+        if (!lightOverlay) {
+            lightOverlay = document.createElement('div');
+            lightOverlay.id = 'mycamp-lighting-overlay';
+            lightOverlay.className = 'mycamp-lighting-overlay';
+            screen.appendChild(lightOverlay);
+        }
+        var lightCfg = bgCfg.lighting || {};
+        if (lightCfg.enabled) {
+            lightOverlay.style.display = 'block';
+            var lColor = lightCfg.color || 'rgba(255, 255, 215, 0.26)';
+            var lPosX = lightCfg.positionX || '50%';
+            var lPosY = lightCfg.positionY || '18%';
+            var lSize = lightCfg.size || '72%';
+            lightOverlay.style.background = 'radial-gradient(circle at ' + lPosX + ' ' + lPosY + ', ' + lColor + ' 0%, rgba(255, 255, 255, 0) ' + lSize + ')';
+            if (lightCfg.pulse) {
+                lightOverlay.classList.add('mycamp-light-pulse');
+            } else {
+                lightOverlay.classList.remove('mycamp-light-pulse');
+            }
+        } else {
+            lightOverlay.style.display = 'none';
+        }
     }
 
     // 2. Cố định kích thước nền và căn giữa sân khấu cắm trại
@@ -3586,6 +3693,9 @@ function renderMyCampScene() {
 
     var html = '';
     itemsList.forEach(function (item) {
+        // TÍNH NĂNG ẨN / HIỆN: Nếu đặt visible: false hoặc hidden: true thì bỏ qua không vẽ lên bãi cắm trại
+        if (item.visible === false || item.hidden === true || item.enabled === false) return;
+
         var style = 'position:absolute;' +
             'left:' + (typeof item.left === 'number' ? item.left + 'px' : item.left) + ';' +
             'top:' + (typeof item.top === 'number' ? item.top + 'px' : item.top) + ';' +
@@ -3603,11 +3713,14 @@ function renderMyCampScene() {
             var activePetId = (SAVE && SAVE.activePet) ? SAVE.activePet : 'character01';
             var petConfig = (cfg && cfg.pets && cfg.pets[activePetId]) ? cfg.pets[activePetId] : null;
 
-            // Nếu con vật chưa có chuyển động (chưa có frame animation) thì tự động để trống bãi cỏ
+            // Nếu con vật chưa có chuyển động (chưa có frame animation hay spritesheet) thì tự động để trống bãi cỏ
             var f1 = petConfig ? (petConfig.state1Frames || petConfig.standFrames || petConfig.idleFrames || []) : [];
             var f2 = petConfig ? (petConfig.state2Frames || petConfig.sitFrames || petConfig.helloFrames || []) : [];
+            var s1Sheet = petConfig ? petConfig.state1Sheet : null;
+            var s2Sheet = petConfig ? petConfig.state2Sheet : null;
+            var hasSheet = !!(s1Sheet || s2Sheet);
 
-            if (!petConfig || (!f1.length && !f2.length)) {
+            if (!petConfig || (!f1.length && !f2.length && !hasSheet)) {
                 // "Nếu con vật nào chưa có chuyển động thì cứ để trống"
                 return;
             }
@@ -3631,7 +3744,12 @@ function renderMyCampScene() {
             var initialW = petConfig.state1Width || petConfig.standWidth || petConfig.idleWidth || 60;
 
             html += '<div id="' + elemId + '" class="mycamp-item mycamp-anim-item mycamp-pet mycamp-pet-' + activePetId + '" data-pet-id="' + activePetId + '" style="' + petStyle + '" title="' + (petConfig.name || '') + '">';
-            html += '<img id="' + elemId + '-img" src="' + initialSrc + '" class="mycamp-prop-img" style="display:block;width:' + initialW + 'px;height:auto;pointer-events:none;" alt="' + (petConfig.name || '') + '">';
+            if (hasSheet) {
+                var activeS = s1Sheet || s2Sheet;
+                html += '<canvas id="' + elemId + '-canvas" class="mycamp-prop-img" style="display:block;width:' + initialW + 'px;height:auto;pointer-events:none;" width="' + activeS.frameWidth + '" height="' + activeS.frameHeight + '"></canvas>';
+            } else {
+                html += '<img id="' + elemId + '-img" src="' + initialSrc + '" class="mycamp-prop-img" style="display:block;width:' + initialW + 'px;height:auto;pointer-events:none;" alt="' + (petConfig.name || '') + '">';
+            }
             // Đồng xu bé trên đầu thú cưng (hiển thị khi hết chu kỳ 10 phút để người chơi biết chạm vào nhận tiền)
             html += '<div id="mycamp-pet-ready-coin" class="pet-ready-coin" style="display:none;"><img src="assets/images/ui/icon_glod.png" class="pet-ready-coin-img" alt="Vàng"></div>';
             // Thanh trạng thái thời gian giữ chạm (vuốt ve)
@@ -3640,11 +3758,15 @@ function renderMyCampScene() {
             return;
         }
 
-        if (item.type === 'decor') {
-            // Vật trang trí cố định (Cây thông, cột đèn, v.v.)
+        if (item.type === 'decor' || item.type === 'cloud') {
+            // Vật trang trí cố định (Cây thông, cột đèn, đám mây, v.v.)
             var elemId = 'mycamp-decor-' + item.id;
-            html += '<div id="' + elemId + '" class="mycamp-item mycamp-' + item.id + '" style="' + style + '" title="' + (item.name || '') + '">';
-            html += '<img src="' + item.src + '" class="mycamp-prop-img" style="' + imgFit + '" alt="' + (item.name || '') + '">';
+            var cloudClass = item.type === 'cloud'
+                ? (' mycamp-cloud ' + (item.animClass || (item.id === 'cloud-top' ? 'mycamp-cloud-top-anim' : (item.id === 'cloud-bottom' ? 'mycamp-cloud-bottom-anim' : ''))))
+                : '';
+            var cloudImgStyle = (item.opacity !== undefined) ? ('opacity:' + item.opacity + ';') : '';
+            html += '<div id="' + elemId + '" class="mycamp-item mycamp-' + item.id + cloudClass + '" style="' + style + '" title="' + (item.name || '') + '">';
+            html += '<img src="' + item.src + '" class="mycamp-prop-img" style="' + imgFit + cloudImgStyle + '" alt="' + (item.name || '') + '">';
             html += '</div>';
         } else if (item.type === 'anim_states') {
             // Đối tượng hoạt ảnh nhiều trạng thái luân phiên (Đứng 1 lúc rồi ngồi)
@@ -3716,6 +3838,12 @@ if (typeof document !== 'undefined' && typeof document.getElementById === 'funct
         var backBtn = document.getElementById('btn-mycamp-back');
         if (backBtn) {
             backBtn.onclick = function () {
+                closeMyCamp();
+            };
+        }
+        var playBtn = document.getElementById('btn-mycamp-play');
+        if (playBtn) {
+            playBtn.onclick = function () {
                 closeMyCamp();
             };
         }

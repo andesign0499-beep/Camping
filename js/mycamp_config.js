@@ -54,22 +54,60 @@ var KHUTRAI_ITEMS = {
 // 2. CẤU HÌNH SÂN KHẤU, ẢNH NỀN, THAO TÁC KÉO/ZOOM & VỊ TRÍ ITEM
 var MYCAMP_CONFIG = {
     // -------------------------------------------------------------------------
-    // I. CẤU HÌNH ẢNH NỀN & MÀU NỀN MÀN HÌNH
+    // I. CẤU HÌNH ẢNH NỀN, MÀU GRADIENT & HIỆU ỨNG ÁNH SÁNG
     // -------------------------------------------------------------------------
     background: {
-        src: 'assets/images/items_khutrai/bg_khutrai.jpg', // File ảnh nền mặc định (nếu địa điểm chưa có ảnh _bg)
+        src: 'assets/images/background/bg_nuimatthan.webp', // File ảnh nền mặc định (nếu địa điểm chưa có ảnh _bg)
         width: 460,             // Chiều rộng ảnh nền cố định (mặc định 400px - bạn có thể sửa tại đây)
-        height: 596,            // Chiều cao ảnh nền (tỷ lệ chuẩn 1100x1640 tương ứng 596px)
-        color: '#566443'        // Màu nền màn hình (phần bao quanh không có ảnh nền)
+        height: 569,            // Chiều cao ảnh nền (tỷ lệ 800x989 tương ứng 569px)
+        color: '#566443',       // Màu nền màn hình dự phòng (khi không dùng gradient)
+
+        // ==========================================
+        // 1. TÙY CHỈNH GRADIENT MÀU NỀN MÀN HÌNH (3 MÀU)
+        // 💡 BẠN CÓ THỂ TỰ DO ĐỔI 3 MÀU VÀ GÓC ĐỘ THEO Ý MUỐN:
+        // ==========================================
+        gradient: {
+            enabled: true,              // true: Bật dải màu gradient 3 màu | false: Dùng màu đơn 'color' ở trên
+            angle: 180,                 // Góc dải màu (độ): 180 = từ trên xuống dưới, 135 = chéo góc
+            color1: '#2c3d28',          // MÀU 1 (Trên cùng màn hình - xanh rừng đậm dịu mát)
+            color2: '#475e3e',          // MÀU 2 (Ở giữa màn hình - xanh rêu tự nhiên)
+            color3: '#1f2b1c'           // MÀU 3 (Dưới đáy màn hình - màu đất rừng trầm lắng)
+        },
+
+        // ==========================================
+        // 2. TÙY CHỈNH HIỆU ỨNG ÁNH SÁNG NHẸ (LIGHTING EFFECT)
+        // 💡 Tạo vệt nắng tự nhiên rọi xuống bãi trại giúp khung cảnh có chiều sâu
+        // ==========================================
+        lighting: {
+            enabled: true,              // true: Bật hiệu ứng ánh sáng nhẹ | false: Tắt
+            color: 'rgba(255, 255, 215, 0.26)', // Màu và độ sáng (màu vàng nắng nhẹ, độ mờ 26%)
+            positionX: '50%',           // Vị trí ngang của tâm sáng (0% = trái, 50% = giữa, 100% = phải)
+            positionY: '18%',           // Vị trí dọc của tâm sáng (18% = chiếu từ trên trời rọi xuống)
+            size: '72%',                // Bán kính vùng phủ ánh sáng (VD: 60%, 70%, 80%)
+            pulse: true                 // true: Ánh sáng thở nhẹ bồng bềnh tự nhiên | false: Tĩnh
+        }
     },
 
-    // LIÊN KẾT ĐỊA ĐIỂM NGƯỜI DÙNG MUA VỚI ẢNH NỀN KHU TRẠI (HẬU TỐ _bg)
+    // LIÊN KẾT ĐỊA ĐIỂM NGƯỜI DÙNG MUA VỚI ẢNH NỀN KHU TRẠI (TẤT CẢ ĐÃ NÉN WEBP CHUẨN ~40%)
     // Khi người chơi mua và trang bị Điểm Đến trong Cửa Hàng, bãi trại sẽ tự động đổi sang ảnh nền tương ứng.
-    // Nếu địa điểm chưa có ảnh riêng thì hệ thống tự động sử dụng ảnh nền mặc định bg_khutrai.jpg.
+    // Nếu địa điểm chưa có ảnh riêng thì hệ thống tự động sử dụng ảnh nền mặc định bg_nuimatthan.webp.
     locationBackgrounds: {
-        'loc_doibu': 'assets/images/ui/bg_03_bg.jpg',     // Đồi Bù (bg_03.jpg -> bg_03_bg.jpg)
-        'loc_matthan': 'assets/images/ui/bg07_bg.jpg',    // Núi Mắt Thần (bg07.jpg -> bg07_bg.jpg)
-        'loc_bangioc': 'assets/images/ui/bg05_bg.jpg'     // Thác Bản Giốc (bg05.jpg -> bg05_bg.jpg)
+        'loc_doibu': 'assets/images/background/bg_doibu.webp',                    // Đồi Bù (Đứng đầu)
+        'loc_dongdo': 'assets/images/background/bg_hodongdo.webp',          // Cao nguyên Lâm Viên (Đứng thứ 2)
+        'loc_matthan': 'assets/images/background/bg_nuimatthan.webp',       // Núi Mắt Thần (WebP nén ~40.6%)
+        'loc_bangioc': 'assets/images/background/bg_thacbandoc.webp',       // Thác Bản Giốc (WebP nén ~42.4%)
+        'loc_muine': 'assets/images/background/bg_doichatmuine.webp',       // Đồi Cát Mũi Né (WebP nén ~47.2%)
+        'loc_songnuocbinhba': 'assets/images/background/bg_songnuocbinhba.webp' // Sóng nước Bình Ba (WebP nén ~44.9%)
+    },
+
+    // =========================================================================
+    // CẤU HÌNH HIỂN THỊ ẢNH NỀN NGOÀI MÀN CHƠI CHÍNH (TOP SCENE)
+    // 💡 Căn giữa theo chiều ngang, padding top = 0 để không bị tràn mép trên,
+    //    chiều ngang tối thiểu 375px để hình ảnh rõ nét và không bị bé
+    // =========================================================================
+    mainPlayScene: {
+        position: 'center -40px',          // Căn ngang ở giữa, dọc sát mép trên (0px)
+        size: 'max(375px, 75%) auto'     // Chiều ngang tối thiểu 375px
     },
 
     // -------------------------------------------------------------------------
@@ -118,6 +156,14 @@ var MYCAMP_CONFIG = {
             state1Name: 'stand',
             state1Duration: 14,       // Thời gian ĐỨNG (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             state1Width: 56,         // Chiều rộng khi đứng (px)
+            state1Sheet: {
+                image: 'assets/images/npc_sheets/goden_idle_sheet.webp',
+                frameWidth: 145,
+                frameHeight: 229,
+                cols: 5,
+                rows: 4,
+                totalFrames: 20
+            },
             state1Frames: [
                 'assets/images/npc_anim/goden_idle1.png',
                 'assets/images/npc_anim/goden_idle2.png',
@@ -145,6 +191,14 @@ var MYCAMP_CONFIG = {
             state2Name: 'sit',
             state2Duration: 3,        // Thời gian NGỒI (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             state2Width: 72,         // Chiều rộng khi ngồi (px)
+            state2Sheet: {
+                image: 'assets/images/npc_sheets/goden_sit_sheet.webp',
+                frameWidth: 200,
+                frameHeight: 205,
+                cols: 5,
+                rows: 4,
+                totalFrames: 20
+            },
             state2Frames: [
                 'assets/images/npc_anim/goden_sit1.png',
                 'assets/images/npc_anim/goden_sit2.png',
@@ -184,6 +238,14 @@ var MYCAMP_CONFIG = {
             state1Name: 'idle',
             state1Duration: 8,        // Thời gian ĐỨNG NGHỈ (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             state1Width: 64,         // Chiều rộng khi đứng nghỉ (px) (tỷ lệ 180x214)
+            state1Sheet: {
+                image: 'assets/images/npc_sheets/meoanh_idle_sheet.webp',
+                frameWidth: 180,
+                frameHeight: 214,
+                cols: 5,
+                rows: 3,
+                totalFrames: 15
+            },
             state1Frames: [
                 'assets/images/npc_anim/meoanh_idle1.png',
                 'assets/images/npc_anim/meoanh_idle2.png',
@@ -206,6 +268,14 @@ var MYCAMP_CONFIG = {
             state2Name: 'hello',
             state2Duration: 4,        // Thời gian VẪY TAY CHÀO (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             state2Width: 64,         // Chiều rộng khi vẫy tay (px)
+            state2Sheet: {
+                image: 'assets/images/npc_sheets/meoanh_hello_sheet.webp',
+                frameWidth: 180,
+                frameHeight: 214,
+                cols: 5,
+                rows: 4,
+                totalFrames: 20
+            },
             state2Frames: [
                 'assets/images/npc_anim/meoanh_hello1.png',
                 'assets/images/npc_anim/meoanh_hello2.png',
@@ -259,12 +329,48 @@ var MYCAMP_CONFIG = {
     // -------------------------------------------------------------------------
     items: [
         // ==========================================
+        // 0. CÁC ĐÁM MÂY BAY KHUNG CẢNH (CLOUDS)
+        // 💡 MẸO ẨN / HIỆN: visible: true (HIỆN) / false (ẨN)
+        //    Có thể tùy chỉnh tọa độ (left, top), độ rộng (width), độ mờ (opacity)
+        // ==========================================
+        {
+            id: 'cloud-top',
+            name: 'Đám mây bay trên (đỉnh núi Mắt Thần)',
+            type: 'cloud',
+            visible: true,           // Đổi thành false để ẨN, true để HIỆN
+            src: 'assets/images/background/may2.webp',
+            left: 75,
+            top: 25,
+            width: 310,
+            height: 'auto',
+            zIndex: 4,
+            opacity: 0.92
+        },
+        {
+            id: 'cloud-bottom',
+            name: 'Đám mây bay dưới (sườn núi)',
+            type: 'cloud',
+            visible: true,           // Đổi thành false để ẨN, true để HIỆN
+            src: 'assets/images/background/may1.webp',
+            left: 65,
+            top: 145,
+            width: 280,
+            height: 'auto',
+            zIndex: 5,
+            opacity: 0.88
+        },
+
+        // ==========================================
         // 1. VẬT TRANG TRÍ MẶC ĐỊNH (CỐ ĐỊNH)
+        // 💡 MẸO ẨN / HIỆN: Bạn có thể bật hoặc tắt bất kỳ món nào dưới đây:
+        //    visible: true   -> HIỂN THỊ TRÊN BÃI TRẠI
+        //    visible: false  -> ẨN KHỎI BÃI TRẠI
         // ==========================================
         {
             id: 'tree-1',
             name: 'Cây thông bên trái (mỏm đá trái)',
             type: 'decor',
+            visible: false,           // Đổi thành false để ẨN, true để HIỆN - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             src: 'assets/images/items_khutrai/tree.png',
             left: 45,
             top: 235,
@@ -276,6 +382,7 @@ var MYCAMP_CONFIG = {
             id: 'tree-2',
             name: 'Cây thông ở giữa (sau lưng lều)',
             type: 'decor',
+            visible: false,           // Đổi thành false để ẨN, true để HIỆN - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             src: 'assets/images/items_khutrai/tree.png',
             left: 200,
             top: 205,
@@ -287,6 +394,7 @@ var MYCAMP_CONFIG = {
             id: 'lamp',
             name: 'Cột đèn dã ngoại (bên bờ suối)',
             type: 'decor',
+            visible: true,           // Đổi thành false để ẨN, true để HIỆN - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             src: 'assets/images/items_khutrai/icon_den.png',
             left: 230,
             top: 245,
