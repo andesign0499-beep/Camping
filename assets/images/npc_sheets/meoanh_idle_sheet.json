@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "image": "meoanh_idle_sheet.webp",
+    "format": "WebP",
+    "size": {
+      "w": 900,
+      "h": 642
+    },
+    "scale": 1,
+    "totalFrames": 15,
+    "frameWidth": 180,
+    "frameHeight": 214,
+    "columns": 5,
+    "rows": 3,
+    "fps": 12
+  },
+  "frames": [
+    {
+      "name": "meoanh_idle1",
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle2",
+      "index": 1,
+      "x": 180,
+      "y": 0,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle3",
+      "index": 2,
+      "x": 360,
+      "y": 0,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle4",
+      "index": 3,
+      "x": 540,
+      "y": 0,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle5",
+      "index": 4,
+      "x": 720,
+      "y": 0,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle6",
+      "index": 5,
+      "x": 0,
+      "y": 214,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle7",
+      "index": 6,
+      "x": 180,
+      "y": 214,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle8",
+      "index": 7,
+      "x": 360,
+      "y": 214,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle9",
+      "index": 8,
+      "x": 540,
+      "y": 214,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle10",
+      "index": 9,
+      "x": 720,
+      "y": 214,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle11",
+      "index": 10,
+      "x": 0,
+      "y": 428,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle12",
+      "index": 11,
+      "x": 180,
+      "y": 428,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle13",
+      "index": 12,
+      "x": 360,
+      "y": 428,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle14",
+      "index": 13,
+      "x": 540,
+      "y": 428,
+      "width": 180,
+      "height": 214
+    },
+    {
+      "name": "meoanh_idle15",
+      "index": 14,
+      "x": 720,
+      "y": 428,
+      "width": 180,
+      "height": 214
+    }
+  ]
+}
