@@ -5136,18 +5136,24 @@ body {
 }
 
 /* ==========================================================================
-   RESPONSIVE LAYOUT (CHIỀU CAO >= 600PX VÀ CHIỀU RỘNG > 600PX):
-   - Chiều cao >= 600px:
-     + Bề ngang <= 600px: Giữ nguyên layout dọc mobile mặc định
-     + Bề ngang > 600px : Chuyển sang layout ngang desktop/tablet:
-       * Bê bàn chơi lên phía trên ảnh nền (nằm bên phải)
-       * Căn icon Bản đồ & Cài đặt ra 2 mép, thanh chỉ số nằm cạnh nút Bản đồ
-       * Ẩn thanh gỗ và nền cỏ
-       * Hệ 3 nút Khu Trại, Cẩm Nang, Bán luôn rộng bằng bàn chơi
+   RESPONSIVE LAYOUT TRÊN MÀN HÌNH > 600PX:
+   - Chú chó và khay 3 order luôn bám cố định mép trên bên trái của bàn chơi 7x9
+   - Bàn chơi 7x9 nằm chính giữa chú chó (phía trên) và cụm 3 nút Cửa hàng, Cẩm nang, Trại của bạn (phía dưới)
+   - Tổng chiều cao cả 3 thành phần (Chú chó & 3 order + Bàn chơi 7x9 + Cụm 3 nút) chiếm đúng 85% chiều cao màn hình (85dvh) và căn giữa
    ========================================================================== */
-@media (min-width: 601px) and (min-height: 600px) {
+@media (min-width: 601px) {
     :root {
         --app-max-w: 100vw;
+        --desktop-order-row-h: 82px;
+        --desktop-footer-row-h: 54px; /* 10px khoảng cách + 44px chiều cao nút */
+        --desktop-board-h: min(
+            calc(85dvh - var(--desktop-order-row-h) - var(--desktop-footer-row-h)),
+            calc((100vw - 32px) * 9 / 7)
+        );
+        --desktop-board-w: calc(var(--desktop-board-h) * 7 / 9);
+        --desktop-stack-h: calc(var(--desktop-order-row-h) + var(--desktop-board-h) + var(--desktop-footer-row-h));
+        --desktop-stack-top: calc((100dvh - var(--desktop-stack-h)) / 2);
+        --desktop-stack-left: calc((100vw - var(--desktop-board-w)) / 2);
     }
 
     #game-app {
@@ -5182,7 +5188,7 @@ body {
         left: 0;
         right: 0;
         width: 100%;
-        padding: 14px 22px 0 22px;
+        padding: 12px 22px 0 22px;
         justify-content: space-between;
         align-items: center;
         z-index: 25;
@@ -5195,21 +5201,25 @@ body {
         flex: 1;
     }
 
-    /* Bê bàn chơi & cụm 3 nút lên phía trên ảnh nền (căn giữa màn hình) */
+    /* Khung tổng 3 phần (Chú chó & 3 order + Bàn chơi 7x9 + Cụm 3 nút) chiếm 85% chiều cao màn hình và căn giữa */
     #bottom-play-area {
         position: absolute;
-        inset: 0;
+        top: var(--desktop-stack-top);
+        left: var(--desktop-stack-left);
+        width: var(--desktop-board-w);
+        height: var(--desktop-stack-h);
+        padding-top: var(--desktop-order-row-h);
+        padding-bottom: 0;
+        padding-left: 0;
+        padding-right: 0;
+        margin: 0;
         background: none;
         z-index: 10;
         pointer-events: none;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
-        padding-top: calc(54px + 16px); /* Cách header tối thiểu 16px */
-        padding-bottom: 24px;
-        padding-left: 16px;
-        padding-right: 16px;
     }
 
     /* Ẩn hoàn toàn thanh gỗ và nền cỏ khi màn hình > 600px */
@@ -5221,35 +5231,37 @@ body {
         position: relative;
         z-index: 14;
         pointer-events: auto;
-        margin: 0 auto;
+        margin: 0;
         padding: 0;
-        width: 100%;
-        flex: 0 0 auto;
-        height: min(
-            calc(100dvh - 54px - 16px - 44px - 12px - 24px),
-            calc(min(100vw - 160px, 600px) * 9 / 7)
-        );
-        max-height: calc(100dvh - 150px);
+        width: var(--desktop-board-w);
+        height: var(--desktop-board-h);
+        max-height: var(--desktop-board-h);
+        flex: 0 0 var(--desktop-board-h);
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .board-frame-wrapper {
-        margin: 0 auto;
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        aspect-ratio: 7 / 9;
+        margin: 0;
     }
 
     #game-footer {
         position: relative;
         z-index: 14;
         pointer-events: auto;
-        width: var(--board-actual-w, 100%);
+        width: 100%;
         max-width: 100%;
         height: 44px;
         min-height: 44px;
-        margin: 12px auto 0 auto;
+        margin: 10px 0 0 0;
         padding: 0;
-        flex: 0 0 auto !important;
+        flex: 0 0 44px !important;
         flex-grow: 0 !important;
         flex-shrink: 0 !important;
         display: grid;
@@ -5258,71 +5270,68 @@ body {
         gap: var(--sp-3);
     }
 
-    /* Khu vực nhân vật đồng hành, hộp thoại, đơn hàng & cây chổi */
+    /* Chú chó và 3 order luôn bám sát mép trên bên trái của bàn chơi 7x9 */
     #scene-stage {
         position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        top: var(--desktop-stack-top);
+        left: var(--desktop-stack-left);
+        width: var(--desktop-board-w);
+        height: var(--desktop-order-row-h);
         min-height: 0;
-        padding: 0;
+        margin: 0;
+        padding: 0 0 4px 0;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: flex-start;
         pointer-events: none;
-        z-index: 12;
+        z-index: 20;
     }
 
-    /* Chú chó đứng sát góc trái dưới màn hình */
-    .npc-guide-wrap {
-        position: absolute;
-        left: clamp(24px, 4vw, 80px);
-        bottom: 12px;
-        z-index: 18;
-        pointer-events: auto;
-    }
-
-    .npc-character-img {
-        height: clamp(165px, 31dvh, 250px);
-        width: auto;
-    }
-
-    /* Hộp thoại của chú chó */
     #scene-right-column {
-        position: absolute;
-        left: calc(clamp(24px, 4vw, 80px) + clamp(110px, 16dvh, 150px) - 32px);
-        bottom: 202px;
-        max-width: 320px;
+        position: relative;
+        left: auto;
+        bottom: auto;
+        top: auto;
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
         margin: 0;
         padding: 0;
         transform: none;
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-end;
-        z-index: 19;
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: flex-start;
+        z-index: 20;
         pointer-events: none;
     }
 
     #scene-right-column .npc-speech-bubble {
-        left: -8px;
-        top: 0;
-        max-width: 280px;
+        position: absolute;
+        left: 8px;
+        bottom: calc(100% - 4px);
+        top: auto;
+        max-width: min(280px, var(--desktop-board-w));
         pointer-events: auto;
     }
 
-    /* Hàng thẻ nhiệm vụ: xếp thành hàng dọc, căn giữa theo chiều dọc và cách mép trái bàn chơi đúng 12px */
     #scene-right-column #orders-container {
-        position: fixed;
-        left: calc(var(--board-actual-left, 50vw) - var(--order-card-sz, 44px) - 12px);
-        top: calc(var(--board-actual-top, 50vh) + (var(--board-actual-h, 400px) / 2));
-        transform: translateY(-50%);
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: flex-start;
         gap: 8px;
         padding: 0;
         margin: 0;
+        width: 100%;
+        max-width: 100%;
         min-height: 0;
-        max-height: 80vh;
+        max-height: none;
         overflow: visible;
         pointer-events: auto;
         z-index: 22;
@@ -5339,7 +5348,7 @@ body {
 }
 
 /* ==========================================================================
-   RESPONSIVE LAYOUT KHI CHIỀU CAO MÀN HÌNH < 600PX (LANDSCAPE / LOW-HEIGHT):
+   RESPONSIVE LAYOUT KHI CHIỀU CAO MÀN HÌNH < 600PX VÀ BỀ NGANG <= 600PX:
    - Ảnh nền cảnh phủ kín màn hình (ẩn hoàn toàn nền cỏ và thanh gỗ)
    - Bàn cờ 7x9 căn giữa màn hình theo cả 2 chiều, chiếm trọn chiều cao khả dụng
    - Cột bên trái:
@@ -5353,7 +5362,7 @@ body {
      + Cụm 3 nút (Khu trại, Cẩm nang, Bán) xếp dọc ở góc dưới bên phải bàn chơi
      + Cây chổi dọn dẹp ở góc phải dưới
    ========================================================================== */
-@media (max-height: 599.98px) {
+@media (max-width: 600px) and (max-height: 599.98px) {
     :root {
         --app-max-w: 100vw;
     }
