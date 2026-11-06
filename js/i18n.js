@@ -333,8 +333,8 @@ var I18N_DATA = {
     // -------------------------------------------------------------------------
     npc: {
         // Mở đầu Level 1 - 10
-        welcome_camp: { vi: 'Chào mừng bạn đến với khu trại nhỏ', en: 'Welcome to the small camp!' },
-        intro_lv1: { vi: 'Chạm vào xe kéo để lấy đồ cắm trại và ghép hoàn thành nhiệm vụ bạn nhé.', en: 'Tap the wagon to get camping gear and complete quests!' },
+        welcome_camp: { vi: 'Chào mừng bạn đến với khu trại nhỏ!', en: 'Welcome to the small camp!' },
+        intro_lv1: { vi: 'Chạm Xe Kéo lấy đồ cắm trại và ghép giao đơn nhé!', en: 'Tap the wagon to get camping gear and complete quests!' },
         intro_lv2: { vi: 'Chạm Ba Lô để lấy bánh mì và pha cà phê ấm nóng nào!', en: 'Tap the Backpack to get sandwiches and warm coffee!' },
         intro_lv3: { vi: 'Chạm Thùng Đồ lấy thảm trải cỏ và bật bếp lửa sưởi ấm nhé!', en: 'Tap the Tool Crate to spread mats and light the fire!' },
         intro_lv4: { vi: 'Chạm Xe Kéo để ghép bàn gỗ và ghế tựa êm ái nào!', en: 'Tap the Wagon to merge wooden tables and chairs!' },
@@ -348,6 +348,8 @@ var I18N_DATA = {
 
         // Gợi ý tình huống trong màn
         deliver_ready: { vi: 'Xong đơn! Chạm NỘP để nhận Vàng nhé!', en: 'Order ready! Tap DELIVER for Gold!' },
+        deliver_order_hint: { vi: 'Ghép xong rồi! Chạm nút GIAO nhận thưởng và mở đất nhé!', en: 'Order ready! Tap DELIVER to level up and unlock land!' },
+        tent_lv4_hint: { vi: 'Gâu! Có Lều rồi! Vào "Trại của bạn" dựng lều nhé!', en: 'You got a Tent! Tap "My Camp" to decorate your campsite!' },
         merge_web: { vi: 'Kéo {item} vào ô Nhện nhé!', en: 'Drag {item} onto the Web cell!' },
         merge_free: { vi: 'Ghép 2 {item} để giao đơn nhé!', en: 'Merge 2 {item} to complete order!' },
         spawn_prompt: { vi: 'Chạm Nguồn phát để lấy thêm đồ nhé!', en: 'Tap Generator to get items!' },

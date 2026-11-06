@@ -86,7 +86,7 @@ function defaultSave() {
         ads: { day: todayKey(), energy: 0, gem: 0, coin: 0, mystery: 0, dailyGemClaimed: false },
         settings: {
             sound: true,
-            bgm: true,
+            bgm: false,
             vibrate: true,
             unlockAllLevels: false,
             lang: (typeof I18N !== 'undefined') ? I18N.currentLang : 'vi'
@@ -94,7 +94,9 @@ function defaultSave() {
         petOrderGroups: [],
         lastEnergyTs: Date.now(),
         lastPetRewardTime: 0,
-        recentOrdersHistory: []
+        recentOrdersHistory: [],
+        recentBranchHistory: [],
+        lastOrderedLevelByBranch: {}
     };
 }
 
@@ -147,7 +149,32 @@ function loadSave() {
             if (!s.activePet) s.activePet = 'character01';
             if (typeof s.lastPetRewardTime !== 'number') s.lastPetRewardTime = 0;
             if (!Array.isArray(s.recentOrdersHistory)) s.recentOrdersHistory = [];
-            if (!Array.isArray(s.petOrderGroups)) s.petOrderGroups = [];
+            if (!Array.isArray(s.recentBranchHistory)) s.recentBranchHistory = [];
+            var maxSensibleLv = (typeof getProgressCap === 'function')
+                ? getProgressCap(s.totalOrdersDelivered || 0)
+                : Math.min(12, Math.floor((s.totalOrdersDelivered || 0) / 3) + 3);
+            if (!s.lastOrderedLevelByBranch || typeof s.lastOrderedLevelByBranch !== 'object') {
+                s.lastOrderedLevelByBranch = {};
+            } else {
+                Object.keys(s.lastOrderedLevelByBranch).forEach(function (k) {
+                    if (typeof s.lastOrderedLevelByBranch[k] === 'number' && s.lastOrderedLevelByBranch[k] > maxSensibleLv) {
+                        s.lastOrderedLevelByBranch[k] = Math.max(2, maxSensibleLv - 1);
+                    }
+                });
+            }
+            if (!Array.isArray(s.petOrderGroups)) {
+                s.petOrderGroups = [];
+            } else {
+                // Tự động loại bỏ các đơn cũ bị lỗi vọt lên cấp vượt quá progressCap để hệ thống tái tạo lại đơn chuẩn
+                s.petOrderGroups = s.petOrderGroups.filter(function (g) {
+                    if (!g || !Array.isArray(g.orders)) return false;
+                    return !g.orders.some(function (o) {
+                        if (!o || !o.id) return false;
+                        var lv = parseInt((o.id.match(/_lv(\d+)$/) || [])[1], 10);
+                        return typeof lv === 'number' && lv > maxSensibleLv;
+                    });
+                });
+            }
             if (!Array.isArray(s.ownedLocations) || !s.ownedLocations.length) s.ownedLocations = ['loc_doibu'];
             if (!s.ownedLocations.includes('loc_doibu')) s.ownedLocations.unshift('loc_doibu');
             if (!s.activeLocation) s.activeLocation = 'loc_doibu';
@@ -188,6 +215,10 @@ function loadSave() {
                 });
             }
             s.settings = Object.assign(defaultSave().settings, parsed.settings || {});
+            // Đảm bảo nhạc nền mặc định là TẮT (trừ khi người chơi đã chủ động bấm BẬT trong Cài đặt)
+            if (s.settings && !s.settings.bgmUserToggled) {
+                s.settings.bgm = false;
+            }
             if (typeof s.gems !== 'number') s.gems = 8;
             if (typeof s.lastEnergyTs !== 'number') s.lastEnergyTs = Date.now();
             // Chuyển đổi save sang nền kinh tế Vàng x10
@@ -440,7 +471,10 @@ function orderReward(id) {
 // Tier 1: 5 EXP, Tier 2: 10 EXP, Tier 3: 20 EXP, Tier 4: 40 EXP, Tier 5: 80 EXP, Tier 6: 160 EXP...
 function orderExp(id) {
     var units = (typeof itemUnits === 'function') ? itemUnits(id) : 1;
-    return Math.max(5, units * 5);
+    var mult = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.orderExpMultiplier === 'number')
+        ? GAME_CONFIG.gameplay.orderExpMultiplier
+        : 1;
+    return Math.max(5, Math.round(units * 5 * mult));
 }
 
 // Yêu cầu điểm EXP cần thiết để thăng cấp Level người chơi tiếp theo (Pacing chuẩn thị trường Merge-2)
@@ -504,6 +538,18 @@ function recordOrderDelivered(itemId) {
     if (SAVE.recentOrdersHistory.length > 15) {
         SAVE.recentOrdersHistory.splice(0, SAVE.recentOrdersHistory.length - 15);
     }
+
+    var branch = (typeof itemLine === 'function') ? itemLine(itemId) : (itemId.split('_lv')[0]);
+    if (branch) {
+        if (!Array.isArray(SAVE.recentBranchHistory)) {
+            SAVE.recentBranchHistory = [];
+        }
+        SAVE.recentBranchHistory.push(branch);
+        if (SAVE.recentBranchHistory.length > 30) {
+            SAVE.recentBranchHistory.splice(0, SAVE.recentBranchHistory.length - 30);
+        }
+    }
+
     saveGame();
 }
 

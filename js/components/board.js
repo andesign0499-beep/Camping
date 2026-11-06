@@ -221,7 +221,7 @@ function getNextRandomBgmIndex() {
 }
 
 function playBgmTrack(index) {
-    if (!SAVE.settings || SAVE.settings.bgm === false) {
+    if (!SAVE.settings || !SAVE.settings.bgm) {
         stopBgm();
         return;
     }
@@ -236,7 +236,7 @@ function playBgmTrack(index) {
         bgmAudioElement.addEventListener('error', function (e) {
             console.warn('BGM load error, skipping to next track:', e);
             setTimeout(function () {
-                if (SAVE.settings && SAVE.settings.bgm !== false) {
+                if (SAVE.settings && SAVE.settings.bgm) {
                     playBgmTrack(getNextRandomBgmIndex());
                 }
             }, 2000);
@@ -255,7 +255,7 @@ function playBgmTrack(index) {
 }
 
 function startBgm() {
-    if (!SAVE.settings || SAVE.settings.bgm === false) return;
+    if (!SAVE.settings || !SAVE.settings.bgm) return;
     if (bgmAudioElement && !bgmAudioElement.paused) return;
     if (currentBgmIndex === -1) {
         currentBgmIndex = Math.floor(Math.random() * BGM_PLAYLIST.length);
@@ -274,7 +274,7 @@ function stopBgm() {
 }
 
 function updateBgmPlayback() {
-    if (SAVE.settings && SAVE.settings.bgm !== false) {
+    if (SAVE.settings && SAVE.settings.bgm) {
         startBgm();
     } else {
         stopBgm();
@@ -852,7 +852,7 @@ var PET_DIALOGUES = {
         requests: [
             'Gâu! Ông chủ ơi, chúng ta cần {item} để cắm trại nè!',
             'Gâu gâu! Hãy giúp em ghép một chiếc {item} nhé!',
-            'Gâu! Bão tuyết ở quê lâu quá, có {item} mình sẽ cắm trại thật vui!'
+            'Gâu! Có {item} mình sẽ cắm trại thật vui!'
         ],
         thanks: [
             'Gâu gâu! {item} tuyệt vời quá, thương ông chủ nhiều!',
@@ -921,7 +921,7 @@ var PET_DIALOGUES = {
         sound: 'Meo~',
         requests: [
             'Meo~ Ta muốn có {item} quý phái để nằm ngắm cảnh, mau làm đi~',
-            'Purr... Một chút {item} sang trọng sẽ hợp với khí chất của ta hơn!',
+            'Purr... Có {item} sang trọng sẽ hợp với ta hơn!',
             'Này bạn, đừng để ta phải chờ {item} lâu quá đấy nhé~'
         ],
         thanks: [
@@ -934,7 +934,7 @@ var PET_DIALOGUES = {
         name: 'Maine Coon',
         sound: 'Ngoao!',
         requests: [
-            'Ngoao! Cần một chiếc {item} thật hoành tráng cho bữa tiệc dã ngoại!',
+            'Ngoao! Cần {item} thật xịn cho tiệc dã ngoại!',
             'Gừ... Khám phá thiên nhiên Việt Nam phải có {item} mới đã!',
             'Ngoao ngoao! Ghép {item} to nhất cho ta nào!'
         ],
@@ -1033,8 +1033,9 @@ function setPetSpeech(petId, speechText, autoHideMs) {
 
     if (speechText && typeof speechText === 'string') {
         speechText = speechText.trim();
-        if (speechText.length > 90) {
-            speechText = speechText.slice(0, 87) + '...';
+        // Giới hạn cứng câu thoại tối đa 68 ký tự
+        if (speechText.length > 68) {
+            speechText = speechText.slice(0, 65).trim() + '...';
         }
     }
 
@@ -1082,15 +1083,19 @@ function getCurrentNpcId() {
 function clearTutorialHand() {
     var old = document.getElementById('tutorial-hand');
     if (old) old.remove();
+    document.querySelectorAll('.hint-pulse').forEach(function (el) {
+        if (!el.classList.contains('cell')) el.classList.remove('hint-pulse');
+    });
 }
 
-function showTutorialHandTap(targetEl) {
+function showTutorialHandTap(targetEl, targetType) {
     clearTutorialHand();
     if (!targetEl) return;
     var rect = targetEl.getBoundingClientRect();
     if (!rect.width) return;
     var hand = document.createElement('div');
     hand.id = 'tutorial-hand';
+    if (targetType) hand._targetType = targetType;
     var img = document.createElement('img');
     img.src = 'assets/images/ui/icon_hand.png';
     img.alt = '';
@@ -1228,16 +1233,19 @@ function updateEarlyLevelsTutorial() {
         return true;
     }
 
-    // Cấu hình hướng dẫn cho 10 level đầu (xen kẽ: Xe kéo -> Ba lô -> Thùng đồ):
+    // Cấu hình hướng dẫn cho 10 level đầu:
+    // - Lv 1..3: Làm quen Xe Kéo (generator_cooler)
+    // - Lv 4..6: Mở Ba Lô Dã Ngoại (generator_backpack)
+    // - Lv 7..9: Mở Thùng Bếp & Sinh Tồn (generator_crate)
     var targetGenMap = {
         1: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv1', text: 'Chạm vào xe kéo để lấy đồ cắm trại và ghép hoàn thành nhiệm vụ bạn nhé.' },
-        2: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv2', text: 'Chạm Ba Lô để lấy bánh mì và pha cà phê ấm nóng nào!' },
-        3: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv3', text: 'Chạm Thùng Đồ lấy thảm trải cỏ và bật bếp lửa sưởi ấm nhé!' },
-        4: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv4', text: 'Chạm Xe Kéo để ghép bàn gỗ và ghế tựa êm ái nào!' },
+        2: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv2', text: 'Chạm Xe Kéo để ghép bàn gỗ và ghế tựa êm ái nào!' },
+        3: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv3', text: 'Chạm Xe Kéo dựng thêm bạt che lớn và lều trại ấm áp nhé!' },
+        4: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv4', text: 'Chạm Ba Lô để lấy bánh mì và pha cà phê ấm nóng nào!' },
         5: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv5', text: 'Mở Ba Lô chuẩn bị búa cắm cọc và làm bữa ăn no nê bạn nhé!' },
-        6: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv6', text: 'Mở Thùng Đồ chuẩn bị bếp nướng và hộp sơ cứu phòng thân nhé!' },
-        7: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv7', text: 'Chạm Xe Kéo dựng thêm bạt che lớn và bàn tiệc hoành tráng nhé!' },
-        8: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv8', text: 'Mở Ba Lô pha bình cà phê nóng và lấy đèn pin đi dạo thôi!' },
+        6: { id: 'generator_backpack', npc: 'cao', emoji: '', key: 'intro_lv6', text: 'Mở Ba Lô pha bình cà phê nóng và lấy đèn pin đi dạo thôi!' },
+        7: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv7', text: 'Chạm Thùng Đồ lấy thảm trải cỏ và bật bếp lửa sưởi ấm nhé!' },
+        8: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv8', text: 'Mở Thùng Đồ chuẩn bị bếp nướng và hộp sơ cứu phòng thân nhé!' },
         9: { id: 'generator_crate', npc: 'de', emoji: '', key: 'intro_lv9', text: 'Mở Thùng Đồ nhóm ngọn lửa trại rực rỡ cho đêm tiệc đáng nhớ nhé!' },
         10: { id: 'generator_cooler', npc: 'gau', emoji: '', key: 'intro_lv10', text: 'Hội tụ 3 nguồn phát! Chạm thùng để làm nhiệm vụ!' }
     };
@@ -1298,6 +1306,103 @@ function updateEarlyLevelsTutorial() {
     return false;
 }
 
+// Hướng dẫn người chơi chạm nút GIAO khi đã ghép xong đơn hàng
+// hoặc bấm vào nút "Trại của bạn" khi đã sở hữu Lều cắm trại Lv.4
+function updateOrderActionTutorials() {
+    if (levelWon || document.getElementById('modal-overlay') || dragState) return false;
+    
+    // 1. Ưu tiên: Nút Giao đơn hàng (khi đã đủ món trong khay đơn hàng)
+    var deliverBtn = ordersContainer ? ordersContainer.querySelector('.btn-group-deliver') : null;
+    if (deliverBtn) {
+        var hand = document.getElementById('tutorial-hand');
+        if (!hand || hand._targetType !== 'deliver') {
+            showTutorialHandTap(deliverBtn, 'deliver');
+            deliverBtn.classList.add('hint-pulse');
+        }
+
+        var petSpeech = (typeof I18N !== 'undefined' && typeof I18N.t === 'function' && I18N.t('npc.deliver_order_hint'))
+            ? I18N.t('npc.deliver_order_hint')
+            : 'Ghép xong rồi! Chạm nút GIAO nhận thưởng và mở đất nhé!';
+        
+        var bubble = document.getElementById('npc-speech-bubble');
+        if (!bubble || bubble.style.display === 'none') {
+            if (typeof setPetSpeech === 'function') {
+                setPetSpeech(null, petSpeech, 5500);
+            } else if (typeof setNpcState === 'function') {
+                setNpcState('gau', '', petSpeech, 5500);
+            }
+        }
+        return true;
+    }
+
+    // Nếu không còn nút Giao nào mà bàn tay đang chỉ vào deliver -> xóa bàn tay
+    var handEl = document.getElementById('tutorial-hand');
+    if (handEl && handEl._targetType === 'deliver') {
+        clearTutorialHand();
+    }
+
+    // 2. Hướng dẫn vào "Trại của bạn" khi đã sở hữu Lều Lv.4
+    return checkAndShowTentLv4Hint();
+}
+
+function checkAndShowTentLv4Hint() {
+    if (levelWon || document.getElementById('modal-overlay') || dragState) return false;
+    if (typeof SAVE === 'undefined' || !SAVE || SAVE.tutTentLv4Seen) return false;
+
+    var myCampScreen = document.getElementById('my-camp-screen');
+    if (myCampScreen && myCampScreen.style.display !== 'none') {
+        SAVE.tutTentLv4Seen = true;
+        if (typeof saveGame === 'function') saveGame();
+        return false;
+    }
+
+    // Kiểm tra người chơi đã sở hữu lều Lv.4 trở lên chưa:
+    var hasTentLv4 = false;
+    if (boardData && Array.isArray(boardData)) {
+        hasTentLv4 = boardData.some(function (c) {
+            return c && c.id && !c.isRock && c.id.indexOf('trai_lv') === 0 && (parseInt(c.id.split('_lv')[1], 10) >= 4);
+        });
+    }
+    if (!hasTentLv4 && SAVE.discovered) {
+        for (var k in SAVE.discovered) {
+            if (k.indexOf('trai_lv') === 0 && parseInt(k.split('_lv')[1], 10) >= 4) {
+                hasTentLv4 = true;
+                break;
+            }
+        }
+    }
+    if (!hasTentLv4 && Array.isArray(SAVE.campItems)) {
+        hasTentLv4 = SAVE.campItems.some(function (it) {
+            return it && it.id && it.id.indexOf('trai_lv') === 0 && (parseInt(it.id.split('_lv')[1], 10) >= 4);
+        });
+    }
+
+    if (!hasTentLv4) return false;
+
+    var myCampBtn = document.getElementById('btn-my-camp');
+    if (!myCampBtn) return false;
+
+    var hand = document.getElementById('tutorial-hand');
+    if (!hand || hand._targetType !== 'mycamp') {
+        showTutorialHandTap(myCampBtn, 'mycamp');
+        myCampBtn.classList.add('hint-pulse');
+    }
+
+    var tentMsg = (typeof I18N !== 'undefined' && typeof I18N.t === 'function' && I18N.t('npc.tent_lv4_hint'))
+        ? I18N.t('npc.tent_lv4_hint')
+        : 'Gâu! Có Lều rồi! Vào "Trại của bạn" dựng lều nhé!';
+    var bubble = document.getElementById('npc-speech-bubble');
+    if (!bubble || bubble.style.display === 'none') {
+        if (typeof setPetSpeech === 'function') {
+            setPetSpeech(null, tentMsg, 6000);
+        } else if (typeof setNpcState === 'function') {
+            setNpcState('gau', '', tentMsg, 6000);
+        }
+    }
+
+    return true;
+}
+
 function scheduleHint() {
     clearHintVisuals();
     if (hintTimer) clearTimeout(hintTimer);
@@ -1305,13 +1410,16 @@ function scheduleHint() {
         hideNpcBubble();
         return;
     }
+
+    // Ưu tiên hướng dẫn giao đơn hoặc vào Trại của bạn
+    if (updateOrderActionTutorials()) {
+        return;
+    }
+
     // Hướng dẫn mở đầu màn chỉ áp dụng cho 3 level đầu để người mới làm quen thao tác
     if (currentLevel <= 3 && updateEarlyLevelsTutorial()) {
         return;
     }
-
-    // Đã loại bỏ timer tự động hiện gợi ý mỗi 10s trong lúc chơi để tránh làm xao nhãng người chơi.
-    // Người chơi có thể chủ động bấm vào Chú chó đồng hành bất cứ lúc nào để xem gợi ý khi cần.
 }
 
 function buildCharacterHintText(npcId, actionType, itemName) {
@@ -1520,14 +1628,21 @@ function loadLevel(lvNum, options) {
     renderBoard();
     updateUIStats();
 
-    // Lời thoại mở đầu ấm áp của thú cưng
+    // Lời thoại mở đầu theo ngữ cảnh cốt truyện & vật phẩm thực tế trên bàn của thú cưng
     if (!levelIntroShown) {
         levelIntroShown = true;
-        var petType = (typeof SAVE !== 'undefined' && SAVE.activePet === 'character06') ? 'cat' : 'dog';
-        var welcomeMsg = petType === 'cat'
-            ? 'Meo! Cùng chuẩn bị đồ nghề dựng khu trại xinh đẹp nhé!'
-            : 'Gâu! Chào bạn, cùng thu thập đồ đạc dựng khu trại dã ngoại nào!';
-        setNpcState('gau', '', welcomeMsg, 3800);
+        var firstGrp = (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[0])
+            ? SAVE.petOrderGroups[0]
+            : null;
+        if (firstGrp && firstGrp.contextDialogue) {
+            setPetSpeech(firstGrp.petId, firstGrp.contextDialogue, 5000);
+        } else {
+            var petType = (typeof SAVE !== 'undefined' && SAVE.activePet === 'character06') ? 'cat' : 'dog';
+            var welcomeMsg = petType === 'cat'
+                ? 'Meo! Cùng chuẩn bị đồ nghề dựng khu trại xinh đẹp nhé!'
+                : 'Gâu! Chào bạn, cùng thu thập đồ đạc dựng khu trại dã ngoại nào!';
+            setNpcState('gau', '', welcomeMsg, 3800);
+        }
     }
 }
 
@@ -1614,7 +1729,8 @@ function updateBookBadge() {
 }
 
 function renderBoard() {
-    // 1. Nếu boardElement chưa có đủ 49 ô (lần đầu tải), khởi tạo khung 49 ô cố định một lần duy nhất
+    if (!boardElement) return;
+    // 1. Nếu boardElement chưa có đủ 63 ô (lần đầu tải), khởi tạo khung 63 ô cố định một lần duy nhất
     if (boardElement.children.length !== TOTAL_CELLS) {
         boardElement.innerHTML = '';
         for (var i = 0; i < TOTAL_CELLS; i++) {
@@ -2274,6 +2390,10 @@ function handleCellDoubleClick(cellIdx, cellEl) {
 // Giao toàn bộ nhóm nhiệm vụ của 1 thú cưng khi đủ điều kiện
 function deliverPetOrderGroup(groupIdx) {
     if (!SAVE || !Array.isArray(SAVE.petOrderGroups) || !SAVE.petOrderGroups[groupIdx]) return;
+    clearTutorialHand();
+    document.querySelectorAll('.btn-group-deliver').forEach(function (btn) {
+        btn.classList.remove('hint-pulse');
+    });
     var group = SAVE.petOrderGroups[groupIdx];
     var groupEls = document.querySelectorAll('.pet-order-group');
     var trayEl = groupEls[groupIdx];
@@ -2372,7 +2492,7 @@ function deliverPetOrderGroup(groupIdx) {
                             showToast('🎉 Đã mở khóa ' + genName + '! Sẵn sàng nhận nhiệm vụ mới!', 4000);
                         }
                         if (typeof setPetSpeech === 'function') {
-                            setPetSpeech(null, 'Oa! ' + genName + ' đã lộ diện! Hãy chạm vào để chuẩn bị đồ nhé!', 4500);
+                            setPetSpeech(null, 'Oa! ' + genName + ' đã mở! Chạm lấy đồ mới nhé!', 4500);
                         }
                     });
                 }
@@ -2386,6 +2506,25 @@ function deliverPetOrderGroup(groupIdx) {
             persistCurrentBoardState();
             renderOrders();
             renderBoard();
+
+            // Khi đơn hàng mới xuất hiện, chú chó nói câu thoại ngữ cảnh tương ứng (Đơn dọn bàn 2/2, Hướng dẫn túi đồ mới, hoặc ngữ cảnh bàn chơi)
+            var nextActiveGroup = (SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[0]) ? SAVE.petOrderGroups[0] : null;
+            if (nextActiveGroup && nextActiveGroup.contextDialogue) {
+                var speechDur = (nextActiveGroup.isNewGenIntroGroup || nextActiveGroup.isCleanupGroup) ? 6200 : 4500;
+                setPetSpeech(nextActiveGroup.petId, nextActiveGroup.contextDialogue, speechDur);
+
+                if (nextActiveGroup.isNewGenIntroGroup && nextActiveGroup.newGenId) {
+                    var introGenIdx = boardData.findIndex(function (c) {
+                        return c && c.id === nextActiveGroup.newGenId && !c.isRock && !c.isLocked;
+                    });
+                    if (introGenIdx !== -1 && boardElement && boardElement.children[introGenIdx]) {
+                        var introGenCell = boardElement.children[introGenIdx];
+                        introGenCell.classList.add('hint-pulse');
+                        triggerParticleBurst(introGenCell, ['#ffd700', '#00e676', '#ffeb3b', '#ffffff']);
+                        showFloatingBadge(introGenCell, '👇 Chạm lấy đồ mới!', '#e65100');
+                    }
+                }
+            }
         }, 420);
     };
 
@@ -2406,6 +2545,12 @@ function renderOrders() {
 
     var groups = (SAVE && Array.isArray(SAVE.petOrderGroups)) ? SAVE.petOrderGroups : [];
     if (!groups.length) {
+        if (typeof ensurePetOrderGroups === 'function') {
+            ensurePetOrderGroups(SAVE.playerLevel || 1);
+            groups = (SAVE && Array.isArray(SAVE.petOrderGroups)) ? SAVE.petOrderGroups : [];
+        }
+    }
+    if (!groups.length) {
         ordersContainer.innerHTML = '';
         return;
     }
@@ -2420,8 +2565,8 @@ function renderOrders() {
         });
     }
 
-    // Hiển thị tối đa 2 nhóm thú cưng trên màn hình
-    var visibleGroups = groups.slice(0, 2);
+    // Hiển thị duy nhất 1 nhóm thú cưng trên màn hình (đơn giản, dễ theo dõi)
+    var visibleGroups = groups.slice(0, 1);
 
     // TỐI ƯU HÓA DOM RECONCILIATION: Tránh xóa innerHTML gây giật nháy khi bấm máy sinh đồ
     var existingGroupEls = ordersContainer.querySelectorAll('.pet-order-group');
@@ -2522,6 +2667,8 @@ function renderOrders() {
 
                         deliverBtn.addEventListener('click', function (e) {
                             e.stopPropagation();
+                            clearTutorialHand();
+                            deliverBtn.classList.remove('hint-pulse');
                             deliverPetOrderGroup(gIdx);
                         });
                         trayWrap.insertBefore(deliverBtn, trayWrap.firstChild);
@@ -2532,6 +2679,7 @@ function renderOrders() {
             }
         });
         syncPendingGeneratorDock();
+        updateOrderActionTutorials();
         return;
     }
 
@@ -2565,11 +2713,14 @@ function renderOrders() {
         groupEl._petAvatarObj = petAvatarObj;
 
         avatarWrap.addEventListener('click', function () {
-            var sampleOrder = (group.orders && group.orders[0]) ? group.orders[0].id : '';
-            var quote = (typeof getPetOrderDialogue === 'function')
-                ? getPetOrderDialogue(sampleOrder, group.petId)
-                : ('Chào bạn! Hãy giúp mình chuẩn bị đồ dã ngoại nhé!');
-            setPetSpeech(group.petId, quote, 2800);
+            var liveGrp = (SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[gIdx]) ? SAVE.petOrderGroups[gIdx] : group;
+            var sampleOrder = (liveGrp.orders && liveGrp.orders[0]) ? liveGrp.orders[0].id : '';
+            var quote = liveGrp.contextDialogue
+                ? liveGrp.contextDialogue
+                : ((typeof getPetOrderDialogue === 'function')
+                    ? getPetOrderDialogue(sampleOrder, liveGrp.petId)
+                    : ('Chào bạn! Hãy giúp mình chuẩn bị đồ dã ngoại nhé!'));
+            setPetSpeech(liveGrp.petId, quote, 4200);
         });
 
         groupEl.appendChild(avatarWrap);
@@ -2607,6 +2758,8 @@ function renderOrders() {
 
             deliverBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
+                clearTutorialHand();
+                deliverBtn.classList.remove('hint-pulse');
                 deliverPetOrderGroup(gIdx);
             });
             trayWrap.appendChild(deliverBtn);
@@ -2687,6 +2840,7 @@ function renderOrders() {
     });
 
     syncPendingGeneratorDock();
+    updateOrderActionTutorials();
 }
 
 // ==========================================
@@ -2817,6 +2971,13 @@ function placePendingGeneratorOnBoard(genId, preferredCellIdx) {
         populateRockHiddenItems(boardData);
     }
 
+    // Kích hoạt ngay 2 nhiệm vụ liên tiếp quét dọn đồ của túi đồ cũ trên bàn chơi trước khi chuyển sang nhiệm vụ của túi đồ mới
+    var cleanupGroup = null;
+    if (typeof startNewGeneratorTransitionOrders === 'function') {
+        cleanupGroup = startNewGeneratorTransitionOrders(genId, boardData);
+        syncCurrentOrdersFromGroups();
+    }
+
     persistCurrentBoardState();
     renderBoard();
     renderOrders();
@@ -2831,10 +2992,13 @@ function placePendingGeneratorOnBoard(genId, preferredCellIdx) {
         showFloatingBadge(placedCell, '🎉 ĐÃ ĐẶT ' + genName.toUpperCase() + '! 🎉', '#e67e22');
     }
     if (typeof showToast === 'function') {
-        showToast('🎉 Đã đặt ' + genName + ' vào bàn chơi! Chạm vào để nhận nguyên liệu mới!', 3500);
+        showToast('🧹 Đã đặt ' + genName + '! Hãy hoàn thành 2 đơn dọn bàn trước khi khui túi đồ mới nhé!', 4200);
     }
     if (typeof setPetSpeech === 'function') {
-        setPetSpeech(null, 'Tuyệt vời! Bạn đã đặt ' + genName + ' lên bàn rồi, chạm vào để lấy đồ mới nhé!', 4000);
+        var cleanupMsg = (cleanupGroup && cleanupGroup.contextDialogue)
+            ? cleanupGroup.contextDialogue
+            : ('Đã đặt ' + genName + '! Cùng dọn 2 đơn cũ nhé!');
+        setPetSpeech(cleanupGroup ? cleanupGroup.petId : null, cleanupMsg, 6000);
     }
     return true;
 }
@@ -2923,7 +3087,11 @@ function executeMoveAndEffects(fromIdx, toIdx) {
     }
 
     if (isAutoEnabled) fillBoardInstantly();
-    renderBoard();
+    // Tối ưu hiệu năng: nếu là merge, renderBoard() sẽ được gọi ở cuối sau các hiệu ứng
+    // để tránh render 2 lần liên tiếp gây lag khung hình
+    if (res.type !== 'merge') {
+        renderBoard();
+    }
 
     if (res.type === 'merge') {
         var mergedCell = boardElement.children[res.index];
@@ -2965,8 +3133,8 @@ function executeMoveAndEffects(fromIdx, toIdx) {
                         var genName = (cellObj.id === 'generator_backpack') ? 'Ba Lô Dã Ngoại' : 'Thùng Bếp Trại';
                         showFloatingBadge(rCell, '🎉 ĐÃ TÌM THẤY ' + genName.toUpperCase() + '! 🎉', '#e67e22');
                         var cheerMsg = (cellObj.id === 'generator_backpack')
-                            ? 'Oa! Bạn đã khai quật được Ba Lô Dã Ngoại rồi nè! Hãy chạm vào để nhận đồ dã ngoại mới!'
-                            : 'Tuyệt cú mèo! Thùng Bếp Trại đã xuất hiện! Toàn đồ dã ngoại xịn sò!';
+                            ? 'Oa! Đã mở Ba Lô Dã Ngoại rồi nè! Chạm lấy đồ mới!'
+                            : 'Tuyệt quá! Thùng Bếp Trại đã mở! Chạm lấy đồ mới!';
                         if (typeof setPetSpeech === 'function') {
                             setPetSpeech(null, cheerMsg, 4500);
                         }
@@ -3078,19 +3246,22 @@ function startDragging() {
     ghost.src = imgSrc;
     ghost.style.cssText = 'position:fixed;left:0;top:0;z-index:100000;pointer-events:none;' +
         'width:' + size + 'px;height:' + size + 'px;object-fit:contain;' +
-        'filter:drop-shadow(0 6px 6px rgba(0,0,0,.45));transform-origin:center;';
+        'filter:drop-shadow(0 6px 6px rgba(0,0,0,.45));transform-origin:center;will-change:transform;';
     document.body.appendChild(ghost);
 
     dragState.ghost = ghost;
     dragState.size = size;
     dragState.active = true;
+    dragState.lastOverCell = null;
+    dragState.rafId = null;
     selectedIndex = null;
     updateSellButton(null);
 }
 
 function moveGhost(x, y) {
+    if (!dragState || !dragState.ghost) return;
     dragState.ghost.style.transform =
-        'translate(' + (x - dragState.size / 2) + 'px,' + (y - dragState.size / 2) + 'px) scale(1.15)';
+        'translate3d(' + (x - dragState.size / 2) + 'px,' + (y - dragState.size / 2) + 'px, 0) scale(1.15)';
 }
 
 function onPointerMove(e) {
@@ -3100,12 +3271,36 @@ function onPointerMove(e) {
         startDragging();
     }
     e.preventDefault();
-    moveGhost(e.clientX, e.clientY);
 
-    boardElement.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
-    var target = cellFromPoint(e.clientX, e.clientY);
-    if (target && boardElement.contains(target) && parseInt(target.dataset.index) !== dragState.from) {
-        target.classList.add('drag-over');
+    dragState.currentX = e.clientX;
+    dragState.currentY = e.clientY;
+
+    if (!dragState.rafId) {
+        dragState.rafId = requestAnimationFrame(function () {
+            if (!dragState) return;
+            dragState.rafId = null;
+            if (!dragState.active) return;
+
+            var curX = dragState.currentX;
+            var curY = dragState.currentY;
+            moveGhost(curX, curY);
+
+            var target = cellFromPoint(curX, curY);
+            var validTarget = (target && boardElement.contains(target) && parseInt(target.dataset.index) !== dragState.from)
+                ? target
+                : null;
+
+            // Chỉ cập nhật DOM khi ô hover thực sự thay đổi, tránh querySelectorAll và style recalculation liên tục mỗi frame
+            if (validTarget !== dragState.lastOverCell) {
+                if (dragState.lastOverCell) {
+                    dragState.lastOverCell.classList.remove('drag-over');
+                }
+                if (validTarget) {
+                    validTarget.classList.add('drag-over');
+                }
+                dragState.lastOverCell = validTarget;
+            }
+        });
     }
 }
 
@@ -3113,7 +3308,17 @@ function endDrag() {
     document.removeEventListener('pointermove', onPointerMove);
     document.removeEventListener('pointerup', onPointerUp);
     document.removeEventListener('pointercancel', onPointerCancel);
-    if (dragState && dragState.ghost) dragState.ghost.remove();
+    if (dragState) {
+        if (dragState.rafId) {
+            cancelAnimationFrame(dragState.rafId);
+            dragState.rafId = null;
+        }
+        if (dragState.ghost) dragState.ghost.remove();
+        if (dragState.lastOverCell) {
+            dragState.lastOverCell.classList.remove('drag-over');
+            dragState.lastOverCell = null;
+        }
+    }
     clearDragVisuals();
     dragState = null;
 }
@@ -3181,17 +3386,28 @@ function onPointerCancel() {
     scheduleHint();
 }
 
-boardElement.addEventListener('pointerdown', onPointerDown);
-boardElement.addEventListener('dragstart', e => e.preventDefault());
-boardElement.addEventListener('contextmenu', e => { if (dragState) e.preventDefault(); });
-boardElement.addEventListener('click', function (e) {
-    if (suppressNextClick) return;
-    if (e.target.closest('.cell-floating-sell-btn')) return;
-    var cell = e.target.closest('.cell');
-    if (cell && boardElement.contains(cell)) {
-        handleCellClick(e, cell);
-    }
-});
+if (boardElement) {
+    boardElement.addEventListener('pointerdown', onPointerDown);
+    boardElement.addEventListener('dragstart', e => e.preventDefault());
+    boardElement.addEventListener('contextmenu', e => { if (dragState) e.preventDefault(); });
+    boardElement.addEventListener('click', function (e) {
+        if (suppressNextClick) return;
+        if (e.target.closest('.cell-floating-sell-btn')) return;
+        var cell = e.target.closest('.cell');
+        if (cell && boardElement.contains(cell)) {
+            handleCellClick(e, cell);
+        }
+    });
+    boardElement.addEventListener('dblclick', function (e) {
+        var cell = e.target.closest('.cell');
+        if (cell && boardElement.contains(cell)) {
+            var cellIdx = parseInt(cell.dataset.index, 10);
+            if (!isNaN(cellIdx) && typeof handleCellDoubleClick === 'function') {
+                handleCellDoubleClick(cellIdx, cell);
+            }
+        }
+    });
+}
 
 // Chạm ra ngoài bàn cờ sẽ bỏ chọn item và ẩn nút Bán
 document.addEventListener('pointerdown', function (e) {
@@ -3201,15 +3417,6 @@ document.addEventListener('pointerdown', function (e) {
     selectedIndex = null;
     updateSellButton(null);
     renderBoard();
-});
-boardElement.addEventListener('dblclick', function (e) {
-    var cell = e.target.closest('.cell');
-    if (cell && boardElement.contains(cell)) {
-        var cellIdx = parseInt(cell.dataset.index, 10);
-        if (!isNaN(cellIdx) && typeof handleCellDoubleClick === 'function') {
-            handleCellDoubleClick(cellIdx, cell);
-        }
-    }
 });
 
 // ==========================================
@@ -3228,13 +3435,13 @@ function handleGeneratorClick(gen, cellElement) {
     if (currentLevel <= 10 && !tutNewGenTapped) {
         var targetGens = {
             1: 'generator_cooler',
-            2: 'generator_backpack',
-            3: 'generator_crate',
-            4: 'generator_cooler',
+            2: 'generator_cooler',
+            3: 'generator_cooler',
+            4: 'generator_backpack',
             5: 'generator_backpack',
-            6: 'generator_crate',
-            7: 'generator_cooler',
-            8: 'generator_backpack',
+            6: 'generator_backpack',
+            7: 'generator_crate',
+            8: 'generator_crate',
             9: 'generator_crate',
             10: 'generator_cooler'
         };
@@ -4064,12 +4271,12 @@ function triggerLevelUp(newLevel) {
     if (newLevel === 4) {
         showToast('🎒 Đạt Cấp 4! Mở khóa Ba Lô Dã Ngoại (bên trái chú chó) — Hãy kéo vào bàn chơi!', 4500);
         if (typeof setPetSpeech === 'function') {
-            setPetSpeech(null, 'Gâu! Ba Lô Dã Ngoại đã xuất hiện bên trái mình kìa! Bạn hãy kéo nó vào bàn chơi nhé!', 5000);
+            setPetSpeech(null, 'Gâu! Ba Lô đã mở bên trái mình, kéo vào bàn nhé!', 5000);
         }
-    } else if (newLevel === 5) {
-        showToast('🧰 Đạt Cấp 5! Mở khóa Thùng Bếp & Sinh Tồn (bên trái chú chó) — Hãy kéo vào bàn chơi!', 4500);
+    } else if (newLevel === 7) {
+        showToast('🧰 Đạt Cấp 7! Mở khóa Thùng Bếp & Sinh Tồn (bên trái chú chó) — Hãy kéo vào bàn chơi!', 4500);
         if (typeof setPetSpeech === 'function') {
-            setPetSpeech(null, 'Tuyệt quá! Thùng Đồ Sinh Tồn đã xuất hiện bên trái mình! Hãy kéo nó xuống bàn chơi nhé!', 5000);
+            setPetSpeech(null, 'Tuyệt quá! Thùng Bếp đã mở bên trái, kéo vào bàn nhé!', 5000);
         }
     } else {
         showToast('🎉 Thăng cấp Lv.' + newLevel + '! (+80 ⚡, +' + coinBonus.toLocaleString('vi-VN') + ' 🪙, +3 💎)');
@@ -4365,6 +4572,8 @@ function initGame() {
     window.persistCurrentBoardState = persistCurrentBoardState;
     window.executeMoveAndEffects = executeMoveAndEffects;
     window.sellItemAtIndex = sellItemAtIndex;
+    window.updateOrderActionTutorials = updateOrderActionTutorials;
+    window.checkAndShowTentLv4Hint = checkAndShowTentLv4Hint;
 
     if (typeof enhanceAll3sButtons === 'function') {
         enhanceAll3sButtons(document.body);

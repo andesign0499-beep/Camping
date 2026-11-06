@@ -43,11 +43,11 @@ var GAME_CONFIG = {
         // Không đặt sẵn Ba Lô và Thùng Đồ trên bàn chơi nữa!
         // - Level 1, 2, 3 : Chỉ có Xe Kéo ('generator_cooler') để người chơi hiểu rõ luật chơi.
         // - Đạt Level 4   : Xuất hiện icon Ba Lô ('generator_backpack') bên trái chú chó (có viền focus) để người chơi lôi vào bàn!
-        // - Đạt Level 5   : Xuất hiện icon Thùng Đồ ('generator_crate') bên trái chú chó (có viền focus) để người chơi lôi vào bàn!
+        // - Đạt Level 7   : Xuất hiện icon Thùng Đồ ('generator_crate') bên trái chú chó (có viền focus) để người chơi lôi vào bàn!
         generatorUnlockLevels: {
             generator_cooler: 1,
             generator_backpack: 4,
-            generator_crate: 5
+            generator_crate: 7
         },
         hiddenGenerators: [],
 
@@ -153,7 +153,7 @@ var GAME_CONFIG = {
         20: ['congcu_lv5', 'cafe_lv4',   'trai_lv3'],
 
         // ---------------------------------------------------------
-        // GIAI ĐOẠN 2: ĐẦY ĐỦ 3 MÁY PHÁT (Level 5+ - Sau khi lôi Thùng Đồ vào bàn | Order 21 - 33)
+        // GIAI ĐOẠN 2: ĐẦY ĐỦ 3 MÁY PHÁT (Level 7+ - Sau khi lôi Thùng Đồ vào bàn | Order 21 - 33)
         // ---------------------------------------------------------
         21: ['bep_lv3',    'tham_lv2',   'trai_lv3'],   // Mở quen nhánh Thùng Đồ
         22: ['tham_lv4',   'an_lv4',     'ban_lv3'],
@@ -325,6 +325,9 @@ var GAME_CONFIG = {
             maxCoins: 250
         },
 
+        // Hệ số nhân điểm kinh nghiệm EXP nhận được từ mỗi đơn hàng (mặc định: 1.0)
+        orderExpMultiplier: 1.5,
+
         // Nhấp liên tiếp vào thùng sinh đồ
         generatorBulkClicks: 6,
         generatorClickWindowMs: 550,
@@ -381,12 +384,35 @@ var GAME_CONFIG = {
 
     // -------------------------------------------------------------------------
     // 8. BẢNG KINH NGHIỆM EXP YÊU CẦU LÊN LEVEL (LEVEL EXP TABLE)
+    // Bạn có thể tùy chỉnh điểm EXP cần thiết để thăng cấp từ Level này lên Level tiếp theo.
+    // Khi hoàn thành đơn hàng, người chơi nhận EXP: Lv.1: 5 | Lv.2: 10 | Lv.3: 20 | Lv.4: 40 | Lv.5: 80...
     // -------------------------------------------------------------------------
     expTable: {
-        1: 100, 2: 250, 3: 450, 4: 700, 5: 1000,
-        6: 1400, 7: 1900, 8: 2500, 9: 3200, 10: 4000,
-        11: 5000, 12: 6200, 13: 7600, 14: 9200, 15: 11000,
-        16: 13000, 17: 15200, 18: 17600, 19: 20200, 20: 23000,
+        // [Giai đoạn tân thủ - Mở máy phát]:
+        1: 100,    // Level 1 -> 2: Cần 100 EXP (làm quen Xe Kéo & ghép cơ bản)
+        2: 250,    // Level 2 -> 3: Cần 250 EXP
+        3: 450,    // Level 3 -> 4: Cần 450 EXP
+        4: 700,    // Level 4 -> 5: Cần 700 EXP  (Mở khóa Ba Lô Dã Ngoại)
+        5: 1000,   // Level 5 -> 6: Cần 1000 EXP
+        6: 1400,   // Level 6 -> 7: Cần 1400 EXP
+        7: 1900,   // Level 7 -> 8: Cần 1900 EXP (Mở khóa Thùng Bếp & Sinh Tồn, mở ô đất Tầng 2)
+        8: 2500,   // Level 8 -> 9: Cần 2500 EXP
+        9: 3200,   // Level 9 -> 10: Cần 3200 EXP (Mở khóa ô đất Tầng 3)
+        10: 4000,  // Level 10 -> 11: Cần 4000 EXP (Máy phát bắt đầu rơi đồ Lv.3)
+
+        // [Giai đoạn trung - cao cấp]:
+        11: 5000,
+        12: 6200,
+        13: 7600,
+        14: 9200,
+        15: 11000,
+        16: 13000,
+        17: 15200,
+        18: 17600,
+        19: 20200,
+        20: 23000,
+
+        // [Giai đoạn mở rộng tiếp theo từ Level 21 đến 60]:
         21: 26000, 22: 29000, 23: 32000, 24: 35000, 25: 38000,
         26: 41000, 27: 44000, 28: 47000, 29: 50000, 30: 53000,
         31: 56000, 32: 59000, 33: 62000, 34: 65000, 35: 68000,

@@ -19,6 +19,10 @@ var KHUTRAI_ITEMS = {
     'trai_lv6': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv6.png', name: 'Lều Gia Đình Chống Gió' },
     'trai_lv7': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv7.png', name: 'Lều Kim Tự Tháp Glamping' },
     'trai_lv8': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv8.png', name: 'Biệt Thự Lều Glamping' },
+    'trai_lv9': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv9.png', name: 'Lều Safari Hoàng Gia' },
+    'trai_lv10': { type: 'tent', path: 'assets/images/items_khutrai/trai_lv10.png', name: 'Lều Dome Kính Thiên Văn' },
+    'trai_lv11': { type: 'tent', path: 'assets/images/items_khutrai/trai_lv11.png', name: 'Biệt Thự Vòm Glamping' },
+    'trai_lv12': { type: 'tent', path: 'assets/images/items_khutrai/trai_lv112.png', name: 'Lâu Đài Cắm Trại Đỉnh Cao' },
 
     // --- BÀN DÃ NGOẠI (TABLE) ---
     'ban_lv1':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv1.png',  name: 'Bàn Nhôm Vuông Mini' },
@@ -29,6 +33,10 @@ var KHUTRAI_ITEMS = {
     'ban_lv6':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv6.png',  name: 'Bàn Cắm Trại Đa Năng' },
     'ban_lv7':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv7.png',  name: 'Bàn Chiến Thuật IGT' },
     'ban_lv8':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv8.png',  name: 'Trạm Bếp Nấu Ăn Glamping' },
+    'ban_lv9':  { type: 'table', path: 'assets/images/items/ban_lv9.png',  name: 'Bàn Tiệc Gỗ Sồi Hoàng Gia' },
+    'ban_lv10': { type: 'table', path: 'assets/images/items/ban_lv10.png', name: 'Bàn Quầy Bar Cắm Trại' },
+    'ban_lv11': { type: 'table', path: 'assets/images/items/ban_lv11.png', name: 'Bàn Đảo Bếp Sang Trọng' },
+    'ban_lv12': { type: 'table', path: 'assets/images/items/ban_lv12.png', name: 'Bàn Hoàng Gia Đỉnh Cao' },
 
     // --- BẾP & LỬA TRẠI (STOVE) ---
     'bep_lv1':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv1.png',  name: 'Nhánh Củi Khô' },
@@ -39,6 +47,10 @@ var KHUTRAI_ITEMS = {
     'bep_lv6':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv6.png',  name: 'Lửa Trại Rực Hồng' },
     'bep_lv7':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv7.png',  name: 'Lò Nướng Than Hoa Tròn' },
     'bep_lv8':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv8.png',  name: 'Bếp Nướng BBQ Chữ Nhật' },
+    'bep_lv9':  { type: 'stove', path: 'assets/images/items/bep_lv9.png',  name: 'Bếp Ga Đôi Dã Ngoại' },
+    'bep_lv10': { type: 'stove', path: 'assets/images/items/bep_lv10.png', name: 'Bếp Củi Sưởi Đa Năng' },
+    'bep_lv11': { type: 'stove', path: 'assets/images/items/bep_lv11.png', name: 'Lò Nướng Pizza Ngoài Trời' },
+    'bep_lv12': { type: 'stove', path: 'assets/images/items/bep_lv12.png', name: 'Trạm Bếp Cắm Trại Đỉnh Cao' },
 
     // --- GHẾ DÃ NGOẠI (CHAIR) ---
     'ghe_lv1':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv1.png',  name: 'Ghế Đôn Xếp Mini' },
@@ -48,7 +60,11 @@ var KHUTRAI_ITEMS = {
     'ghe_lv5':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv5.png',  name: 'Ghế Câu Cá Có Khay' },
     'ghe_lv6':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv6.png',  name: 'Ghế Mặt Trăng Moon Chair' },
     'ghe_lv7':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv7.png',  name: 'Ghế Tựa Lưng Cao Có Gối' },
-    'ghe_lv8':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv8.png',  name: 'Ghế Đạo Diễn Cao Cấp' }
+    'ghe_lv8':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv8.png',  name: 'Ghế Đạo Diễn Cao Cấp' },
+    'ghe_lv9':  { type: 'chair', path: 'assets/images/items/ghe_lv9.png',  name: 'Ghế Sofa Hơi Đôi Dã Ngoại' },
+    'ghe_lv10': { type: 'chair', path: 'assets/images/items/ghe_lv10.png', name: 'Ghế Bập Bênh Thư Giãn' },
+    'ghe_lv11': { type: 'chair', path: 'assets/images/items/ghe_lv11.png', name: 'Giường Xếp Glamping Đệm Dày' },
+    'ghe_lv12': { type: 'chair', path: 'assets/images/items/ghe_lv12.png', name: 'Ghế Ngai Vàng Cắm Trại Đỉnh Cao' }
 };
 
 // 2. CẤU HÌNH SÂN KHẤU, ẢNH NỀN, THAO TÁC KÉO/ZOOM & VỊ TRÍ ITEM
