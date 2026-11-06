@@ -1632,12 +1632,12 @@ function renderBoard() {
             ? getVisibleOrders(currentOrders)
             : currentOrders.filter(o => !o.done).slice(0, 4);
         visibleOrders.forEach(o => {
-            if (!o.done) activeOrderMap[o.id] = (activeOrderMap[o.id] || 0) + 1;
+            if (!o.done && !o.stashed) activeOrderMap[o.id] = (activeOrderMap[o.id] || 0) + 1;
         });
     }
     var readyCellIndexes = new Set();
     boardData.forEach((c, idx) => {
-        if (c && c.id && !c.isLocked && !GENERATORS[c.id] && activeOrderMap[c.id] > 0) {
+        if (c && c.id && !c.isLocked && !c.isRock && !GENERATORS[c.id] && activeOrderMap[c.id] > 0) {
             readyCellIndexes.add(idx);
             activeOrderMap[c.id]--;
         }
@@ -1890,7 +1890,7 @@ function deliverReadyOrderWithFlight(orderObj, boardCellIdx, targetCardEl) {
     if (!orderObj || orderObj.done) return;
 
     // Tự động tìm lại ô chứa item trên bàn cờ nếu ô truyền vào không khớp (do người chơi di chuyển hoặc thao tác nhanh)
-    if (boardCellIdx === -1 || !boardData[boardCellIdx] || boardData[boardCellIdx].id !== orderObj.id || boardData[boardCellIdx].isLocked) {
+    if (boardCellIdx === -1 || !boardData[boardCellIdx] || boardData[boardCellIdx].id !== orderObj.id || boardData[boardCellIdx].isLocked || boardData[boardCellIdx].isRock) {
         boardCellIdx = findOrderMatch(boardData, orderObj.id);
         if (boardCellIdx === -1) return;
     }
@@ -2171,14 +2171,28 @@ function syncCurrentOrdersFromGroups() {
 
 // Hiệu ứng vật phẩm bay từ bàn cờ lên khay đơn hàng (khi double-click hoặc chạm ô)
 function flyItemToTraySlot(fromCellIdx, targetSlotEl, onFinish) {
-    if (fromCellIdx === -1 || !boardData[fromCellIdx] || !targetSlotEl) {
+    if (fromCellIdx === -1 || !boardData[fromCellIdx] || !boardData[fromCellIdx].id || boardData[fromCellIdx].isRock || boardData[fromCellIdx].isLocked) {
         if (onFinish) onFinish();
         return;
     }
 
+    var consumedItemId = boardData[fromCellIdx].id;
+    // Xóa item trên bàn cờ ngay lập tức để chắc chắn vật phẩm được thu hồi khỏi bàn chơi
+    boardData[fromCellIdx] = makeEmptyCell();
+    if (selectedIndex === fromCellIdx) {
+        selectedIndex = null;
+        updateSellButton(null);
+    }
+
     var cellEl = boardElement && boardElement.children[fromCellIdx];
     var cellImg = cellEl && cellEl.querySelector('.item-img');
-    if (!cellEl || !cellImg) {
+    if (!cellEl || !cellImg || !targetSlotEl) {
+        if (cellEl) {
+            if (cellImg) cellImg.style.visibility = 'hidden';
+            var bdg = cellEl.querySelector('.board-item-ready-tick');
+            if (bdg) bdg.remove();
+            cellEl.classList.remove('order-ready-item');
+        }
         if (onFinish) onFinish();
         return;
     }
@@ -2187,15 +2201,13 @@ function flyItemToTraySlot(fromCellIdx, targetSlotEl, onFinish) {
     var tgtRect = targetSlotEl.getBoundingClientRect();
 
     var flyer = document.createElement('img');
-    flyer.src = cellImg.src;
+    flyer.src = cellImg.src || getItemImagePath(consumedItemId);
     flyer.style.cssText = 'position:fixed;pointer-events:none;z-index:180020;' +
         'width:' + (srcRect.width * 0.85) + 'px;height:' + (srcRect.height * 0.85) + 'px;' +
         'left:' + (srcRect.left + srcRect.width * 0.075) + 'px;top:' + (srcRect.top + srcRect.height * 0.075) + 'px;' +
         'filter:drop-shadow(0 0 10px #2ecc71);transition:none;';
     document.body.appendChild(flyer);
 
-    // Xóa item trên bàn cờ ngay lập tức để người chơi có thêm ô trống
-    boardData[fromCellIdx] = makeEmptyCell();
     cellImg.style.visibility = 'hidden';
     var oldBadge = cellEl.querySelector('.board-item-ready-tick');
     if (oldBadge) oldBadge.remove();
@@ -2249,6 +2261,7 @@ function handleCellDoubleClick(cellIdx, cellEl) {
     if (!slotEl) slotEl = document.querySelector('.tray-item-slot[data-order-id="' + targetOrder.id + '"]');
 
     targetOrder.stashed = true;
+    targetOrder.stashedVerified = true;
     flyItemToTraySlot(cellIdx, slotEl, function () {
         persistCurrentBoardState();
         renderOrders();
@@ -2272,8 +2285,13 @@ function deliverPetOrderGroup(groupIdx) {
     unstashed.forEach(function (o) {
         var matchIdx = findOrderMatch(boardData, o.id);
         if (matchIdx !== -1) {
-            var slotEl = trayEl && trayEl.querySelector('.tray-item-slot[data-order-id="' + o.id + '"]');
+            var slotEl = trayEl && (
+                trayEl.querySelector('.tray-item-slot[data-order-id="' + o.id + '"]:not(.stashed)') ||
+                trayEl.querySelector('.tray-item-slot[data-order-id="' + o.id + '"]')
+            );
+            if (slotEl) slotEl.classList.add('stashed');
             o.stashed = true;
+            o.stashedVerified = true;
             flightPromises.push(new Promise(function (resolve) {
                 flyItemToTraySlot(matchIdx, slotEl, resolve);
             }));
@@ -2636,10 +2654,13 @@ function renderOrders() {
             // Chạm vào ô đơn hàng trên khay
             slot.addEventListener('click', function (e) {
                 e.stopPropagation();
-                if (!o.stashed) {
-                    var matchIdx = findOrderMatch(boardData, o.id);
+                var liveGroup = (SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[gIdx]) ? SAVE.petOrderGroups[gIdx] : group;
+                var liveOrder = (liveGroup && Array.isArray(liveGroup.orders) && liveGroup.orders[oIdx]) ? liveGroup.orders[oIdx] : o;
+                if (!liveOrder.stashed) {
+                    var matchIdx = findOrderMatch(boardData, liveOrder.id);
                     if (matchIdx !== -1) {
-                        o.stashed = true;
+                        liveOrder.stashed = true;
+                        liveOrder.stashedVerified = true;
                         flyItemToTraySlot(matchIdx, slot, function () {
                             persistCurrentBoardState();
                             renderOrders();
@@ -2647,12 +2668,12 @@ function renderOrders() {
                         });
                     } else {
                         var quote = (typeof getPetOrderDialogue === 'function')
-                            ? getPetOrderDialogue(o.id, group.petId)
-                            : ('Hãy giúp mình ghép ' + getItemDisplayName(o.id) + ' nhé!');
-                        setPetSpeech(group.petId, quote, 2800);
+                            ? getPetOrderDialogue(liveOrder.id, liveGroup.petId)
+                            : ('Hãy giúp mình ghép ' + getItemDisplayName(liveOrder.id) + ' nhé!');
+                        setPetSpeech(liveGroup.petId, quote, 2800);
                     }
                 } else {
-                    setPetSpeech(group.petId, 'Món này đã nằm sẵn trong khay rồi nè!', 2000);
+                    setPetSpeech(liveGroup.petId, 'Món này đã nằm sẵn trong khay rồi nè!', 2000);
                 }
             });
 
@@ -3015,7 +3036,7 @@ function onPointerDown(e) {
     if (!cell) return;
     var idx = parseInt(cell.dataset.index);
     var item = boardData[idx];
-    if (!item || !item.id || item.isLocked) return;
+    if (!item || !item.id || item.isLocked || item.isRock) return;
 
     clearHintVisuals();
     hideNpcBubble();
@@ -3137,7 +3158,7 @@ function onPointerUp(e) {
         if (draggedCard && ordersContainer && ordersContainer.contains(draggedCard)) {
             var orderId = draggedCard.dataset.orderId;
             var fromItem = boardData[from];
-            if (fromItem && fromItem.id && fromItem.id === orderId && !fromItem.isLocked) {
+            if (fromItem && fromItem.id && fromItem.id === orderId && !fromItem.isLocked && !fromItem.isRock) {
                 var matchingOrder = currentOrders.find(o => o.id === orderId && !o.done);
                 if (matchingOrder) {
                     deliverReadyOrderWithFlight(matchingOrder, from, draggedCard);
@@ -3562,7 +3583,7 @@ function handleCellClick(e, cellElement) {
             }
             return;
         }
-        if (clickedItem && clickedItem.id && !clickedItem.isLocked) {
+        if (clickedItem && clickedItem.id && !clickedItem.isLocked && !clickedItem.isRock) {
             selectedIndex = index;
             updateSellButton(clickedItem.id);
             renderBoard();

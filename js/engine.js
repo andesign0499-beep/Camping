@@ -649,7 +649,7 @@ function doMove(board, fromIdx, toIdx) {
     var none = { type: 'none', index: -1, newId: null, brokeDirectWeb: false };
     if (fromIdx === toIdx) return none;
     var from = board[fromIdx], to = board[toIdx];
-    if (!from || !from.id || from.isLocked) return none;
+    if (!from || !from.id || from.isLocked || from.isRock) return none;
     if (!to || to.isRock) return none;
 
     if (!to.id) {
@@ -713,7 +713,7 @@ function neededLevels(board, orders) {
         need[l] = Math.max(need[l] || 0, itemLv(id));
     });
     board.forEach(c => {
-        if (c && c.id && c.isLocked) {
+        if (c && c.id && c.isLocked && !c.isRock) {
             var l = itemLine(c.id);
             need[l] = Math.max(need[l] || 0, itemLv(c.id));
         }
@@ -722,7 +722,7 @@ function neededLevels(board, orders) {
 }
 
 function findOrderMatch(board, orderId) {
-    return board.findIndex(c => c && c.id === orderId && !c.isLocked);
+    return board.findIndex(c => c && c.id === orderId && !c.isLocked && !c.isRock && !GENERATORS[c.id]);
 }
 
 // Nước ghép tốt nhất: ưu tiên phá nhện trực tiếp > phá nhện liền kề > tiến tới đơn hàng > ghép dọn bàn
@@ -1727,6 +1727,12 @@ function ensurePetOrderGroups(playerLevel) {
     // 1. Đồng bộ / kiểm tra thích ứng trực tiếp (Live Hybrid Adaptation) cho các nhóm đơn hiện có
     SAVE.petOrderGroups = SAVE.petOrderGroups.map(function (g, gIdx) {
         if (!g || !Array.isArray(g.orders) || g.orders.length === 0) return null;
+        // Phục hồi các slot từng bị đánh dấu stashed ảo do lỗi khớp nhầm ô đá trước đây
+        g.orders.forEach(function (o) {
+            if (o && o.stashed && !o.stashedVerified) {
+                o.stashed = false;
+            }
+        });
         var hasStashed = g.orders.some(function (o) { return o && o.stashed; });
         var targetOrderNum = currentOrderNum + gIdx;
 
