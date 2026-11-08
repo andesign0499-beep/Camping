@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>NPC Animations Spritesheet Preview</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e24;
+            color: #eee;
+            padding: 24px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: #4ade80;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 28px;
+            font-size: 14px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #2a2b36;
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card h2 {
+            font-size: 18px;
+            color: #38bdf8;
+            margin-bottom: 6px;
+        }
+        .card-info {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+        .anim-stage {
+            width: 220px;
+            height: 250px;
+            background: radial-gradient(circle, #3b3d4f 0%, #20212b 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+            position: relative;
+        }
+        .controls {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .btn:hover { background: #2563eb; }
+        .fps-label { font-size: 12px; color: #cbd5e1; }
+        .sheet-link {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #38bdf8;
+            text-decoration: none;
+        }
+        .sheet-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>🎬 NPC Spritesheet WebP Preview</h1>
+    <p class="subtitle">Đã ghép thành công tất cả frame PNG thành WebP Sprite Sheet dung lượng siêu nhẹ cho game</p>
+    
+    <div class="grid-container">
+        
+        <div class="card">
+            <h2>goden_idle</h2>
+            <div class="card-info">
+                20 frames | 145x229px | 551.1 KB WebP
+            </div>
+            <div class="anim-stage">
+                <canvas id="canvas-0" width="145" height="229"></canvas>
+            </div>
+            <div class="controls">
+                <button class="btn" id="btn-toggle-0">Tạm dừng</button>
+                <span class="fps-label">FPS: <input type="range" id="fps-0" min="4" max="30" value="12" style="width: 70px; vertical-align: middle;"> <span id="fps-val-0">12</span></span>
+            </div>
+            <a class="sheet-link" href="goden_idle_sheet.webp" target="_blank">🔍 Xem file sheet đầy đủ (.webp)</a>
+        </div>
+        
+        <div class="card">
+            <h2>goden_sit</h2>
+            <div class="card-info">
+                20 frames | 200x205px | 609.5 KB WebP
+            </div>
+            <div class="anim-stage">
+                <canvas id="canvas-1" width="200" height="205"></canvas>
+            </div>
+            <div class="controls">
+                <button class="btn" id="btn-toggle-1">Tạm dừng</button>
+                <span class="fps-label">FPS: <input type="range" id="fps-1" min="4" max="30" value="12" style="width: 70px; vertical-align: middle;"> <span id="fps-val-1">12</span></span>
+            </div>
+            <a class="sheet-link" href="goden_sit_sheet.webp" target="_blank">🔍 Xem file sheet đầy đủ (.webp)</a>
+        </div>
+        
+        <div class="card">
+            <h2>meoanh_hello</h2>
+            <div class="card-info">
+                20 frames | 180x214px | 567.1 KB WebP
+            </div>
+            <div class="anim-stage">
+                <canvas id="canvas-2" width="180" height="214"></canvas>
+            </div>
+            <div class="controls">
+                <button class="btn" id="btn-toggle-2">Tạm dừng</button>
+                <span class="fps-label">FPS: <input type="range" id="fps-2" min="4" max="30" value="12" style="width: 70px; vertical-align: middle;"> <span id="fps-val-2">12</span></span>
+            </div>
+            <a class="sheet-link" href="meoanh_hello_sheet.webp" target="_blank">🔍 Xem file sheet đầy đủ (.webp)</a>
+        </div>
+        
+        <div class="card">
+            <h2>meoanh_idle</h2>
+            <div class="card-info">
+                15 frames | 180x214px | 419.3 KB WebP
+            </div>
+            <div class="anim-stage">
+                <canvas id="canvas-3" width="180" height="214"></canvas>
+            </div>
+            <div class="controls">
+                <button class="btn" id="btn-toggle-3">Tạm dừng</button>
+                <span class="fps-label">FPS: <input type="range" id="fps-3" min="4" max="30" value="12" style="width: 70px; vertical-align: middle;"> <span id="fps-val-3">12</span></span>
+            </div>
+            <a class="sheet-link" href="meoanh_idle_sheet.webp" target="_blank">🔍 Xem file sheet đầy đủ (.webp)</a>
+        </div>
+        
+    </div>
+
+    <script>
+        const sheetsData = [{"name":"goden_idle","frames":20,"sheetFile":"goden_idle_sheet.webp","jsonFile":"goden_idle_sheet.json","frameW":145,"frameH":229,"cols":5,"rows":4,"sizeKb":"551.1"},{"name":"goden_sit","frames":20,"sheetFile":"goden_sit_sheet.webp","jsonFile":"goden_sit_sheet.json","frameW":200,"frameH":205,"cols":5,"rows":4,"sizeKb":"609.5"},{"name":"meoanh_hello","frames":20,"sheetFile":"meoanh_hello_sheet.webp","jsonFile":"meoanh_hello_sheet.json","frameW":180,"frameH":214,"cols":5,"rows":4,"sizeKb":"567.1"},{"name":"meoanh_idle","frames":15,"sheetFile":"meoanh_idle_sheet.webp","jsonFile":"meoanh_idle_sheet.json","frameW":180,"frameH":214,"cols":5,"rows":3,"sizeKb":"419.3"}];
+
+        sheetsData.forEach((s, idx) => {
+            const canvas = document.getElementById('canvas-' + idx);
+            const ctx = canvas.getContext('2d');
+            const btnToggle = document.getElementById('btn-toggle-' + idx);
+            const fpsSlider = document.getElementById('fps-' + idx);
+            const fpsVal = document.getElementById('fps-val-' + idx);
+
+            const img = new Image();
+            img.src = s.sheetFile;
+
+            let currentFrame = 0;
+            let isPlaying = true;
+            let fps = 12;
+            let lastTime = 0;
+
+            fpsSlider.addEventListener('input', (e) => {
+                fps = parseInt(e.target.value);
+                fpsVal.textContent = fps;
+            });
+
+            btnToggle.addEventListener('click', () => {
+                isPlaying = !isPlaying;
+                btnToggle.textContent = isPlaying ? 'Tạm dừng' : 'Phát';
+            });
+
+            function render(time) {
+                requestAnimationFrame(render);
+                if (!isPlaying) return;
+
+                if (time - lastTime < (1000 / fps)) return;
+                lastTime = time;
+
+                if (!img.complete) return;
+
+                const col = currentFrame % s.cols;
+                const row = Math.floor(currentFrame / s.cols);
+                const sx = col * s.frameW;
+                const sy = row * s.frameH;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, sx, sy, s.frameW, s.frameH, 0, 0, canvas.width, canvas.height);
+
+                currentFrame = (currentFrame + 1) % s.frames;
+            }
+
+            img.onload = () => {
+                requestAnimationFrame(render);
+            };
+        });
+    </script>
+</body>
+</html>
