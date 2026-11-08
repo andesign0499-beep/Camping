@@ -4,65 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Merge Camping Game</title>
-    <link rel="icon" type="image/png" href="assets/images/ui/icon_map.png">
+    <link rel="icon" type="image/png" href="assets/images_webp/ui/icon_map.webp">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=10.10">
+    <link rel="stylesheet" href="css/style.css?v=10.51">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <div id="game-app">
+        <!-- NỀN LIỀN MẠCH TOÀN MÀN HÌNH: GRADIENT TRÊN TRONG SUỐT 0% NẰM TRÊN BG_DOIBU.WEBP -->
+        <div id="game-backdrop" class="game-backdrop" aria-hidden="true"></div>
+
         <!-- PHẦN TRÊN: CẢNH CẮM TRẠI (CO GIÃN THEO MÀN HÌNH), THANH HUD, NHÂN VẬT & ĐƠN HÀNG -->
         <section id="top-scene">
             <!-- MÂY BAY MÀN CHƠI (TOP SCENE CLOUDS) -->
-            <div id="top-scene-clouds" class="top-scene-clouds" style="display: none;">
-                <img src="assets/images/background/may2.webp" class="top-scene-cloud top-scene-cloud-top" alt="Mây đỉnh núi">
-                <img src="assets/images/background/may1.webp" class="top-scene-cloud top-scene-cloud-bottom" alt="Mây sườn núi">
+            <div id="top-scene-clouds" class="top-scene-clouds">
+                <img src="assets/images_webp/background/may2.webp" class="top-scene-cloud top-scene-cloud-top" alt="Mây đỉnh núi">
+                <img src="assets/images_webp/background/may1.webp" class="top-scene-cloud top-scene-cloud-bottom" alt="Mây sườn núi">
             </div>
 
             <!-- HEADER: Bản đồ, Năng lượng, Vàng, Kim cương & Cài đặt -->
             <header id="game-header">
                 <button id="btn-world-map" class="hud-icon-btn map-hud-btn" title="Mở Bản Đồ Hành Trình">
-                    <img src="assets/images/ui/icon_map.png" alt="Bản đồ">
+                    <img src="assets/images_webp/ui/icon_map.webp" alt="Bản đồ">
                     <span id="current-lv-badge" class="lv-map-badge"><span class="lv-map-num">1</span></span>
                 </button>
 
                 <div class="hud-stats-group">
                     <div class="hud-stat-banner energy-banner" id="btn-refill-energy" title="Bấm để mở Trạm Tiếp Năng Lượng">
                         <div class="energy-icon-wrapper">
-                            <img class="hud-stat-icon" src="assets/images/ui/icon_nangluong.png" alt="Năng lượng">
+                            <img class="hud-stat-icon" src="assets/images_webp/ui/icon_nangluong.webp" alt="Năng lượng">
                             <div class="sparkle-star star-1"></div>
                             <div class="sparkle-star star-2"></div>
                             <div class="sparkle-star star-3"></div>
                         </div>
                         <span id="energy-val" class="hud-stat-val">100</span>
-                        <img class="hud-add-btn" src="assets/images/ui/icon_add.png" alt="+">
+                        <img class="hud-add-btn" src="assets/images_webp/ui/icon_add.webp" alt="+">
                     </div>
 
                     <div class="hud-stat-banner gold-banner" id="btn-coin-shop" title="Vàng tích lũy (Nhận khi ghép đồ, nộp đơn & qua màn)">
-                        <img class="hud-stat-icon" src="assets/images/ui/icon_glod.png" alt="Vàng">
+                        <img class="hud-stat-icon" src="assets/images_webp/ui/icon_glod.webp" alt="Vàng">
                         <span id="coin-val" class="hud-stat-val">100</span>
-                        <img class="hud-add-btn" src="assets/images/ui/icon_add.png" alt="+">
+                        <img class="hud-add-btn" src="assets/images_webp/ui/icon_add.webp" alt="+">
                     </div>
 
                     <div class="hud-stat-banner ruby-banner" id="btn-gem-shop" title="Kim cương (Nhận khi qua màn, ghép Lv.8 & Cẩm Nang)">
-                        <img class="hud-stat-icon" src="assets/images/ui/icon_ruby.png" alt="Kim cương">
+                        <img class="hud-stat-icon" src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương">
                         <span id="gem-val" class="hud-stat-val">20</span>
-                        <img class="hud-add-btn" src="assets/images/ui/icon_add.png" alt="+">
+                        <img class="hud-add-btn" src="assets/images_webp/ui/icon_add.webp" alt="+">
                     </div>
                 </div>
 
                 <button id="btn-settings" class="hud-icon-btn setting-hud-btn" title="Cài đặt trò chơi">
-                    <img src="assets/images/ui/icon_setting.png" alt="Cài đặt">
+                    <img src="assets/images_webp/ui/icon_setting.webp" alt="Cài đặt">
                 </button>
             </header>
 
             <!-- KHU VỰC NHÂN VẬT ĐỒNG HÀNH, HỘP THOẠI & ĐƠN HÀNG (GẮN SÁT TRÊN KHUNG BÀN CỜ) -->
             <div id="scene-stage">
+                <!-- ĐÁM MÂY BAY CHẬM DƯỚI ẢNH GÒ CỎ -->
+                <div id="npc-stage-cloud" class="npc-stage-cloud" aria-hidden="true">
+                    <img src="assets/images_webp/background/may1.webp" class="npc-stage-cloud-img" alt="">
+                </div>
+
+                <!-- NỀN ĐỒI CỎ GÒ ĐẤT CHO CHÚ CHÓ & ITEM NHIỆM VỤ -->
+                <div id="npc-stage-bg" class="npc-stage-bg" aria-hidden="true">
+                    <img src="assets/images_webp/board/npc_bg.webp" class="npc-stage-bg-img" alt="">
+                </div>
+
                 <div id="npc-guide-wrap" class="npc-guide-wrap">
                     <button id="npc-avatar-btn" class="npc-character-btn" title="Chạm vào nhân vật để trò chuyện & xem gợi ý">
-                        <img id="npc-avatar-img" class="npc-character-img" src="assets/images/ui/character01.png" alt="Nhân vật đồng hành">
+                        <img id="npc-avatar-img" class="npc-character-img" src="assets/images_webp/ui/character01.webp" alt="Nhân vật đồng hành">
                     </button>
                 </div>
 
@@ -82,11 +95,19 @@
 
         <!-- PHẦN DƯỚI: KHUNG BÀN CỜ 7x9 & 3 NÚT CHỨC NĂNG -->
         <section id="bottom-play-area">
-            <div id="wood-bar" class="wood-bar-wrap" aria-hidden="true">
-                <img src="assets/images/ui/thanhgo.png" alt="" class="wood-bar-img">
-            </div>
             <main class="board-container">
                 <div class="board-frame-wrapper">
+                    <!-- DẢI BỤI CỎ TRANG TRÍ 2 BÊN TRÁI & PHẢI BÀN CHƠI (TỰ NHIÊN, XẾP CHÉO NHAU & ĐÈ LÊN MÉP BÀN 8PX) -->
+                    <div class="board-bushes board-bushes-left" aria-hidden="true">
+                        <img src="assets/images_webp/board/glass1.webp" class="board-bush bush-top" alt="">
+                        <img src="assets/images_webp/board/glass2.webp" class="board-bush bush-mid" alt="">
+                        <img src="assets/images_webp/board/glass3.webp" class="board-bush bush-bot" alt="">
+                    </div>
+                    <div class="board-bushes board-bushes-right" aria-hidden="true">
+                        <img src="assets/images_webp/board/glass2.webp" class="board-bush bush-top" alt="">
+                        <img src="assets/images_webp/board/glass3.webp" class="board-bush bush-mid" alt="">
+                        <img src="assets/images_webp/board/glass1.webp" class="board-bush bush-bot" alt="">
+                    </div>
                     <div id="grid-board"></div>
                 </div>
             </main>
@@ -121,11 +142,14 @@
             <div id="mycamp-viewport" class="mycamp-viewport">
                 <!-- SÂN KHẤU CẮM TRẠI: CHỨA CẢ ẢNH NỀN VÀ CÁC ITEM CÙNG TỌA ĐỘ CỐ ĐỊNH -->
                 <div id="mycamp-stage" class="mycamp-stage">
-                    <img id="mycamp-bg-img" class="mycamp-bg-img" src="assets/images/items_khutrai/bg_khutrai.jpg" alt="Khu trại">
+                    <img id="mycamp-bg-img" class="mycamp-bg-img" src="assets/images_webp/items_khutrai/bg_khutrai.jpg" alt="Khu trại">
                     <div class="mycamp-grid-overlay" id="mycamp-grid-overlay"></div>
                     <div id="mycamp-items-container" class="mycamp-items-container"></div>
                 </div>
             </div>
+
+            <!-- LỚP GRADIENT OVERLAY ĐÈ LÊN 20% PHÍA DƯỚI HÒN ĐẢO (POINTER-EVENTS: NONE) -->
+            <div id="mycamp-gradient-overlay" class="mycamp-gradient-overlay"></div>
 
             <div class="mycamp-header">
                 <div class="mycamp-title">Trại của bạn</div>
@@ -150,14 +174,15 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-    <script src="js/i18n.js?v=10.13"></script>
-    <script src="js/config.js?v=10.13"></script>
-    <script src="js/data.js?v=10.13"></script>
-    <script src="js/engine.js?v=10.13"></script>
-    <script src="js/progress.js?v=10.13"></script>
-    <script src="js/firebase-sync.js?v=10.13"></script>
-    <script src="js/mycamp_config.js?v=10.13"></script>
-    <script src="js/camp.js?v=10.13"></script>
-    <script src="js/components/board.js?v=10.13"></script>
+    <script src="js/i18n.js?v=10.51"></script>
+    <script src="js/config.js?v=10.51"></script>
+    <script src="js/data.js?v=10.51"></script>
+    <script src="js/engine.js?v=10.51"></script>
+    <script src="js/progress.js?v=10.51"></script>
+    <script src="js/firebase-sync.js?v=10.51"></script>
+    <script src="js/mycamp_config.js?v=10.51"></script>
+    <script src="js/camp.js?v=10.51"></script>
+    <script src="js/components/board.js?v=10.51"></script>
+    <script src="js/test_tool.js?v=10.51"></script>
 </body>
 </html>

@@ -142,7 +142,7 @@ var FIREBASE_SYNC = (function () {
                             uid: user.uid,
                             email: user.email || '',
                             name: user.displayName || user.email.split('@')[0],
-                            picture: user.photoURL || 'assets/images/ui/character01.png',
+                            picture: user.photoURL || 'assets/images_webp/ui/character01.webp',
                             provider: 'firebase',
                             lastSynced: Date.now()
                         };
@@ -169,7 +169,7 @@ var FIREBASE_SYNC = (function () {
                         uid: user.uid,
                         email: user.email || '',
                         name: user.displayName || user.email.split('@')[0],
-                        picture: user.photoURL || 'assets/images/ui/character01.png',
+                        picture: user.photoURL || 'assets/images_webp/ui/character01.webp',
                         provider: 'firebase',
                         lastSynced: Date.now()
                     };
@@ -211,7 +211,7 @@ var FIREBASE_SYNC = (function () {
                             uid: user.uid,
                             email: user.email || '',
                             name: user.displayName || user.email.split('@')[0],
-                            picture: user.photoURL || 'assets/images/ui/character01.png',
+                            picture: user.photoURL || 'assets/images_webp/ui/character01.webp',
                             provider: 'firebase',
                             lastSynced: Date.now()
                         };
@@ -349,7 +349,7 @@ var FIREBASE_SYNC = (function () {
                         uid: userObj.uid,
                         email: userObj.email || '',
                         name: userObj.displayName || (userObj.email ? userObj.email.split('@')[0] : 'Người chơi Google'),
-                        picture: userObj.photoUrl || userObj.photoURL || 'assets/images/ui/character01.png',
+                        picture: userObj.photoUrl || userObj.photoURL || 'assets/images_webp/ui/character01.webp',
                         provider: 'firebase',
                         lastSynced: Date.now()
                     };
@@ -403,7 +403,7 @@ var FIREBASE_SYNC = (function () {
                     uid: user.uid,
                     email: user.email || '',
                     name: user.displayName || user.email.split('@')[0],
-                    picture: user.photoURL || 'assets/images/ui/character01.png',
+                    picture: user.photoURL || 'assets/images_webp/ui/character01.webp',
                     provider: 'firebase',
                     lastSynced: Date.now()
                 };

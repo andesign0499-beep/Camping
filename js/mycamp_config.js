@@ -14,57 +14,57 @@
 // 1. DANH SÁCH VẬT PHẨM KHU TRẠI CÓ THỂ THU THẬP & TRANG BỊ
 var KHUTRAI_ITEMS = {
     // --- LỀU TRẠI (TENT) ---
-    'trai_lv4': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv4.png', name: 'Bạt Tăng Che Nắng' },
-    'trai_lv5': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv5.png', name: 'Lều Vòm Cắm Trại 2 Người' },
-    'trai_lv6': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv6.png', name: 'Lều Gia Đình Chống Gió' },
-    'trai_lv7': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv7.png', name: 'Lều Kim Tự Tháp Glamping' },
-    'trai_lv8': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv8.png', name: 'Biệt Thự Lều Glamping' },
-    'trai_lv9': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv9.png', name: 'Lều Safari Hoàng Gia' },
-    'trai_lv10': { type: 'tent', path: 'assets/images/items_khutrai/trai_lv10.png', name: 'Lều Dome Kính Thiên Văn' },
-    'trai_lv11': { type: 'tent', path: 'assets/images/items_khutrai/trai_lv11.png', name: 'Biệt Thự Vòm Glamping' },
-    'trai_lv12': { type: 'tent', path: 'assets/images/items_khutrai/trai_lv112.png', name: 'Lâu Đài Cắm Trại Đỉnh Cao' },
+    'trai_lv4': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv4.webp', name: 'Bạt Tăng Che Nắng' },
+    'trai_lv5': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv5.webp', name: 'Lều Vòm Cắm Trại 2 Người' },
+    'trai_lv6': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv6.webp', name: 'Lều Gia Đình Chống Gió' },
+    'trai_lv7': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv7.webp', name: 'Lều Kim Tự Tháp Glamping' },
+    'trai_lv8': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv8.webp', name: 'Biệt Thự Lều Glamping' },
+    'trai_lv9': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv9.webp', name: 'Lều Safari Hoàng Gia' },
+    'trai_lv10': { type: 'tent', path: 'assets/images_webp/items_khutrai/trai_lv10.webp', name: 'Lều Dome Kính Thiên Văn' },
+    'trai_lv11': { type: 'tent', path: 'assets/images_webp/items_khutrai/trai_lv11.webp', name: 'Biệt Thự Vòm Glamping' },
+    'trai_lv12': { type: 'tent', path: 'assets/images_webp/items_khutrai/trai_lv112.webp', name: 'Lâu Đài Cắm Trại Đỉnh Cao' },
 
     // --- BÀN DÃ NGOẠI (TABLE) ---
-    'ban_lv1':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv1.png',  name: 'Bàn Nhôm Vuông Mini' },
-    'ban_lv2':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv2.png',  name: 'Bàn Vải Gấp Dã Ngoại' },
-    'ban_lv3':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv3.png',  name: 'Bàn Trà Dã Ngoại' },
-    'ban_lv4':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv4.png',  name: 'Bàn Gỗ Cuộn Dã Ngoại' },
-    'ban_lv5':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv5.png',  name: 'Bàn Dã Ngoại Kèm Giá Lưới' },
-    'ban_lv6':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv6.png',  name: 'Bàn Cắm Trại Đa Năng' },
-    'ban_lv7':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv7.png',  name: 'Bàn Chiến Thuật IGT' },
-    'ban_lv8':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv8.png',  name: 'Trạm Bếp Nấu Ăn Glamping' },
-    'ban_lv9':  { type: 'table', path: 'assets/images/items/ban_lv9.png',  name: 'Bàn Tiệc Gỗ Sồi Hoàng Gia' },
-    'ban_lv10': { type: 'table', path: 'assets/images/items/ban_lv10.png', name: 'Bàn Quầy Bar Cắm Trại' },
-    'ban_lv11': { type: 'table', path: 'assets/images/items/ban_lv11.png', name: 'Bàn Đảo Bếp Sang Trọng' },
-    'ban_lv12': { type: 'table', path: 'assets/images/items/ban_lv12.png', name: 'Bàn Hoàng Gia Đỉnh Cao' },
+    'ban_lv1':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv1.webp',  name: 'Bàn Nhôm Vuông Mini' },
+    'ban_lv2':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv2.webp',  name: 'Bàn Vải Gấp Dã Ngoại' },
+    'ban_lv3':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv3.webp',  name: 'Bàn Trà Dã Ngoại' },
+    'ban_lv4':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv4.webp',  name: 'Bàn Gỗ Cuộn Dã Ngoại' },
+    'ban_lv5':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv5.webp',  name: 'Bàn Dã Ngoại Kèm Giá Lưới' },
+    'ban_lv6':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv6.webp',  name: 'Bàn Cắm Trại Đa Năng' },
+    'ban_lv7':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv7.webp',  name: 'Bàn Chiến Thuật IGT' },
+    'ban_lv8':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv8.webp',  name: 'Trạm Bếp Nấu Ăn Glamping' },
+    'ban_lv9':  { type: 'table', path: 'assets/images_webp/items/ban_lv9.webp',  name: 'Bàn Tiệc Gỗ Sồi Hoàng Gia' },
+    'ban_lv10': { type: 'table', path: 'assets/images_webp/items/ban_lv10.webp', name: 'Bàn Quầy Bar Cắm Trại' },
+    'ban_lv11': { type: 'table', path: 'assets/images_webp/items/ban_lv11.webp', name: 'Bàn Đảo Bếp Sang Trọng' },
+    'ban_lv12': { type: 'table', path: 'assets/images_webp/items/ban_lv12.webp', name: 'Bàn Hoàng Gia Đỉnh Cao' },
 
     // --- BẾP & LỬA TRẠI (STOVE) ---
-    'bep_lv1':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv1.png',  name: 'Nhánh Củi Khô' },
-    'bep_lv2':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv2.png',  name: 'Khúc Gỗ Tròn' },
-    'bep_lv3':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv3.png',  name: 'Bó Củi Buộc Dây' },
-    'bep_lv4':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv4.png',  name: 'Hố Đá Xếp Lửa' },
-    'bep_lv5':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv5.png',  name: 'Đống Củi Trại Vòng Đá' },
-    'bep_lv6':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv6.png',  name: 'Lửa Trại Rực Hồng' },
-    'bep_lv7':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv7.png',  name: 'Lò Nướng Than Hoa Tròn' },
-    'bep_lv8':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv8.png',  name: 'Bếp Nướng BBQ Chữ Nhật' },
-    'bep_lv9':  { type: 'stove', path: 'assets/images/items/bep_lv9.png',  name: 'Bếp Ga Đôi Dã Ngoại' },
-    'bep_lv10': { type: 'stove', path: 'assets/images/items/bep_lv10.png', name: 'Bếp Củi Sưởi Đa Năng' },
-    'bep_lv11': { type: 'stove', path: 'assets/images/items/bep_lv11.png', name: 'Lò Nướng Pizza Ngoài Trời' },
-    'bep_lv12': { type: 'stove', path: 'assets/images/items/bep_lv12.png', name: 'Trạm Bếp Cắm Trại Đỉnh Cao' },
+    'bep_lv1':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv1.webp',  name: 'Nhánh Củi Khô' },
+    'bep_lv2':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv2.webp',  name: 'Khúc Gỗ Tròn' },
+    'bep_lv3':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv3.webp',  name: 'Bó Củi Buộc Dây' },
+    'bep_lv4':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv4.webp',  name: 'Hố Đá Xếp Lửa' },
+    'bep_lv5':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv5.webp',  name: 'Đống Củi Trại Vòng Đá' },
+    'bep_lv6':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv6.webp',  name: 'Lửa Trại Rực Hồng' },
+    'bep_lv7':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv7.webp',  name: 'Lò Nướng Than Hoa Tròn' },
+    'bep_lv8':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv8.webp',  name: 'Bếp Nướng BBQ Chữ Nhật' },
+    'bep_lv9':  { type: 'stove', path: 'assets/images_webp/items/bep_lv9.webp',  name: 'Bếp Ga Đôi Dã Ngoại' },
+    'bep_lv10': { type: 'stove', path: 'assets/images_webp/items/bep_lv10.webp', name: 'Bếp Củi Sưởi Đa Năng' },
+    'bep_lv11': { type: 'stove', path: 'assets/images_webp/items/bep_lv11.webp', name: 'Lò Nướng Pizza Ngoài Trời' },
+    'bep_lv12': { type: 'stove', path: 'assets/images_webp/items/bep_lv12.webp', name: 'Trạm Bếp Cắm Trại Đỉnh Cao' },
 
     // --- GHẾ DÃ NGOẠI (CHAIR) ---
-    'ghe_lv1':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv1.png',  name: 'Ghế Đôn Xếp Mini' },
-    'ghe_lv2':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv2.png',  name: 'Ghế Xếp Tựa Lưng Xanh' },
-    'ghe_lv3':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv3.png',  name: 'Ghế Xếp Dã Ngoại Màu Cát' },
-    'ghe_lv4':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv4.png',  name: 'Ghế Xếp Có Tay Vịn' },
-    'ghe_lv5':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv5.png',  name: 'Ghế Câu Cá Có Khay' },
-    'ghe_lv6':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv6.png',  name: 'Ghế Mặt Trăng Moon Chair' },
-    'ghe_lv7':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv7.png',  name: 'Ghế Tựa Lưng Cao Có Gối' },
-    'ghe_lv8':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv8.png',  name: 'Ghế Đạo Diễn Cao Cấp' },
-    'ghe_lv9':  { type: 'chair', path: 'assets/images/items/ghe_lv9.png',  name: 'Ghế Sofa Hơi Đôi Dã Ngoại' },
-    'ghe_lv10': { type: 'chair', path: 'assets/images/items/ghe_lv10.png', name: 'Ghế Bập Bênh Thư Giãn' },
-    'ghe_lv11': { type: 'chair', path: 'assets/images/items/ghe_lv11.png', name: 'Giường Xếp Glamping Đệm Dày' },
-    'ghe_lv12': { type: 'chair', path: 'assets/images/items/ghe_lv12.png', name: 'Ghế Ngai Vàng Cắm Trại Đỉnh Cao' }
+    'ghe_lv1':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv1.webp',  name: 'Ghế Đôn Xếp Mini' },
+    'ghe_lv2':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv2.webp',  name: 'Ghế Xếp Tựa Lưng Xanh' },
+    'ghe_lv3':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv3.webp',  name: 'Ghế Xếp Dã Ngoại Màu Cát' },
+    'ghe_lv4':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv4.webp',  name: 'Ghế Xếp Có Tay Vịn' },
+    'ghe_lv5':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv5.webp',  name: 'Ghế Câu Cá Có Khay' },
+    'ghe_lv6':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv6.webp',  name: 'Ghế Mặt Trăng Moon Chair' },
+    'ghe_lv7':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv7.webp',  name: 'Ghế Tựa Lưng Cao Có Gối' },
+    'ghe_lv8':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv8.webp',  name: 'Ghế Đạo Diễn Cao Cấp' },
+    'ghe_lv9':  { type: 'chair', path: 'assets/images_webp/items/ghe_lv9.webp',  name: 'Ghế Sofa Hơi Đôi Dã Ngoại' },
+    'ghe_lv10': { type: 'chair', path: 'assets/images_webp/items/ghe_lv10.webp', name: 'Ghế Bập Bênh Thư Giãn' },
+    'ghe_lv11': { type: 'chair', path: 'assets/images_webp/items/ghe_lv11.webp', name: 'Giường Xếp Glamping Đệm Dày' },
+    'ghe_lv12': { type: 'chair', path: 'assets/images_webp/items/ghe_lv12.webp', name: 'Ghế Ngai Vàng Cắm Trại Đỉnh Cao' }
 };
 
 // 2. CẤU HÌNH SÂN KHẤU, ẢNH NỀN, THAO TÁC KÉO/ZOOM & VỊ TRÍ ITEM
@@ -73,21 +73,20 @@ var MYCAMP_CONFIG = {
     // I. CẤU HÌNH ẢNH NỀN, MÀU GRADIENT & HIỆU ỨNG ÁNH SÁNG
     // -------------------------------------------------------------------------
     background: {
-        src: 'assets/images/background/bg_nuimatthan.webp', // File ảnh nền mặc định (nếu địa điểm chưa có ảnh _bg)
+        src: 'assets/images_webp/background/bg_nuimatthan.webp', // File ảnh nền mặc định (nếu địa điểm chưa có ảnh _bg)
         width: 460,             // Chiều rộng ảnh nền cố định (mặc định 400px - bạn có thể sửa tại đây)
         height: 569,            // Chiều cao ảnh nền (tỷ lệ 800x989 tương ứng 569px)
-        color: '#566443',       // Màu nền màn hình dự phòng (khi không dùng gradient)
+        color: '#263622',       // Màu nền màn hình dự phòng
+        fullScreenBg: 'assets/images_webp/ui/bg_game_all.jpg', // Lớp 1 (đáy): Ảnh bầu trời kéo 100% full màn hình
 
         // ==========================================
-        // 1. TÙY CHỈNH GRADIENT MÀU NỀN MÀN HÌNH (3 MÀU)
-        // 💡 BẠN CÓ THỂ TỰ DO ĐỔI 3 MÀU VÀ GÓC ĐỘ THEO Ý MUỐN:
+        // 1. TÙY CHỈNH GRADIENT MÀU NỀN MÀN HÌNH (LỚP THỨ 3)
+        // 👉 Đè nhẹ 20% chân hòn đảo để hiển thị rõ bãi trại và tạo độ tương phản cho nút đáy:
         // ==========================================
         gradient: {
-            enabled: true,              // true: Bật dải màu gradient 3 màu | false: Dùng màu đơn 'color' ở trên
-            angle: 180,                 // Góc dải màu (độ): 180 = từ trên xuống dưới, 135 = chéo góc
-            color1: '#2c3d28',          // MÀU 1 (Trên cùng màn hình - xanh rừng đậm dịu mát)
-            color2: '#475e3e',          // MÀU 2 (Ở giữa màn hình - xanh rêu tự nhiên)
-            color3: '#1f2b1c'           // MÀU 3 (Dưới đáy màn hình - màu đất rừng trầm lắng)
+            enabled: true,              // true: Bật dải màu gradient overlay đè 20% chân đảo
+            angle: 180,                 // Góc dải màu (độ): 180 = từ trên xuống dưới
+            color1: '#263622'           // Màu trầm đáy màn hình
         },
 
         // ==========================================
@@ -108,12 +107,12 @@ var MYCAMP_CONFIG = {
     // Khi người chơi mua và trang bị Điểm Đến trong Cửa Hàng, bãi trại sẽ tự động đổi sang ảnh nền tương ứng.
     // Nếu địa điểm chưa có ảnh riêng thì hệ thống tự động sử dụng ảnh nền mặc định bg_nuimatthan.webp.
     locationBackgrounds: {
-        'loc_doibu': 'assets/images/background/bg_doibu.webp',                    // Đồi Bù (Đứng đầu)
-        'loc_dongdo': 'assets/images/background/bg_hodongdo.webp',          // Cao nguyên Lâm Viên (Đứng thứ 2)
-        'loc_matthan': 'assets/images/background/bg_nuimatthan.webp',       // Núi Mắt Thần (WebP nén ~40.6%)
-        'loc_bangioc': 'assets/images/background/bg_thacbandoc.webp',       // Thác Bản Giốc (WebP nén ~42.4%)
-        'loc_muine': 'assets/images/background/bg_doichatmuine.webp',       // Đồi Cát Mũi Né (WebP nén ~47.2%)
-        'loc_songnuocbinhba': 'assets/images/background/bg_songnuocbinhba.webp' // Sóng nước Bình Ba (WebP nén ~44.9%)
+        'loc_doibu': 'assets/images_webp/background/bg_doibu.webp',                    // Đồi Bù (Đứng đầu)
+        'loc_dongdo': 'assets/images_webp/background/bg_hodongdo.webp',          // Cao nguyên Lâm Viên (Đứng thứ 2)
+        'loc_matthan': 'assets/images_webp/background/bg_nuimatthan.webp',       // Núi Mắt Thần (WebP nén ~40.6%)
+        'loc_bangioc': 'assets/images_webp/background/bg_thacbandoc.webp',       // Thác Bản Giốc (WebP nén ~42.4%)
+        'loc_muine': 'assets/images_webp/background/bg_doichatmuine.webp',       // Đồi Cát Mũi Né (WebP nén ~47.2%)
+        'loc_songnuocbinhba': 'assets/images_webp/background/bg_songnuocbinhba.webp' // Sóng nước Bình Ba (WebP nén ~44.9%)
     },
 
     // =========================================================================
@@ -173,7 +172,7 @@ var MYCAMP_CONFIG = {
             state1Duration: 14,       // Thời gian ĐỨNG (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             state1Width: 56,         // Chiều rộng khi đứng (px)
             state1Sheet: {
-                image: 'assets/images/npc_sheets/goden_idle_sheet.webp',
+                image: 'assets/images_webp/npc_sheets/goden_idle_sheet.webp',
                 frameWidth: 145,
                 frameHeight: 229,
                 cols: 5,
@@ -181,26 +180,26 @@ var MYCAMP_CONFIG = {
                 totalFrames: 20
             },
             state1Frames: [
-                'assets/images/npc_anim/goden_idle1.png',
-                'assets/images/npc_anim/goden_idle2.png',
-                'assets/images/npc_anim/goden_idle3.png',
-                'assets/images/npc_anim/goden_idle4.png',
-                'assets/images/npc_anim/goden_idle5.png',
-                'assets/images/npc_anim/goden_idle6.png',
-                'assets/images/npc_anim/goden_idle7.png',
-                'assets/images/npc_anim/goden_idle8.png',
-                'assets/images/npc_anim/goden_idle9.png',
-                'assets/images/npc_anim/goden_idle10.png',
-                'assets/images/npc_anim/goden_idle11.png',
-                'assets/images/npc_anim/goden_idle12.png',
-                'assets/images/npc_anim/goden_idle13.png',
-                'assets/images/npc_anim/goden_idle14.png',
-                'assets/images/npc_anim/goden_idle15.png',
-                'assets/images/npc_anim/goden_idle16.png',
-                'assets/images/npc_anim/goden_idle17.png',
-                'assets/images/npc_anim/goden_idle18.png',
-                'assets/images/npc_anim/goden_idle19.png',
-                'assets/images/npc_anim/goden_idle20.png'
+                'assets/images_webp/npc_anim/goden_idle1.webp',
+                'assets/images_webp/npc_anim/goden_idle2.webp',
+                'assets/images_webp/npc_anim/goden_idle3.webp',
+                'assets/images_webp/npc_anim/goden_idle4.webp',
+                'assets/images_webp/npc_anim/goden_idle5.webp',
+                'assets/images_webp/npc_anim/goden_idle6.webp',
+                'assets/images_webp/npc_anim/goden_idle7.webp',
+                'assets/images_webp/npc_anim/goden_idle8.webp',
+                'assets/images_webp/npc_anim/goden_idle9.webp',
+                'assets/images_webp/npc_anim/goden_idle10.webp',
+                'assets/images_webp/npc_anim/goden_idle11.webp',
+                'assets/images_webp/npc_anim/goden_idle12.webp',
+                'assets/images_webp/npc_anim/goden_idle13.webp',
+                'assets/images_webp/npc_anim/goden_idle14.webp',
+                'assets/images_webp/npc_anim/goden_idle15.webp',
+                'assets/images_webp/npc_anim/goden_idle16.webp',
+                'assets/images_webp/npc_anim/goden_idle17.webp',
+                'assets/images_webp/npc_anim/goden_idle18.webp',
+                'assets/images_webp/npc_anim/goden_idle19.webp',
+                'assets/images_webp/npc_anim/goden_idle20.webp'
             ],
 
             // Động tác 2: NGỒI (Sit - 20 frame)
@@ -208,7 +207,7 @@ var MYCAMP_CONFIG = {
             state2Duration: 3,        // Thời gian NGỒI (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             state2Width: 72,         // Chiều rộng khi ngồi (px)
             state2Sheet: {
-                image: 'assets/images/npc_sheets/goden_sit_sheet.webp',
+                image: 'assets/images_webp/npc_sheets/goden_sit_sheet.webp',
                 frameWidth: 200,
                 frameHeight: 205,
                 cols: 5,
@@ -216,26 +215,26 @@ var MYCAMP_CONFIG = {
                 totalFrames: 20
             },
             state2Frames: [
-                'assets/images/npc_anim/goden_sit1.png',
-                'assets/images/npc_anim/goden_sit2.png',
-                'assets/images/npc_anim/goden_sit3.png',
-                'assets/images/npc_anim/goden_sit4.png',
-                'assets/images/npc_anim/goden_sit5.png',
-                'assets/images/npc_anim/goden_sit6.png',
-                'assets/images/npc_anim/goden_sit7.png',
-                'assets/images/npc_anim/goden_sit8.png',
-                'assets/images/npc_anim/goden_sit9.png',
-                'assets/images/npc_anim/goden_sit10.png',
-                'assets/images/npc_anim/goden_sit11.png',
-                'assets/images/npc_anim/goden_sit12.png',
-                'assets/images/npc_anim/goden_sit13.png',
-                'assets/images/npc_anim/goden_sit14.png',
-                'assets/images/npc_anim/goden_sit15.png',
-                'assets/images/npc_anim/goden_sit16.png',
-                'assets/images/npc_anim/goden_sit17.png',
-                'assets/images/npc_anim/goden_sit18.png',
-                'assets/images/npc_anim/goden_sit19.png',
-                'assets/images/npc_anim/goden_sit20.png'
+                'assets/images_webp/npc_anim/goden_sit1.webp',
+                'assets/images_webp/npc_anim/goden_sit2.webp',
+                'assets/images_webp/npc_anim/goden_sit3.webp',
+                'assets/images_webp/npc_anim/goden_sit4.webp',
+                'assets/images_webp/npc_anim/goden_sit5.webp',
+                'assets/images_webp/npc_anim/goden_sit6.webp',
+                'assets/images_webp/npc_anim/goden_sit7.webp',
+                'assets/images_webp/npc_anim/goden_sit8.webp',
+                'assets/images_webp/npc_anim/goden_sit9.webp',
+                'assets/images_webp/npc_anim/goden_sit10.webp',
+                'assets/images_webp/npc_anim/goden_sit11.webp',
+                'assets/images_webp/npc_anim/goden_sit12.webp',
+                'assets/images_webp/npc_anim/goden_sit13.webp',
+                'assets/images_webp/npc_anim/goden_sit14.webp',
+                'assets/images_webp/npc_anim/goden_sit15.webp',
+                'assets/images_webp/npc_anim/goden_sit16.webp',
+                'assets/images_webp/npc_anim/goden_sit17.webp',
+                'assets/images_webp/npc_anim/goden_sit18.webp',
+                'assets/images_webp/npc_anim/goden_sit19.webp',
+                'assets/images_webp/npc_anim/goden_sit20.webp'
             ]
         },
 
@@ -255,7 +254,7 @@ var MYCAMP_CONFIG = {
             state1Duration: 8,        // Thời gian ĐỨNG NGHỈ (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             state1Width: 64,         // Chiều rộng khi đứng nghỉ (px) (tỷ lệ 180x214)
             state1Sheet: {
-                image: 'assets/images/npc_sheets/meoanh_idle_sheet.webp',
+                image: 'assets/images_webp/npc_sheets/meoanh_idle_sheet.webp',
                 frameWidth: 180,
                 frameHeight: 214,
                 cols: 5,
@@ -263,21 +262,21 @@ var MYCAMP_CONFIG = {
                 totalFrames: 15
             },
             state1Frames: [
-                'assets/images/npc_anim/meoanh_idle1.png',
-                'assets/images/npc_anim/meoanh_idle2.png',
-                'assets/images/npc_anim/meoanh_idle3.png',
-                'assets/images/npc_anim/meoanh_idle4.png',
-                'assets/images/npc_anim/meoanh_idle5.png',
-                'assets/images/npc_anim/meoanh_idle6.png',
-                'assets/images/npc_anim/meoanh_idle7.png',
-                'assets/images/npc_anim/meoanh_idle8.png',
-                'assets/images/npc_anim/meoanh_idle9.png',
-                'assets/images/npc_anim/meoanh_idle10.png',
-                'assets/images/npc_anim/meoanh_idle11.png',
-                'assets/images/npc_anim/meoanh_idle12.png',
-                'assets/images/npc_anim/meoanh_idle13.png',
-                'assets/images/npc_anim/meoanh_idle14.png',
-                'assets/images/npc_anim/meoanh_idle15.png'
+                'assets/images_webp/npc_anim/meoanh_idle1.webp',
+                'assets/images_webp/npc_anim/meoanh_idle2.webp',
+                'assets/images_webp/npc_anim/meoanh_idle3.webp',
+                'assets/images_webp/npc_anim/meoanh_idle4.webp',
+                'assets/images_webp/npc_anim/meoanh_idle5.webp',
+                'assets/images_webp/npc_anim/meoanh_idle6.webp',
+                'assets/images_webp/npc_anim/meoanh_idle7.webp',
+                'assets/images_webp/npc_anim/meoanh_idle8.webp',
+                'assets/images_webp/npc_anim/meoanh_idle9.webp',
+                'assets/images_webp/npc_anim/meoanh_idle10.webp',
+                'assets/images_webp/npc_anim/meoanh_idle11.webp',
+                'assets/images_webp/npc_anim/meoanh_idle12.webp',
+                'assets/images_webp/npc_anim/meoanh_idle13.webp',
+                'assets/images_webp/npc_anim/meoanh_idle14.webp',
+                'assets/images_webp/npc_anim/meoanh_idle15.webp'
             ],
 
             // Động tác 2: VẪY TAY CHÀO (Hello - 20 frame)
@@ -285,7 +284,7 @@ var MYCAMP_CONFIG = {
             state2Duration: 4,        // Thời gian VẪY TAY CHÀO (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             state2Width: 64,         // Chiều rộng khi vẫy tay (px)
             state2Sheet: {
-                image: 'assets/images/npc_sheets/meoanh_hello_sheet.webp',
+                image: 'assets/images_webp/npc_sheets/meoanh_hello_sheet.webp',
                 frameWidth: 180,
                 frameHeight: 214,
                 cols: 5,
@@ -293,26 +292,26 @@ var MYCAMP_CONFIG = {
                 totalFrames: 20
             },
             state2Frames: [
-                'assets/images/npc_anim/meoanh_hello1.png',
-                'assets/images/npc_anim/meoanh_hello2.png',
-                'assets/images/npc_anim/meoanh_hello3.png',
-                'assets/images/npc_anim/meoanh_hello4.png',
-                'assets/images/npc_anim/meoanh_hello5.png',
-                'assets/images/npc_anim/meoanh_hello6.png',
-                'assets/images/npc_anim/meoanh_hello7.png',
-                'assets/images/npc_anim/meoanh_hello8.png',
-                'assets/images/npc_anim/meoanh_hello9.png',
-                'assets/images/npc_anim/meoanh_hello10.png',
-                'assets/images/npc_anim/meoanh_hello11.png',
-                'assets/images/npc_anim/meoanh_hello12.png',
-                'assets/images/npc_anim/meoanh_hello13.png',
-                'assets/images/npc_anim/meoanh_hello14.png',
-                'assets/images/npc_anim/meoanh_hello15.png',
-                'assets/images/npc_anim/meoanh_hello16.png',
-                'assets/images/npc_anim/meoanh_hello17.png',
-                'assets/images/npc_anim/meoanh_hello18.png',
-                'assets/images/npc_anim/meoanh_hello19.png',
-                'assets/images/npc_anim/meoanh_hello20.png'
+                'assets/images_webp/npc_anim/meoanh_hello1.webp',
+                'assets/images_webp/npc_anim/meoanh_hello2.webp',
+                'assets/images_webp/npc_anim/meoanh_hello3.webp',
+                'assets/images_webp/npc_anim/meoanh_hello4.webp',
+                'assets/images_webp/npc_anim/meoanh_hello5.webp',
+                'assets/images_webp/npc_anim/meoanh_hello6.webp',
+                'assets/images_webp/npc_anim/meoanh_hello7.webp',
+                'assets/images_webp/npc_anim/meoanh_hello8.webp',
+                'assets/images_webp/npc_anim/meoanh_hello9.webp',
+                'assets/images_webp/npc_anim/meoanh_hello10.webp',
+                'assets/images_webp/npc_anim/meoanh_hello11.webp',
+                'assets/images_webp/npc_anim/meoanh_hello12.webp',
+                'assets/images_webp/npc_anim/meoanh_hello13.webp',
+                'assets/images_webp/npc_anim/meoanh_hello14.webp',
+                'assets/images_webp/npc_anim/meoanh_hello15.webp',
+                'assets/images_webp/npc_anim/meoanh_hello16.webp',
+                'assets/images_webp/npc_anim/meoanh_hello17.webp',
+                'assets/images_webp/npc_anim/meoanh_hello18.webp',
+                'assets/images_webp/npc_anim/meoanh_hello19.webp',
+                'assets/images_webp/npc_anim/meoanh_hello20.webp'
             ]
         }
 
@@ -354,7 +353,7 @@ var MYCAMP_CONFIG = {
             name: 'Đám mây bay trên (đỉnh núi Mắt Thần)',
             type: 'cloud',
             visible: true,           // Đổi thành false để ẨN, true để HIỆN
-            src: 'assets/images/background/may2.webp',
+            src: 'assets/images_webp/background/may2.webp',
             left: 75,
             top: 25,
             width: 310,
@@ -367,7 +366,7 @@ var MYCAMP_CONFIG = {
             name: 'Đám mây bay dưới (sườn núi)',
             type: 'cloud',
             visible: true,           // Đổi thành false để ẨN, true để HIỆN
-            src: 'assets/images/background/may1.webp',
+            src: 'assets/images_webp/background/may1.webp',
             left: 65,
             top: 145,
             width: 280,
@@ -387,7 +386,7 @@ var MYCAMP_CONFIG = {
             name: 'Cây thông bên trái (mỏm đá trái)',
             type: 'decor',
             visible: false,           // Đổi thành false để ẨN, true để HIỆN - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            src: 'assets/images/items_khutrai/tree.png',
+            src: 'assets/images_webp/items_khutrai/tree.webp',
             left: 45,
             top: 235,
             width: 38,
@@ -399,7 +398,7 @@ var MYCAMP_CONFIG = {
             name: 'Cây thông ở giữa (sau lưng lều)',
             type: 'decor',
             visible: false,           // Đổi thành false để ẨN, true để HIỆN - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            src: 'assets/images/items_khutrai/tree.png',
+            src: 'assets/images_webp/items_khutrai/tree.webp',
             left: 200,
             top: 205,
             width: 36,
@@ -411,7 +410,7 @@ var MYCAMP_CONFIG = {
             name: 'Cột đèn dã ngoại (bên bờ suối)',
             type: 'decor',
             visible: true,           // Đổi thành false để ẨN, true để HIỆN - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            src: 'assets/images/items_khutrai/icon_den.png',
+            src: 'assets/images_webp/items_khutrai/icon_den.webp',
             left: 230,
             top: 245,
             width: 24,
@@ -505,7 +504,7 @@ var MYCAMP_CONFIG = {
             id: 'my-decor-item',
             name: 'Tên đồ trang trí mới',
             type: 'decor',
-            src: 'assets/images/items_khutrai/ten_anh.png',
+            src: 'assets/images_webp/items_khutrai/ten_anh.webp',
             left: 120,
             top: 200,
             width: 80,

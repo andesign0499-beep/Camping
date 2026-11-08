@@ -9,9 +9,9 @@
 // 7. Cài Đặt Hệ Thống & Chọn Màn Chơi (Settings Modal)
 // ==========================================
 
-var ICON_GOLD_HTML = '<img class="inline-ui-icon" src="assets/images/ui/icon_glod.png" alt="Vàng">';
-var ICON_RUBY_HTML = '<img class="inline-ui-icon" src="assets/images/ui/icon_ruby.png" alt="Kim cương">';
-var ICON_ENERGY_HTML = '<img class="inline-ui-icon" src="assets/images/ui/icon_nangluong.png" alt="Năng lượng">';
+var ICON_GOLD_HTML = '<img class="inline-ui-icon" src="assets/images_webp/ui/icon_glod.webp" alt="Vàng">';
+var ICON_RUBY_HTML = '<img class="inline-ui-icon" src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương">';
+var ICON_ENERGY_HTML = '<img class="inline-ui-icon" src="assets/images_webp/ui/icon_nangluong.webp" alt="Năng lượng">';
 
 // ==========================================
 // HỆ THỐNG NÚT 3 MẢNH (3-SLICE BUTTON SYSTEM)
@@ -351,14 +351,14 @@ function startWinFireworks(targetOverlay, starCount) {
 function showWinModal(info, onReplay, onNext) {
     // 1. Level Up Banner
     var levelUpHtml = '<div class="win-levelup-header">' +
-        '<img src="assets/images/ui/level_up.png" class="win-levelup-img" alt="Level Up!">' +
+        '<img src="assets/images_webp/ui/level_up.webp" class="win-levelup-img" alt="Level Up!">' +
     '</div>';
 
     // 2. Stars
     var starsHtml = '<div class="win-stars">';
     for (var i = 1; i <= 3; i++) {
         var isStarOn = i <= info.stars;
-        starsHtml += '<img src="assets/images/ui/icon_star.png" class="win-star-img' + (isStarOn ? ' on' : ' off') + '" ' +
+        starsHtml += '<img src="assets/images_webp/ui/icon_star.webp" class="win-star-img' + (isStarOn ? ' on' : ' off') + '" ' +
             'style="animation-delay:' + (i * 0.16) + 's" alt="">';
     }
     starsHtml += '</div>';
@@ -373,11 +373,11 @@ function showWinModal(info, onReplay, onNext) {
     // 5. Rewards row (Năng lượng, Vàng tổng hợp, Kim cương)
     var rewardsHtml = '<div class="win-rewards-row">';
     if (info.energy && info.energy > 0) {
-        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.energy + '</span> <img class="reward-icon" src="assets/images/ui/icon_nangluong.png" alt="Năng lượng"></div>';
+        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.energy + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_nangluong.webp" alt="Năng lượng"></div>';
     }
-    rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + totalCoins.toLocaleString('vi-VN') + '</span> <img class="reward-icon" src="assets/images/ui/icon_glod.png" alt="Vàng"></div>';
+    rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + totalCoins.toLocaleString('vi-VN') + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_glod.webp" alt="Vàng"></div>';
     if (info.gems && info.gems > 0) {
-        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.gems + '</span> <img class="reward-icon" src="assets/images/ui/icon_ruby.png" alt="Kim cương"></div>';
+        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.gems + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương"></div>';
     }
     rewardsHtml += '</div>';
 
@@ -427,14 +427,14 @@ function showWinModal(info, onReplay, onNext) {
 
     // 1. Level Up Banner
     var levelUpHtml = '<div class="win-levelup-header">' +
-        '<img src="assets/images/ui/level_up.png" class="win-levelup-img" alt="Level Up!">' +
+        '<img src="assets/images_webp/ui/level_up.webp" class="win-levelup-img" alt="Level Up!">' +
     '</div>';
 
     // 2. Stars
     var starsHtml = '<div class="win-stars">';
     for (var i = 1; i <= 3; i++) {
         var isStarOn = i <= info.stars;
-        starsHtml += '<img src="assets/images/ui/icon_star.png" class="win-star-img' + (isStarOn ? ' on' : ' off') + '" ' +
+        starsHtml += '<img src="assets/images_webp/ui/icon_star.webp" class="win-star-img' + (isStarOn ? ' on' : ' off') + '" ' +
             'style="animation-delay:' + (i * 0.16) + 's" alt="">';
     }
     starsHtml += '</div>';
@@ -449,11 +449,11 @@ function showWinModal(info, onReplay, onNext) {
     // 5. Rewards row (Năng lượng, Vàng tổng hợp, Kim cương)
     var rewardsHtml = '<div class="win-rewards-row">';
     if (info.energy && info.energy > 0) {
-        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.energy + '</span> <img class="reward-icon" src="assets/images/ui/icon_nangluong.png" alt="Năng lượng"></div>';
+        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.energy + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_nangluong.webp" alt="Năng lượng"></div>';
     }
-    rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + totalCoins.toLocaleString('vi-VN') + '</span> <img class="reward-icon" src="assets/images/ui/icon_glod.png" alt="Vàng"></div>';
+    rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + totalCoins.toLocaleString('vi-VN') + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_glod.webp" alt="Vàng"></div>';
     if (info.gems && info.gems > 0) {
-        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.gems + '</span> <img class="reward-icon" src="assets/images/ui/icon_ruby.png" alt="Kim cương"></div>';
+        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.gems + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương"></div>';
     }
     rewardsHtml += '</div>';
 
@@ -557,57 +557,57 @@ function showWinModal(info, onReplay, onNext) {
 if (typeof KHUTRAI_ITEMS === 'undefined') {
     var KHUTRAI_ITEMS = {
         // --- LỀU TRẠI (TENT) ---
-        'trai_lv4': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv4.png', name: 'Bạt Tăng Che Nắng' },
-        'trai_lv5': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv5.png', name: 'Lều Vòm Cắm Trại 2 Người' },
-        'trai_lv6': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv6.png', name: 'Lều Gia Đình Chống Gió' },
-        'trai_lv7': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv7.png', name: 'Lều Kim Tự Tháp Glamping' },
-        'trai_lv8': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv8.png', name: 'Biệt Thự Lều Glamping' },
-        'trai_lv9': { type: 'tent',  path: 'assets/images/items_khutrai/trai_lv9.png', name: 'Lều Safari Hoàng Gia' },
-        'trai_lv10': { type: 'tent', path: 'assets/images/items_khutrai/trai_lv10.png', name: 'Lều Dome Kính Thiên Văn' },
-        'trai_lv11': { type: 'tent', path: 'assets/images/items_khutrai/trai_lv11.png', name: 'Biệt Thự Vòm Glamping' },
-        'trai_lv12': { type: 'tent', path: 'assets/images/items_khutrai/trai_lv112.png', name: 'Lâu Đài Cắm Trại Đỉnh Cao' },
+        'trai_lv4': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv4.webp', name: 'Bạt Tăng Che Nắng' },
+        'trai_lv5': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv5.webp', name: 'Lều Vòm Cắm Trại 2 Người' },
+        'trai_lv6': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv6.webp', name: 'Lều Gia Đình Chống Gió' },
+        'trai_lv7': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv7.webp', name: 'Lều Kim Tự Tháp Glamping' },
+        'trai_lv8': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv8.webp', name: 'Biệt Thự Lều Glamping' },
+        'trai_lv9': { type: 'tent',  path: 'assets/images_webp/items_khutrai/trai_lv9.webp', name: 'Lều Safari Hoàng Gia' },
+        'trai_lv10': { type: 'tent', path: 'assets/images_webp/items_khutrai/trai_lv10.webp', name: 'Lều Dome Kính Thiên Văn' },
+        'trai_lv11': { type: 'tent', path: 'assets/images_webp/items_khutrai/trai_lv11.webp', name: 'Biệt Thự Vòm Glamping' },
+        'trai_lv12': { type: 'tent', path: 'assets/images_webp/items_khutrai/trai_lv112.webp', name: 'Lâu Đài Cắm Trại Đỉnh Cao' },
 
         // --- BÀN DÃ NGOẠI (TABLE) ---
-        'ban_lv1':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv1.png',  name: 'Bàn Nhôm Vuông Mini' },
-        'ban_lv2':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv2.png',  name: 'Bàn Vải Gấp Dã Ngoại' },
-        'ban_lv3':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv3.png',  name: 'Bàn Trà Dã Ngoại' },
-        'ban_lv4':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv4.png',  name: 'Bàn Gỗ Cuộn Dã Ngoại' },
-        'ban_lv5':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv5.png',  name: 'Bàn Dã Ngoại Kèm Giá Lưới' },
-        'ban_lv6':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv6.png',  name: 'Bàn Cắm Trại Đa Năng' },
-        'ban_lv7':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv7.png',  name: 'Bàn Chiến Thuật IGT' },
-        'ban_lv8':  { type: 'table', path: 'assets/images/items_khutrai/ban_lv8.png',  name: 'Trạm Bếp Nấu Ăn Glamping' },
-        'ban_lv9':  { type: 'table', path: 'assets/images/items/ban_lv9.png',  name: 'Bàn Tiệc Gỗ Sồi Hoàng Gia' },
-        'ban_lv10': { type: 'table', path: 'assets/images/items/ban_lv10.png', name: 'Bàn Quầy Bar Cắm Trại' },
-        'ban_lv11': { type: 'table', path: 'assets/images/items/ban_lv11.png', name: 'Bàn Đảo Bếp Sang Trọng' },
-        'ban_lv12': { type: 'table', path: 'assets/images/items/ban_lv12.png', name: 'Bàn Hoàng Gia Đỉnh Cao' },
+        'ban_lv1':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv1.webp',  name: 'Bàn Nhôm Vuông Mini' },
+        'ban_lv2':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv2.webp',  name: 'Bàn Vải Gấp Dã Ngoại' },
+        'ban_lv3':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv3.webp',  name: 'Bàn Trà Dã Ngoại' },
+        'ban_lv4':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv4.webp',  name: 'Bàn Gỗ Cuộn Dã Ngoại' },
+        'ban_lv5':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv5.webp',  name: 'Bàn Dã Ngoại Kèm Giá Lưới' },
+        'ban_lv6':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv6.webp',  name: 'Bàn Cắm Trại Đa Năng' },
+        'ban_lv7':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv7.webp',  name: 'Bàn Chiến Thuật IGT' },
+        'ban_lv8':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv8.webp',  name: 'Trạm Bếp Nấu Ăn Glamping' },
+        'ban_lv9':  { type: 'table', path: 'assets/images_webp/items/ban_lv9.webp',  name: 'Bàn Tiệc Gỗ Sồi Hoàng Gia' },
+        'ban_lv10': { type: 'table', path: 'assets/images_webp/items/ban_lv10.webp', name: 'Bàn Quầy Bar Cắm Trại' },
+        'ban_lv11': { type: 'table', path: 'assets/images_webp/items/ban_lv11.webp', name: 'Bàn Đảo Bếp Sang Trọng' },
+        'ban_lv12': { type: 'table', path: 'assets/images_webp/items/ban_lv12.webp', name: 'Bàn Hoàng Gia Đỉnh Cao' },
 
         // --- BẾP & LỬA TRẠI (STOVE) ---
-        'bep_lv1':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv1.png',  name: 'Nhánh Củi Khô' },
-        'bep_lv2':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv2.png',  name: 'Khúc Gỗ Tròn' },
-        'bep_lv3':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv3.png',  name: 'Bó Củi Buộc Dây' },
-        'bep_lv4':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv4.png',  name: 'Hố Đá Xếp Lửa' },
-        'bep_lv5':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv5.png',  name: 'Đống Củi Trại Vòng Đá' },
-        'bep_lv6':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv6.png',  name: 'Lửa Trại Rực Hồng' },
-        'bep_lv7':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv7.png',  name: 'Lò Nướng Than Hoa Tròn' },
-        'bep_lv8':  { type: 'stove', path: 'assets/images/items_khutrai/bep_lv8.png',  name: 'Bếp Nướng BBQ Chữ Nhật' },
-        'bep_lv9':  { type: 'stove', path: 'assets/images/items/bep_lv9.png',  name: 'Bếp Ga Đôi Dã Ngoại' },
-        'bep_lv10': { type: 'stove', path: 'assets/images/items/bep_lv10.png', name: 'Bếp Củi Sưởi Đa Năng' },
-        'bep_lv11': { type: 'stove', path: 'assets/images/items/bep_lv11.png', name: 'Lò Nướng Pizza Ngoài Trời' },
-        'bep_lv12': { type: 'stove', path: 'assets/images/items/bep_lv12.png', name: 'Trạm Bếp Cắm Trại Đỉnh Cao' },
+        'bep_lv1':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv1.webp',  name: 'Nhánh Củi Khô' },
+        'bep_lv2':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv2.webp',  name: 'Khúc Gỗ Tròn' },
+        'bep_lv3':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv3.webp',  name: 'Bó Củi Buộc Dây' },
+        'bep_lv4':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv4.webp',  name: 'Hố Đá Xếp Lửa' },
+        'bep_lv5':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv5.webp',  name: 'Đống Củi Trại Vòng Đá' },
+        'bep_lv6':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv6.webp',  name: 'Lửa Trại Rực Hồng' },
+        'bep_lv7':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv7.webp',  name: 'Lò Nướng Than Hoa Tròn' },
+        'bep_lv8':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv8.webp',  name: 'Bếp Nướng BBQ Chữ Nhật' },
+        'bep_lv9':  { type: 'stove', path: 'assets/images_webp/items/bep_lv9.webp',  name: 'Bếp Ga Đôi Dã Ngoại' },
+        'bep_lv10': { type: 'stove', path: 'assets/images_webp/items/bep_lv10.webp', name: 'Bếp Củi Sưởi Đa Năng' },
+        'bep_lv11': { type: 'stove', path: 'assets/images_webp/items/bep_lv11.webp', name: 'Lò Nướng Pizza Ngoài Trời' },
+        'bep_lv12': { type: 'stove', path: 'assets/images_webp/items/bep_lv12.webp', name: 'Trạm Bếp Cắm Trại Đỉnh Cao' },
 
         // --- GHẾ DÃ NGOẠI (CHAIR) ---
-        'ghe_lv1':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv1.png',  name: 'Ghế Đôn Xếp Mini' },
-        'ghe_lv2':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv2.png',  name: 'Ghế Xếp Tựa Lưng Xanh' },
-        'ghe_lv3':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv3.png',  name: 'Ghế Xếp Dã Ngoại Màu Cát' },
-        'ghe_lv4':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv4.png',  name: 'Ghế Xếp Có Tay Vịn' },
-        'ghe_lv5':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv5.png',  name: 'Ghế Câu Cá Có Khay' },
-        'ghe_lv6':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv6.png',  name: 'Ghế Mặt Trăng Moon Chair' },
-        'ghe_lv7':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv7.png',  name: 'Ghế Tựa Lưng Cao Có Gối' },
-        'ghe_lv8':  { type: 'chair', path: 'assets/images/items_khutrai/ghe_lv8.png',  name: 'Ghế Đạo Diễn Cao Cấp' },
-        'ghe_lv9':  { type: 'chair', path: 'assets/images/items/ghe_lv9.png',  name: 'Ghế Sofa Hơi Đôi Dã Ngoại' },
-        'ghe_lv10': { type: 'chair', path: 'assets/images/items/ghe_lv10.png', name: 'Ghế Bập Bênh Thư Giãn' },
-        'ghe_lv11': { type: 'chair', path: 'assets/images/items/ghe_lv11.png', name: 'Giường Xếp Glamping Đệm Dày' },
-        'ghe_lv12': { type: 'chair', path: 'assets/images/items/ghe_lv12.png', name: 'Ghế Ngai Vàng Cắm Trại Đỉnh Cao' }
+        'ghe_lv1':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv1.webp',  name: 'Ghế Đôn Xếp Mini' },
+        'ghe_lv2':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv2.webp',  name: 'Ghế Xếp Tựa Lưng Xanh' },
+        'ghe_lv3':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv3.webp',  name: 'Ghế Xếp Dã Ngoại Màu Cát' },
+        'ghe_lv4':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv4.webp',  name: 'Ghế Xếp Có Tay Vịn' },
+        'ghe_lv5':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv5.webp',  name: 'Ghế Câu Cá Có Khay' },
+        'ghe_lv6':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv6.webp',  name: 'Ghế Mặt Trăng Moon Chair' },
+        'ghe_lv7':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv7.webp',  name: 'Ghế Tựa Lưng Cao Có Gối' },
+        'ghe_lv8':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv8.webp',  name: 'Ghế Đạo Diễn Cao Cấp' },
+        'ghe_lv9':  { type: 'chair', path: 'assets/images_webp/items/ghe_lv9.webp',  name: 'Ghế Sofa Hơi Đôi Dã Ngoại' },
+        'ghe_lv10': { type: 'chair', path: 'assets/images_webp/items/ghe_lv10.webp', name: 'Ghế Bập Bênh Thư Giãn' },
+        'ghe_lv11': { type: 'chair', path: 'assets/images_webp/items/ghe_lv11.webp', name: 'Giường Xếp Glamping Đệm Dày' },
+        'ghe_lv12': { type: 'chair', path: 'assets/images_webp/items/ghe_lv12.webp', name: 'Ghế Ngai Vàng Cắm Trại Đỉnh Cao' }
     };
 }
 
@@ -882,16 +882,16 @@ function unequipItemInMyCamp(itemOrUid) {
 // ---------- 3. CỬA HÀNG (THÚ CƯNG & ĐIỂM ĐẾN) ----------
 function openCamp(highlightLevel, onBack, initialTab) {
     var petsList = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS : [
-        { id: 'character01', name: 'Golden', img: 'assets/images/ui/character01.png', price: 0 },
-        { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 8000 },
-        { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 16000 },
-        { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 28000 },
-        { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 42000 },
-        { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 60000 },
-        { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 85000 },
-        { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 115000 },
-        { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 150000 },
-        { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 200000 }
+        { id: 'character01', name: 'Golden', img: 'assets/images_webp/ui/character01.webp', price: 0 },
+        { id: 'character05', name: 'Labrador', img: 'assets/images_webp/ui/character05.webp', price: 2500 },
+        { id: 'character04', name: 'Poodle', img: 'assets/images_webp/ui/character04.webp', price: 5000 },
+        { id: 'character03', name: 'Bulldog', img: 'assets/images_webp/ui/character03.webp', price: 9000 },
+        { id: 'character02', name: 'Béc-giê', img: 'assets/images_webp/ui/character02.webp', price: 14000 },
+        { id: 'character10', name: 'Ba Tư', img: 'assets/images_webp/ui/character10.webp', price: 20000 },
+        { id: 'character09', name: 'Maine Coon', img: 'assets/images_webp/ui/character09.webp', price: 28000 },
+        { id: 'character08', name: 'Ragdoll', img: 'assets/images_webp/ui/character08.webp', price: 38000 },
+        { id: 'character07', name: 'Mèo Anh', img: 'assets/images_webp/ui/character07.webp', price: 50000 },
+        { id: 'character06', name: 'Xiêm', img: 'assets/images_webp/ui/character06.webp', price: 68000 }
     ];
 
     var defaultTab = (initialTab === 'pets') ? 'pets' : 'locations';
@@ -1112,8 +1112,8 @@ function openCamp(highlightLevel, onBack, initialTab) {
 
             var cloudHtml = (loc.id === 'loc_matthan')
                 ? '<div class="loc-card-clouds">' +
-                    '<img src="assets/images/background/may2.webp" class="loc-card-cloud loc-card-cloud-top" alt="Mây đỉnh">' +
-                    '<img src="assets/images/background/may1.webp" class="loc-card-cloud loc-card-cloud-bottom" alt="Mây sườn">' +
+                    '<img src="assets/images_webp/background/may2.webp" class="loc-card-cloud loc-card-cloud-top" alt="Mây đỉnh">' +
+                    '<img src="assets/images_webp/background/may1.webp" class="loc-card-cloud loc-card-cloud-bottom" alt="Mây sườn">' +
                   '</div>'
                 : '';
 
@@ -1845,7 +1845,7 @@ function openDiscoveryBook() {
         var bgClass = typeof getCellBgClass === 'function' ? getCellBgClass(ch.line) : 'cell-bg-01';
         for (var lv = 1; lv <= maxChainLv; lv++) {
             var id = ch.line + '_lv' + lv;
-            var imgPath = id === 'ban_lv8' ? 'assets/images/items/ban_level8.png' : ('assets/images/items/' + id + '.png');
+            var imgPath = id === 'ban_lv8' ? 'assets/images_webp/items/ban_level8.webp' : ('assets/images_webp/items/' + id + '.webp');
             var isDisc = !!SAVE.discovered[id];
             if (isDisc) chainDisc++;
 
@@ -1878,6 +1878,38 @@ function openDiscoveryBook() {
         'book-box',
         (typeof I18N !== 'undefined' ? I18N.t('handbook.title') : 'CẨM NANG')
     );
+
+    // Kích hoạt bí mật: Chạm 5 lần liên tục vào tiêu đề Cẩm Nang để bật / tắt công cụ Test
+    var bookHeaderTitle = overlay.querySelector('.modal-title');
+    if (bookHeaderTitle) {
+        var headerTapCount = 0;
+        var headerTapTimer = null;
+        bookHeaderTitle.style.cursor = 'pointer';
+        bookHeaderTitle.onclick = function (e) {
+            e.stopPropagation();
+            headerTapCount++;
+            if (headerTapTimer) clearTimeout(headerTapTimer);
+            headerTapTimer = setTimeout(function () { headerTapCount = 0; }, 1500);
+            if (headerTapCount >= 5) {
+                headerTapCount = 0;
+                if (headerTapTimer) clearTimeout(headerTapTimer);
+                closeModal();
+                var curState = !!(typeof SAVE !== 'undefined' && SAVE && SAVE.settings && SAVE.settings.showTestTool);
+                var newState = !curState;
+                if (typeof setDevToolEnabled === 'function') {
+                    setDevToolEnabled(newState);
+                } else if (typeof SAVE !== 'undefined' && SAVE && SAVE.settings) {
+                    SAVE.settings.showTestTool = newState;
+                    if (typeof saveGame === 'function') saveGame();
+                    if (typeof updateDevToolVisibility === 'function') updateDevToolVisibility();
+                }
+                if (typeof playSound === 'function') playSound('win');
+                if (typeof showToast === 'function') {
+                    showToast(newState ? '🛠️ Đã BẬT công cụ Test bí mật!' : '🔒 Đã TẮT công cụ Test bí mật!', newState ? '#2e7d32' : '#c62828');
+                }
+            }
+        };
+    }
 
     overlay.querySelectorAll('.book-slot').forEach(function (slot) {
         slot.onclick = function () {
@@ -1969,9 +2001,9 @@ function openWorldMap(currentLv, onSelectLevel) {
             var isCur = lv === currentLv;
 
             var starsHtml = '<div class="map-level-stars">' +
-                '<img src="assets/images/ui/icon_star.png" class="map-star-img' + (st >= 1 ? ' on' : ' off') + '" alt="">' +
-                '<img src="assets/images/ui/icon_star.png" class="map-star-img' + (st >= 2 ? ' on' : ' off') + '" alt="">' +
-                '<img src="assets/images/ui/icon_star.png" class="map-star-img' + (st >= 3 ? ' on' : ' off') + '" alt="">' +
+                '<img src="assets/images_webp/ui/icon_star.webp" class="map-star-img' + (st >= 1 ? ' on' : ' off') + '" alt="">' +
+                '<img src="assets/images_webp/ui/icon_star.webp" class="map-star-img' + (st >= 2 ? ' on' : ' off') + '" alt="">' +
+                '<img src="assets/images_webp/ui/icon_star.webp" class="map-star-img' + (st >= 3 ? ' on' : ' off') + '" alt="">' +
             '</div>';
 
             if (unlocked) {
@@ -1981,7 +2013,7 @@ function openWorldMap(currentLv, onSelectLevel) {
                 '</button>';
             } else {
                 nodesHtml += '<button class="map-level-btn locked" data-lv="' + lv + '">' +
-                    '<img src="assets/images/ui/icon_lock.png" class="map-level-lock" alt="Khóa">' +
+                    '<img src="assets/images_webp/ui/icon_lock.webp" class="map-level-lock" alt="Khóa">' +
                     starsHtml +
                 '</button>';
             }
@@ -1990,11 +2022,11 @@ function openWorldMap(currentLv, onSelectLevel) {
         navTitle.innerHTML = 'Chặng <b>' + currentStage + '</b>' +
             ' <span class="map-title-dot">•</span> ' +
             '<b>' + stageStars + '/60</b> ' +
-            '<img src="assets/images/ui/icon_star.png" class="map-title-star-img" alt="">';
+            '<img src="assets/images_webp/ui/icon_star.webp" class="map-title-star-img" alt="">';
         gridContainer.innerHTML = nodesHtml;
 
         if (stageReqEl) {
-            var starImgHtml = '<img src="assets/images/ui/icon_star.png" class="map-req-star-img" alt="">';
+            var starImgHtml = '<img src="assets/images_webp/ui/icon_star.webp" class="map-req-star-img" alt="">';
             var nextStage = currentStage + 1;
             if (nextStage <= 3) {
                 if (stageStars >= 30) {
@@ -2070,7 +2102,7 @@ function openSettingsModal(opts) {
         return '<div class="st-google-linked">' +
             '<div class="st-google-user-row">' +
                 '<div class="st-google-avatar-wrap">' +
-                    '<img src="' + (user.picture || user.photoURL || 'assets/images/ui/character01.png') + '" class="st-google-avatar" alt="">' +
+                    '<img src="' + (user.picture || user.photoURL || 'assets/images_webp/ui/character01.webp') + '" class="st-google-avatar" alt="">' +
                 '</div>' +
                 '<div class="st-google-user-meta">' +
                     '<div class="st-google-name">' + (user.name || user.displayName || 'Người chơi Google') + '</div>' +
@@ -2119,13 +2151,13 @@ function openSettingsModal(opts) {
         '<div class="lang-dropdown-container" id="st-lang-container">' +
             '<div class="lang-dropdown-trigger" id="st-lang-trigger" role="button" tabindex="0" title="' + (typeof I18N !== 'undefined' ? I18N.t('settings.lang_dropdown_hint') : 'Bấm để mở danh sách chọn ngôn ngữ') + '">' +
                 '<div class="st-row-left">' +
-                    '<img src="assets/images/ui/icon_ngonngu.png" class="st-icon" alt="">' +
+                    '<img src="assets/images_webp/ui/icon_ngonngu.webp" class="st-icon" alt="">' +
                     '<span class="st-label" id="st-lbl-lang">' + (typeof I18N !== 'undefined' ? I18N.t('settings.lang_label') : 'Ngôn ngữ') + '</span>' +
                 '</div>' +
                 '<div class="lang-current-pill">' +
                     (typeof I18N !== 'undefined' ? I18N.getFlagHtml(curLang, 22) : '') +
                     '<span class="lang-current-text">' + (isEn ? 'English' : 'Tiếng Việt') + '</span>' +
-                    '<img src="assets/images/ui/icon_down.png" class="lang-arrow" id="st-lang-arrow" alt="▼">' +
+                    '<img src="assets/images_webp/ui/icon_down.webp" class="lang-arrow" id="st-lang-arrow" alt="▼">' +
                 '</div>' +
             '</div>' +
             '<div class="lang-dropdown-menu" id="st-lang-menu" style="display:none">' +
@@ -2164,7 +2196,7 @@ function openSettingsModal(opts) {
             '<!-- Nhạc nền cắm trại -->' +
             '<div class="st-row">' +
                 '<div class="st-row-left">' +
-                    '<img src="assets/images/ui/icon_amthanh.png" class="st-icon" alt="">' +
+                    '<img src="assets/images_webp/ui/icon_amthanh.webp" class="st-icon" alt="">' +
                     '<span class="st-label" id="st-lbl-bgm">' + (typeof I18N !== 'undefined' ? I18N.t('settings.bgm_label') : 'Nhạc nền cắm trại') + '</span>' +
                 '</div>' +
                 '<button class="toggle-btn ' + (s.bgm ? 'on' : 'off') + '" id="st-bgm">' +
@@ -2175,7 +2207,7 @@ function openSettingsModal(opts) {
             '<!-- Âm thanh hiệu ứng -->' +
             '<div class="st-row">' +
                 '<div class="st-row-left">' +
-                    '<img src="assets/images/ui/icon_mussic.png" class="st-icon" alt="">' +
+                    '<img src="assets/images_webp/ui/icon_mussic.webp" class="st-icon" alt="">' +
                     '<span class="st-label" id="st-lbl-sfx">' + (typeof I18N !== 'undefined' ? I18N.t('settings.sfx_label') : 'Âm thanh hiệu ứng') + '</span>' +
                 '</div>' +
                 '<button class="toggle-btn ' + (s.sound ? 'on' : 'off') + '" id="st-sound">' +
@@ -2186,7 +2218,7 @@ function openSettingsModal(opts) {
             '<!-- Mở khóa tất cả level -->' +
             '<div class="st-row">' +
                 '<div class="st-row-left">' +
-                    '<img src="assets/images/ui/icon_lock.png" class="st-icon" alt="">' +
+                    '<img src="assets/images_webp/ui/icon_lock.webp" class="st-icon" alt="">' +
                     '<span class="st-label" id="st-lbl-unlock">' + (typeof I18N !== 'undefined' ? I18N.t('settings.unlock_all') : 'Mở khóa tất cả level') + '</span>' +
                 '</div>' +
                 '<button class="toggle-btn ' + (s.unlockAllLevels ? 'on' : 'off') + '" id="st-unlock">' +
@@ -2197,7 +2229,7 @@ function openSettingsModal(opts) {
             '<!-- Tự động đổ đầy bàn -->' +
             '<div class="st-row">' +
                 '<div class="st-row-left">' +
-                    '<img src="assets/images/ui/icon_auto.png" class="st-icon" alt="">' +
+                    '<img src="assets/images_webp/ui/icon_auto.webp" class="st-icon" alt="">' +
                     '<span class="st-label" id="st-lbl-auto">' + (typeof I18N !== 'undefined' ? I18N.t('settings.auto_fill') : 'Tự động đổ đầy bàn') + '</span>' +
                 '</div>' +
                 '<button class="toggle-btn ' + (isAuto ? 'on' : 'off') + '" id="st-auto">' +
@@ -2256,7 +2288,7 @@ function openSettingsModal(opts) {
         if (pillWrap && typeof I18N !== 'undefined') {
             pillWrap.innerHTML = I18N.getFlagHtml(lang, 22) +
                 '<span class="lang-current-text">' + (isEnLang ? 'English' : 'Tiếng Việt') + '</span>' +
-                '<img src="assets/images/ui/icon_down.png" class="lang-arrow" id="st-lang-arrow" alt="▼">';
+                '<img src="assets/images_webp/ui/icon_down.webp" class="lang-arrow" id="st-lang-arrow" alt="▼">';
         }
 
         // Tích chọn trong Menu ngôn ngữ
@@ -2722,7 +2754,7 @@ function showGoogleAuthModal(params) {
                         SAVE.googleUser = {
                             email: email,
                             name: email.split('@')[0],
-                            picture: 'assets/images/ui/character01.png',
+                            picture: 'assets/images_webp/ui/character01.webp',
                             lastSynced: Date.now()
                         };
                         saveGame();
@@ -2738,7 +2770,7 @@ function showGoogleAuthModal(params) {
                         SAVE.googleUser = {
                             email: email,
                             name: email.split('@')[0],
-                            picture: 'assets/images/ui/character01.png',
+                            picture: 'assets/images_webp/ui/character01.webp',
                             lastSynced: Date.now()
                         };
                         syncSaveToCloud();
@@ -2754,7 +2786,7 @@ function showGoogleAuthModal(params) {
             SAVE.googleUser = {
                 email: email,
                 name: email.split('@')[0],
-                picture: 'assets/images/ui/character01.png',
+                picture: 'assets/images_webp/ui/character01.webp',
                 lastSynced: Date.now()
             };
             syncSaveToCloud();
@@ -3740,21 +3772,23 @@ function renderMyCampScene() {
     var bgColor = bgCfg.color || '#566443';
     var bgSrc = (typeof getMyCampBackgroundSrc === 'function')
         ? getMyCampBackgroundSrc()
-        : (bgCfg.src || 'assets/images/items_khutrai/bg_khutrai.jpg');
+        : (bgCfg.src || 'assets/images_webp/items_khutrai/bg_khutrai.jpg');
 
-    // 1. Cấu hình màu nền / Gradient 3 màu toàn màn hình
+    // 1. Cấu hình 3 lớp nền: Lớp 1 (đáy): bg_game_all.jpg 100% cover; Lớp 2: hòn đảo trại; Lớp 3: gradient overlay đè 20% chân đảo
     if (screen) {
-        if (bgCfg.gradient && bgCfg.gradient.enabled) {
-            var grad = bgCfg.gradient;
-            var angle = (grad.angle !== undefined) ? grad.angle : 180;
-            var c1 = grad.color1 || '#2c3d28';
-            var c2 = grad.color2 || '#475e3e';
-            var c3 = grad.color3 || '#1f2b1c';
-            screen.style.backgroundImage = 'linear-gradient(' + angle + 'deg, ' + c1 + ' 0%, ' + c2 + ' 50%, ' + c3 + ' 100%)';
-            screen.style.backgroundColor = c2;
-        } else {
-            screen.style.backgroundImage = 'none';
-            screen.style.backgroundColor = bgColor;
+        screen.style.backgroundImage = "url('assets/images_webp/ui/bg_game_all.jpg')";
+        screen.style.backgroundPosition = "center top";
+        screen.style.backgroundRepeat = "no-repeat";
+        screen.style.backgroundSize = "cover";
+        screen.style.backgroundColor = '#263622';
+
+        // Lớp gradient overlay đè lên 20% phía dưới hòn đảo
+        var gradOverlay = document.getElementById('mycamp-gradient-overlay');
+        if (!gradOverlay) {
+            gradOverlay = document.createElement('div');
+            gradOverlay.id = 'mycamp-gradient-overlay';
+            gradOverlay.className = 'mycamp-gradient-overlay';
+            screen.appendChild(gradOverlay);
         }
 
         // Hiệu ứng ánh sáng nhẹ (Lighting Effect)
@@ -3873,7 +3907,7 @@ function renderMyCampScene() {
                 html += '<img id="' + elemId + '-img" src="' + initialSrc + '" class="mycamp-prop-img" style="display:block;width:' + initialW + 'px;height:auto;pointer-events:none;" alt="' + (petConfig.name || '') + '">';
             }
             // Đồng xu bé trên đầu thú cưng (hiển thị khi hết chu kỳ 10 phút để người chơi biết chạm vào nhận tiền)
-            html += '<div id="mycamp-pet-ready-coin" class="pet-ready-coin" style="display:none;"><img src="assets/images/ui/icon_glod.png" class="pet-ready-coin-img" alt="Vàng"></div>';
+            html += '<div id="mycamp-pet-ready-coin" class="pet-ready-coin" style="display:none;"><img src="assets/images_webp/ui/icon_glod.webp" class="pet-ready-coin-img" alt="Vàng"></div>';
             // Thanh trạng thái thời gian giữ chạm (vuốt ve)
             html += '<div id="mycamp-pet-hold-indicator" class="pet-hold-indicator" style="display:none;"></div>';
             html += '</div>';
@@ -3932,7 +3966,7 @@ function renderMyCampScene() {
                 } else {
                     itemData = {
                         name: (typeof getItemCleanName === 'function') ? getItemCleanName(equippedId) : equippedId,
-                        path: (typeof getItemImagePath === 'function') ? getItemImagePath(equippedId) : ('assets/images/items/' + equippedId + '.png')
+                        path: (typeof getItemImagePath === 'function') ? getItemImagePath(equippedId) : ('assets/images_webp/items/' + equippedId + '.webp')
                     };
                 }
             }

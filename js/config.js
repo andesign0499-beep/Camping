@@ -225,7 +225,7 @@ var GAME_CONFIG = {
     // 3. TÀI NGUYÊN TÀI KHOẢN MỚI BAN ĐẦU (INITIAL PLAYER PROFILE)
     // -------------------------------------------------------------------------
     initialProfile: {
-        coins: 1500,    // Vàng khởi đầu
+        coins: 500,     // Vàng khởi đầu cân bằng vừa phải
         gems: 25,       // Kim Cương khởi đầu
         energy: 150     // Năng lượng khởi đầu dồi dào
     },
@@ -238,28 +238,29 @@ var GAME_CONFIG = {
         maxEnergyBase: 120,         // Năng lượng tối đa ở Level 1
         maxEnergyPerLevel: 5,       // Mỗi cấp độ tăng thêm giới hạn năng lượng tối đa
         maxEnergyCap: 250,          // Giới hạn kịch trần thanh năng lượng tự hồi
-        regenIntervalSec: 20        // Thời gian hồi phục 1 điểm Năng lượng nhanh hơn (20 giây)
+        regenIntervalSec: 30        // Thời gian hồi phục 1 điểm Năng lượng chuẩn: 30 giây (1 tiếng hồi đầy bình 120⚡)
     },
 
     // -------------------------------------------------------------------------
     // 5. TRẠM TIẾP NĂNG LƯỢNG (ENERGY SHOP)
+    // Cân bằng hợp lý: 1⚡ ≈ 20 Vàng
     // -------------------------------------------------------------------------
     energyShop: {
         coinPacks: [
-            { energy: 25, coinCost: 4000, desc: 'Dùng Vàng mua 25 Năng Lượng' },
-            { energy: 50, coinCost: 7500, desc: 'Dùng Vàng mua 50 Năng Lượng' }
+            { energy: 30, coinCost: 600, desc: 'Dùng Vàng mua 30 Năng Lượng' },
+            { energy: 60, coinCost: 1100, desc: 'Dùng Vàng mua 60 Năng Lượng (Tiết kiệm ~10%)' }
         ],
         coinPack: {
-            energy: 25,
-            coinCost: 4000
+            energy: 30,
+            coinCost: 600
         },
         gemPack: {
             energy: 50,
-            gemCost: 8
+            gemCost: 5              // 5 Kim Cương = 50 Năng Lượng (tỷ lệ chuẩn 1💎 = 10⚡)
         },
         rescue: {
             enabled: true,
-            amount: 20              // Cứu trợ khẩn cấp khi hết sạch năng lượng
+            amount: 25              // Cứu trợ khẩn cấp 25⚡ khi hết sạch năng lượng
         }
     },
 
@@ -270,26 +271,26 @@ var GAME_CONFIG = {
         {
             id: 'coin_pack_1',
             name: 'Túi Vàng Nhỏ',
-            coins: 3500,
+            coins: 1000,
             gemCost: 5,
             badge: null,
-            desc: 'Đổi từ 5 Kim Cương'
+            desc: 'Đổi từ 5 Kim Cương (1💎 = 200🪙)'
         },
         {
             id: 'coin_pack_2',
             name: 'Rương Vàng Lớn',
-            coins: 11000,
+            coins: 3200,
             gemCost: 15,
             badge: 'TIẾT KIỆM 15%',
-            desc: 'Đổi từ 15 Kim Cương'
+            desc: 'Đổi từ 15 Kim Cương (1💎 = 213🪙)'
         },
         {
             id: 'coin_pack_3',
             name: 'Kho Vàng Hoàng Gia',
-            coins: 25000,
+            coins: 7000,
             gemCost: 30,
-            badge: 'SIÊU LỜI +30%',
-            desc: 'Đổi từ 30 Kim Cương'
+            badge: 'SIÊU LỜI +35%',
+            desc: 'Đổi từ 30 Kim Cương (1💎 = 233🪙)'
         }
     ],
 
@@ -297,36 +298,36 @@ var GAME_CONFIG = {
     // 7. CÂN BẰNG THƯỞNG TRONG VÁN CHƠI (GAMEPLAY ECONOMY & REWARDS)
     // -------------------------------------------------------------------------
     gameplay: {
-        // Hệ số thưởng Vàng khi nộp đơn hàng: Vàng = 28 * itemUnits(id)
-        orderRewardMultiplier: 28,
+        // Hệ số thưởng Vàng khi nộp đơn hàng: Vàng = 12 * itemUnits(id) (Cân bằng chuẩn, chống lạm phát)
+        orderRewardMultiplier: 12,
 
-        // Hệ số tính giá bán vật phẩm trên bàn cờ: Giá bán = itemUnits(id) * 18
-        sellMultiplier: 18,
+        // Hệ số tính giá bán vật phẩm trên bàn cờ: Giá bán = itemUnits(id) * 5 (~40% giá trị đơn hàng)
+        sellMultiplier: 5,
         sellMinLevel: 1,
         sellDivisor: 1,
 
         // Thưởng Vàng và Kim Cương khi tạo ra vật phẩm cấp cao
         mergeRewards: {
             2: { coins: 0, gems: 0 },
-            3: { coins: 5, gems: 0 },
-            4: { coins: 20, gems: 0 },
-            5: { coins: 45, gems: 0 },
-            6: { coins: 100, gems: 0 },
-            7: { coins: 220, gems: 1 },
-            8: { coins: 500, gems: 2 }
+            3: { coins: 2, gems: 0 },
+            4: { coins: 5, gems: 0 },
+            5: { coins: 10, gems: 0 },
+            6: { coins: 20, gems: 0 },
+            7: { coins: 40, gems: 1 },
+            8: { coins: 80, gems: 1 }
         },
 
         // Thưởng chuỗi Combo ghép đồ liên tiếp
         combo: {
             enabled: true,
             windowSec: 4.0,
-            baseCoins: 15,
-            stepCoins: 20,
-            maxCoins: 250
+            baseCoins: 4,
+            stepCoins: 3,
+            maxCoins: 25
         },
 
         // Hệ số nhân điểm kinh nghiệm EXP nhận được từ mỗi đơn hàng (mặc định: 1.0)
-        orderExpMultiplier: 1.5,
+        orderExpMultiplier: 1.0,
 
         // Nhấp liên tiếp vào thùng sinh đồ
         generatorBulkClicks: 6,
@@ -344,14 +345,13 @@ var GAME_CONFIG = {
                 generator_backpack: { an: 1, cafe: 1, congcu: 1 },    // Ba Lô: 33.3% Ăn, 33.3% Cà Phê, 33.3% Công Cụ
                 generator_crate:    { tham: 1, antoan: 1, bep: 1 }    // Thùng Chứa: 33.3% Thảm, 33.3% An Toàn, 33.3% Bếp
             },
-            minLevelForTierDrops: 5,    // Chỉ bắt đầu sinh đồ Lv.2 từ khi người chơi đạt Level 5 trở lên (Level 1-4 sinh 100% đồ Lv.1)
-            minLevelForLv3Drops: 10,    // Từ Level 10 trở lên mới có xác suất sinh đồ Lv.3
+            minLevelForTierDrops: 4,    // Bắt đầu sinh đồ Lv.2 từ Level 4 (Level 1-3 sinh 100% đồ Lv.1)
+            minLevelForLv3Drops: 8,     // Từ Level 8 trở lên phát ra item vật phẩm Lv.3 lên tới 60%
             tiers: [
-                { maxLevel: 4,  lv1: 1.00, lv2: 0.00, lv3: 0.00 }, // Level 1-4:  100% Lv.1 (Không sinh đồ Lv.2)
-                { maxLevel: 9,  lv1: 0.72, lv2: 0.28, lv3: 0.00 }, // Level 5-9:  72% Lv.1, 28% Lv.2
-                { maxLevel: 20, lv1: 0.58, lv2: 0.32, lv3: 0.10 }, // Level 10-20: 58% Lv.1, 32% Lv.2, 10% Lv.3
-                { maxLevel: 35, lv1: 0.45, lv2: 0.37, lv3: 0.18 }, // Level 21-35: 45% Lv.1, 37% Lv.2, 18% Lv.3
-                { maxLevel: 60, lv1: 0.35, lv2: 0.40, lv3: 0.25 }  // Level 36-60: 35% Lv.1, 40% Lv.2, 25% Lv.3
+                { maxLevel: 3,  lv1: 1.00, lv2: 0.00, lv3: 0.00 }, // Level 1-3:  100% Cấp 1
+                { maxLevel: 5,  lv1: 0.50, lv2: 0.50, lv3: 0.00 }, // Level 4-5:  50% Cấp 1, 50% Cấp 2
+                { maxLevel: 7,  lv1: 0.30, lv2: 0.70, lv3: 0.00 }, // Level 6-7:  30% Cấp 1, 70% Cấp 2 (giai đoạn 5-7)
+                { maxLevel: 99, lv1: 0.10, lv2: 0.30, lv3: 0.60 }  // Từ Level 8+: 10% Cấp 1, 30% Cấp 2, 60% Cấp 3
             ]
         },
 
@@ -372,9 +372,9 @@ var GAME_CONFIG = {
 
         // Thưởng qua màn chơi
         levelClear: {
-            baseCoins: 150,
-            perLevelCoins: 25,
-            perStarCoins: 50,
+            baseCoins: 60,
+            perLevelCoins: 15,
+            perStarCoins: 25,
             gems3Stars: 2,
             gems1Or2Stars: 1,
             energyPerStar: { 1: 3, 2: 5, 3: 7 },
@@ -384,50 +384,46 @@ var GAME_CONFIG = {
 
     // -------------------------------------------------------------------------
     // 8. BẢNG KINH NGHIỆM EXP YÊU CẦU LÊN LEVEL (LEVEL EXP TABLE)
-    // Bạn có thể tùy chỉnh điểm EXP cần thiết để thăng cấp từ Level này lên Level tiếp theo.
-    // Khi hoàn thành đơn hàng, người chơi nhận EXP: Lv.1: 5 | Lv.2: 10 | Lv.3: 20 | Lv.4: 40 | Lv.5: 80...
+    // Tăng đều mượt mà: Bắt đầu Level 1 với 195 EXP (chính xác đúng 3 nhiệm vụ đầu để lên cấp).
+    // Toàn bộ các Level tiếp theo duy trì ổn định trong khoảng 3 - 7 nhiệm vụ/level.
+    // Không có bước nhảy vọt % đột ngột, tốc độ tăng trưởng mượt mà theo chuẩn game casual merge quốc tế.
     // -------------------------------------------------------------------------
     expTable: {
-        // [Giai đoạn tân thủ - Mở máy phát]:
-        1: 100,    // Level 1 -> 2: Cần 100 EXP (làm quen Xe Kéo & ghép cơ bản)
-        2: 250,    // Level 2 -> 3: Cần 250 EXP
-        3: 450,    // Level 3 -> 4: Cần 450 EXP
-        4: 700,    // Level 4 -> 5: Cần 700 EXP  (Mở khóa Ba Lô Dã Ngoại)
-        5: 1000,   // Level 5 -> 6: Cần 1000 EXP
-        6: 1400,   // Level 6 -> 7: Cần 1400 EXP
-        7: 1900,   // Level 7 -> 8: Cần 1900 EXP (Mở khóa Thùng Bếp & Sinh Tồn, mở ô đất Tầng 2)
-        8: 2500,   // Level 8 -> 9: Cần 2500 EXP
-        9: 3200,   // Level 9 -> 10: Cần 3200 EXP (Mở khóa ô đất Tầng 3)
-        10: 4000,  // Level 10 -> 11: Cần 4000 EXP (Máy phát bắt đầu rơi đồ Lv.3)
+        1: 195,    2: 570,    3: 950,    4: 1100,   5: 1950,
+        6: 2050,   7: 2300,   8: 2550,   9: 3900,   10: 4200,
+        11: 4500,  12: 4800,  13: 5050,  14: 5300,  15: 5550,
+        16: 5700,  17: 5750,  18: 6000,  19: 6100,  20: 6250,
+        21: 6400,  22: 6600,  23: 6850,  24: 7100,  25: 7350,
+        26: 7650,  27: 7950,  28: 8250,  29: 8600,  30: 8950,
+        31: 9300,  32: 9700,  33: 10100, 34: 10500, 35: 10950,
+        36: 11400, 37: 11900, 38: 12400, 39: 12900, 40: 13450,
+        41: 14000, 42: 14600, 43: 15200, 44: 15850, 45: 16500,
+        46: 17200, 47: 17900, 48: 18650, 49: 19400, 50: 20200,
+        51: 21000, 52: 21850, 53: 22700, 54: 23600, 55: 24500,
+        56: 25450, 57: 26450, 58: 27450, 59: 28500, 60: 29600
+    },
 
-        // [Giai đoạn trung - cao cấp]:
-        11: 5000,
-        12: 6200,
-        13: 7600,
-        14: 9200,
-        15: 11000,
-        16: 13000,
-        17: 15200,
-        18: 17600,
-        19: 20200,
-        20: 23000,
-
-        // [Giai đoạn mở rộng tiếp theo từ Level 21 đến 60]:
-        21: 26000, 22: 29000, 23: 32000, 24: 35000, 25: 38000,
-        26: 41000, 27: 44000, 28: 47000, 29: 50000, 30: 53000,
-        31: 56000, 32: 59000, 33: 62000, 34: 65000, 35: 68000,
-        36: 71000, 37: 74000, 38: 77000, 39: 80000, 40: 83000,
-        41: 86000, 42: 89000, 43: 92000, 44: 95000, 45: 98000,
-        46: 101000, 47: 104000, 48: 107000, 49: 110000, 50: 113000,
-        51: 116000, 52: 119000, 53: 122000, 54: 125000, 55: 128000,
-        56: 131000, 57: 134000, 58: 137000, 59: 140000, 60: 143000
+    // Điểm EXP cơ bản khi nộp từng cấp vật phẩm (Cân bằng lũy tiến theo công sức merge)
+    itemExpByLevel: {
+        1: 10,
+        2: 25,
+        3: 60,
+        4: 125,
+        5: 230,
+        6: 390,
+        7: 620,
+        8: 940,
+        9: 1380,
+        10: 1960,
+        11: 2700,
+        12: 3600
     },
 
     // -------------------------------------------------------------------------
     // 9. THƯỞNG SỔ TAY CẨM NANG KHÁM PHÁ (DISCOVERY BOOK)
     // -------------------------------------------------------------------------
     discoveryBook: {
-        coinsMultiplier: 50,
+        coinsMultiplier: 25,
         gemUnlockMinLevel: 5,
         gemsReward: 1
     },
@@ -438,7 +434,7 @@ var GAME_CONFIG = {
     adRewards: {
         energy: { amount: 30, dailyLimit: 6 },
         gem: { amount: 8, dailyLimit: 6 },
-        coin: { amount: 2500, dailyLimit: 5 },
+        coin: { amount: 600, dailyLimit: 5 },
         dailyGift: { amount: 5, doubleAmount: 10 },
         mysteryChest: { minGems: 12, maxGems: 25, dailyLimit: 3 }
     },

@@ -89,6 +89,7 @@ function defaultSave() {
             bgm: false,
             vibrate: true,
             unlockAllLevels: false,
+            showTestTool: false,
             lang: (typeof I18N !== 'undefined') ? I18N.currentLang : 'vi'
         },
         petOrderGroups: [],
@@ -151,8 +152,8 @@ function loadSave() {
             if (!Array.isArray(s.recentOrdersHistory)) s.recentOrdersHistory = [];
             if (!Array.isArray(s.recentBranchHistory)) s.recentBranchHistory = [];
             var maxSensibleLv = (typeof getProgressCap === 'function')
-                ? getProgressCap(s.totalOrdersDelivered || 0)
-                : Math.min(12, Math.floor((s.totalOrdersDelivered || 0) / 3) + 3);
+                ? getProgressCap(s.totalOrdersDelivered || 0, s.playerLevel || 1)
+                : Math.min(12, Math.floor((s.totalOrdersDelivered || 0) / 3) + 4);
             if (!s.lastOrderedLevelByBranch || typeof s.lastOrderedLevelByBranch !== 'object') {
                 s.lastOrderedLevelByBranch = {};
             } else {
@@ -165,13 +166,11 @@ function loadSave() {
             if (!Array.isArray(s.petOrderGroups)) {
                 s.petOrderGroups = [];
             } else {
-                // Tự động loại bỏ các đơn cũ bị lỗi vọt lên cấp vượt quá progressCap để hệ thống tái tạo lại đơn chuẩn
+                // Giữ nguyên 100% danh sách nhóm nhiệm vụ hợp lệ đang thực hiện của người chơi khi nạp lại save.
+                // Tuyệt đối không xóa bỏ hay tái tạo nhiệm vụ khi reload trang thiết bị!
                 s.petOrderGroups = s.petOrderGroups.filter(function (g) {
-                    if (!g || !Array.isArray(g.orders)) return false;
-                    return !g.orders.some(function (o) {
-                        if (!o || !o.id) return false;
-                        var lv = parseInt((o.id.match(/_lv(\d+)$/) || [])[1], 10);
-                        return typeof lv === 'number' && lv > maxSensibleLv;
+                    return g && Array.isArray(g.orders) && g.orders.length > 0 && g.orders.every(function (o) {
+                        return o && typeof o.id === 'string' && o.id.length > 0;
                     });
                 });
             }
@@ -401,18 +400,18 @@ function importSyncCode(codeStr) {
 }
 
 // ---------- DANH SÁCH THÚ CƯNG ĐỒNG HÀNH (PETS) ----------
-var PET_PRICE = 8000;
+var PET_PRICE = 2500;
 var PET_CHARACTERS = [
-    { id: 'character01', name: 'Golden', img: 'assets/images/ui/character01.png', price: 0 },
-    { id: 'character05', name: 'Labrador', img: 'assets/images/ui/character05.png', price: 8000 },
-    { id: 'character04', name: 'Poodle', img: 'assets/images/ui/character04.png', price: 16000 },
-    { id: 'character03', name: 'Bulldog', img: 'assets/images/ui/character03.png', price: 28000 },
-    { id: 'character02', name: 'Béc-giê', img: 'assets/images/ui/character02.png', price: 42000 },
-    { id: 'character10', name: 'Ba Tư', img: 'assets/images/ui/character10.png', price: 60000 },
-    { id: 'character09', name: 'Maine Coon', img: 'assets/images/ui/character09.png', price: 85000 },
-    { id: 'character08', name: 'Ragdoll', img: 'assets/images/ui/character08.png', price: 115000 },
-    { id: 'character07', name: 'Mèo Anh', img: 'assets/images/ui/character07.png', price: 150000 },
-    { id: 'character06', name: 'Xiêm', img: 'assets/images/ui/character06.png', price: 200000 }
+    { id: 'character01', name: 'Golden', img: 'assets/images_webp/ui/character01.webp', price: 0 },
+    { id: 'character05', name: 'Labrador', img: 'assets/images_webp/ui/character05.webp', price: 2500 },
+    { id: 'character04', name: 'Poodle', img: 'assets/images_webp/ui/character04.webp', price: 5000 },
+    { id: 'character03', name: 'Bulldog', img: 'assets/images_webp/ui/character03.webp', price: 9000 },
+    { id: 'character02', name: 'Béc-giê', img: 'assets/images_webp/ui/character02.webp', price: 14000 },
+    { id: 'character10', name: 'Ba Tư', img: 'assets/images_webp/ui/character10.webp', price: 20000 },
+    { id: 'character09', name: 'Maine Coon', img: 'assets/images_webp/ui/character09.webp', price: 28000 },
+    { id: 'character08', name: 'Ragdoll', img: 'assets/images_webp/ui/character08.webp', price: 38000 },
+    { id: 'character07', name: 'Mèo Anh', img: 'assets/images_webp/ui/character07.webp', price: 50000 },
+    { id: 'character06', name: 'Xiêm', img: 'assets/images_webp/ui/character06.webp', price: 68000 }
 ];
 
 // ---------- HỒI NĂNG LƯỢNG THEO TƯƠNG TÁC (ACTIVE INTERACTION REGEN) ----------
@@ -442,12 +441,12 @@ function sellPrice(id) {
     var lv = parseInt(String(id).split('_lv')[1]) || 1;
     if (lv < minLv) return 0;
 
-    var mul = 15;
+    var mul = 5;
     if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellMultiplier === 'number') {
         mul = GAME_CONFIG.gameplay.sellMultiplier;
     } else if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.coinPack) {
-        var cost = GAME_CONFIG.energyShop.coinPack.coinCost || 3000;
-        var eng = GAME_CONFIG.energyShop.coinPack.energy || 25;
+        var cost = GAME_CONFIG.energyShop.coinPack.coinCost || 600;
+        var eng = GAME_CONFIG.energyShop.coinPack.energy || 30;
         mul = Math.round((cost / eng) * 0.125);
     }
     var divisor = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellDivisor === 'number')
@@ -455,10 +454,10 @@ function sellPrice(id) {
     return Math.floor(itemUnits(id) * mul / divisor);
 }
 
-// Thưởng Vàng khi nộp đơn hàng: tăng theo độ khó (cấp) của món hàng (24 Vàng / 1 Năng lượng, +10% khi đạt 90 Sao)
+// Thưởng Vàng khi nộp đơn hàng: tăng theo độ khó (cấp) của món hàng (12 Vàng / 1 Năng lượng, +10% khi đạt 90 Sao)
 function orderReward(id) {
     var mul = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.orderRewardMultiplier === 'number')
-        ? GAME_CONFIG.gameplay.orderRewardMultiplier : 24;
+        ? GAME_CONFIG.gameplay.orderRewardMultiplier : 12;
     var base = mul * itemUnits(id);
     if (getTotalStars() >= 90) {
         return Math.round(base * 1.1);
@@ -467,43 +466,31 @@ function orderReward(id) {
 }
 
 // Thưởng Điểm Kinh Nghiệm (EXP) khi nộp đơn hàng cho Thú Cưng
-// Mỗi bậc vật phẩm tăng theo lũy tiến độ khó chế tạo:
-// Tier 1: 5 EXP, Tier 2: 10 EXP, Tier 3: 20 EXP, Tier 4: 40 EXP, Tier 5: 80 EXP, Tier 6: 160 EXP...
+// Điểm EXP được cân bằng tuyến tính theo cấp độ item trong GAME_CONFIG.itemExpByLevel
 function orderExp(id) {
-    var units = (typeof itemUnits === 'function') ? itemUnits(id) : 1;
+    var lv = parseInt(String(id).split('_lv')[1]) || 1;
+    var base = 10;
+    if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.itemExpByLevel && typeof GAME_CONFIG.itemExpByLevel[lv] === 'number') {
+        base = GAME_CONFIG.itemExpByLevel[lv];
+    } else {
+        base = Math.max(10, Math.round(Math.pow(lv, 1.85) * 10));
+    }
     var mult = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.orderExpMultiplier === 'number')
         ? GAME_CONFIG.gameplay.orderExpMultiplier
-        : 1;
-    return Math.max(5, Math.round(units * 5 * mult));
+        : 1.0;
+    return Math.max(10, Math.round(base * mult));
 }
+window.orderExp = orderExp;
+window.getExpRequiredForLevel = getExpRequiredForLevel;
 
-// Yêu cầu điểm EXP cần thiết để thăng cấp Level người chơi tiếp theo (Pacing chuẩn thị trường Merge-2)
+// Yêu cầu điểm EXP cần thiết để thăng cấp Level người chơi tiếp theo (Theo bảng GAME_CONFIG.expTable)
 function getExpRequiredForLevel(lv) {
     var l = Math.max(1, parseInt(lv, 10) || 1);
     if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.expTable && typeof GAME_CONFIG.expTable[l] === 'number') {
         return GAME_CONFIG.expTable[l];
     }
-    if (l === 1) return 100;
-    if (l === 2) return 250;
-    if (l === 3) return 450;
-    if (l === 4) return 700;
-    if (l === 5) return 1000;
-    if (l === 6) return 1400;
-    if (l === 7) return 1900;
-    if (l === 8) return 2500;
-    if (l === 9) return 3200;
-    if (l === 10) return 4000;
-    if (l === 11) return 5000;
-    if (l === 12) return 6200;
-    if (l === 13) return 7600;
-    if (l === 14) return 9200;
-    if (l === 15) return 11000;
-    if (l === 16) return 13000;
-    if (l === 17) return 15200;
-    if (l === 18) return 17600;
-    if (l === 19) return 20200;
-    if (l === 20) return 23000;
-    return Math.floor(23000 + (l - 20) * 3000);
+    // Fallback nếu chưa load xong GAME_CONFIG
+    return Math.round(180 * Math.pow(l, 1.35));
 }
 
 // Cộng điểm kinh nghiệm và xử lý thăng cấp tài khoản
@@ -563,11 +550,11 @@ function getComboReward(comboCount) {
     return Math.min(cfg.maxCoins || 200, coins);
 }
 
-// Shop năng lượng (đọc từ GAME_CONFIG.energyShop - Kinh tế x10)
-var ENERGY_PACK = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.coinPack.energy : 25;
-var ENERGY_PACK_PRICE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.coinPack.coinCost : 3000;
-var GEM_ENERGY_PACK = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.gemPack.energy : 50;
-var GEM_ENERGY_PRICE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop) ? GAME_CONFIG.energyShop.gemPack.gemCost : 8;
+// Shop năng lượng (đọc từ GAME_CONFIG.energyShop)
+var ENERGY_PACK = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.coinPack) ? GAME_CONFIG.energyShop.coinPack.energy : 30;
+var ENERGY_PACK_PRICE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.coinPack) ? GAME_CONFIG.energyShop.coinPack.coinCost : 1200;
+var GEM_ENERGY_PACK = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.gemPack) ? GAME_CONFIG.energyShop.gemPack.energy : 50;
+var GEM_ENERGY_PRICE = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.gemPack) ? GAME_CONFIG.energyShop.gemPack.gemCost : 5;
 
 // Quảng cáo thưởng: giới hạn số lượt mỗi ngày
 var AD_REWARDS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards) ? GAME_CONFIG.adRewards : {
@@ -894,7 +881,7 @@ function getItemCleanName(id) {
 
 function getItemImagePath(id) {
     if (!id) return '';
-    return id === 'ban_lv8' ? 'assets/images/items/ban_level8.png' : ('assets/images/items/' + id + '.png');
+    return id === 'ban_lv8' ? 'assets/images_webp/items/ban_level8.webp' : ('assets/images_webp/items/' + id + '.webp');
 }
 
 function addCampItem(itemId, fromLevel) {
@@ -938,20 +925,20 @@ function getChainGenerator(line) {
         return {
             id: 'generator_cooler',
             name: 'Xe Kéo',
-            icon: 'assets/images/items/generator_cooler.png'
+            icon: 'assets/images_webp/items/generator_cooler.webp'
         };
     }
     if (line === 'tham' || line === 'antoan' || line === 'bep') {
         return {
             id: 'generator_crate',
             name: 'Thùng Dụng Cụ',
-            icon: 'assets/images/items/generator_crate.png'
+            icon: 'assets/images_webp/items/generator_crate.webp'
         };
     }
     return {
         id: 'generator_backpack',
         name: 'Ba Lô',
-        icon: 'assets/images/items/generator_backpack.png'
+        icon: 'assets/images_webp/items/generator_backpack.webp'
     };
 }
 

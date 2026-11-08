@@ -131,10 +131,36 @@ body {
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
-    background-color: #f6eee0;
+    position: relative;
+    background-color: #2b3d27;
     display: flex;
     flex-direction: column;
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Nền liền mạch toàn màn hình: Lớp gradient overlay đè lên hòn đảo nổi (80%, -20px) và ảnh nền trời bg_game_all.jpg (100% full màn hình) */
+.game-backdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    background-color: #263622;
+    background-image: 
+        linear-gradient(180deg, 
+            rgba(53, 76, 48, 0) 0%, 
+            rgba(53, 76, 48, 0) 22%, 
+            rgba(53, 76, 48, 0.25) 34%, 
+            rgba(47, 68, 43, 0.60) 48%, 
+            rgba(41, 59, 37, 0.82) 64%, 
+            rgba(38, 54, 34, 0.90) 80%, 
+            #263622 100%),
+        url('../assets/images_webp/background/bg_doibu.webp'),
+        url('../assets/images_webp/ui/bg_game_all.jpg');
+    background-position: center top, center -20px, center top;
+    background-repeat: no-repeat, no-repeat, no-repeat;
+    background-size: 100% 100%, 80% auto, cover;
 }
 
 /* ================== PHẦN TRÊN: TOP SCENE (BACKGROUND CO GIÃN, HUD, NHÂN VẬT & ĐƠN HÀNG) ================== */
@@ -143,15 +169,12 @@ body {
     min-height: var(--top-scene-min-h);
     width: 100%;
     position: relative;
-    background: url('../assets/images/background/bg_hodongdo.webp') center 0px / max(375px, 80%) auto no-repeat,
-                linear-gradient(180deg, #2c3d28 0%, #475e3e 50%, #1f2b1c 100%);
-    background-position: center 0px, center center;
-    background-size: max(375px, 80%) auto, cover;
-    background-repeat: no-repeat, no-repeat;
+    background: transparent !important;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow: visible;
+    z-index: 2;
 }
 
 /* Thanh HUD trên cùng (Chuẩn 4/8pt) */
@@ -283,7 +306,7 @@ body {
     transition: transform 0.12s;
     border-style: solid;
     border-width: 0 14px 0 14px;
-    border-image: url('../assets/images/ui/bg_gold.png') 0 43 0 43 fill / 0px 14px 0px 14px stretch;
+    border-image: url('../assets/images_webp/ui/bg_gold.webp') 0 43 0 43 fill / 0px 14px 0px 14px stretch;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.22));
 }
 
@@ -416,6 +439,60 @@ body {
     z-index: 6;
 }
 
+/* Đám mây bay chậm dưới ảnh nền bãi cỏ npc_bg.png */
+.npc-stage-cloud {
+    position: absolute;
+    left: 20px;
+    bottom: 2px;
+    width: clamp(150px, 42vw, 210px);
+    pointer-events: none;
+    z-index: 1;
+    line-height: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    will-change: transform;
+    animation: npcStageCloudFloat 22s ease-in-out infinite alternate;
+}
+
+.npc-stage-cloud-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    opacity: 0.88;
+    filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.4));
+}
+
+@keyframes npcStageCloudFloat {
+    0% {
+        transform: translate3d(-18px, 0, 0);
+    }
+    100% {
+        transform: translate3d(55px, -6px, 0);
+    }
+}
+
+/* Nền đồi cỏ gò đất cho chú chó & item nhiệm vụ (đè lên đám mây) */
+.npc-stage-bg {
+    position: absolute;
+    left: 0;
+    bottom: -8px;
+    width: clamp(260px, 78vw, 340px);
+    pointer-events: none;
+    z-index: 2;
+    line-height: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.npc-stage-bg-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
+}
+
 .npc-guide-wrap {
     display: none !important; /* Đã chuyển các thú cưng hiển thị trực tiếp theo từng nhóm khay đơn hàng */
 }
@@ -518,7 +595,7 @@ body {
 .t3-left {
     height: 100%;
     aspect-ratio: 101 / 185;
-    background: url('../assets/images/ui/talk_bg_left.png') left center / 100% 100% no-repeat;
+    background: url('../assets/images_webp/ui/talk_bg_left.webp') left center / 100% 100% no-repeat;
     flex-shrink: 0;
 }
 
@@ -528,13 +605,13 @@ body {
     min-width: 0;
     margin-left: -1px;
     margin-right: -1px;
-    background: url('../assets/images/ui/talk_bg_center.png') center / 100% 100% no-repeat;
+    background: url('../assets/images_webp/ui/talk_bg_center.webp') center / 100% 100% no-repeat;
 }
 
 .t3-right {
     height: 100%;
     aspect-ratio: 71 / 185;
-    background: url('../assets/images/ui/talk_bg_right.png') right center / 100% 100% no-repeat;
+    background: url('../assets/images_webp/ui/talk_bg_right.webp') right center / 100% 100% no-repeat;
     flex-shrink: 0;
 }
 
@@ -686,7 +763,7 @@ body {
 .pet-group-tray .tray-bg-left {
     height: 100%;
     aspect-ratio: 43 / 175;
-    background-image: url('../assets/images/ui/bg_giao_left.png');
+    background-image: url('../assets/images_webp/ui/bg_giao_left.webp');
     background-position: left center;
     background-size: 100% 100%;
     background-repeat: no-repeat;
@@ -699,7 +776,7 @@ body {
     min-width: 0;
     margin-left: -1px;
     margin-right: -1px;
-    background-image: url('../assets/images/ui/bg_giao_center.png');
+    background-image: url('../assets/images_webp/ui/bg_giao_center.webp');
     background-position: center;
     background-size: 100% 100%;
     background-repeat: no-repeat;
@@ -708,7 +785,7 @@ body {
 .pet-group-tray .tray-bg-right {
     height: 100%;
     aspect-ratio: 37 / 175;
-    background-image: url('../assets/images/ui/bg_giao_right.png');
+    background-image: url('../assets/images_webp/ui/bg_giao_right.webp');
     background-position: right center;
     background-size: 100% 100%;
     background-repeat: no-repeat;
@@ -812,7 +889,7 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     background-color: #fff6e5;
-    background-image: url('../assets/images/board/board_cell_empty.png');
+    background-image: url('../assets/images_webp/board/board_cell_empty.webp');
     border: none;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.28);
     display: flex;
@@ -944,38 +1021,23 @@ body {
     flex: 1 1 auto;
     min-height: 0;
     width: 100%;
-    background: url('../assets/images/ui/bg_game.jpg') center center / cover no-repeat;
+    background: transparent !important;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    z-index: 8;
+    z-index: 2;
 }
 
-/* Thanh gỗ tự nhiên ngăn cách giữa cảnh cắm trại & bàn cờ, đè lên nền cỏ tạo bóng đổ 3D */
+/* Ẩn hoàn toàn thanh gỗ */
 .wood-bar-wrap {
-    width: 100%;
-    line-height: 0;
-    position: relative;
-    z-index: 6;
-    pointer-events: none;
-    user-select: none;
-    margin-top: -10px;
-    margin-bottom: 2px;
-    flex-shrink: 0;
-}
-
-.wood-bar-img {
-    width: 100%;
-    height: auto;
-    display: block;
-    object-fit: fill;
+    display: none !important;
 }
 
 .board-container {
     position: relative;
     z-index: 12;
-    margin-top: -8px;
+    margin-top: 0px;
     margin-bottom: 0px;
     width: 100%;
     flex: 0 0 auto;
@@ -1018,6 +1080,68 @@ body {
     overflow: visible;
 }
 
+/* =============================================================================
+   DẢI BỤI CỎ TRANG TRÍ 2 BÊN BÀN CHƠI 7x9 (TỰ NHIÊN, XẾP CHÉO & ĐÈ LÊN BÀN 8PX)
+   ============================================================================= */
+.board-bushes {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    width: 0;
+    pointer-events: none;
+    z-index: 18;
+    overflow: visible;
+}
+
+.board-bushes-left {
+    left: 0;
+}
+
+.board-bushes-right {
+    right: 0;
+}
+
+.board-bush {
+    position: absolute;
+    height: 34%;
+    width: auto;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.22));
+}
+
+/* Đè lên bàn chơi khoảng 16px nhìn cho tự nhiên */
+.board-bushes-left .board-bush {
+    right: -16px;
+}
+
+.board-bushes-right .board-bush {
+    left: -16px;
+}
+
+/* Trên màn hình >600px: ẩn hoàn toàn bụi cỏ */
+@media (min-width: 601px) {
+    .board-bushes {
+        display: none !important;
+    }
+}
+
+/* 3 đám nối tiếp nhau phủ kín 100% chiều cao bàn chơi 7x9 */
+.board-bush.bush-top {
+    top: 0;
+}
+
+.board-bush.bush-mid {
+    top: 33.33%;
+}
+
+.board-bush.bush-bot {
+    bottom: 0;
+}
+
 .board-stroke-overlay {
     display: none !important;
 }
@@ -1037,39 +1161,59 @@ body {
 }
 .bg-light,
 .bg-dark,
-.cell.bg-empty {
-    background-image: url('../assets/images/board/board_cell_empty.png');
+.cell.bg-empty,
+.cell.bg-empty-dark {
+    background-image: url('../assets/images_webp/board/board_cell_empty.webp');
+}
+/* Ô cờ vua xen kẽ màu sáng (board_cell_empty_light.png) */
+.cell.bg-empty-light {
+    background-image: url('../assets/images_webp/board/board_cell_empty_light.webp');
 }
 .bg-rock,
 .cell.bg-rock {
-    background-image: url('../assets/images/board/board_cell_rock.png');
+    background-image: url('../assets/images_webp/board/board_cell_rock_co1.webp');
     background-color: transparent !important;
     pointer-events: auto;
     cursor: pointer;
 }
+/* 6 biến thể ô đá mở ngẫu nhiên tự nhiên (được phân bố hài hòa trên 63 ô) */
+.cell.bg-rock.bg-rock-1, .cell.bg-rock-1 { background-image: url('../assets/images_webp/board/board_cell_rock_co1.webp'); }
+.cell.bg-rock.bg-rock-2, .cell.bg-rock-2 { background-image: url('../assets/images_webp/board/board_cell_rock_co2.webp'); }
+.cell.bg-rock.bg-rock-3, .cell.bg-rock-3 { background-image: url('../assets/images_webp/board/board_cell_rock_co3.webp'); }
+.cell.bg-rock.bg-rock-4, .cell.bg-rock-4 { background-image: url('../assets/images_webp/board/board_cell_rock_co4.webp'); }
+.cell.bg-rock.bg-rock-5, .cell.bg-rock-5 { background-image: url('../assets/images_webp/board/board_cell_rock_co5.webp'); }
+.cell.bg-rock.bg-rock-6, .cell.bg-rock-6 { background-image: url('../assets/images_webp/board/board_cell_rock_co6.webp'); }
+
 .bg-rock-lock,
 .cell.bg-rock-lock {
-    background-image: url('../assets/images/board/board_cell_rock_lock.png');
+    background-image: url('../assets/images_webp/board/board_cell_rock_lock_co1.webp');
     background-color: transparent !important;
     pointer-events: auto;
     cursor: pointer;
 }
+/* 6 biến thể ô đá bị khóa ngẫu nhiên tự nhiên (tương ứng hoàn hảo với từng cặp ô đá mở) */
+.cell.bg-rock-lock.bg-rock-lock-1, .cell.bg-rock-lock-1 { background-image: url('../assets/images_webp/board/board_cell_rock_lock_co1.webp'); }
+.cell.bg-rock-lock.bg-rock-lock-2, .cell.bg-rock-lock-2 { background-image: url('../assets/images_webp/board/board_cell_rock_lock_co2.webp'); }
+.cell.bg-rock-lock.bg-rock-lock-3, .cell.bg-rock-lock-3 { background-image: url('../assets/images_webp/board/board_cell_rock_lock_co3.webp'); }
+.cell.bg-rock-lock.bg-rock-lock-4, .cell.bg-rock-lock-4 { background-image: url('../assets/images_webp/board/board_cell_rock_lock_co4.webp'); }
+.cell.bg-rock-lock.bg-rock-lock-5, .cell.bg-rock-lock-5 { background-image: url('../assets/images_webp/board/board_cell_rock_lock_co5.webp'); }
+.cell.bg-rock-lock.bg-rock-lock-6, .cell.bg-rock-lock-6 { background-image: url('../assets/images_webp/board/board_cell_rock_lock_co6.webp'); }
 
 /* 9 màu nền tương ứng 9 nhóm vật phẩm giúp người chơi dễ nhận diện họ hàng (Bàn cờ, Nhiệm vụ, Cẩm nang) */
-.cell.cell-bg-01, .order-card.cell-bg-01, .book-slot.cell-bg-01, .tray-item-slot.cell-bg-01 { background-image: url('../assets/images/board/board_cell_01.png'); }
-.cell.cell-bg-02, .order-card.cell-bg-02, .book-slot.cell-bg-02, .tray-item-slot.cell-bg-02 { background-image: url('../assets/images/board/board_cell_02.png'); }
-.cell.cell-bg-03, .order-card.cell-bg-03, .book-slot.cell-bg-03, .tray-item-slot.cell-bg-03 { background-image: url('../assets/images/board/board_cell_03.png'); }
-.cell.cell-bg-04, .order-card.cell-bg-04, .book-slot.cell-bg-04, .tray-item-slot.cell-bg-04 { background-image: url('../assets/images/board/board_cell_04.png'); }
-.cell.cell-bg-05, .order-card.cell-bg-05, .book-slot.cell-bg-05, .tray-item-slot.cell-bg-05 { background-image: url('../assets/images/board/board_cell_05.png'); }
-.cell.cell-bg-06, .order-card.cell-bg-06, .book-slot.cell-bg-06, .tray-item-slot.cell-bg-06 { background-image: url('../assets/images/board/board_cell_06.png'); }
-.cell.cell-bg-07, .order-card.cell-bg-07, .book-slot.cell-bg-07, .tray-item-slot.cell-bg-07 { background-image: url('../assets/images/board/board_cell_07.png'); }
-.cell.cell-bg-08, .order-card.cell-bg-08, .book-slot.cell-bg-08, .tray-item-slot.cell-bg-08 { background-image: url('../assets/images/board/board_cell_08.png'); }
-.cell.cell-bg-09, .order-card.cell-bg-09, .book-slot.cell-bg-09, .tray-item-slot.cell-bg-09 { background-image: url('../assets/images/board/board_cell_09.png'); }
+.cell.cell-bg-01, .order-card.cell-bg-01, .book-slot.cell-bg-01, .tray-item-slot.cell-bg-01 { background-image: url('../assets/images_webp/board/board_cell_01.webp'); }
+.cell.cell-bg-02, .order-card.cell-bg-02, .book-slot.cell-bg-02, .tray-item-slot.cell-bg-02 { background-image: url('../assets/images_webp/board/board_cell_02.webp'); }
+.cell.cell-bg-03, .order-card.cell-bg-03, .book-slot.cell-bg-03, .tray-item-slot.cell-bg-03 { background-image: url('../assets/images_webp/board/board_cell_03.webp'); }
+.cell.cell-bg-04, .order-card.cell-bg-04, .book-slot.cell-bg-04, .tray-item-slot.cell-bg-04 { background-image: url('../assets/images_webp/board/board_cell_04.webp'); }
+.cell.cell-bg-05, .order-card.cell-bg-05, .book-slot.cell-bg-05, .tray-item-slot.cell-bg-05 { background-image: url('../assets/images_webp/board/board_cell_05.webp'); }
+.cell.cell-bg-06, .order-card.cell-bg-06, .book-slot.cell-bg-06, .tray-item-slot.cell-bg-06 { background-image: url('../assets/images_webp/board/board_cell_06.webp'); }
+.cell.cell-bg-07, .order-card.cell-bg-07, .book-slot.cell-bg-07, .tray-item-slot.cell-bg-07 { background-image: url('../assets/images_webp/board/board_cell_07.webp'); }
+.cell.cell-bg-08, .order-card.cell-bg-08, .book-slot.cell-bg-08, .tray-item-slot.cell-bg-08 { background-image: url('../assets/images_webp/board/board_cell_08.webp'); }
+.cell.cell-bg-09, .order-card.cell-bg-09, .book-slot.cell-bg-09, .tray-item-slot.cell-bg-09 { background-image: url('../assets/images_webp/board/board_cell_09.webp'); }
 
 /* Nền riêng cho các thùng chứa (máy sinh đồ) theo 3 màu dòng sản phẩm nó sinh ra */
-.cell.bg-generator_backpack { background-image: url('../assets/images/board/generator_backpack_bg.png'); }
-.cell.bg-generator_cooler   { background-image: url('../assets/images/board/generator_cooler_bg.png'); }
-.cell.bg-generator_crate    { background-image: url('../assets/images/board/generator_crate_bg.png'); }
+.cell.bg-generator_backpack { background-image: url('../assets/images_webp/board/generator_backpack_bg.webp'); }
+.cell.bg-generator_cooler   { background-image: url('../assets/images_webp/board/generator_cooler_bg.webp'); }
+.cell.bg-generator_crate    { background-image: url('../assets/images_webp/board/generator_crate_bg.webp'); }
 
 .cell.selected {
     z-index: 45 !important;
@@ -1079,23 +1223,27 @@ body {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('../assets/images/board/board_cell_highlight.png');
+    background-image: url('../assets/images_webp/board/board_cell_highlight.webp');
     background-size: cover;
     z-index: 20;
     pointer-events: none;
 }
 
-/* Nút Bán màu xanh đặt giữa bàn chơi, nằm cách hệ 3 nút Cửa hàng, cẩm nang, trại của bạn 80px */
+/* Nút Bán màu xanh đặt giữa bàn chơi (đã hạ xuống 40px và bỏ viền vuông bao quanh) */
 .board-sell-btn {
     position: absolute !important;
-    bottom: calc(100% + 76px) !important;
+    bottom: calc(100% + 36px) !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     z-index: 60 !important;
     min-width: 68px;
     height: 28px;
     padding: 0 10px;
-    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.65), 0 0 0 2px rgba(255, 255, 255, 0.9);
+    border: none !important;
+    outline: none !important;
+    border-radius: 9999px !important;
+    box-shadow: none !important;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
     animation: bounceSellBtn 1.1s infinite alternate ease-in-out;
     cursor: pointer;
     pointer-events: auto;
@@ -1133,12 +1281,11 @@ body {
 }
 .cell.order-ready-item img.item-img {
     animation: orderItemBounce 1.4s infinite ease-in-out;
-    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
-    will-change: transform;
+    transform: translateZ(0);
 }
 @keyframes orderItemBounce {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    0%, 100% { transform: scale3d(1, 1, 1); }
+    50% { transform: scale3d(1.08, 1.08, 1); }
 }
 
 /* Dấu tick xanh icon_check.png ở góc ảnh của item được nộp trên bàn cờ */
@@ -1151,12 +1298,12 @@ body {
     object-fit: contain;
     z-index: 25;
     pointer-events: none;
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+    transform: translateZ(0);
     animation: readyTickPulse 1.4s ease-in-out infinite alternate;
 }
 @keyframes readyTickPulse {
-    0% { transform: scale(0.95); }
-    100% { transform: scale(1.1); }
+    0% { transform: scale3d(0.95, 0.95, 1); }
+    100% { transform: scale3d(1.08, 1.08, 1); }
 }
 
 /* Nút NỘP trong bộ button 3-slice chuẩn (giống nút Sử dụng) nằm phía trên item của thẻ nhiệm vụ */
@@ -1358,31 +1505,38 @@ body {
     height: 4px;
     background: radial-gradient(circle, #fff700 0%, #ff9800 100%);
     border-radius: 50%;
-    box-shadow: 0 0 4px #ffd700;
+    box-shadow: 0 0 3px #ffd700;
     pointer-events: none;
     z-index: 15;
     opacity: 0;
-    will-change: transform, opacity;
+    transform: translateZ(0);
 }
-@keyframes floatStar {
-    0% { transform: translate(0, 0) scale(0.5); opacity: 0; }
-    30% { opacity: 1; transform: translate(calc(var(--tx) * 0.3), calc(var(--ty) * 0.3)) scale(1.2); }
-    100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
+@keyframes floatStar1 {
+    0% { transform: translate3d(0, 0, 0) scale(0.5); opacity: 0; }
+    30% { opacity: 1; transform: translate3d(-3px, -7px, 0) scale(1.1); }
+    100% { transform: translate3d(-8px, -20px, 0) scale(0.2); opacity: 0; }
+}
+@keyframes floatStar2 {
+    0% { transform: translate3d(0, 0, 0) scale(0.5); opacity: 0; }
+    30% { opacity: 1; transform: translate3d(4px, -8px, 0) scale(1.1); }
+    100% { transform: translate3d(12px, -24px, 0) scale(0.2); opacity: 0; }
+}
+@keyframes floatStar3 {
+    0% { transform: translate3d(0, 0, 0) scale(0.5); opacity: 0; }
+    30% { opacity: 1; transform: translate3d(3px, -8px, 0) scale(1.1); }
+    100% { transform: translate3d(8px, -24px, 0) scale(0.2); opacity: 0; }
 }
 .sparkle-star.star-1 {
     top: 60%; left: 20%;
-    --tx: -8px; --ty: -20px;
-    animation: floatStar 1.8s infinite ease-out;
+    animation: floatStar1 1.8s infinite ease-out;
 }
 .sparkle-star.star-2 {
     top: 50%; right: 20%;
-    --tx: 12px; --ty: -24px;
-    animation: floatStar 2.2s infinite ease-out 0.6s;
+    animation: floatStar2 2.2s infinite ease-out 0.6s;
 }
 .sparkle-star.star-3 {
     top: 30%; left: 50%;
-    --tx: 8px; --ty: -24px;
-    animation: floatStar 1.5s infinite ease-out 1.2s;
+    animation: floatStar3 1.5s infinite ease-out 1.2s;
 }
 
 .generator-energy-badge {
@@ -1395,17 +1549,16 @@ body {
     object-fit: contain;
     z-index: 6;
     pointer-events: none;
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+    transform: translateZ(0);
     animation: energyBadgeBounce 2.4s ease-in-out infinite;
-    will-change: transform;
 }
 
 @keyframes energyBadgeBounce {
     0%, 100% {
-        transform: translateY(0) scale(1);
+        transform: translate3d(0, 0, 0) scale(1);
     }
     50% {
-        transform: translateY(-2px) scale(1.08);
+        transform: translate3d(0, -2px, 0) scale(1.06);
     }
 }
 
@@ -1476,7 +1629,7 @@ body {
     left: 0;
     width: 100%;
     height: calc(var(--modal-w) * 148 / 800);
-    background: url('../assets/images/ui/bg_popup_top.png') center top / 100% 100% no-repeat;
+    background: url('../assets/images_webp/ui/bg_popup_top.webp') center top / 100% 100% no-repeat;
     z-index: 1;
 }
 
@@ -1486,7 +1639,7 @@ body {
     left: 0;
     width: 100%;
     height: calc(var(--modal-w) * 108 / 800);
-    background: url('../assets/images/ui/bg_popup_bottom.png') center bottom / 100% 100% no-repeat;
+    background: url('../assets/images_webp/ui/bg_popup_bottom.webp') center bottom / 100% 100% no-repeat;
     z-index: 1;
 }
 
@@ -1496,7 +1649,7 @@ body {
     bottom: calc(var(--modal-w) * 108 / 800 - 1.5px);
     left: 0;
     width: 100%;
-    background: url('../assets/images/ui/bg_popup_center.png') center / 100% 100% no-repeat;
+    background: url('../assets/images_webp/ui/bg_popup_center.webp') center / 100% 100% no-repeat;
     z-index: 1;
 }
 
@@ -1530,7 +1683,7 @@ body {
     transform: translate(-50%, -46%);
     width: min(82%, 280px);
     height: 56px;
-    background: url('../assets/images/ui/bg_header.png') center / 100% 100% no-repeat;
+    background: url('../assets/images_webp/ui/bg_header.webp') center / 100% 100% no-repeat;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1949,46 +2102,46 @@ body {
 /* --- 4 BỘ MÀU THEO YÊU CẦU --- */
 /* Màu 1: Xanh lá (bt01) */
 .btn-green .b3-left, .btn-primary .b3-left, .modal-btn.primary .b3-left, .btn-camp-ui .b3-left, .btn-equip .b3-left, .st-act-btn.green .b3-left, .order-deliver-btn .b3-left {
-    background-image: url('../assets/images/ui/bt01_left.png');
+    background-image: url('../assets/images_webp/ui/bt01_left.webp');
 }
 .btn-green .b3-mid,  .btn-primary .b3-mid,  .modal-btn.primary .b3-mid,  .btn-camp-ui .b3-mid,  .btn-equip .b3-mid,  .st-act-btn.green .b3-mid, .order-deliver-btn .b3-mid {
-    background-image: url('../assets/images/ui/bt01_center.png');
+    background-image: url('../assets/images_webp/ui/bt01_center.webp');
 }
 .btn-green .b3-right, .btn-primary .b3-right, .modal-btn.primary .b3-right, .btn-camp-ui .b3-right, .btn-equip .b3-right, .st-act-btn.green .b3-right, .order-deliver-btn .b3-right {
-    background-image: url('../assets/images/ui/bt01_right.png');
+    background-image: url('../assets/images_webp/ui/bt01_right.webp');
 }
 
 /* Màu 2: Xanh dương / Xanh ngọc (bt02) */
 .btn-blue .b3-left, .btn-gem .b3-left, .modal-btn.gem-btn .b3-left, .btn-book-ui .b3-left, .st-act-btn.blue .b3-left, .btn-buy:not(.pet-action-btn):not(.loc-action-btn) .b3-left {
-    background-image: url('../assets/images/ui/bt02_left.png');
+    background-image: url('../assets/images_webp/ui/bt02_left.webp');
 }
 .btn-blue .b3-mid,  .btn-gem .b3-mid,  .modal-btn.gem-btn .b3-mid,  .btn-book-ui .b3-mid,  .st-act-btn.blue .b3-mid,  .btn-buy:not(.pet-action-btn):not(.loc-action-btn) .b3-mid {
-    background-image: url('../assets/images/ui/bt02_center.png');
+    background-image: url('../assets/images_webp/ui/bt02_center.webp');
 }
 .btn-blue .b3-right, .btn-gem .b3-right, .modal-btn.gem-btn .b3-right, .btn-book-ui .b3-right, .st-act-btn.blue .b3-right, .btn-buy:not(.pet-action-btn):not(.loc-action-btn) .b3-right {
-    background-image: url('../assets/images/ui/bt02_right.png');
+    background-image: url('../assets/images_webp/ui/bt02_right.webp');
 }
 
 /* Màu 3: Cam đỏ (bt03) */
 .btn-orange .b3-left, .btn-red .b3-left, .btn-danger .b3-left, .modal-btn.danger-btn .b3-left, .btn-sell-ui:not(.disabled) .b3-left, .btn-mycamp-ui .b3-left, .win-btn-double:not(.disabled-btn) .b3-left, .pet-action-btn.btn-buy .b3-left, .loc-action-btn.btn-buy .b3-left {
-    background-image: url('../assets/images/ui/bt03_left.png');
+    background-image: url('../assets/images_webp/ui/bt03_left.webp');
 }
 .btn-orange .b3-mid,  .btn-red .b3-mid,  .btn-danger .b3-mid,  .modal-btn.danger-btn .b3-mid,  .btn-sell-ui:not(.disabled) .b3-mid,  .btn-mycamp-ui .b3-mid,  .win-btn-double:not(.disabled-btn) .b3-mid,  .pet-action-btn.btn-buy .b3-mid,  .loc-action-btn.btn-buy .b3-mid {
-    background-image: url('../assets/images/ui/bt03_center.png');
+    background-image: url('../assets/images_webp/ui/bt03_center.webp');
 }
 .btn-orange .b3-right, .btn-red .b3-right, .btn-danger .b3-right, .modal-btn.danger-btn .b3-right, .btn-sell-ui:not(.disabled) .b3-right, .btn-mycamp-ui .b3-right, .win-btn-double:not(.disabled-btn) .b3-right, .pet-action-btn.btn-buy .b3-right, .loc-action-btn.btn-buy .b3-right {
-    background-image: url('../assets/images/ui/bt03_right.png');
+    background-image: url('../assets/images_webp/ui/bt03_right.webp');
 }
 
 /* Màu 4: Xám (bt_none) */
 .btn-gray .b3-left, .btn-disabled .b3-left, .modal-btn.disabled-btn .b3-left, .modal-btn:disabled .b3-left, .btn-active .b3-left, .btn-sell-ui.disabled .b3-left, .win-btn-double.disabled-btn .b3-left, .modal-btn:not(.primary):not(.gem-btn):not(.danger-btn) .b3-left {
-    background-image: url('../assets/images/ui/bt_none_left.png');
+    background-image: url('../assets/images_webp/ui/bt_none_left.webp');
 }
 .btn-gray .b3-mid,  .btn-disabled .b3-mid,  .modal-btn.disabled-btn .b3-mid,  .modal-btn:disabled .b3-mid,  .btn-active .b3-mid,  .btn-sell-ui.disabled .b3-mid,  .win-btn-double.disabled-btn .b3-mid,  .modal-btn:not(.primary):not(.gem-btn):not(.danger-btn) .b3-mid {
-    background-image: url('../assets/images/ui/bt_none_center.png');
+    background-image: url('../assets/images_webp/ui/bt_none_center.webp');
 }
 .btn-gray .b3-right, .btn-disabled .b3-right, .modal-btn.disabled-btn .b3-right, .modal-btn:disabled .b3-right, .btn-active .b3-right, .btn-sell-ui.disabled .b3-right, .win-btn-double.disabled-btn .b3-right, .modal-btn:not(.primary):not(.gem-btn):not(.danger-btn) .b3-right {
-    background-image: url('../assets/images/ui/bt_none_right.png');
+    background-image: url('../assets/images_webp/ui/bt_none_right.webp');
 }
 
 .btn-gray, .btn-disabled, .modal-btn.disabled-btn, .modal-btn:disabled, .btn-sell-ui.disabled, .btn-active {
@@ -2119,8 +2272,8 @@ body {
     overflow: hidden;
 }
 
-.camp-cell.bg-light { background-image: url('../assets/images/board/board_cell_empty.png'); }
-.camp-cell.bg-dark { background-image: url('../assets/images/board/board_cell_empty.png'); }
+.camp-cell.bg-light { background-image: url('../assets/images_webp/board/board_cell_empty.webp'); }
+.camp-cell.bg-dark { background-image: url('../assets/images_webp/board/board_cell_empty.webp'); }
 
 .camp-cell img.item-img {
     width: 82%;
@@ -2199,8 +2352,8 @@ body {
     background-color: #e2cfb1;
 }
 
-.camp-item-slot.bg-light { background-image: url('../assets/images/board/board_cell_empty.png'); }
-.camp-item-slot.bg-dark { background-image: url('../assets/images/board/board_cell_empty.png'); }
+.camp-item-slot.bg-light { background-image: url('../assets/images_webp/board/board_cell_empty.webp'); }
+.camp-item-slot.bg-dark { background-image: url('../assets/images_webp/board/board_cell_empty.webp'); }
 
 .camp-item-slot:hover {
     transform: translateY(-2px);
@@ -2218,7 +2371,7 @@ body {
     content: "";
     position: absolute;
     inset: 0;
-    background-image: url('../assets/images/board/board_cell_highlight.png');
+    background-image: url('../assets/images_webp/board/board_cell_highlight.webp');
     background-size: 100% 100%;
     border-radius: 10px;
     z-index: 5;
@@ -2338,16 +2491,16 @@ body {
 /* 3 mảnh màu nâu cho tab Khu cắm trại */
 .camp-tab-btn .b3-left {
     aspect-ratio: 52 / 148;
-    background-image: url('../assets/images/ui/tab_left.png') !important;
+    background-image: url('../assets/images_webp/ui/tab_left.webp') !important;
 }
 
 .camp-tab-btn .b3-mid {
-    background-image: url('../assets/images/ui/tab_center.png') !important;
+    background-image: url('../assets/images_webp/ui/tab_center.webp') !important;
 }
 
 .camp-tab-btn .b3-right {
     aspect-ratio: 53 / 148;
-    background-image: url('../assets/images/ui/tab_right.png') !important;
+    background-image: url('../assets/images_webp/ui/tab_right.webp') !important;
 }
 
 /* Tab chưa active: hiện 24% opacity */
@@ -3790,11 +3943,11 @@ button.hint-pulse {
 }
 
 .toggle-btn.on {
-    background: url('../assets/images/ui/bg_bt_bat.png') center / contain no-repeat;
+    background: url('../assets/images_webp/ui/bg_bt_bat.webp') center / contain no-repeat;
 }
 
 .toggle-btn.off {
-    background: url('../assets/images/ui/bg_bt_tat.png') center / contain no-repeat;
+    background: url('../assets/images_webp/ui/bg_bt_tat.webp') center / contain no-repeat;
 }
 
 .st-actions {
@@ -3837,7 +3990,7 @@ button.hint-pulse {
     height: 42px;
     min-width: 42px;
     border-radius: 50%;
-    background: url('../assets/images/ui/bg_next.png') no-repeat center center / contain;
+    background: url('../assets/images_webp/ui/bg_next.webp') no-repeat center center / contain;
     border: none;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.22);
     display: inline-flex;
@@ -3931,7 +4084,7 @@ button.hint-pulse {
 .map-level-btn {
     aspect-ratio: 248 / 263;
     min-height: 46px;
-    background: url('../assets/images/ui/bg_level.png') no-repeat center center / 100% 100%;
+    background: url('../assets/images_webp/ui/bg_level.webp') no-repeat center center / 100% 100%;
     border: none;
     border-radius: 11px;
     box-shadow: none;
@@ -5272,6 +5425,10 @@ button.hint-pulse {
         margin: 0;
     }
 
+    .board-bushes {
+        display: none !important;
+    }
+
     #game-footer {
         position: relative;
         z-index: 14;
@@ -5546,6 +5703,11 @@ button.hint-pulse {
         margin: 0;
     }
 
+    .npc-stage-cloud,
+    .npc-stage-bg {
+        display: none !important;
+    }
+
     /* Chú chó đứng ở góc dưới bên trái */
     .npc-guide-wrap {
         position: absolute;
@@ -5645,11 +5807,33 @@ button.hint-pulse {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #566443;
+    background-color: #263622;
+    background-image: url('../assets/images_webp/ui/bg_game_all.jpg');
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-size: cover;
     z-index: 1050;
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
+}
+
+/* LỚP GRADIENT OVERLAY ĐÈ LÊN 20% PHÍA DƯỚI HÒN ĐẢO (POINTER-EVENTS: NONE) */
+.mycamp-gradient-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 15;
+    background: linear-gradient(180deg, 
+        rgba(53, 76, 48, 0) 0%, 
+        rgba(53, 76, 48, 0) 65%, 
+        rgba(53, 76, 48, 0.25) 72%, 
+        rgba(47, 68, 43, 0.60) 80%, 
+        rgba(41, 59, 37, 0.82) 88%, 
+        rgba(38, 54, 34, 0.92) 94%, 
+        #263622 100%);
 }
 
 /* KHUNG VIEWPORT TƯƠNG TÁC: HỖ TRỢ KÉO (PAN) & ZOOM BÃI TRẠI */

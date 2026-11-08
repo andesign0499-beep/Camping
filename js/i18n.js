@@ -302,6 +302,7 @@ var I18N_DATA = {
 
         unlock_all: { vi: 'Mở khóa tất cả level', en: 'Unlock All Levels' },
         auto_fill: { vi: 'Tự động đổ đầy bàn', en: 'Auto-fill Board' },
+        dev_tool: { vi: 'Bật công cụ Test & Bot', en: 'Enable Test & Bot Tool' },
         close_btn: { vi: 'Đóng', en: 'Close' },
         reset_btn: { vi: 'Xóa dữ liệu', en: 'Reset Data' },
         reset_warning: { vi: 'Bạn chắc chắn muốn xóa toàn bộ tiến trình, sao, vàng và cẩm nang về ban đầu?', en: 'Are you sure you want to reset all progress, stars, coins, and handbook?' },

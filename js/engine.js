@@ -94,6 +94,31 @@ function getCellBgClass(line) {
 }
 function makeEmptyCell() { return { id: null, isRock: false, isLocked: false }; }
 
+// Bảng phân bố ngẫu nhiên tự nhiên 6 biến thể ô đá (1 - 6) trên bàn cờ 7 cột x 9 hàng (63 ô)
+// Đảm bảo không có 2 ô liền kề nhau (trên, dưới, trái, phải) bị trùng lặp biến thể cỏ
+var ROCK_CELL_VARIANTS_MAP = [
+    3, 1, 2, 6, 4, 5, 4,
+    6, 2, 3, 5, 1, 2, 1,
+    5, 4, 6, 3, 6, 1, 2,
+    4, 3, 5, 6, 4, 2, 1,
+    5, 1, 3, 5, 6, 4, 3,
+    2, 3, 6, 4, 5, 1, 2,
+    6, 2, 4, 1, 3, 5, 6,
+    5, 4, 1, 3, 2, 1, 2,
+    6, 3, 5, 4, 1, 2, 4
+];
+
+function getRockCellVariant(cellIdx, cellObj) {
+    if (cellObj && typeof cellObj.rockVariant === 'number' && cellObj.rockVariant >= 1 && cellObj.rockVariant <= 6) {
+        return cellObj.rockVariant;
+    }
+    var idx = parseInt(cellIdx, 10);
+    if (!isNaN(idx) && idx >= 0 && idx < ROCK_CELL_VARIANTS_MAP.length) {
+        return ROCK_CELL_VARIANTS_MAP[idx];
+    }
+    return ((Math.abs(idx || 0) * 7 + 11) % 6) + 1;
+}
+
 // Lấy cấp độ người chơi yêu cầu để mở khóa ô đá có biểu tượng ổ khóa (board_cell_rock_lock.png)
 function getRockUnlockLevel(cellIdx, cellObj) {
     if (cellObj && typeof cellObj.rockUnlockLevel === 'number') {
@@ -132,6 +157,7 @@ function buildBoard(level) {
                 id: null,
                 isRock: isR,
                 isLocked: false,
+                rockVariant: isR ? getRockCellVariant(i) : 0,
                 rockUnlockLevel: isR ? (lockedRocksMap[i] || 0) : 0
             };
         }
@@ -432,17 +458,16 @@ function getGeneratorDropLevel(levelNum) {
         ? GAME_CONFIG.gameplay.generatorDrops
         : null;
 
-    var minTierLv = (dropCfg && dropCfg.minLevelForTierDrops != null) ? dropCfg.minLevelForTierDrops : 5;
-    var minLv3 = (dropCfg && dropCfg.minLevelForLv3Drops != null) ? dropCfg.minLevelForLv3Drops : 10;
+    var minTierLv = (dropCfg && dropCfg.minLevelForTierDrops != null) ? dropCfg.minLevelForTierDrops : 4;
+    var minLv3 = (dropCfg && dropCfg.minLevelForLv3Drops != null) ? dropCfg.minLevelForLv3Drops : 8;
     var effLv = Math.max(1, levelNum || 1);
     if (effLv < minTierLv) return 1;
 
     var tiers = (dropCfg && dropCfg.tiers) || [
-        { maxLevel: 4,   lv1: 1.00, lv2: 0.00, lv3: 0.00 },
-        { maxLevel: 9,   lv1: 0.72, lv2: 0.28, lv3: 0.00 },
-        { maxLevel: 20,  lv1: 0.58, lv2: 0.32, lv3: 0.10 },
-        { maxLevel: 35,  lv1: 0.45, lv2: 0.37, lv3: 0.18 },
-        { maxLevel: 60,  lv1: 0.35, lv2: 0.40, lv3: 0.25 }
+        { maxLevel: 3,   lv1: 1.00, lv2: 0.00, lv3: 0.00 },
+        { maxLevel: 5,   lv1: 0.50, lv2: 0.50, lv3: 0.00 },
+        { maxLevel: 7,   lv1: 0.30, lv2: 0.70, lv3: 0.00 },
+        { maxLevel: 99,  lv1: 0.10, lv2: 0.30, lv3: 0.60 }
     ];
 
     var tier = tiers.find(function (t) { return effLv <= t.maxLevel; }) || tiers[tiers.length - 1];
@@ -462,17 +487,16 @@ function getGeneratorDropExpectedValue(levelNum) {
         ? GAME_CONFIG.gameplay.generatorDrops
         : null;
 
-    var minTierLv = (dropCfg && dropCfg.minLevelForTierDrops != null) ? dropCfg.minLevelForTierDrops : 5;
-    var minLv3 = (dropCfg && dropCfg.minLevelForLv3Drops != null) ? dropCfg.minLevelForLv3Drops : 10;
+    var minTierLv = (dropCfg && dropCfg.minLevelForTierDrops != null) ? dropCfg.minLevelForTierDrops : 4;
+    var minLv3 = (dropCfg && dropCfg.minLevelForLv3Drops != null) ? dropCfg.minLevelForLv3Drops : 8;
     var effLv = Math.max(1, levelNum || 1);
     if (effLv < minTierLv) return 1.0;
 
     var tiers = (dropCfg && dropCfg.tiers) || [
-        { maxLevel: 4,   lv1: 1.00, lv2: 0.00, lv3: 0.00 },
-        { maxLevel: 9,   lv1: 0.72, lv2: 0.28, lv3: 0.00 },
-        { maxLevel: 20,  lv1: 0.58, lv2: 0.32, lv3: 0.10 },
-        { maxLevel: 35,  lv1: 0.45, lv2: 0.37, lv3: 0.18 },
-        { maxLevel: 60,  lv1: 0.35, lv2: 0.40, lv3: 0.25 }
+        { maxLevel: 3,   lv1: 1.00, lv2: 0.00, lv3: 0.00 },
+        { maxLevel: 5,   lv1: 0.50, lv2: 0.50, lv3: 0.00 },
+        { maxLevel: 7,   lv1: 0.30, lv2: 0.70, lv3: 0.00 },
+        { maxLevel: 99,  lv1: 0.10, lv2: 0.30, lv3: 0.60 }
     ];
 
     var tier = tiers.find(function (t) { return effLv <= t.maxLevel; }) || tiers[tiers.length - 1];
@@ -711,11 +735,11 @@ function spawnItem(board, genId, activeOrders, levelCfg) {
     var pLv = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number')
         ? SAVE.playerLevel
         : ((typeof currentLevel !== 'undefined' && currentLevel) ? currentLevel : ((levelCfg && (levelCfg.num || levelCfg.level)) || 1));
-    var minTierLv = (dropCfg && dropCfg.minLevelForTierDrops != null) ? dropCfg.minLevelForTierDrops : 5;
+    var minTierLv = (dropCfg && dropCfg.minLevelForTierDrops != null) ? dropCfg.minLevelForTierDrops : 4;
     var dropLv = getGeneratorDropLevel(pLv);
 
     // Khi bàn cờ sắp đầy (<= 6 ô trống), nếu nhánh vừa chọn đang có món lẻ hoặc nhện chờ ghép thì khớp đúng cấp đó để ghép ngay
-    // (nhưng chỉ cho phép sinh Lv.2 khi người chơi đã đạt tối thiểu Level 5 theo đúng luật minLevelForTierDrops)
+    // (nhưng chỉ cho phép sinh Lv.2 khi người chơi đã đạt tối thiểu Level 4 theo đúng luật minLevelForTierDrops)
     if (smartAssist && empty.length <= 6) {
         var maxAllowedAssistLv = (pLv >= minTierLv) ? 2 : 1;
         if (webLowLvByLine[pickedLine] && webLowLvByLine[pickedLine] <= maxAllowedAssistLv) {
@@ -1514,14 +1538,21 @@ function getBoardBranchStats(board, activeLines) {
 
     var lines = Array.isArray(activeLines) && activeLines.length ? activeLines : ['ban', 'ghe', 'trai'];
     var maxBoardLvByLine = {};
+    var maxUnlockedLvByLine = {};
     var countByLine = {};
+    var unlockedCountByLine = {};
     var webCountByLine = {};
+    var maxWebLvByLine = {};
     var overallBoardMaxLv = 0;
+    var overallUnlockedMaxLv = 0;
 
     lines.forEach(function (ln) {
         maxBoardLvByLine[ln] = 0;
+        maxUnlockedLvByLine[ln] = 0;
         countByLine[ln] = 0;
+        unlockedCountByLine[ln] = 0;
         webCountByLine[ln] = 0;
+        maxWebLvByLine[ln] = 0;
     });
 
     if (Array.isArray(b)) {
@@ -1535,6 +1566,17 @@ function getBoardBranchStats(board, activeLines) {
             countByLine[ln] = (countByLine[ln] || 0) + 1;
             if (c.isLocked) {
                 webCountByLine[ln] = (webCountByLine[ln] || 0) + 1;
+                if (lv > (maxWebLvByLine[ln] || 0)) {
+                    maxWebLvByLine[ln] = lv;
+                }
+            } else {
+                unlockedCountByLine[ln] = (unlockedCountByLine[ln] || 0) + 1;
+                if (lv > (maxUnlockedLvByLine[ln] || 0)) {
+                    maxUnlockedLvByLine[ln] = lv;
+                }
+                if (lv > overallUnlockedMaxLv) {
+                    overallUnlockedMaxLv = lv;
+                }
             }
             if (lv > (maxBoardLvByLine[ln] || 0)) {
                 maxBoardLvByLine[ln] = lv;
@@ -1545,15 +1587,19 @@ function getBoardBranchStats(board, activeLines) {
         }
     }
 
-    // Nếu trên bàn chưa có món nào hoặc chỉ mới có Lv.1, cấp cơ sở mặc định là Lv.2
-    var baseLevel = Math.max(2, overallBoardMaxLv);
+    // Cấp cơ sở tính trên các item tự do (không bị mạng nhện)
+    var baseLevel = Math.max(2, overallUnlockedMaxLv);
 
     return {
         lines: lines,
         maxBoardLvByLine: maxBoardLvByLine,
+        maxUnlockedLvByLine: maxUnlockedLvByLine,
         countByLine: countByLine,
+        unlockedCountByLine: unlockedCountByLine,
         webCountByLine: webCountByLine,
+        maxWebLvByLine: maxWebLvByLine,
         overallBoardMaxLv: overallBoardMaxLv,
+        overallUnlockedMaxLv: overallUnlockedMaxLv,
         baseLevel: baseLevel
     };
 }
@@ -1588,41 +1634,67 @@ function getLastOrderedLevelForLine(line) {
 // - Cấp 14+ (Đỉnh cao toàn game): Tối đa Lv.12 (Slot 1: Lv.12 - Cấp cao nhất toàn game)
 function getMaxSensibleLevelForPlayer(playerLv) {
     var lv = Math.max(1, parseInt(playerLv, 10) || 1);
-    if (lv <= 1) return 4;
-    if (lv <= 3) return 5;
-    if (lv <= 4) return 6;
-    if (lv <= 5) return 7;
-    if (lv <= 7) return 8;
-    if (lv <= 9) return 9;
-    if (lv <= 11) return 10;
-    if (lv <= 13) return 11;
-    return 12;
+    if (lv <= 2) return 4;   // Lv 1-2: max Lv.4 (Bàn gỗ, Ghế tay vịn, Lều tăng che)
+    if (lv <= 4) return 5;   // Lv 3-4: max Lv.5 (Ba Lô vừa mở ở Lv.4)
+    if (lv <= 6) return 6;   // Lv 5-6: max Lv.6
+    if (lv <= 8) return 7;   // Lv 7-8: max Lv.7 (Thùng Đồ vừa mở ở Lv.7)
+    if (lv <= 11) return 8;  // Lv 9-11: max Lv.8
+    if (lv <= 14) return 9;  // Lv 12-14: max Lv.9
+    if (lv <= 18) return 10; // Lv 15-18: max Lv.10
+    if (lv <= 22) return 11; // Lv 19-22: max Lv.11
+    return 12;               // Lv 23+: max Lv.12 (Đỉnh cao toàn game)
 }
 
-function getProgressCap(deliveredOrders) {
+function getProgressCap(deliveredOrders, playerLv) {
     var delivered = 0;
     if (typeof deliveredOrders === 'number' && deliveredOrders >= 0) {
         delivered = deliveredOrders;
     } else if (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.totalOrdersDelivered === 'number') {
         delivered = SAVE.totalOrdersDelivered;
     }
-    var capFromOrders = Math.min(12, Math.floor(Math.max(0, delivered) / 3) + 4);
-    var pLv = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number') ? SAVE.playerLevel : 1;
+    var capFromOrders = Math.min(12, Math.floor(Math.max(0, delivered) / 4) + 4);
+    var pLv = (typeof playerLv === 'number' && playerLv >= 1)
+        ? playerLv
+        : ((typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number') ? SAVE.playerLevel : 1);
     var capFromLevel = getMaxSensibleLevelForPlayer(pLv);
     // capFromLevel là trần cứng tuyệt đối theo Cấp độ Trại của người chơi (không bao giờ vượt quá cấp mà Trại hỗ trợ)
     return Math.min(capFromLevel, capFromOrders);
 }
 
-function getProgressCapForOrder(orderNum) {
+function getProgressCapForOrder(orderNum, playerLv) {
     var num = (typeof orderNum === 'number' && orderNum > 0)
         ? orderNum
         : ((typeof SAVE !== 'undefined' && SAVE && typeof SAVE.totalOrdersDelivered === 'number') ? (SAVE.totalOrdersDelivered + 1) : 1);
-    var delivered = Math.max(0, num - 1);
-    var capFromOrders = Math.min(12, Math.floor(delivered / 3) + 4);
-    var pLv = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number') ? SAVE.playerLevel : 1;
+
+    var capFromOrders;
+    if (num === 1) capFromOrders = 2; // Đơn 1 làm quen nhanh gọn: Lv.2
+    else if (num <= 3) capFromOrders = 3; // Đơn 2 - 3 (Level 1): trần Lv.3
+    else if (num <= 7) capFromOrders = 4; // Level 2: trần Lv.4
+    else if (num <= 13) capFromOrders = 5; // Level 3: trần Lv.5
+    else if (num <= 21) capFromOrders = 6; // Level 4: trần Lv.6
+    else if (num <= 32) capFromOrders = 7; // Level 5-6: trần Lv.7
+    else if (num <= 45) capFromOrders = 8; // Level 7-8: trần Lv.8
+    else if (num <= 60) capFromOrders = 9; // Level 9-11: trần Lv.9
+    else if (num <= 78) capFromOrders = 10; // Level 12-15: trần Lv.10
+    else if (num <= 98) capFromOrders = 11; // Level 16-20: trần Lv.11
+    else capFromOrders = 12;
+
+    var pLv = (typeof playerLv === 'number' && playerLv >= 1)
+        ? playerLv
+        : ((typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number') ? SAVE.playerLevel : 1);
     var capFromLevel = getMaxSensibleLevelForPlayer(pLv);
     // capFromLevel là trần cứng tuyệt đối theo Cấp độ Trại của người chơi (không bao giờ vượt quá cấp mà Trại hỗ trợ)
     return Math.min(capFromLevel, capFromOrders);
+}
+
+// Xác định số lượng món hàng cho mỗi đơn (Nhịp điệu sinh động: 1 món nhanh gọn, 2 món tiêu chuẩn, 3 món thử thách)
+function getOrderSlotCount(orderNum) {
+    var num = Math.max(1, parseInt(orderNum, 10) || 1);
+    if (num === 1) return 1; // Đơn 1: 1 món (làm quen tức thì)
+    if (num === 2 || num === 3) return 2; // Đơn 2, 3: 2 món (hoàn thành chuẩn xác Level 1 với 3 đơn)
+    // Từ đơn 4 trở đi: Chu kỳ nhịp điệu [2, 1, 2, 3, 2, 1, 2, 3] (~25% đơn 1 món, 50% đơn 2 món, 25% đơn 3 món)
+    var cycle = [2, 1, 2, 3, 2, 1, 2, 3];
+    return cycle[(num - 4) % cycle.length];
 }
 
 // Tính item order cho một nhánh cụ thể:
@@ -1630,21 +1702,12 @@ function getProgressCapForOrder(orderNum) {
 // - Slot 1 (Món chính): được phép lên đến progressCap (Cấp 1: Lv.4; Cấp 2-3: Lv.5; Cấp 4: Lv.6; Cấp 5: Lv.7...).
 // - Slot 2 (Món vừa): tối đa progressCap - 1 (tối thiểu Lv.2).
 // - Slot 3 (Món nhẹ / van xả): tối đa progressCap - 2 (tối thiểu Lv.2).
-// - Khi một nhánh đã chạm trần, luân phiên cấp độ kề trần để tránh lặp lại cùng 1 cấp liên tục!
-function computeDynamicOrderItemForBranch(line, stats, lastOrderedLevel, slotIdx, orderNum) {
+// - Cơ chế Chống Lặp Tuyệt Đối: Kiểm tra lịch sử recentOrdersHistory và các item cùng nhóm để không lặp lại cùng 1 cấp liên tục!
+function computeDynamicOrderItemForBranch(line, stats, lastOrderedLevel, slotIdx, orderNum, existingInGroup) {
     var validLine = (typeof line === 'string' && line.trim()) ? line.trim() : 'ban';
     var progressCap = getProgressCapForOrder(orderNum);
     var maxLineCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(validLine) : 12;
     var ceiling = Math.min(maxLineCap, progressCap);
-
-    var prevLv = (typeof lastOrderedLevel === 'number' && lastOrderedLevel > 0)
-        ? lastOrderedLevel
-        : getLastOrderedLevelForLine(validLine);
-
-    // Nếu prevLv trong SAVE bị lưu vết cấp quá cao từ lỗi cũ (ví dụ 10, 11, 12), hạ ngay về mức trần cho phép
-    if (prevLv > ceiling) {
-        prevLv = Math.max(2, ceiling - 1);
-    }
 
     var isSlot1 = (typeof slotIdx === 'number' && slotIdx === 0);
     var isSlot3 = (typeof slotIdx === 'number' && slotIdx === 2);
@@ -1654,31 +1717,52 @@ function computeDynamicOrderItemForBranch(line, stats, lastOrderedLevel, slotIdx
     // Slot 3 (món nhẹ): tối đa ceiling - 2 (tối thiểu Lv.2)
     var effectiveCap = isSlot1 ? ceiling : (isSlot3 ? Math.max(2, ceiling - 2) : Math.max(2, ceiling - 1));
 
+    // Tập hợp toàn bộ các cấp độ khả dĩ trong khoảng [2 .. effectiveCap]
+    var candidates = [];
+    for (var lv = 2; lv <= effectiveCap; lv++) {
+        candidates.push(lv);
+    }
+    if (candidates.length === 0) candidates = [2];
+
+    // Lịch sử chống lặp item: kiểm tra 8 item gần nhất
+    var recentHistory = (typeof SAVE !== 'undefined' && Array.isArray(SAVE.recentOrdersHistory)) ? SAVE.recentOrdersHistory : [];
+    var recentGroupIds = Array.isArray(existingInGroup) ? existingInGroup : [];
+    var allRecent = recentHistory.concat(recentGroupIds);
+
+    // Lọc các cấp độ CHƯA TỪNG xuất hiện trong 8 item gần nhất
+    var validLevels = candidates.filter(function (lvCandidate) {
+        var idCandidate = validLine + '_lv' + lvCandidate;
+        return allRecent.slice(-8).indexOf(idCandidate) === -1;
+    });
+
     var orderLv;
-    if (prevLv > 0) {
-        if (prevLv < effectiveCap) {
-            orderLv = prevLv + 1;
+    if (validLevels.length > 0) {
+        if (isSlot1) {
+            // Slot 1: Ưu tiên cấp cao nhất trong các cấp chưa bị lặp để giữ thử thách cốt truyện
+            orderLv = validLevels[validLevels.length - 1];
         } else {
-            // Khi nhánh đã chạm trần cấp cho phép, luân phiên giữa (effectiveCap - 1) và effectiveCap để luôn đổi mới:
-            orderLv = (prevLv >= effectiveCap) ? Math.max(2, effectiveCap - 1) : effectiveCap;
+            // Slot 2 & 3: Luân phiên cấp độ mượt mà, tránh lặp lại
+            orderLv = validLevels[Math.floor(Math.random() * validLevels.length)];
         }
     } else {
-        // Nhánh xuất hiện lần đầu:
-        orderLv = isSlot1 ? Math.min(4, effectiveCap) : 2;
+        // Nếu tất cả cấp độ khả dĩ đều đã từng xuất hiện gần đây, chọn cấp độ xuất hiện xa nhất trong quá khứ
+        candidates.sort(function (a, b) {
+            var idxA = allRecent.lastIndexOf(validLine + '_lv' + a);
+            var idxB = allRecent.lastIndexOf(validLine + '_lv' + b);
+            return idxA - idxB;
+        });
+        orderLv = candidates[0];
     }
 
     orderLv = Math.max(2, Math.min(orderLv, effectiveCap));
     return validLine + '_lv' + orderLv;
 }
 
-// Sinh 3 item cho 3 slot order: Đảm bảo:
-// 1. Tuyệt đối không có 2 item cùng nhánh với nhau trong cùng 1 bộ 3 order (3 slot thuộc 3 nhánh hoàn toàn khác biệt).
-// 2. Cấp độ order tăng dần mượt mà: khi lặp lại thì tăng đúng +1 cấp so với lần order trước của chính nhánh đó.
-// 3. Tránh lặp lại nhánh item theo số túi sinh đồ đang có trên bàn:
-//    - 1 túi (3 nhánh): lặp lại sau tối thiểu 1 lần (minGap = 1).
-//    - 2 túi (6 nhánh): lặp lại sau tối thiểu 3 lần (minGap = 3).
-//    - 3 túi (9 nhánh): lặp lại sau tối thiểu 6 lần (minGap = 6).
-function generateDynamic3SlotOrderItems(board, orderNum, existingIds, activeGens) {
+// Sinh danh sách item động theo nhịp điệu số lượng món:
+// - Đơn 1 món: nhanh gọn, nhận thưởng tức thì
+// - Đơn 2 món: tiêu chuẩn cân đối
+// - Đơn 3 món: combo lớn kèm van xả dọn bàn
+function generateDynamicOrderItems(board, orderNum, existingIds, activeGens) {
     var b = board || (typeof boardData !== 'undefined' ? boardData : null);
     var gens = Array.isArray(activeGens) && activeGens.length ? activeGens : getActiveGeneratorsForOrders(b);
     var activeLines = [];
@@ -1690,18 +1774,14 @@ function generateDynamic3SlotOrderItems(board, orderNum, existingIds, activeGens
     if (!activeLines.length) activeLines = ['ban', 'ghe', 'trai'];
 
     var stats = getBoardBranchStats(b, activeLines);
+    var numSlots = getOrderSlotCount(orderNum);
 
     // Xác định khoảng cách giãn cách tối thiểu (minGap) dựa trên số túi sinh đồ đang có trên bàn:
     // - 1 túi (3 nhánh): lặp lại sau tối thiểu 1 lần (minGap = 1)
     // - 2 túi (6 nhánh): lặp lại sau tối thiểu 3 lần (minGap = 3)
     // - 3 túi (9 nhánh): lặp lại sau tối thiểu 6 lần (minGap = 6)
     var numGens = gens.length;
-    var minGap = 1;
-    if (numGens === 2) {
-        minGap = 3;
-    } else if (numGens >= 3) {
-        minGap = 6;
-    }
+    var minGap = (numGens === 1) ? 1 : ((numGens === 2) ? 3 : 6);
 
     // Lấy lịch sử các nhánh đã tạo gần đây (FIFO)
     var recentBranches = [];
@@ -1711,23 +1791,19 @@ function generateDynamic3SlotOrderItems(board, orderNum, existingIds, activeGens
         recentBranches = SAVE.recentOrdersHistory.map(function (id) { return itemLine(id); }).filter(Boolean);
     }
 
-    // Với 1 túi sinh đồ: vì chỉ có đúng 3 nhánh (ban, ghe, trai) và mỗi đơn gồm 3 slot,
-    // nên nhánh lặp lại ngay sau 1 lần (không bị chặn bởi đơn trước đó)
     var cooldown = (numGens === 1) ? [] : recentBranches.slice(-minGap);
-
     var storyCtx = (typeof EARLY_CAMP_STORY_CONTEXT !== 'undefined') ? (EARLY_CAMP_STORY_CONTEXT[orderNum] || null) : null;
     var preferredLines = (storyCtx && Array.isArray(storyCtx.preferredLines)) ? storyCtx.preferredLines : [];
 
     var chosenLines = [];
 
-    // 1. CHỌN 2 NHÁNH CHO SLOT 1 (CHÍNH) VÀ SLOT 2 (PHỤ) - GIỮ NGUYÊN CƠ CHẾ HIỆN TẠI
-    for (var slot = 0; slot < 2; slot++) {
-        // Nhánh hợp lệ: không nằm trong cooldown minGap lần gần nhất và chưa chọn trong bộ này
+    // Chọn số lượng nhánh đúng bằng numSlots (cho Slot 1 và Slot 2)
+    var selectSlotsCount = Math.min(numSlots, 2);
+    for (var slot = 0; slot < selectSlotsCount; slot++) {
         var pool = activeLines.filter(function (ln) {
             return cooldown.indexOf(ln) === -1 && chosenLines.indexOf(ln) === -1;
         });
 
-        // Nếu pool rỗng (ví dụ tất cả các nhánh đều đang cooldown), chọn nhánh lâu chưa xuất hiện nhất (Least Recently Used)
         if (pool.length === 0) {
             var fallbackPool = activeLines.filter(function (ln) {
                 return chosenLines.indexOf(ln) === -1;
@@ -1746,10 +1822,6 @@ function generateDynamic3SlotOrderItems(board, orderNum, existingIds, activeGens
             pool = fallbackPool;
         }
 
-        // Sắp xếp các ứng viên trong pool:
-        // 1. Nhánh có đồ trên bàn trước (ưu tiên nhánh có ô nhện, nhiều đồ, cấp cao)
-        // 2. Nhánh ưu tiên theo cốt truyện (preferredLines)
-        // 3. Nhánh lâu chưa xuất hiện nhất
         pool.sort(function (a, bLn) {
             var countA = stats.countByLine[a] || 0;
             var countB = stats.countByLine[bLn] || 0;
@@ -1760,15 +1832,26 @@ function generateDynamic3SlotOrderItems(board, orderNum, existingIds, activeGens
 
             var prefA = preferredLines.indexOf(a);
             var prefB = preferredLines.indexOf(bLn);
-
             var storyBonusA = (prefA !== -1) ? (15 - prefA * 4) : 0;
             var storyBonusB = (prefB !== -1) ? (15 - prefB * 4) : 0;
 
-            var scoreA = (webA * 20) + (countA * 10) + (lvA * 5) + storyBonusA;
-            var scoreB = (webB * 20) + (countB * 10) + (lvB * 5) + storyBonusB;
+            // Đếm tần suất xuất hiện trong 6 lần gần nhất để phạt điểm chống lặp nhánh liên tục
+            var last6 = recentBranches.slice(-6);
+            var aApp = last6.filter(function (x) { return x === a; }).length;
+            var bApp = last6.filter(function (x) { return x === bLn; }).length;
 
-            if (scoreA !== scoreB) {
-                return scoreB - scoreA;
+            // Khống chế điểm dồn ứ trên bàn (tối đa +30 điểm) kết hợp phạt nặng nhánh vừa xuất hiện (-45 điểm/lần)
+            var scoreA = Math.min(countA * 8, 30) + Math.min(webA * 15, 30) + Math.min(lvA * 4, 15) + storyBonusA - (aApp * 45);
+            var scoreB = Math.min(countB * 8, 30) + Math.min(webB * 15, 30) + Math.min(lvB * 4, 15) + storyBonusB - (bApp * 45);
+
+            if (scoreA !== scoreB) return scoreB - scoreA;
+
+            if (numGens === 1) {
+                var rotOrder = ['ban', 'ghe', 'trai'];
+                var leadIdx = (orderNum - 1 + slot) % 3;
+                var targetLine = rotOrder[leadIdx];
+                if (a === targetLine) return -1;
+                if (bLn === targetLine) return 1;
             }
 
             var idxA = recentBranches.lastIndexOf(a);
@@ -1792,101 +1875,126 @@ function generateDynamic3SlotOrderItems(board, orderNum, existingIds, activeGens
         recentBranches.push(chosen);
     }
 
-    var item0 = computeDynamicOrderItemForBranch(chosenLines[0], stats, null, 0, orderNum);
-    var item1 = computeDynamicOrderItemForBranch(chosenLines[1], stats, null, 1, orderNum);
-
-    // 2. SLOT 3: TÁCH RIÊNG - QUÉT BÀN CHƠI TÌM NHÁNH ĐANG CHIẾM NHIỀU Ô NHẤT, LEVEL = LEVEL CAO NHẤT TRÊN BÀN + 1
-    var slot3Result = pickCrowdedBranchSlot3Item(b, chosenLines[0], chosenLines[1], item0, item1, orderNum, stats, activeLines);
-    chosenLines.push(slot3Result.line);
-    recentBranches.push(slot3Result.line);
-
-    // Cập nhật lại SAVE.recentBranchHistory và lastOrderedLevelByBranch
-    if (typeof SAVE !== 'undefined' && SAVE) {
-        SAVE.recentBranchHistory = recentBranches.slice(-30);
-        if (!SAVE.lastOrderedLevelByBranch) SAVE.lastOrderedLevelByBranch = {};
-        SAVE.lastOrderedLevelByBranch[chosenLines[0]] = (typeof itemLevel === 'function') ? itemLevel(item0) : parseInt((item0.match(/_lv(\d+)$/) || [])[1], 10);
-        SAVE.lastOrderedLevelByBranch[chosenLines[1]] = (typeof itemLevel === 'function') ? itemLevel(item1) : parseInt((item1.match(/_lv(\d+)$/) || [])[1], 10);
-        SAVE.lastOrderedLevelByBranch[slot3Result.line] = slot3Result.level;
+    var items = [];
+    if (numSlots >= 1) {
+        var item0 = computeDynamicOrderItemForBranch(chosenLines[0], stats, null, 0, orderNum, items);
+        items.push(item0);
+    }
+    if (numSlots >= 2) {
+        var item1 = computeDynamicOrderItemForBranch(chosenLines[1], stats, null, 1, orderNum, items);
+        items.push(item1);
     }
 
-    var items = [item0, item1, slot3Result.item];
+    // Nếu đơn hàng có 3 món: Slot 3 dọn bàn van xả (bảo đảm khác hoàn toàn nhánh với Slot 1 & 2 khi có >= 3 nhánh)
+    if (numSlots >= 3) {
+        var slot3Result = pickCrowdedBranchSlot3Item(b, chosenLines[0], chosenLines[1], items[0], items[1], orderNum, stats, activeLines);
+        chosenLines.push(slot3Result.line);
+        recentBranches.push(slot3Result.line);
+        items.push(slot3Result.item);
+    }
+
+    // Cập nhật lại SAVE.recentBranchHistory, SAVE.recentOrdersHistory và lastOrderedLevelByBranch
+    if (typeof SAVE !== 'undefined' && SAVE) {
+        SAVE.recentBranchHistory = recentBranches.slice(-30);
+        if (!Array.isArray(SAVE.recentOrdersHistory)) SAVE.recentOrdersHistory = [];
+        items.forEach(function (itId) {
+            if (itId && SAVE.recentOrdersHistory.indexOf(itId) === -1) {
+                SAVE.recentOrdersHistory.push(itId);
+            }
+        });
+        if (SAVE.recentOrdersHistory.length > 20) {
+            SAVE.recentOrdersHistory = SAVE.recentOrdersHistory.slice(-20);
+        }
+        if (!SAVE.lastOrderedLevelByBranch) SAVE.lastOrderedLevelByBranch = {};
+        chosenLines.forEach(function (ln, sIdx) {
+            var itm = items[sIdx];
+            if (itm) {
+                SAVE.lastOrderedLevelByBranch[ln] = (typeof itemLevel === 'function') ? itemLevel(itm) : parseInt((itm.match(/_lv(\d+)$/) || [])[1], 10);
+            }
+        });
+    }
 
     return {
         lines: chosenLines,
         items: items,
         stats: stats,
-        minGap: minGap
+        minGap: minGap,
+        slotCount: numSlots
     };
+}
+
+// Giữ alias cho tương thích ngược
+function generateDynamic3SlotOrderItems(board, orderNum, existingIds, activeGens) {
+    return generateDynamicOrderItems(board, orderNum, existingIds, activeGens);
 }
 
 // =============================================================================
 // HÀM SINH NHIỆM VỤ SLOT 3 (VAN XẢ / DỌN BÀN THÔNG MINH):
-// Quét toàn bộ bàn chơi xem nhánh nào đang chiếm nhiều ô nhất:
-// -> Tạo nhiệm vụ cho nhánh đó với level = level item cao nhất của nhánh đó trên bàn + 1
+// Quét toàn bộ bàn chơi xem nhánh nào đang chiếm nhiều ô nhất (CHỈ TÍNH ITEM KHÔNG BỊ MẠNG NHỆN):
+// -> Tạo nhiệm vụ cho nhánh đó với level = level item KHÔNG BỊ MẠNG NHỆN cao nhất của nhánh đó trên bàn + 1
+// -> Khống chế trần cấp độ theo progressCap (không vượt quá cấp độ cho phép theo tiến trình/cấp người chơi)
+// -> Bắt buộc chọn nhánh khác hoàn toàn Slot 1 & 2 khi có từ 3 nhánh và chống lặp item liên tục!
 // =============================================================================
 function pickCrowdedBranchSlot3Item(board, chosenLine1, chosenLine2, item0, item1, orderNum, stats, activeLines) {
     var b = board || (typeof boardData !== 'undefined' ? boardData : null);
     var lines = Array.isArray(activeLines) && activeLines.length ? activeLines : ['ban', 'ghe', 'trai'];
     var branchStats = stats || getBoardBranchStats(b, lines);
 
-    // Xếp hạng các nhánh dựa trên số ô chiếm dụng thực tế trên bàn:
-    var ranked = lines.slice().sort(function (a, bLn) {
-        var countA = branchStats.countByLine[a] || 0;
-        var countB = branchStats.countByLine[bLn] || 0;
+    var progressCap = (typeof getProgressCapForOrder === 'function')
+        ? getProgressCapForOrder(orderNum)
+        : ((typeof getProgressCap === 'function') ? getProgressCap() : 6);
 
-        // Nhánh chiếm nhiều ô hơn luôn được ưu tiên hàng đầu:
-        if (countA !== countB) {
-            return countB - countA;
-        }
+    // Khi có từ 3 nhánh hoạt động trở lên: Slot 3 BẮT BUỘC phải là nhánh thứ 3 (khác hoàn toàn Slot 1 & Slot 2)
+    var availableLines = lines.slice();
+    if (lines.length >= 3) {
+        var unchosen = lines.filter(function (ln) { return ln !== chosenLine1 && ln !== chosenLine2; });
+        if (unchosen.length > 0) availableLines = unchosen;
+    }
 
-        // Nếu cùng số ô (ví dụ cả 2 nhánh cùng 3 ô, hoặc cùng bằng 0):
-        // Ưu tiên nhánh chưa được chọn ở Slot 1 và Slot 2 để tạo sự đa dạng
+    // Xếp hạng các nhánh dựa trên số ô chiếm dụng thực tế trên bàn (CHỈ TÍNH Ô TỰ DO KHÔNG BỊ MẠNG NHỆN):
+    var ranked = availableLines.slice().sort(function (a, bLn) {
+        var countA = branchStats.unlockedCountByLine ? (branchStats.unlockedCountByLine[a] || 0) : 0;
+        var countB = branchStats.unlockedCountByLine ? (branchStats.unlockedCountByLine[bLn] || 0) : 0;
+
+        if (countA !== countB) return countB - countA;
+
         var inPrevA = (a === chosenLine1 || a === chosenLine2);
         var inPrevB = (bLn === chosenLine1 || bLn === chosenLine2);
-        if (inPrevA !== inPrevB) {
-            return inPrevA ? 1 : -1;
-        }
+        if (inPrevA !== inPrevB) return inPrevA ? 1 : -1;
 
-        // Ưu tiên nhánh có cấp độ cao nhất trên bàn cao hơn:
-        var maxLvA = branchStats.maxBoardLvByLine[a] || 0;
-        var maxLvB = branchStats.maxBoardLvByLine[bLn] || 0;
+        var maxLvA = branchStats.maxUnlockedLvByLine ? (branchStats.maxUnlockedLvByLine[a] || 0) : 0;
+        var maxLvB = branchStats.maxUnlockedLvByLine ? (branchStats.maxUnlockedLvByLine[bLn] || 0) : 0;
         return maxLvB - maxLvA;
     });
 
-    var chosenLine = ranked[0] || 'ban';
-    var maxOnBoard = branchStats.maxBoardLvByLine[chosenLine] || 0;
+    var chosenLine = ranked[0] || 'trai';
+    var maxOnBoardUnlocked = branchStats.maxUnlockedLvByLine ? (branchStats.maxUnlockedLvByLine[chosenLine] || 0) : 0;
     var maxLineCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(chosenLine) : 12;
+    var cap = Math.min(maxLineCap, progressCap);
 
-    // Cấp độ item = level cao nhất đang có trên bàn + 1 (tối thiểu Lv.2, không vượt quá maxLineCap)
-    var targetLv = (maxOnBoard > 0) ? (maxOnBoard + 1) : 2;
-    targetLv = Math.max(2, Math.min(targetLv, maxLineCap));
+    // Slot 3 là van xả: Cấp độ trong khoảng [2 .. Math.max(2, cap - 2)]
+    var slot3Cap = Math.max(2, cap - 2);
+    var targetLv = (maxOnBoardUnlocked > 0) ? (maxOnBoardUnlocked + 1) : 2;
+    targetLv = Math.max(2, Math.min(targetLv, slot3Cap));
 
     var targetItemId = chosenLine + '_lv' + targetLv;
+    var recentHist = (typeof SAVE !== 'undefined' && Array.isArray(SAVE.recentOrdersHistory)) ? SAVE.recentOrdersHistory.slice(-8) : [];
 
-    // Tránh trùng 100% item ID với Slot 1 hoặc Slot 2 nếu có nhánh khác cũng có đồ trên bàn:
-    if (targetItemId === item0 || targetItemId === item1) {
-        var alt = ranked.find(function (ln) {
-            if (ln === chosenLine) return false;
-            var c = branchStats.countByLine[ln] || 0;
-            if (c <= 0) return false;
-            var lv = Math.max(2, Math.min((branchStats.maxBoardLvByLine[ln] || 0) + 1, (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : 12));
-            var altId = ln + '_lv' + lv;
-            return altId !== item0 && altId !== item1;
-        });
-
-        if (alt) {
-            chosenLine = alt;
-            maxOnBoard = branchStats.maxBoardLvByLine[chosenLine] || 0;
-            maxLineCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(chosenLine) : 12;
-            targetLv = (maxOnBoard > 0) ? (maxOnBoard + 1) : 2;
-            targetLv = Math.max(2, Math.min(targetLv, maxLineCap));
+    // Chống lặp item tuyệt đối với các món gần đây và 2 món cùng khay
+    if (recentHist.indexOf(targetItemId) !== -1 || targetItemId === item0 || targetItemId === item1) {
+        var candidateLvs = [];
+        for (var cLv = 2; cLv <= slot3Cap; cLv++) {
+            var cId = chosenLine + '_lv' + cLv;
+            if (cId !== item0 && cId !== item1 && recentHist.indexOf(cId) === -1) {
+                candidateLvs.push(cLv);
+            }
+        }
+        if (candidateLvs.length > 0) {
+            targetLv = candidateLvs[0];
             targetItemId = chosenLine + '_lv' + targetLv;
         } else {
-            if (targetLv < maxLineCap) {
-                targetLv++;
-            } else {
-                targetLv = Math.max(2, targetLv - 1);
-            }
+            // Đổi cấp kề cận
+            targetLv = (targetLv > 2) ? (targetLv - 1) : Math.min(3, slot3Cap);
             targetItemId = chosenLine + '_lv' + targetLv;
         }
     }
@@ -2035,7 +2143,13 @@ function buildCleanupOrderGroupForOldGens(newGenId, cleanupStep, orderNum, petId
     var orders = chosenIds.map(function (itemId, sIdx) {
         var slotName = (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy');
         var goldRw = (typeof orderReward === 'function') ? orderReward(itemId) : 50;
-        var expRw = (typeof orderExp === 'function') ? orderExp(itemId) : 15;
+        var expRw = (typeof orderExp === 'function')
+            ? orderExp(itemId)
+            : ((typeof window !== 'undefined' && typeof window.orderExp === 'function')
+                ? window.orderExp(itemId)
+                : ((typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.itemExpByLevel)
+                    ? (GAME_CONFIG.itemExpByLevel[parseInt(String(itemId).split('_lv')[1]) || 1] || 25)
+                    : 25));
         return {
             id: itemId,
             done: false,
@@ -2086,7 +2200,13 @@ function buildNewGenIntroOrderGroup(newGenId, orderNum, petId, board, existingId
     var orders = introIds.map(function (itemId, sIdx) {
         var slotName = (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy');
         var goldRw = (typeof orderReward === 'function') ? orderReward(itemId) : 50;
-        var expRw = (typeof orderExp === 'function') ? orderExp(itemId) : 15;
+        var expRw = (typeof orderExp === 'function')
+            ? orderExp(itemId)
+            : ((typeof window !== 'undefined' && typeof window.orderExp === 'function')
+                ? window.orderExp(itemId)
+                : ((typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.itemExpByLevel)
+                    ? (GAME_CONFIG.itemExpByLevel[parseInt(String(itemId).split('_lv')[1]) || 1] || 25)
+                    : 25));
         return {
             id: itemId,
             done: false,
@@ -2147,15 +2267,21 @@ function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
         }
     }
 
-    // Sinh cả 3 Slot hoàn toàn linh động: 100% không trùng nhánh, cấp order > cấp đồ đang có trên bàn (hoặc bằng cấp nếu chưa có)
-    var genResult = generateDynamic3SlotOrderItems(b, orderNum, existingIds, activeGens);
+    // Sinh các Slot hoàn toàn linh động theo nhịp điệu (1, 2 hoặc 3 món): 100% không trùng nhánh
+    var genResult = generateDynamicOrderItems(b, orderNum, existingIds, activeGens);
     var finalIds = genResult.items;
     var contextDialogue = getDynamicOrderContextDialogue(finalIds, orderNum, b);
 
     var orders = finalIds.map(function (itemId, sIdx) {
         var slotName = (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy');
         var goldRw = (typeof orderReward === 'function') ? orderReward(itemId) : 50;
-        var expRw = (typeof orderExp === 'function') ? orderExp(itemId) : 15;
+        var expRw = (typeof orderExp === 'function')
+            ? orderExp(itemId)
+            : ((typeof window !== 'undefined' && typeof window.orderExp === 'function')
+                ? window.orderExp(itemId)
+                : ((typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.itemExpByLevel)
+                    ? (GAME_CONFIG.itemExpByLevel[parseInt(String(itemId).split('_lv')[1]) || 1] || 25)
+                    : 25));
         return {
             id: itemId,
             done: false,
@@ -2265,6 +2391,20 @@ function ensurePetOrderGroups(playerLevel) {
         var targetOrderNum = currentOrderNum + gIdx;
         var pCap = getProgressCapForOrder(targetOrderNum);
 
+        // Khống chế cấp độ item của đơn hàng không bao giờ được vượt quá trần cấp độ cho phép
+        g.orders.forEach(function (o) {
+            if (o && o.id) {
+                var oLv = (typeof itemLv === 'function') ? itemLv(o.id) : (parseInt((o.id.match(/_lv(\d+)$/) || [])[1], 10) || 1);
+                if (oLv > pCap) {
+                    var oLn = (typeof itemLine === 'function') ? itemLine(o.id) : o.id.split('_lv')[0];
+                    var fixedLv = Math.max(2, pCap);
+                    o.id = oLn + '_lv' + fixedLv;
+                    o.gold = (typeof orderReward === 'function') ? orderReward(o.id) : 50;
+                    o.exp = (typeof orderExp === 'function') ? orderExp(o.id) : 15;
+                }
+            }
+        });
+
         // Tự động dọn dẹp các cấp độ bị lưu vết quá cao từ trước trong SAVE:
         if (typeof SAVE !== 'undefined' && SAVE && SAVE.lastOrderedLevelByBranch) {
             Object.keys(SAVE.lastOrderedLevelByBranch).forEach(function (k) {
@@ -2286,6 +2426,7 @@ function ensurePetOrderGroups(playerLevel) {
     }).filter(Boolean);
 
     // 2. Nếu chưa có nhóm thú cưng (mới vào game hoặc vừa nộp xong), sinh 1 đơn mới cho activePet:
+    var hasNewGroupGenerated = false;
     while (SAVE.petOrderGroups.length < maxPets) {
         var chosenPet = activePet;
         var nextOrderNum = currentOrderNum + SAVE.petOrderGroups.length;
@@ -2334,6 +2475,7 @@ function ensurePetOrderGroups(playerLevel) {
         if (nextGroup && Array.isArray(nextGroup.orders) && nextGroup.orders.length > 0) {
             SAVE.petOrderGroups.push(nextGroup);
             nextGroup.orders.forEach(function (o) { if (o && o.id) existingIds.push(o.id); });
+            hasNewGroupGenerated = true;
         }
     }
 
@@ -2361,6 +2503,13 @@ function ensurePetOrderGroups(playerLevel) {
             contextDialogue: getDynamicOrderContextDialogue(emgOrders.map(function (o) { return o.id; }), currentOrderNum, b),
             orders: emgOrders
         });
+        hasNewGroupGenerated = true;
+    }
+
+    // Lưu ngay lập tức vào bộ nhớ thiết bị (localStorage) để khi reload trình duyệt
+    // bộ nhiệm vụ vừa sinh KHÔNG bao giờ bị thay đổi hay tái tạo lại!
+    if (hasNewGroupGenerated && typeof saveGame === 'function') {
+        saveGame(true);
     }
 
     return SAVE.petOrderGroups;
@@ -2625,6 +2774,7 @@ function populateRockHiddenItems(board, forceReassign) {
             isRock: true,
             isLocked: false,
             isSurprise: isSurprise,
+            rockVariant: getRockCellVariant(idx),
             rockLayer: d,
             rockUnlockLevel: reqUnlockLv
         };
@@ -2650,6 +2800,7 @@ function populateRockHiddenItems(board, forceReassign) {
             isRock: true,
             isLocked: false,
             isSurprise: isSurprise,
+            rockVariant: getRockCellVariant(idx),
             rockLayer: d,
             rockUnlockLevel: reqUnlockLv2
         };
@@ -2744,12 +2895,16 @@ if (typeof window !== 'undefined') {
     window.getBoardBranchStats = getBoardBranchStats;
     window.getLastOrderedLevelForLine = getLastOrderedLevelForLine;
     window.computeDynamicOrderItemForBranch = computeDynamicOrderItemForBranch;
+    window.getOrderSlotCount = getOrderSlotCount;
+    window.generateDynamicOrderItems = generateDynamicOrderItems;
     window.generateDynamic3SlotOrderItems = generateDynamic3SlotOrderItems;
     window.pickDynamicSlot1Item = pickDynamicSlot1Item;
     window.pickDynamicSlot2Item = pickDynamicSlot2Item;
     window.pickDynamicSlot3Item = pickDynamicSlot3Item;
     window.pickCrowdedBranchSlot3Item = pickCrowdedBranchSlot3Item;
     window.applyLiveHybridAdaptations = applyLiveHybridAdaptations;
+    window.ROCK_CELL_VARIANTS_MAP = ROCK_CELL_VARIANTS_MAP;
+    window.getRockCellVariant = getRockCellVariant;
     window.getCuratedOrderGroup = getCuratedOrderGroup;
     window.generatePetOrderGroup = generatePetOrderGroup;
     window.ensurePetOrderGroups = ensurePetOrderGroups;
