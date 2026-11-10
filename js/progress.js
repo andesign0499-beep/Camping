@@ -81,6 +81,7 @@ function defaultSave() {
         campItemsMigrated: false,
         myCampEquipped: {},
         myCampUnequipped: {},
+        myCampManualEquipped: {},
         claimedStarChests: [],
         starterPackBought: false,
         ads: { day: todayKey(), energy: 0, gem: 0, coin: 0, mystery: 0, dailyGemClaimed: false },
@@ -97,7 +98,11 @@ function defaultSave() {
         lastPetRewardTime: 0,
         recentOrdersHistory: [],
         recentBranchHistory: [],
-        lastOrderedLevelByBranch: {}
+        lastOrderedLevelByBranch: {},
+        slot1BranchLevelMap: {},
+        slot1RecentBranches: [],
+        slot1CompletedIds: [],
+        allHistoricalOrderedItems: []
     };
 }
 
@@ -151,6 +156,20 @@ function loadSave() {
             if (typeof s.lastPetRewardTime !== 'number') s.lastPetRewardTime = 0;
             if (!Array.isArray(s.recentOrdersHistory)) s.recentOrdersHistory = [];
             if (!Array.isArray(s.recentBranchHistory)) s.recentBranchHistory = [];
+            if (!s.slot1BranchLevelMap || typeof s.slot1BranchLevelMap !== 'object') s.slot1BranchLevelMap = {};
+            if (!Array.isArray(s.slot1RecentBranches)) s.slot1RecentBranches = [];
+            if (!Array.isArray(s.slot1CompletedIds)) s.slot1CompletedIds = [];
+            if (!Array.isArray(s.allHistoricalOrderedItems)) s.allHistoricalOrderedItems = [];
+            if (Array.isArray(s.slot1CompletedIds)) {
+                s.slot1CompletedIds.forEach(function (id) {
+                    if (id && s.allHistoricalOrderedItems.indexOf(id) === -1) s.allHistoricalOrderedItems.push(id);
+                });
+            }
+            if (Array.isArray(s.recentOrdersHistory)) {
+                s.recentOrdersHistory.forEach(function (id) {
+                    if (id && s.allHistoricalOrderedItems.indexOf(id) === -1) s.allHistoricalOrderedItems.push(id);
+                });
+            }
             var maxSensibleLv = (typeof getProgressCap === 'function')
                 ? getProgressCap(s.totalOrdersDelivered || 0, s.playerLevel || 1)
                 : Math.min(12, Math.floor((s.totalOrdersDelivered || 0) / 3) + 4);
@@ -183,6 +202,9 @@ function loadSave() {
             }
             if (!s.myCampUnequipped || typeof s.myCampUnequipped !== 'object') {
                 s.myCampUnequipped = {};
+            }
+            if (!s.myCampManualEquipped || typeof s.myCampManualEquipped !== 'object') {
+                s.myCampManualEquipped = {};
             }
             if (!Array.isArray(s.claimedStarChests)) s.claimedStarChests = [];
             if (!s.campItemsMigrated) {
@@ -518,6 +540,7 @@ function addPlayerExp(amount, onLevelUpCallback) {
 // Ghi nhận đơn hàng vừa hoàn thành vào bộ đệm FIFO lịch sử chống lặp (tối đa 15 đơn gần nhất)
 function recordOrderDelivered(itemId) {
     if (!itemId || typeof SAVE === 'undefined' || !SAVE) return;
+    recordHistoricalOrderedItem(itemId);
     if (!Array.isArray(SAVE.recentOrdersHistory)) {
         SAVE.recentOrdersHistory = [];
     }
@@ -539,6 +562,34 @@ function recordOrderDelivered(itemId) {
 
     saveGame();
 }
+
+// Kiểm tra xem một vật phẩm đã từng được giao trong nhiệm vụ trước đó hay chưa
+function isItemEverOrdered(itemId) {
+    if (!itemId || typeof SAVE === 'undefined' || !SAVE) return false;
+    if (Array.isArray(SAVE.allHistoricalOrderedItems) && SAVE.allHistoricalOrderedItems.indexOf(itemId) !== -1) {
+        return true;
+    }
+    if (Array.isArray(SAVE.slot1CompletedIds) && SAVE.slot1CompletedIds.indexOf(itemId) !== -1) {
+        return true;
+    }
+    if (Array.isArray(SAVE.recentOrdersHistory) && SAVE.recentOrdersHistory.indexOf(itemId) !== -1) {
+        return true;
+    }
+    return false;
+}
+window.isItemEverOrdered = isItemEverOrdered;
+
+// Ghi nhận một vật phẩm đã từng xuất hiện trong nhiệm vụ (không bao giờ mất theo thời gian)
+function recordHistoricalOrderedItem(itemId) {
+    if (!itemId || typeof SAVE === 'undefined' || !SAVE) return;
+    if (!Array.isArray(SAVE.allHistoricalOrderedItems)) {
+        SAVE.allHistoricalOrderedItems = [];
+    }
+    if (SAVE.allHistoricalOrderedItems.indexOf(itemId) === -1) {
+        SAVE.allHistoricalOrderedItems.push(itemId);
+    }
+}
+window.recordHistoricalOrderedItem = recordHistoricalOrderedItem;
 
 // Thưởng Vàng khi tạo chuỗi Combo ghép liên tiếp
 function getComboReward(comboCount) {
@@ -881,12 +932,16 @@ function getItemCleanName(id) {
 
 function getItemImagePath(id) {
     if (!id) return '';
-    return id === 'ban_lv8' ? 'assets/images_webp/items/ban_level8.webp' : ('assets/images_webp/items/' + id + '.webp');
+    return 'assets/images_webp/items/' + id + '.webp';
 }
 
 function addCampItem(itemId, fromLevel) {
     if (!itemId) return null;
     if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) SAVE.campItems = [];
+    // Chặn tuyệt đối việc thêm trùng lặp liên tiếp cùng 1 vật phẩm sát nhau
+    if (SAVE.campItems.length > 0 && SAVE.campItems[SAVE.campItems.length - 1] && SAVE.campItems[SAVE.campItems.length - 1].id === itemId) {
+        return SAVE.campItems[SAVE.campItems.length - 1];
+    }
     var parts = String(itemId).split('_lv');
     var lv = parts.length === 2 ? parseInt(parts[1]) || 1 : 1;
     var name = getItemCleanName(itemId);

@@ -72,7 +72,8 @@ function updateActiveLocationBackground() {
         topSceneEl.style.backgroundImage = 'none';
     }
     var backdropEl = document.getElementById('game-backdrop');
-    var targetEl = backdropEl || document.getElementById('game-app');
+    var islandEl = document.getElementById('backdrop-island');
+    var targetEl = islandEl || backdropEl || document.getElementById('game-app');
     var customBg = getActiveLocationBackground();
     var bgUrl = customBg || (typeof currentLevel !== 'undefined' ? getLevelBackground(currentLevel) : 'assets/images_webp/background/bg_doibu.webp');
     if (bgUrl && targetEl) {
@@ -84,18 +85,29 @@ function updateActiveLocationBackground() {
             'rgba(41, 59, 37, 0.82) 64%, ' +
             'rgba(38, 54, 34, 0.90) 80%, ' +
             '#263622 100%)';
-        targetEl.style.backgroundImage = gradientOverlay + ", url('" + bgUrl + "'), url('assets/images_webp/ui/bg_game_all.jpg')";
-        targetEl.style.backgroundPosition = "center top, center -20px, center top";
-        targetEl.style.backgroundRepeat = "no-repeat, no-repeat, no-repeat";
-        targetEl.style.backgroundSize = "100% 100%, 80% auto, cover";
-        targetEl.style.backgroundColor = '#263622';
+        
+        if (islandEl) {
+            islandEl.style.backgroundImage = gradientOverlay + ", url('" + bgUrl + "')";
+            islandEl.style.backgroundPosition = "center top, center -20px";
+            islandEl.style.backgroundRepeat = "no-repeat, no-repeat";
+            islandEl.style.backgroundSize = "100% 100%, 80% auto";
+        } else {
+            targetEl.style.backgroundImage = gradientOverlay + ", url('" + bgUrl + "'), url('assets/images_webp/ui/bg_game_all.jpg')";
+            targetEl.style.backgroundPosition = "center top, center -20px, center top";
+            targetEl.style.backgroundRepeat = "no-repeat, no-repeat, no-repeat";
+            targetEl.style.backgroundSize = "100% 100%, 80% auto, cover";
+            targetEl.style.backgroundColor = '#263622';
+        }
     }
 
-    // Đồng bộ mây bay ở màn chơi: Hiển thị mây bay cho tất cả các map
+    // Ưu tiên 4 đám mây hoàng hôn trong nền trời game-backdrop
     var cloudsEl = document.getElementById('top-scene-clouds');
     if (cloudsEl) {
-        cloudsEl.style.display = 'block';
+        cloudsEl.style.display = 'none';
     }
+
+    // Cập nhật tỷ lệ co giãn cho mây theo đúng tỷ lệ ảnh nền bg_game_all.jpg (1100x1971 cover)
+    updateBackdropScale();
 
     // Cập nhật đồng bộ ảnh nền Trại của bạn nếu đang mở hoặc sau khi đổi điểm đến
     var myCampBgImg = document.getElementById('mycamp-bg-img');
@@ -104,6 +116,77 @@ function updateActiveLocationBackground() {
         if (myCampBgImg.getAttribute('src') !== campBg) {
             myCampBgImg.src = campBg;
         }
+    }
+}
+
+// Đồng bộ tỷ lệ to/nhỏ của 4 đám mây với ảnh nền bg_game_all.jpg khi cửa sổ co giãn
+function updateBackdropScale() {
+    var backdrop = document.getElementById('game-backdrop');
+    if (!backdrop) return;
+    var w = backdrop.clientWidth || window.innerWidth || 412;
+    var h = backdrop.clientHeight || window.innerHeight || 850;
+    // Ảnh nền gốc bg_game_all.jpg có kích thước 1100 x 1971
+    var scale = Math.max(w / 1100, h / 1971);
+    backdrop.style.setProperty('--bg-scale', scale.toFixed(4));
+    backdrop.style.setProperty('--backdrop-w', w + 'px');
+
+    var myCampScreen = document.getElementById('my-camp-screen');
+    if (myCampScreen) {
+        myCampScreen.style.setProperty('--bg-scale', scale.toFixed(4));
+        myCampScreen.style.setProperty('--backdrop-w', w + 'px');
+    }
+
+    applyCloudConfig();
+}
+
+// Áp dụng cấu hình vị trí, tốc độ, độ mờ của 4 đám mây từ GAME_CONFIG.clouds trong js/config.js
+function applyCloudConfig() {
+    var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.clouds)
+        ? GAME_CONFIG.clouds
+        : (typeof CLOUD_CONFIG !== 'undefined' ? CLOUD_CONFIG : null);
+    if (!cfg) return;
+
+    // 1. Áp dụng cho màn hình bàn chơi chính (Gameplay)
+    var gpBackdrop = document.getElementById('game-backdrop');
+    if (gpBackdrop && cfg.gameplay) {
+        var gp = cfg.gameplay;
+        for (var i = 1; i <= 4; i++) {
+            var c = gp['cloud' + i];
+            if (!c) continue;
+            if (c.top !== undefined) gpBackdrop.style.setProperty('--cloud' + i + '-top', c.top + 'px');
+            if (c.opacity !== undefined) gpBackdrop.style.setProperty('--cloud' + i + '-opacity', c.opacity);
+            if (c.speed !== undefined || c.direction !== undefined) {
+                var anim = (c.direction === 'R2L') ? 'bgCloudAcrossR2L' : 'bgCloudAcrossL2R';
+                var dur = (c.speed || 60) + 's';
+                gpBackdrop.style.setProperty('--cloud' + i + '-anim', anim + ' ' + dur + ' linear infinite');
+            }
+        }
+    }
+
+    // 2. Áp dụng cho màn hình Trại của bạn (My Camp)
+    var mcScreen = document.getElementById('my-camp-screen');
+    if (mcScreen && cfg.myCamp) {
+        var mc = cfg.myCamp;
+        for (var j = 1; j <= 4; j++) {
+            var mcC = mc['cloud' + j];
+            if (!mcC) continue;
+            if (mcC.top !== undefined) mcScreen.style.setProperty('--cloud' + j + '-top', mcC.top + 'px');
+            if (mcC.opacity !== undefined) mcScreen.style.setProperty('--cloud' + j + '-opacity', mcC.opacity);
+            if (mcC.speed !== undefined || mcC.direction !== undefined) {
+                var mcAnim = (mcC.direction === 'R2L') ? 'bgCloudAcrossR2L' : 'bgCloudAcrossL2R';
+                var mcDur = (mcC.speed || 60) + 's';
+                mcScreen.style.setProperty('--cloud' + j + '-anim', mcAnim + ' ' + mcDur + ' linear infinite');
+            }
+        }
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateBackdropScale);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateBackdropScale);
+    } else {
+        setTimeout(updateBackdropScale, 20);
     }
 }
 

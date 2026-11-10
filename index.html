@@ -8,21 +8,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=10.51">
+    <link rel="stylesheet" href="css/style.css?v=10.76">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <div id="game-app">
-        <!-- NỀN LIỀN MẠCH TOÀN MÀN HÌNH: GRADIENT TRÊN TRONG SUỐT 0% NẰM TRÊN BG_DOIBU.WEBP -->
-        <div id="game-backdrop" class="game-backdrop" aria-hidden="true"></div>
+        <!-- NỀN LIỀN MẠCH TOÀN MÀN HÌNH: ĐÓNG GÓI BG_GAME_ALL (100% COVER) + 4 ĐÁM MÂY BAY + HÒN ĐẢO CẮM TRẠI -->
+        <div id="game-backdrop" class="game-backdrop" aria-hidden="true">
+            <div class="backdrop-sky"></div>
+            <div class="backdrop-clouds" id="backdrop-clouds">
+                <img src="assets/images_webp/ui/bg_all_may1.webp" class="backdrop-cloud cloud-1" alt="">
+                <img src="assets/images_webp/ui/bg_all_may2.webp" class="backdrop-cloud cloud-2" alt="">
+                <img src="assets/images_webp/ui/bg_all_may3.webp" class="backdrop-cloud cloud-3" alt="">
+                <img src="assets/images_webp/ui/bg_all_may4.webp" class="backdrop-cloud cloud-4" alt="">
+            </div>
+            <div class="backdrop-island" id="backdrop-island"></div>
+        </div>
 
         <!-- PHẦN TRÊN: CẢNH CẮM TRẠI (CO GIÃN THEO MÀN HÌNH), THANH HUD, NHÂN VẬT & ĐƠN HÀNG -->
         <section id="top-scene">
-            <!-- MÂY BAY MÀN CHƠI (TOP SCENE CLOUDS) -->
-            <div id="top-scene-clouds" class="top-scene-clouds">
-                <img src="assets/images_webp/background/may2.webp" class="top-scene-cloud top-scene-cloud-top" alt="Mây đỉnh núi">
-                <img src="assets/images_webp/background/may1.webp" class="top-scene-cloud top-scene-cloud-bottom" alt="Mây sườn núi">
-            </div>
+            <!-- MÂY BAY MÀN CHƠI (ẨN ĐỂ ƯU TIÊN MÂY HOÀNG HÔN NỀN TRỜI MỚI) -->
+            <div id="top-scene-clouds" class="top-scene-clouds" style="display:none;" aria-hidden="true"></div>
 
             <!-- HEADER: Bản đồ, Năng lượng, Vàng, Kim cương & Cài đặt -->
             <header id="game-header">
@@ -63,14 +69,14 @@
 
             <!-- KHU VỰC NHÂN VẬT ĐỒNG HÀNH, HỘP THOẠI & ĐƠN HÀNG (GẮN SÁT TRÊN KHUNG BÀN CỜ) -->
             <div id="scene-stage">
-                <!-- ĐÁM MÂY BAY CHẬM DƯỚI ẢNH GÒ CỎ -->
+                <!-- ĐÁM MÂY BAY CHẬM DƯỚI ẢNH GÒ CỎ (LOAD SAU CÙNG) -->
                 <div id="npc-stage-cloud" class="npc-stage-cloud" aria-hidden="true">
-                    <img src="assets/images_webp/background/may1.webp" class="npc-stage-cloud-img" alt="">
+                    <img data-src="assets/images_webp/background/may1.webp" class="npc-stage-cloud-img" alt="">
                 </div>
 
-                <!-- NỀN ĐỒI CỎ GÒ ĐẤT CHO CHÚ CHÓ & ITEM NHIỆM VỤ -->
+                <!-- NỀN ĐỒI CỎ GÒ ĐẤT CHO CHÚ CHÓ & ITEM NHIỆM VỤ (LOAD SAU CÙNG KHI CÁC THÀNH PHẦN CHÍNH ĐÃ SẴN SÀNG) -->
                 <div id="npc-stage-bg" class="npc-stage-bg" aria-hidden="true">
-                    <img src="assets/images_webp/board/npc_bg.webp" class="npc-stage-bg-img" alt="">
+                    <img data-src="assets/images_webp/board/npc_bg.webp" class="npc-stage-bg-img" alt="">
                 </div>
 
                 <div id="npc-guide-wrap" class="npc-guide-wrap">
@@ -138,6 +144,14 @@
 
         <!-- MÀN HÌNH TRẠI CỦA BẠN (MY CAMP SCREEN) -->
         <div id="my-camp-screen" class="my-camp-screen" style="display: none;">
+            <!-- MÂY BAY NỀN HOÀNG HÔN CHO KHU TRẠI (PHÍA SAU ĐẢO) -->
+            <div class="backdrop-clouds mycamp-clouds" aria-hidden="true">
+                <img src="assets/images_webp/ui/bg_all_may1.webp" class="backdrop-cloud cloud-1" alt="">
+                <img src="assets/images_webp/ui/bg_all_may2.webp" class="backdrop-cloud cloud-2" alt="">
+                <img src="assets/images_webp/ui/bg_all_may3.webp" class="backdrop-cloud cloud-3" alt="">
+                <img src="assets/images_webp/ui/bg_all_may4.webp" class="backdrop-cloud cloud-4" alt="">
+            </div>
+
             <!-- VIEWPORT KÉO (PAN) & ZOOM KHÔNG GIAN BÃI TRẠI -->
             <div id="mycamp-viewport" class="mycamp-viewport">
                 <!-- SÂN KHẤU CẮM TRẠI: CHỨA CẢ ẢNH NỀN VÀ CÁC ITEM CÙNG TỌA ĐỘ CỐ ĐỊNH -->
@@ -174,15 +188,23 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-    <script src="js/i18n.js?v=10.51"></script>
-    <script src="js/config.js?v=10.51"></script>
-    <script src="js/data.js?v=10.51"></script>
-    <script src="js/engine.js?v=10.51"></script>
-    <script src="js/progress.js?v=10.51"></script>
-    <script src="js/firebase-sync.js?v=10.51"></script>
-    <script src="js/mycamp_config.js?v=10.51"></script>
-    <script src="js/camp.js?v=10.51"></script>
-    <script src="js/components/board.js?v=10.51"></script>
-    <script src="js/test_tool.js?v=10.51"></script>
+    <!-- Bộ thư viện mã nguồn mở: Đồ họa WebGL (PixiJS + Filters + Particles) & Hoạt ảnh Juiciness (GSAP) -->
+    <script src="js/libs/pixi.min.js"></script>
+    <script src="js/libs/pixi-filters.js"></script>
+    <script src="js/libs/particle-emitter.min.js"></script>
+    <script src="js/libs/gsap.min.js"></script>
+    <script src="js/libs/MotionPathPlugin.min.js"></script>
+
+    <script src="js/i18n.js?v=10.72"></script>
+    <script src="js/config.js?v=10.76"></script>
+    <script src="js/data.js?v=10.76"></script>
+    <script src="js/engine.js?v=10.72"></script>
+    <script src="js/progress.js?v=10.72"></script>
+    <script src="js/firebase-sync.js?v=10.72"></script>
+    <script src="js/mycamp_config.js?v=10.72"></script>
+    <script src="js/visual_fx.js?v=10.72"></script>
+    <script src="js/camp.js?v=10.72"></script>
+    <script src="js/components/board.js?v=10.72"></script>
+    <script src="js/test_tool.js?v=10.72"></script>
 </body>
 </html>

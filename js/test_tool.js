@@ -116,12 +116,25 @@
     }
 
     // 4. CÁC HÀM TRỢ GIÚP PHÂN TÍCH NHIỆM VỤ & BÀN CỜ CHO BOT
-    // 4.1. Lấy danh sách các đơn hàng thực tế đang còn thiếu (chưa có trên bàn cờ)
+    function getItemLineHelper(id) {
+        if (!id) return '';
+        return (typeof itemLine === 'function') ? itemLine(id) : String(id).split('_lv')[0];
+    }
+
+    function getItemLvHelper(id) {
+        if (!id) return 1;
+        return (typeof itemLv === 'function') ? itemLv(id) : (parseInt(String(id).split('_lv')[1], 10) || 1);
+    }
+
+    // 4.1. Lấy danh sách các đơn hàng thực tế đang còn thiếu (chưa stashed và chưa có sẵn trên bàn cờ)
     function getUnsatisfiedOrders() {
         var needed = [];
         if (typeof SAVE === 'undefined' || !SAVE || !Array.isArray(SAVE.petOrderGroups) || !SAVE.petOrderGroups.length) {
             return needed;
         }
+        var group = SAVE.petOrderGroups[0];
+        if (!group || group._isDelivering) return needed;
+
         var available = {};
         if (typeof boardData !== 'undefined' && Array.isArray(boardData)) {
             boardData.forEach(function (c) {
@@ -130,8 +143,7 @@
                 }
             });
         }
-        var group = SAVE.petOrderGroups[0];
-        if (group && Array.isArray(group.orders)) {
+        if (Array.isArray(group.orders)) {
             group.orders.forEach(function (o) {
                 if (!o || !o.id) return;
                 if (o.stashed) return;
@@ -145,62 +157,167 @@
         return needed;
     }
 
-    // 4.2. Kiểm tra xem 1 món đồ trên bàn cờ có đang được bảo vệ (đạt đúng cấp độ đơn hàng cần giao) hay không
-    function isItemProtectedForOrder(itemId) {
-        if (!itemId || typeof SAVE === 'undefined' || !SAVE || !Array.isArray(SAVE.petOrderGroups) || !SAVE.petOrderGroups[0]) return false;
-        var group = SAVE.petOrderGroups[0];
-        var neededCount = 0;
-        (group.orders || []).forEach(function (o) {
-            if (o && o.id === itemId && !o.stashed) neededCount++;
-        });
-        if (neededCount === 0) return false;
+    // 4.2. Phân tích toàn cảnh bàn cờ và đơn hàng hiện tại để quyết định ghép thông minh
+    function analyzeBoardForBot() {
+        var unlockedCountsById = {};
+        var maxWebLvByLine = {};
+        var unlockedUnitsByLine = {};
+        var emptyCount = 0;
 
-        var countOnBoard = 0;
         if (typeof boardData !== 'undefined' && Array.isArray(boardData)) {
-            boardData.forEach(function (c) {
-                if (c && c.id === itemId && !c.isRock && !c.isLocked) {
-                    countOnBoard++;
+            for (var i = 0; i < boardData.length; i++) {
+                var c = boardData[i];
+                if (!c || !c.id) {
+                    emptyCount++;
+                    continue;
+                }
+                if (c.isRock || GENERATORS[c.id]) continue;
+                var ln = getItemLineHelper(c.id);
+                var lv = getItemLvHelper(c.id);
+                if (c.isLocked) {
+                    if (lv > (maxWebLvByLine[ln] || 0)) {
+                        maxWebLvByLine[ln] = lv;
+                    }
+                } else {
+                    unlockedCountsById[c.id] = (unlockedCountsById[c.id] || 0) + 1;
+                    unlockedUnitsByLine[ln] = (unlockedUnitsByLine[ln] || 0) + Math.pow(2, lv - 1);
+                }
+            }
+        }
+
+        var neededCountById = {};
+        var maxNeededLvByLine = {};
+        var targetLines = new Set();
+
+        if (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[0]) {
+            var grp = SAVE.petOrderGroups[0];
+            (grp.orders || []).forEach(function (o) {
+                if (o && o.id && !o.stashed) {
+                    neededCountById[o.id] = (neededCountById[o.id] || 0) + 1;
+                    var ln = getItemLineHelper(o.id);
+                    var lv = getItemLvHelper(o.id);
+                    targetLines.add(ln);
+                    if (lv > (maxNeededLvByLine[ln] || 0)) {
+                        maxNeededLvByLine[ln] = lv;
+                    }
                 }
             });
         }
-        return countOnBoard <= neededCount;
+
+        return {
+            unlockedCountsById: unlockedCountsById,
+            maxWebLvByLine: maxWebLvByLine,
+            unlockedUnitsByLine: unlockedUnitsByLine,
+            emptyCount: emptyCount,
+            neededCountById: neededCountById,
+            maxNeededLvByLine: maxNeededLvByLine,
+            targetLines: targetLines
+        };
+    }
+
+    // Kiểm tra xem có được phép tiêu thụ `consumeCount` (1 khi ghép vào nhện, 2 khi ghép 2 ô mở) của `itemId` hay không
+    function canConsumeItemsForMerge(itemId, consumeCount, analysis) {
+        if (!itemId) return false;
+        var info = analysis || analyzeBoardForBot();
+        var countOnBoard = info.unlockedCountsById[itemId] || 0;
+        var neededNow = info.neededCountById[itemId] || 0;
+
+        // Tuyệt đối không bao giờ ghép làm thiếu số lượng món đang cần trực tiếp cho đơn hiện tại!
+        if (countOnBoard - consumeCount < neededNow) {
+            return false;
+        }
+
+        var ln = getItemLineHelper(itemId);
+        var lv = getItemLvHelper(itemId);
+        var maxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
+        if (lv >= maxLv) return false;
+
+        // Nếu ghép vào ô mạng nhện (consumeCount === 1): luôn cho phép vì không làm giảm cấp mà còn mở khóa ô!
+        if (consumeCount === 1) {
+            return true;
+        }
+
+        // Nếu nhánh này có ô mạng nhện ở cấp cao hơn (lv < maxWebLvByLine[ln]), cho phép ghép lên để phá nhện
+        if ((info.maxWebLvByLine[ln] || 0) > lv) {
+            return true;
+        }
+
+        // Nếu thuộc nhánh đơn hàng hiện tại đang cần:
+        if (info.targetLines.has(ln)) {
+            var targetLv = info.maxNeededLvByLine[ln] || 2;
+            if (lv < targetLv) {
+                return true; // Ghép tích cực từ cấp thấp lên tới đúng cấp đơn hàng yêu cầu
+            }
+            // Nếu đã bằng hoặc vượt cấp đơn hàng: cho phép ghép tiếp khi có từ 2 món trở lên ngoài số lượng đang cần để gom gọn ô
+            return (countOnBoard - neededNow >= 2);
+        }
+
+        // Nếu thuộc nhánh phụ (chưa có trong đơn hiện tại):
+        // Cho phép ghép dồn tự do khi có từ 2 món trở lên (đặc biệt ở cấp < 7) để giải phóng ô cờ tối đa,
+        // không bao giờ để tồn đọng hàng loạt món trùng lặp chiếm diện tích bàn cờ!
+        if (lv < 7) {
+            return countOnBoard >= 2;
+        }
+        return (countOnBoard >= 3) || (info.emptyCount <= 10);
+    }
+
+    // Kiểm tra xem ô `cellIdx` có nằm cạnh ô đá (isRock) để ưu tiên phá băng/mở đá hay không
+    function hasAdjacentRock(cellIdx) {
+        if (typeof boardData === 'undefined' || !Array.isArray(boardData)) return false;
+        var cols = 7;
+        var r = Math.floor(cellIdx / cols);
+        var c = cellIdx % cols;
+        var dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        for (var d = 0; d < dirs.length; d++) {
+            var nr = r + dirs[d][0];
+            var nc = c + dirs[d][1];
+            if (nr >= 0 && nr < 9 && nc >= 0 && nc < cols) {
+                var nCell = boardData[nr * cols + nc];
+                if (nCell && nCell.isRock) return true;
+            }
+        }
+        return false;
     }
 
     // 4.3. Tìm ô đồ rác tối ưu nhất để bán giải phóng chỗ trống khi bàn cờ bị đầy
+    // Tuyệt đối bảo vệ nguyên liệu đang ghép cho đơn hàng hiện tại
     function findBestTrashItemToSell() {
         if (typeof boardData === 'undefined' || !Array.isArray(boardData)) return -1;
-        var neededIds = new Set();
-        if (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[0]) {
-            (SAVE.petOrderGroups[0].orders || []).forEach(function (o) {
-                if (o && o.id) neededIds.add(o.id);
-            });
-        }
+        var info = analyzeBoardForBot();
 
         var bestIdx = -1;
-        var lowestLv = 999;
-        var bestIsNeeded = true;
+        var bestScore = Infinity;
 
         for (var idx = 0; idx < boardData.length; idx++) {
             var c = boardData[idx];
             if (!c || !c.id || c.isRock || c.isLocked || GENERATORS[c.id]) continue;
-            var lv = (typeof itemLv === 'function') ? itemLv(c.id) : (parseInt(c.id.split('_lv')[1], 10) || 1);
-            var isNeeded = neededIds.has(c.id);
+            var ln = getItemLineHelper(c.id);
+            var lv = getItemLvHelper(c.id);
 
-            // Ưu tiên bán đồ không nằm trong đơn hàng đang cần
-            if (!isNeeded && bestIsNeeded) {
-                bestIsNeeded = false;
-                lowestLv = lv;
+            // Điểm càng thấp càng ưu tiên bán trước
+            var score = lv * 10;
+
+            // 1. Bảo vệ tuyệt đối vật phẩm khớp trực tiếp với đơn hàng đang cần
+            if ((info.neededCountById[c.id] || 0) > 0) {
+                score += 100000;
+            }
+            // 2. Bảo vệ nguyên liệu cấp thấp thuộc nhánh đơn hàng đang cần ghép
+            else if (info.targetLines.has(ln) && lv < (info.maxNeededLvByLine[ln] || 2)) {
+                score += 10000 + (lv * 100);
+            }
+            // 3. Bảo vệ vật phẩm đã chuẩn bị đúng cấp prepLv cho nhiệm vụ kế tiếp của Slot 1
+            else {
+                var prepLv = (typeof SAVE !== 'undefined' && SAVE && SAVE.slot1BranchLevelMap && typeof SAVE.slot1BranchLevelMap[ln] === 'number')
+                    ? (SAVE.slot1BranchLevelMap[ln] + 1)
+                    : 2;
+                if (lv === prepLv && (info.unlockedCountsById[c.id] || 0) === 1) {
+                    score += 500;
+                }
+            }
+
+            if (score < bestScore) {
+                bestScore = score;
                 bestIdx = idx;
-            } else if (!isNeeded && !bestIsNeeded) {
-                if (lv < lowestLv) {
-                    lowestLv = lv;
-                    bestIdx = idx;
-                }
-            } else if (isNeeded && bestIsNeeded) {
-                if (lv < lowestLv) {
-                    lowestLv = lv;
-                    bestIdx = idx;
-                }
             }
         }
         return bestIdx;
@@ -258,22 +375,43 @@
         return false;
     }
 
-    // 4.5. LOGIC CHÍNH CỦA BOT TỰ ĐỘNG CHƠI (AUTO-BOT ENGINE)
+    // 4.5. LOGIC CHÍNH CỦA BOT TỰ ĐỘNG CHƠI (AUTO-BOT ENGINE THÔNG MINH v2)
     function botStep() {
         if (!autoBotRunning) return;
         if (typeof boardData === 'undefined' || !boardData.length) return;
+        if (typeof SAVE === 'undefined' || !SAVE || !Array.isArray(SAVE.petOrderGroups) || !SAVE.petOrderGroups.length) return;
 
-        // BƯỚC 1: TỰ ĐỘNG GIAO ĐƠN HÀNG KHI ĐỦ ĐIỀU KIỆN
-        var deliverGroupBtn = document.querySelector('.btn-group-deliver');
-        if (deliverGroupBtn && !deliverGroupBtn.disabled) {
-            deliverGroupBtn.click();
-            autoBotStats.ordersDelivered++;
-            updateBotStatusUI();
-            return;
+        var activeGroup = SAVE.petOrderGroups[0];
+        if (!activeGroup || activeGroup._isDelivering) return;
+
+        // BƯỚC 1: TỰ ĐỘNG CẤT NGAY VẬT PHẨM ĐÃ HOÀN THÀNH LÊN KHAY ĐƠN HÀNG (STASH)
+        // Giúp giải phóng ô cờ tức thì và tránh tuyệt đối việc ghép nhầm hoặc bán nhầm món đã xong!
+        if (Array.isArray(activeGroup.orders)) {
+            for (var oi = 0; oi < activeGroup.orders.length; oi++) {
+                var ord = activeGroup.orders[oi];
+                if (ord && ord.id && !ord.stashed) {
+                    var matchIdx = -1;
+                    for (var bi = 0; bi < boardData.length; bi++) {
+                        var cell = boardData[bi];
+                        if (cell && cell.id === ord.id && !cell.isRock && !cell.isLocked) {
+                            matchIdx = bi;
+                            break;
+                        }
+                    }
+                    if (matchIdx !== -1 && typeof handleCellDoubleClick === 'function') {
+                        handleCellDoubleClick(matchIdx);
+                        return; // Cất món xong lập tức nhường lượt để state và khay được cập nhật an toàn
+                    }
+                }
+            }
         }
 
+        // BƯỚC 2: TỰ ĐỘNG GIAO ĐƠN HÀNG KHI TẤT CẢ CÁC MÓN TRONG NHÓM ĐÃ ĐỦ
+        var allStashed = Array.isArray(activeGroup.orders) && activeGroup.orders.length > 0 &&
+            activeGroup.orders.every(function (o) { return o && o.stashed; });
         var unsatisfied = getUnsatisfiedOrders();
-        if (unsatisfied.length === 0 && typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups.length > 0) {
+
+        if ((allStashed || unsatisfied.length === 0) && !activeGroup._isDelivering) {
             if (typeof deliverPetOrderGroup === 'function') {
                 deliverPetOrderGroup(0);
                 autoBotStats.ordersDelivered++;
@@ -282,79 +420,98 @@
             }
         }
 
-        // BƯỚC 2: TỰ ĐỘNG PHÁT HIỆN VÀ LÔI MÁY PHÁT MỚI VÀO BÀN CỜ (CẤP 4: BA LÔ, CẤP 7: THÙNG ĐỒ)
+        // BƯỚC 3: TỰ ĐỘNG PHÁT HIỆN VÀ LÔI MÁY PHÁT MỚI VÀO BÀN CỜ (CẤP 4: BA LÔ, CẤP 7: THÙNG ĐỒ)
         if (checkAndPlacePendingGenerators()) {
             return;
         }
 
-        // BƯỚC 3: GHÉP ĐỒ THÔNG MINH
-        // 3.1. Thu thập các nhánh mà các đơn hàng còn thiếu đang cần
-        var targetLines = new Set();
-        unsatisfied.forEach(function (o) {
-            if (o && o.id) {
-                var ln = (typeof itemLine === 'function') ? itemLine(o.id) : o.id.split('_lv')[0];
-                targetLines.add(ln);
-            }
-        });
+        // BƯỚC 4: GHÉP ĐỒ THÔNG MINH THEO THỨ TỰ ƯU TIÊN CHIẾN THUẬT
+        var analysis = analyzeBoardForBot();
 
-        // 3.2. Ghép vào ô mạng nhện (kẹt mạng) để giải phóng ô cờ và mở đá
+        // 4.1. Ưu tiên số 1: Ghép mở khóa ô mạng nhện (c1 tự do + c2 bị khóa mạng nhện)
+        // Sắp xếp ưu tiên: Ô nhện sát đá -> Nhánh đơn hàng đang cần -> Cấp độ cao nhất trước
+        var webMerges = [];
         for (var i = 0; i < boardData.length; i++) {
             var c1 = boardData[i];
             if (!c1 || !c1.id || c1.isRock || c1.isLocked || GENERATORS[c1.id]) continue;
+            if (!canConsumeItemsForMerge(c1.id, 1, analysis)) continue;
+
             for (var j = 0; j < boardData.length; j++) {
                 if (i === j) continue;
                 var c2 = boardData[j];
                 if (!c2 || !c2.id || c2.isRock || GENERATORS[c2.id]) continue;
                 if (c2.isLocked && c2.id === c1.id) {
-                    executeMoveAndEffects(i, j);
-                    autoBotStats.merges++;
-                    updateBotStatusUI();
-                    return;
+                    var lnW = getItemLineHelper(c1.id);
+                    var lvW = getItemLvHelper(c1.id);
+                    var adjRock = hasAdjacentRock(j) ? 1 : 0;
+                    var isTarget = analysis.targetLines.has(lnW) ? 1 : 0;
+                    webMerges.push({
+                        from: i,
+                        to: j,
+                        score: (adjRock * 1000) + (isTarget * 200) + (lvW * 10)
+                    });
+                }
+            }
+        }
+        if (webMerges.length > 0) {
+            webMerges.sort(function (a, b) { return b.score - a.score; });
+            var resW = executeMoveAndEffects(webMerges[0].from, webMerges[0].to);
+            if (!resW || resW.type === 'merge') {
+                autoBotStats.merges++;
+            }
+            updateBotStatusUI();
+            return;
+        }
+
+        // 4.2. Thu thập tất cả các cặp ô tự do có thể ghép hợp lệ và phân loại ưu tiên:
+        // - Nhóm A (type 1): Nhánh mục tiêu của đơn hàng hiện tại (lv < maxNeededLv) -> Ghép từ cấp thấp nhất lên cao (Lv.1 -> Lv.2 -> Lv.3...)
+        // - Nhóm B (type 2): Nhánh có ô mạng nhện cấp cao hơn đang chờ trên bàn (lv < maxWebLv) -> Ghép bắc cầu để phá nhện
+        // - Nhóm C (type 3): Ghép thu gọn bàn cờ & dọn sạch đồ trùng lặp -> Ghép từ cấp thấp nhất lên
+        var freeMerges = [];
+        for (var m1 = 0; m1 < boardData.length; m1++) {
+            var item1 = boardData[m1];
+            if (!item1 || !item1.id || item1.isRock || item1.isLocked || GENERATORS[item1.id]) continue;
+            if (!canConsumeItemsForMerge(item1.id, 2, analysis)) continue;
+
+            for (var m2 = m1 + 1; m2 < boardData.length; m2++) {
+                var item2 = boardData[m2];
+                if (!item2 || !item2.id || item2.isRock || item2.isLocked || GENERATORS[item2.id]) continue;
+                if (item2.id === item1.id) {
+                    var lnM = getItemLineHelper(item1.id);
+                    var lvM = getItemLvHelper(item1.id);
+                    var priorityGroup = 3;
+                    if (analysis.targetLines.has(lnM) && lvM < (analysis.maxNeededLvByLine[lnM] || 2)) {
+                        priorityGroup = 1;
+                    } else if (lvM < (analysis.maxWebLvByLine[lnM] || 0)) {
+                        priorityGroup = 2;
+                    }
+                    freeMerges.push({
+                        from: m1,
+                        to: m2,
+                        priorityGroup: priorityGroup,
+                        lv: lvM
+                    });
+                    break; // Đã tìm được cặp cho m1
                 }
             }
         }
 
-        // 3.3. Ghép đồ thuộc nhánh nhiệm vụ đang cần (ưu tiên hoàn thành đơn)
-        // Không ghép tiêu biến món đồ đã đạt đúng cấp độ đơn hàng đang cần
-        for (var i = 0; i < boardData.length; i++) {
-            var c1 = boardData[i];
-            if (!c1 || !c1.id || c1.isRock || c1.isLocked || GENERATORS[c1.id]) continue;
-            var line1 = (typeof itemLine === 'function') ? itemLine(c1.id) : c1.id.split('_lv')[0];
-            if (!targetLines.has(line1)) continue;
-            if (isItemProtectedForOrder(c1.id)) continue;
-
-            for (var j = i + 1; j < boardData.length; j++) {
-                var c2 = boardData[j];
-                if (!c2 || !c2.id || c2.isRock || c2.isLocked || GENERATORS[c2.id]) continue;
-                if (c2.id === c1.id) {
-                    executeMoveAndEffects(i, j);
-                    autoBotStats.merges++;
-                    updateBotStatusUI();
-                    return;
-                }
+        if (freeMerges.length > 0) {
+            freeMerges.sort(function (a, b) {
+                if (a.priorityGroup !== b.priorityGroup) return a.priorityGroup - b.priorityGroup;
+                // Luôn ghép từ cấp thấp nhất (Lv.1 -> Lv.2 -> Lv.3) để dồn chuỗi gọn gàng, không để sót đồ lẻ
+                return a.lv - b.lv;
+            });
+            var resF = executeMoveAndEffects(freeMerges[0].from, freeMerges[0].to);
+            if (!resF || resF.type === 'merge') {
+                autoBotStats.merges++;
             }
+            updateBotStatusUI();
+            return;
         }
 
-        // 3.4. Ghép bất kỳ 2 món cùng loại khác để thu gọn bàn cờ (trừ món đã đủ để nộp)
-        for (var i = 0; i < boardData.length; i++) {
-            var c1 = boardData[i];
-            if (!c1 || !c1.id || c1.isRock || c1.isLocked || GENERATORS[c1.id]) continue;
-            if (isItemProtectedForOrder(c1.id)) continue;
-
-            for (var j = i + 1; j < boardData.length; j++) {
-                var c2 = boardData[j];
-                if (!c2 || !c2.id || c2.isRock || c2.isLocked || GENERATORS[c2.id]) continue;
-                if (c2.id === c1.id) {
-                    executeMoveAndEffects(i, j);
-                    autoBotStats.merges++;
-                    updateBotStatusUI();
-                    return;
-                }
-            }
-        }
-
-        // BƯỚC 4: BẤM MÁY PHÁT ĐỂ SINH ĐỒ
-        // 4.1. Kiểm tra ô trống trên bàn cờ
+        // BƯỚC 5: BẤM MÁY PHÁT ĐỂ SINH ĐỒ
+        // 5.1. Kiểm tra ô trống trên bàn cờ; nếu đầy và không còn cặp ghép thì bán món đồ rác ít giá trị nhất
         var empties = (typeof getEmptyIndexes === 'function') ? getEmptyIndexes(boardData) : [];
         if (!empties.length) {
             var sellIdx = findBestTrashItemToSell();
@@ -364,18 +521,30 @@
             }
         }
 
-        // 4.2. Tự hồi năng lượng nếu cạn (giả lập xem ads +50⚡)
+        // 5.2. Tự hồi năng lượng nếu cạn (giả lập xem ads +50⚡)
         if (typeof playerEnergy !== 'undefined' && playerEnergy <= 5) {
             playerEnergy = 50;
             if (SAVE) SAVE.energy = 50;
             if (typeof updateUIStats === 'function') updateUIStats();
         }
 
-        // 4.3. Chọn chính xác máy phát phục vụ cho đơn hàng đang thiếu
+        // 5.3. Chọn máy phát thông minh: Ưu tiên hoàn thành món đơn hàng nào cần ÍT năng lượng/đơn vị còn thiếu nhất trước
+        // để nhanh chóng cất món đó lên khay, giải phóng tối đa mặt bằng cho món khó!
         var targetGen = 'generator_cooler';
         if (unsatisfied.length > 0) {
-            var firstMissing = unsatisfied[0];
-            var fLine = (typeof itemLine === 'function') ? itemLine(firstMissing.id) : firstMissing.id.split('_lv')[0];
+            var sortedUnsatisfied = unsatisfied.slice().sort(function (oA, oB) {
+                var lnA = getItemLineHelper(oA.id);
+                var lvA = getItemLvHelper(oA.id);
+                var lnB = getItemLineHelper(oB.id);
+                var lvB = getItemLvHelper(oB.id);
+
+                var reqA = Math.pow(2, lvA - 1) - (analysis.unlockedUnitsByLine[lnA] || 0);
+                var reqB = Math.pow(2, lvB - 1) - (analysis.unlockedUnitsByLine[lnB] || 0);
+                return reqA - reqB;
+            });
+
+            var bestMissing = sortedUnsatisfied[0];
+            var fLine = getItemLineHelper(bestMissing.id);
             if (typeof getGeneratorForLine === 'function') {
                 targetGen = getGeneratorForLine(fLine);
             } else if (typeof GENERATOR_BRANCH_MAP !== 'undefined') {

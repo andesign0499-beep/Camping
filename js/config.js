@@ -24,6 +24,32 @@
 
 var GAME_CONFIG = {
     // -------------------------------------------------------------------------
+    // CẤU HÌNH VỊ TRÍ VÀ TỐC ĐỘ 4 ĐÁM MÂY HOÀNG HÔN (BG_ALL_MAY 1..4)
+    // Bạn có thể trực tiếp sửa các thông số:
+    // - top: Độ cao vị trí mây (tính theo pixel)
+    // - speed: Thời gian bay hết màn hình (giây - số càng lớn thì mây bay càng chậm)
+    // - direction: Hướng bay ('L2R': Trái sang Phải, 'R2L': Phải sang Trái)
+    // - opacity: Độ đậm/nhạt của mây (0.0 đến 1.0)
+    // -------------------------------------------------------------------------
+    clouds: {
+        // 1. Màn hình bàn chơi chính (Gameplay - mây bay cao hơn)
+        gameplay: {
+            cloud1: { top: 70, speed: 80, direction: 'L2R', opacity: 0.80 }, // Mây 1: Trái -> Phải
+            cloud2: { top: 120, speed: 80, direction: 'R2L', opacity: 0.93 }, // Mây 2: Phải -> Trái
+            cloud3: { top: 145, speed: 80, direction: 'L2R', opacity: 0.90 }, // Mây 3: Trái -> Phải
+            cloud4: { top: 160, speed: 80, direction: 'R2L', opacity: 0.92 }  // Mây 4: Phải -> Trái
+        },
+
+        // 2. Màn hình "Trại của bạn" (My Camp - mây bay thấp hơn)
+        myCamp: {
+            cloud1: { top: 180, speed: 80, direction: 'L2R', opacity: 0.80 }, // Mây 1: Trái -> Phải
+            cloud2: { top: 220, speed: 80, direction: 'R2L', opacity: 0.93 }, // Mây 2: Phải -> Trái
+            cloud3: { top: 320, speed: 80, direction: 'L2R', opacity: 0.90 }, // Mây 3: Trái -> Phải
+            cloud4: { top: 320, speed: 80, direction: 'R2L', opacity: 0.92 }  // Mây 4: Phải -> Trái
+        }
+    },
+
+    // -------------------------------------------------------------------------
     // 1. CẤU HÌNH VỊ TRÍ CÁC ITEM VÀ MÁY PHÁT TRÊN BÀN CHƠI BAN ĐẦU
     // (Bàn cờ 7 cột x 9 hàng = 63 ô)
     // -------------------------------------------------------------------------
@@ -634,6 +660,7 @@ GAME_CONFIG.generateLevelConfig = generateLevelConfig;
 
 if (typeof window !== 'undefined') {
     window.GAME_CONFIG = GAME_CONFIG;
+    window.CLOUD_CONFIG = GAME_CONFIG.clouds;
     window.generateLevelConfig = generateLevelConfig;
 }
 

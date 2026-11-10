@@ -33,10 +33,10 @@ var KHUTRAI_ITEMS = {
     'ban_lv6':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv6.webp',  name: 'Bàn Cắm Trại Đa Năng' },
     'ban_lv7':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv7.webp',  name: 'Bàn Chiến Thuật IGT' },
     'ban_lv8':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv8.webp',  name: 'Trạm Bếp Nấu Ăn Glamping' },
-    'ban_lv9':  { type: 'table', path: 'assets/images_webp/items/ban_lv9.webp',  name: 'Bàn Tiệc Gỗ Sồi Hoàng Gia' },
-    'ban_lv10': { type: 'table', path: 'assets/images_webp/items/ban_lv10.webp', name: 'Bàn Quầy Bar Cắm Trại' },
-    'ban_lv11': { type: 'table', path: 'assets/images_webp/items/ban_lv11.webp', name: 'Bàn Đảo Bếp Sang Trọng' },
-    'ban_lv12': { type: 'table', path: 'assets/images_webp/items/ban_lv12.webp', name: 'Bàn Hoàng Gia Đỉnh Cao' },
+    'ban_lv9':  { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv9.webp',  name: 'Bàn Tiệc Gỗ Sồi Hoàng Gia' },
+    'ban_lv10': { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv10.webp', name: 'Bàn Quầy Bar Cắm Trại' },
+    'ban_lv11': { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv11.webp', name: 'Bàn Đảo Bếp Sang Trọng' },
+    'ban_lv12': { type: 'table', path: 'assets/images_webp/items_khutrai/ban_lv12.webp', name: 'Bàn Hoàng Gia Đỉnh Cao' },
 
     // --- BẾP & LỬA TRẠI (STOVE) ---
     'bep_lv1':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv1.webp',  name: 'Nhánh Củi Khô' },
@@ -47,10 +47,10 @@ var KHUTRAI_ITEMS = {
     'bep_lv6':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv6.webp',  name: 'Lửa Trại Rực Hồng' },
     'bep_lv7':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv7.webp',  name: 'Lò Nướng Than Hoa Tròn' },
     'bep_lv8':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv8.webp',  name: 'Bếp Nướng BBQ Chữ Nhật' },
-    'bep_lv9':  { type: 'stove', path: 'assets/images_webp/items/bep_lv9.webp',  name: 'Bếp Ga Đôi Dã Ngoại' },
-    'bep_lv10': { type: 'stove', path: 'assets/images_webp/items/bep_lv10.webp', name: 'Bếp Củi Sưởi Đa Năng' },
-    'bep_lv11': { type: 'stove', path: 'assets/images_webp/items/bep_lv11.webp', name: 'Lò Nướng Pizza Ngoài Trời' },
-    'bep_lv12': { type: 'stove', path: 'assets/images_webp/items/bep_lv12.webp', name: 'Trạm Bếp Cắm Trại Đỉnh Cao' },
+    'bep_lv9':  { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv9.webp',  name: 'Bếp Ga Đôi Dã Ngoại' },
+    'bep_lv10': { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv10.webp', name: 'Bếp Củi Sưởi Đa Năng' },
+    'bep_lv11': { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv11.webp', name: 'Lò Nướng Pizza Ngoài Trời' },
+    'bep_lv12': { type: 'stove', path: 'assets/images_webp/items_khutrai/bep_lv12.webp', name: 'Trạm Bếp Cắm Trại Đỉnh Cao' },
 
     // --- GHẾ DÃ NGOẠI (CHAIR) ---
     'ghe_lv1':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv1.webp',  name: 'Ghế Đôn Xếp Mini' },
@@ -61,10 +61,19 @@ var KHUTRAI_ITEMS = {
     'ghe_lv6':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv6.webp',  name: 'Ghế Mặt Trăng Moon Chair' },
     'ghe_lv7':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv7.webp',  name: 'Ghế Tựa Lưng Cao Có Gối' },
     'ghe_lv8':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv8.webp',  name: 'Ghế Đạo Diễn Cao Cấp' },
-    'ghe_lv9':  { type: 'chair', path: 'assets/images_webp/items/ghe_lv9.webp',  name: 'Ghế Sofa Hơi Đôi Dã Ngoại' },
-    'ghe_lv10': { type: 'chair', path: 'assets/images_webp/items/ghe_lv10.webp', name: 'Ghế Bập Bênh Thư Giãn' },
-    'ghe_lv11': { type: 'chair', path: 'assets/images_webp/items/ghe_lv11.webp', name: 'Giường Xếp Glamping Đệm Dày' },
-    'ghe_lv12': { type: 'chair', path: 'assets/images_webp/items/ghe_lv12.webp', name: 'Ghế Ngai Vàng Cắm Trại Đỉnh Cao' }
+    'ghe_lv9':  { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv9.webp',  name: 'Ghế Sofa Hơi Đôi Dã Ngoại' },
+    'ghe_lv10': { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv10.webp', name: 'Ghế Bập Bênh Thư Giãn' },
+    'ghe_lv11': { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv11.webp', name: 'Giường Xếp Glamping Đệm Dày' },
+    'ghe_lv12': { type: 'chair', path: 'assets/images_webp/items_khutrai/ghe_lv12.webp', name: 'Ghế Ngai Vàng Cắm Trại Đỉnh Cao' },
+
+    // --- ĐÈN BÃO TREO CỘT ĐÈN TỪ LEVEL 6 (LAMP) ---
+    'congcu_lv6':  { type: 'lamp', path: 'assets/images_webp/items_khutrai/congcu_lv6.webp',  name: 'Đèn Bão Dã Ngoại Vintage' },
+    'congcu_lv7':  { type: 'lamp', path: 'assets/images_webp/items_khutrai/congcu_lv7.webp',  name: 'Đèn Cắm Trại Chân Cao Tripod' },
+    'congcu_lv8':  { type: 'lamp', path: 'assets/images_webp/items_khutrai/congcu_lv8.webp',  name: 'Đèn Bão Cổ Điển Retro' },
+    'congcu_lv9':  { type: 'lamp', path: 'assets/images_webp/items_khutrai/congcu_lv9.webp',  name: 'Cột Đèn Glamping Đôi' },
+    'congcu_lv10': { type: 'lamp', path: 'assets/images_webp/items_khutrai/congcu_lv10.webp', name: 'Đèn Thao Tác Chuyên Dụng' },
+    'congcu_lv11': { type: 'lamp', path: 'assets/images_webp/items_khutrai/congcu_lv11.webp', name: 'Hệ Thống Chiếu Sáng Trại Glamping' },
+    'congcu_lv12': { type: 'lamp', path: 'assets/images_webp/items_khutrai/congcu_lv12.webp', name: 'Đèn Cực Quang Glamping Thượng Hạng' }
 };
 
 // 2. CẤU HÌNH SÂN KHẤU, ẢNH NỀN, THAO TÁC KÉO/ZOOM & VỊ TRÍ ITEM
@@ -407,13 +416,24 @@ var MYCAMP_CONFIG = {
         },
         {
             id: 'lamp',
-            name: 'Cột đèn dã ngoại (bên bờ suối)',
+            name: 'Cột đèn dã ngoại (bên bờ suối - tự động ẩn nếu chưa có đèn Lv.6+)',
             type: 'decor',
             visible: true,           // Đổi thành false để ẨN, true để HIỆN - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             src: 'assets/images_webp/items_khutrai/icon_den.webp',
-            left: 230,
-            top: 245,
-            width: 24,
+            left: 230,               // Tọa độ ngang cột đèn (px) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            top: 245,                // Tọa độ dọc cột đèn (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            width: 24,               // Chiều rộng cột đèn (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            height: 'auto',
+            zIndex: 14
+        },
+        {
+            id: 'slot-lamp',
+            name: 'Đèn bão treo dưới cột đèn (Tự động gắn theo đèn từ Level 6 người chơi đang có)',
+            type: 'slot',
+            slotKey: 'lamp',
+            left: 223,               // Tọa độ ngang đèn treo (px) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            top: 254,                // Tọa độ dọc đèn treo (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
+            width: 26,               // Chiều rộng đèn treo (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
             height: 'auto',
             zIndex: 13
         },
