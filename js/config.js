@@ -148,6 +148,7 @@ var GAME_CONFIG = {
 
     // Danh sách 63 đơn hàng định hướng tiến trình:
     // - Phần tử [0] (Slot 1): Cố định 100% làm Nhiệm vụ Cốt truyện (Main Quest).
+    //   Đặc biệt: Nhánh Ghế (ghe_lv...) luôn xuất hiện đúng 2 lần (cách nhau 3 nhiệm vụ) để người chơi có 2 ghế ghép vào trại.
     // - Phần tử [1], [2] (Slot 2 & 3): Làm mốc tham chiếu cấp độ / mặc định khi bàn cờ đang trống hoàn toàn.
     // - Tự động thích ứng: Nếu người chơi chưa đạt Level 4 (Ba Lô) hoặc Level 5 (Thùng Đồ) / chưa lôi máy phát vào bàn,
     //   đơn hàng sẽ chỉ lấy các nhánh thuộc máy phát ĐANG CÓ TRÊN BÀN CHƠI!
@@ -157,21 +158,21 @@ var GAME_CONFIG = {
         // Chỉ xuất hiện 3 nhánh Xe Kéo (ban, ghe, trai) để người chơi hiểu rõ luật ghép và phá nhện mở bàn cờ
         1:  ['trai_lv3', 'ghe_lv2', 'ban_lv2'],
         2:  ['ban_lv3',  'ghe_lv2', 'trai_lv2'],
-        3:  ['ghe_lv3',  'trai_lv2', 'ban_lv2'],
+        3:  ['ghe_lv3',  'trai_lv2', 'ban_lv2'],  // Ghế Lv3 (Lần 1)
         4:  ['trai_lv4', 'ban_lv3', 'ghe_lv2'],
         5:  ['ban_lv4',  'ghe_lv3', 'trai_lv2'],
-        6:  ['ghe_lv4',  'trai_lv3', 'ban_lv2'],
-        7:  ['trai_lv4', 'ghe_lv3', 'ban_lv3'],
-        8:  ['ban_lv4',  'trai_lv3', 'ghe_lv3'],
-        9:  ['ghe_lv5',  'ban_lv3', 'trai_lv3'],
-        10: ['trai_lv5', 'ghe_lv4', 'ban_lv3'],
-        11: ['ban_lv5',  'trai_lv4', 'ghe_lv3'],
-        12: ['ghe_lv5',  'ban_lv4', 'trai_lv3'],
+        6:  ['trai_lv4', 'trai_lv3', 'ban_lv2'],
+        7:  ['ghe_lv3',  'ghe_lv3', 'ban_lv3'],   // Ghế Lv3 (Lần 2 - cách đúng 3 nhiệm vụ)
+        8:  ['ban_lv5',  'trai_lv3', 'ghe_lv3'],
+        9:  ['trai_lv5', 'ban_lv3', 'trai_lv3'],
+        10: ['ban_lv5',  'ghe_lv4', 'ban_lv3'],
+        11: ['ghe_lv4',  'trai_lv4', 'ghe_lv3'],  // Ghế Lv4 (Lần 1)
+        12: ['trai_lv5', 'ban_lv4', 'trai_lv3'],
 
         // Order 13-20 (Giai đoạn Level 4 - Sau khi lôi Ba Lô vào bàn: Thêm an, cafe, congcu)
         13: ['an_lv3',     'cafe_lv2',   'ghe_lv3'],
         14: ['congcu_lv3', 'an_lv3',     'ban_lv3'],
-        15: ['cafe_lv4',   'trai_lv3',   'congcu_lv2'],
+        15: ['ghe_lv4',    'trai_lv3',   'congcu_lv2'], // Ghế Lv4 (Lần 2 - cách đúng 3 nhiệm vụ: 12, 13, 14)
         16: ['an_lv4',     'ghe_lv4',    'cafe_lv3'],
         17: ['congcu_lv4', 'ban_lv4',    'an_lv3'],
         18: ['cafe_lv5',   'trai_lv4',   'congcu_lv3'],
@@ -373,11 +374,22 @@ var GAME_CONFIG = {
             },
             minLevelForTierDrops: 4,    // Bắt đầu sinh đồ Lv.2 từ Level 4 (Level 1-3 sinh 100% đồ Lv.1)
             minLevelForLv3Drops: 8,     // Từ Level 8 trở lên phát ra item vật phẩm Lv.3 lên tới 60%
+            // Công thức đặc biệt: Khi người chơi làm nhiệm vụ với item từ Level 8 trở lên (chỉ áp dụng cho máy phát chứa món đó)
+            // HOẶC khi cấp độ tài khoản người chơi >= 12 (áp dụng cho tất cả máy phát):
+            // Tăng tỷ lệ rơi Cấp 4 = 50%, Cấp 3 = 30%, Cấp 2 = 20%, Cấp 1 = 0%
+            highLevelQuestDrops: {
+                minQuestLevel: 8,
+                minPlayerLevel: 12,
+                lv4: 0.50,
+                lv3: 0.30,
+                lv2: 0.20,
+                lv1: 0.00
+            },
             tiers: [
-                { maxLevel: 3,  lv1: 1.00, lv2: 0.00, lv3: 0.00 }, // Level 1-3:  100% Cấp 1
-                { maxLevel: 5,  lv1: 0.50, lv2: 0.50, lv3: 0.00 }, // Level 4-5:  50% Cấp 1, 50% Cấp 2
-                { maxLevel: 7,  lv1: 0.30, lv2: 0.70, lv3: 0.00 }, // Level 6-7:  30% Cấp 1, 70% Cấp 2 (giai đoạn 5-7)
-                { maxLevel: 99, lv1: 0.10, lv2: 0.30, lv3: 0.60 }  // Từ Level 8+: 10% Cấp 1, 30% Cấp 2, 60% Cấp 3
+                { maxLevel: 3,  lv1: 1.00, lv2: 0.00, lv3: 0.00, lv4: 0.00 }, // Level 1-3:  100% Cấp 1
+                { maxLevel: 5,  lv1: 0.50, lv2: 0.50, lv3: 0.00, lv4: 0.00 }, // Level 4-5:  50% Cấp 1, 50% Cấp 2
+                { maxLevel: 7,  lv1: 0.30, lv2: 0.70, lv3: 0.00, lv4: 0.00 }, // Level 6-7:  30% Cấp 1, 70% Cấp 2
+                { maxLevel: 99, lv1: 0.00, lv2: 0.20, lv3: 0.30, lv4: 0.50 }  // Từ Level 12+ hoặc khi làm nhiệm vụ Lv.8+: 50% Cấp 4, 30% Cấp 3, 20% Cấp 2
             ]
         },
 

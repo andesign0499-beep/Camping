@@ -2486,6 +2486,16 @@ function deliverPetOrderGroup(groupIdx) {
             }
         });
 
+        // Kích hoạt khoảng nghỉ cho Slot 1 sau khi nộp món cấp cao (Tension & Release)
+        // (Nếu đang trong chu kỳ lặp lại 2 lần của Ghế thì chưa nghỉ vội để giữ đúng nhịp lặp lại)
+        var slot1Order = group.orders.find(function (o) { return o.slotType === 'hard'; });
+        if (slot1Order && (!SAVE.slot1ChairRepeat || !SAVE.slot1ChairRepeat.itemId)) {
+            var s1Lv = parseInt(String(slot1Order.id).split('_lv')[1], 10) || 1;
+            if (typeof getSlot1RestOrdersForLevel === 'function') {
+                SAVE.slot1RestCooldown = getSlot1RestOrdersForLevel(s1Lv);
+            }
+        }
+
         // Thưởng hoàn thành trọn vẹn nhóm nhiệm vụ: Cộng toàn bộ EXP và Vàng gốc của các món + thưởng bonus 10%
         var bonusGold = Math.max(10, Math.round(baseGroupGold * 0.10));
         var bonusExp = Math.max(10, Math.round(baseGroupExp * 0.15));

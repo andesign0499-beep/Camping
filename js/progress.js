@@ -102,6 +102,9 @@ function defaultSave() {
         slot1BranchLevelMap: {},
         slot1RecentBranches: [],
         slot1CompletedIds: [],
+        slot1ChairRepeat: null,
+        slot1RestCooldown: 0,
+        itemCompletedCounts: {},
         allHistoricalOrderedItems: []
     };
 }
@@ -159,6 +162,9 @@ function loadSave() {
             if (!s.slot1BranchLevelMap || typeof s.slot1BranchLevelMap !== 'object') s.slot1BranchLevelMap = {};
             if (!Array.isArray(s.slot1RecentBranches)) s.slot1RecentBranches = [];
             if (!Array.isArray(s.slot1CompletedIds)) s.slot1CompletedIds = [];
+            if (s.slot1ChairRepeat && (typeof s.slot1ChairRepeat !== 'object' || !s.slot1ChairRepeat.itemId)) s.slot1ChairRepeat = null;
+            if (typeof s.slot1RestCooldown !== 'number' || s.slot1RestCooldown < 0) s.slot1RestCooldown = 0;
+            if (!s.itemCompletedCounts || typeof s.itemCompletedCounts !== 'object') s.itemCompletedCounts = {};
             if (!Array.isArray(s.allHistoricalOrderedItems)) s.allHistoricalOrderedItems = [];
             if (Array.isArray(s.slot1CompletedIds)) {
                 s.slot1CompletedIds.forEach(function (id) {
@@ -541,6 +547,13 @@ function addPlayerExp(amount, onLevelUpCallback) {
 function recordOrderDelivered(itemId) {
     if (!itemId || typeof SAVE === 'undefined' || !SAVE) return;
     recordHistoricalOrderedItem(itemId);
+
+    // Ghi nhận số lần hoàn thành vào bảng tổng kết
+    if (!SAVE.itemCompletedCounts || typeof SAVE.itemCompletedCounts !== 'object') {
+        SAVE.itemCompletedCounts = {};
+    }
+    SAVE.itemCompletedCounts[itemId] = (SAVE.itemCompletedCounts[itemId] || 0) + 1;
+
     if (!Array.isArray(SAVE.recentOrdersHistory)) {
         SAVE.recentOrdersHistory = [];
     }
@@ -562,6 +575,55 @@ function recordOrderDelivered(itemId) {
 
     saveGame();
 }
+
+// Kiểm tra số lần một vật phẩm đã được hoàn thành trong kho đồ cắm trại (hoặc tổng số lần giao)
+function getCampItemCompletedCount(itemId) {
+    if (!itemId || typeof SAVE === 'undefined' || !SAVE) return 0;
+    var campCount = 0;
+    if (Array.isArray(SAVE.campItems)) {
+        for (var i = 0; i < SAVE.campItems.length; i++) {
+            if (SAVE.campItems[i] && SAVE.campItems[i].id === itemId) {
+                campCount++;
+            }
+        }
+    }
+    var mapCount = (SAVE.itemCompletedCounts && typeof SAVE.itemCompletedCounts[itemId] === 'number')
+        ? SAVE.itemCompletedCounts[itemId]
+        : 0;
+    return Math.max(campCount, mapCount);
+}
+window.getCampItemCompletedCount = getCampItemCompletedCount;
+
+// Kiểm tra giới hạn số lần tối đa được phép hoàn thành của một item:
+// - Từ cấp 10 trở lên: Chỉ thực hiện 1 lần duy nhất và không thực hiện lại (trừ Ghế được 2 lần)
+// - Dưới cấp 10: Tối đa 3 lần (quá 3 lần thì không thực hiện lại)
+function getMaxAllowedCompletions(itemId) {
+    if (!itemId) return 3;
+    var lv = (typeof itemLevel === 'function')
+        ? itemLevel(itemId)
+        : (parseInt(String(itemId).split('_lv')[1], 10) || 1);
+    var ln = (typeof itemLine === 'function')
+        ? itemLine(itemId)
+        : itemId.split('_lv')[0];
+
+    if (lv >= 10) {
+        if (ln === 'ghe') {
+            return 2; // Ghế từ cấp 10 trở lên được 2 lần để người chơi đủ 2 ghế ghép vào trại
+        }
+        return 1; // Các món khác từ cấp 10 trở lên chỉ thực hiện đúng 1 lần duy nhất
+    }
+    return 3; // Các món dưới cấp 10 tối đa 3 lần
+}
+window.getMaxAllowedCompletions = getMaxAllowedCompletions;
+
+// Kiểm tra xem một vật phẩm đã hoàn thành tối đa số lần cho phép hay chưa
+function isItemCompletedMaxTimes(itemId) {
+    if (!itemId) return false;
+    var currentCount = getCampItemCompletedCount(itemId);
+    var maxAllowed = getMaxAllowedCompletions(itemId);
+    return currentCount >= maxAllowed;
+}
+window.isItemCompletedMaxTimes = isItemCompletedMaxTimes;
 
 // Kiểm tra xem một vật phẩm đã từng được giao trong nhiệm vụ trước đó hay chưa
 function isItemEverOrdered(itemId) {

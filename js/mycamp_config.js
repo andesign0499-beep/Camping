@@ -103,12 +103,14 @@ var MYCAMP_CONFIG = {
         // 💡 Tạo vệt nắng tự nhiên rọi xuống bãi trại giúp khung cảnh có chiều sâu
         // ==========================================
         lighting: {
-            enabled: true,              // true: Bật hiệu ứng ánh sáng nhẹ | false: Tắt
+            enabled: false,             // true: Bật hiệu ứng ánh sáng nhẹ | false: Tắt (Đã tắt vệt nắng nhẹ overlay)
             color: 'rgba(255, 255, 215, 0.26)', // Màu và độ sáng (màu vàng nắng nhẹ, độ mờ 26%)
             positionX: '50%',           // Vị trí ngang của tâm sáng (0% = trái, 50% = giữa, 100% = phải)
             positionY: '18%',           // Vị trí dọc của tâm sáng (18% = chiếu từ trên trời rọi xuống)
             size: '72%',                // Bán kính vùng phủ ánh sáng (VD: 60%, 70%, 80%)
-            pulse: true                 // true: Ánh sáng thở nhẹ bồng bềnh tự nhiên | false: Tĩnh
+            pulse: false,               // true: Ánh sáng thở nhẹ bồng bềnh tự nhiên | false: Tĩnh
+            sunbeams: false,            // true: Bật tia nắng chiều chiếu xiên bay qua lại | false: Tắt (Đã tắt dải nắng bay)
+            fireflies: true             // true: Bật đom đóm / hạt ánh sáng bay lơ lửng quanh đèn | false: Tắt
         }
     },
 

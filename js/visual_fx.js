@@ -604,12 +604,14 @@
                 campApp.stage.addChild(campSunbeamContainer);
                 campApp.stage.addChild(campParticleContainer);
 
-                // 1. Các dải nắng chiều chiếu xiên dịu nhẹ qua rừng thông (hoàn toàn trong suốt)
-                var rayConfigs = [
+                // 1. Các dải nắng chiều chiếu xiên qua rừng thông (Đọc từ MYCAMP_CONFIG.background.lighting, mặc định tắt)
+                var lightCfg = (bgCfg && bgCfg.lighting) ? bgCfg.lighting : {};
+                var enableSunbeams = (lightCfg.sunbeams === true) && (lightCfg.enabled !== false);
+                var rayConfigs = enableSunbeams ? [
                     { x: 115, y: 185, width: 75, height: 310, alpha: 0.28, phase: 0 },
                     { x: 215, y: 205, width: 95, height: 340, alpha: 0.32, phase: 1.6 },
                     { x: 315, y: 215, width: 70, height: 290, alpha: 0.24, phase: 3.1 }
-                ];
+                ] : [];
                 for (var r = 0; r < rayConfigs.length; r++) {
                     var rc = rayConfigs[r];
                     var ray = new PIXI.Sprite(sunbeamTex);
@@ -914,15 +916,30 @@
             stageEl.appendChild(campApp.view);
         }
 
-        // Đồng bộ vị trí & trạng thái hiệu ứng Đèn bão (chỉ áp dụng từ Level 6: congcu_lv6..12)
+        // Kiểm tra cấu hình hiệu ứng ánh sáng (MYCAMP_CONFIG.background.lighting)
+        var currentLightCfg = (bgCfg && bgCfg.lighting) ? bgCfg.lighting : {};
+        var currentEnableSunbeams = (currentLightCfg.sunbeams === true) && (currentLightCfg.enabled !== false);
+        var currentEnableFireflies = (currentLightCfg.fireflies !== false);
+
+        // Tắt dải tia nắng chiếu xiên bay qua lại nếu không được bật
+        if (!currentEnableSunbeams) {
+            if (campSunbeamContainer) campSunbeamContainer.removeChildren();
+            campSunbeams = [];
+        }
+
+        // Đồng bộ vị trí & trạng thái hiệu ứng Đèn bão & Đom đóm bay lơ lửng quanh đèn (từ Level 6: congcu_lv6..12)
         var slotLampEl = document.getElementById('mycamp-slot-lamp');
         var lampImg = slotLampEl ? slotLampEl.querySelector('img') : null;
         var lampItemId = slotLampEl ? (slotLampEl.getAttribute('data-item-id') || '') : '';
+        var eq = (typeof SAVE !== 'undefined' && SAVE && SAVE.myCampEquipped) ? SAVE.myCampEquipped : {};
+        var lampVal = eq.lamp;
+        var lampEquippedId = (typeof lampVal === 'object' && lampVal) ? lampVal.id : (lampVal || '');
+        if (!lampItemId && lampEquippedId) lampItemId = lampEquippedId;
         var lampLv = (lampItemId.indexOf('congcu_lv') === 0) ? (parseInt(lampItemId.split('_lv')[1], 10) || 0) : 0;
-        var hasLampLv6 = !!(slotLampEl && slotLampEl.style.display !== 'none' && lampImg && lampLv >= 6);
+        var hasLampLv6 = !!(slotLampEl && slotLampEl.style.display !== 'none' && (lampImg || lampItemId) && (lampLv >= 6 || lampLv === 0));
 
         if (lampImg) {
-            if (hasLampLv6) {
+            if (hasLampLv6 && currentEnableFireflies) {
                 lampImg.classList.add('vfx-glow-lantern');
             } else {
                 lampImg.classList.remove('vfx-glow-lantern');
@@ -934,7 +951,10 @@
             campFireflyContainer.position.set(lx, ly);
         }
         if (campFireflyEmitter) {
-            campFireflyEmitter.emit = hasLampLv6;
+            campFireflyEmitter.emit = hasLampLv6 && currentEnableFireflies;
+            if (!currentEnableFireflies && typeof campFireflyEmitter.cleanup === 'function') {
+                campFireflyEmitter.cleanup();
+            }
         }
 
         // Đồng bộ vị trí & trạng thái hiệu ứng cháy + khói + tàn lửa ở Bếp (chỉ áp dụng từ Level 6: bep_lv6..12)

@@ -4075,6 +4075,7 @@ function renderMyCampScene() {
             }
         } else {
             lightOverlay.style.display = 'none';
+            lightOverlay.classList.remove('mycamp-light-pulse');
         }
     }
 

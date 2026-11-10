@@ -452,51 +452,125 @@ function computeLineDeficits(board, activeOrders, levelCfg, includeAllOrders) {
 }
 
 // Tính toán cấp độ rơi của vật phẩm từ thùng sinh đồ (Lv.1, Lv.2, Lv.3)
+// Kiểm tra xem máy phát genId có được kích hoạt chế độ sinh đồ cao cấp hay không:
+// - Cấp độ tài khoản người chơi >= 12 -> TẤT CẢ máy phát đều kích hoạt
+// - HOẶC trong nhóm nhiệm vụ đang mở có bất kỳ món nào >= Level 8 -> CHỈ máy phát chứa món đồ đó mới kích hoạt
+function isGeneratorHighLevelActive(genId, effLv) {
+    var pLv = Math.max(1, effLv || ((typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number') ? SAVE.playerLevel : 1));
+
+    // 1. Cấp độ tài khoản người chơi >= 12: tất cả máy phát kích hoạt chế độ cao cấp
+    if (pLv >= 12) return true;
+
+    // 2. Kiểm tra nếu trong nhóm nhiệm vụ đang mở có món >= Level 8:
+    // CHỈ máy phát chứa món đồ đó mới kích hoạt
+    if (!genId || typeof SAVE === 'undefined' || !SAVE || !Array.isArray(SAVE.petOrderGroups)) {
+        return false;
+    }
+
+    var genBranches = [];
+    if (typeof GENERATOR_BRANCH_MAP !== 'undefined' && GENERATOR_BRANCH_MAP && GENERATOR_BRANCH_MAP[genId]) {
+        genBranches = GENERATOR_BRANCH_MAP[genId];
+    } else {
+        var defaultGenMap = {
+            'generator_cooler': ['ban', 'ghe', 'trai'],
+            'generator_backpack': ['an', 'cafe', 'congcu'],
+            'generator_crate': ['bep', 'tham', 'antoan']
+        };
+        genBranches = defaultGenMap[genId] || [];
+    }
+    if (!genBranches.length && typeof GENERATORS !== 'undefined' && Array.isArray(GENERATORS[genId])) {
+        GENERATORS[genId].forEach(function (itId) {
+            var ln = (typeof itemLine === 'function') ? itemLine(itId) : itId.split('_lv')[0];
+            if (genBranches.indexOf(ln) === -1) genBranches.push(ln);
+        });
+    }
+
+    if (!genBranches.length) return false;
+
+    for (var gi = 0; gi < SAVE.petOrderGroups.length; gi++) {
+        var grp = SAVE.petOrderGroups[gi];
+        if (grp && Array.isArray(grp.orders)) {
+            for (var oi = 0; oi < grp.orders.length; oi++) {
+                var o = grp.orders[oi];
+                if (o && !o.done && o.id) {
+                    var lv = (typeof itemLevel === 'function') ? itemLevel(o.id) : (parseInt(String(o.id).split('_lv')[1], 10) || 1);
+                    var ln = (typeof itemLine === 'function') ? itemLine(o.id) : o.id.split('_lv')[0];
+                    if (lv >= 8 && genBranches.indexOf(ln) !== -1) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+window.isGeneratorHighLevelActive = isGeneratorHighLevelActive;
+
+// Tính toán cấp độ rơi của vật phẩm từ thùng sinh đồ (Lv.1, Lv.2, Lv.3, Lv.4)
 // Đọc trực tiếp từ cấu hình GAME_CONFIG.gameplay.generatorDrops để giảm lượng đồ Lv.1 gây đầy bàn
-function getGeneratorDropLevel(levelNum) {
+// Đặc biệt: Khi làm nhiệm vụ item từ Lv.8 trở lên (chỉ máy phát chứa món đó) HOẶC cấp tài khoản >= 12:
+// -> Cấp 4 = 50%, Cấp 3 = 30%, Cấp 2 = 20%, Cấp 1 = 0%
+function getGeneratorDropLevel(levelNum, genId) {
     var dropCfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.generatorDrops)
         ? GAME_CONFIG.gameplay.generatorDrops
         : null;
 
+    var effLv = Math.max(1, levelNum || 1);
+
+    // Kích hoạt công thức sinh đồ cao cấp
+    var isHighLv = isGeneratorHighLevelActive(genId, effLv);
+    if (isHighLv) {
+        var hlCfg = (dropCfg && dropCfg.highLevelQuestDrops) ? dropCfg.highLevelQuestDrops : { lv4: 0.50, lv3: 0.30, lv2: 0.20 };
+        var r = rand();
+        var p4 = (hlCfg.lv4 != null) ? hlCfg.lv4 : 0.50;
+        var p3 = (hlCfg.lv3 != null) ? hlCfg.lv3 : 0.30;
+        if (r < p4) return 4;
+        if (r < p4 + p3) return 3;
+        return 2;
+    }
+
     var minTierLv = (dropCfg && dropCfg.minLevelForTierDrops != null) ? dropCfg.minLevelForTierDrops : 4;
     var minLv3 = (dropCfg && dropCfg.minLevelForLv3Drops != null) ? dropCfg.minLevelForLv3Drops : 8;
-    var effLv = Math.max(1, levelNum || 1);
     if (effLv < minTierLv) return 1;
 
     var tiers = (dropCfg && dropCfg.tiers) || [
         { maxLevel: 3,   lv1: 1.00, lv2: 0.00, lv3: 0.00 },
         { maxLevel: 5,   lv1: 0.50, lv2: 0.50, lv3: 0.00 },
         { maxLevel: 7,   lv1: 0.30, lv2: 0.70, lv3: 0.00 },
-        { maxLevel: 99,  lv1: 0.10, lv2: 0.30, lv3: 0.60 }
+        { maxLevel: 99,  lv1: 0.00, lv2: 0.20, lv3: 0.30, lv4: 0.50 }
     ];
 
     var tier = tiers.find(function (t) { return effLv <= t.maxLevel; }) || tiers[tiers.length - 1];
     var lv3Prob = (effLv >= minLv3) ? (tier.lv3 || 0) : 0;
     var lv2Prob = (effLv >= minTierLv) ? (tier.lv2 || 0) : 0;
 
-    var r = rand();
-    if (effLv >= minLv3 && r < lv3Prob) return 3;
-    if (effLv >= minTierLv && r < lv3Prob + lv2Prob) return 2;
+    var rRand = rand();
+    if (effLv >= minLv3 && rRand < lv3Prob) return 3;
+    if (effLv >= minTierLv && rRand < lv3Prob + lv2Prob) return 2;
     return 1;
 }
 
 // Giá trị kỳ vọng tương đương Lv.1 của 1 lần bấm sinh đồ theo cấp độ màn chơi:
-// Lv.1 = 1 điểm, Lv.2 = 2 điểm, Lv.3 = 4 điểm (1 món Lv3 = 2 món Lv2 = 4 món Lv1)
-function getGeneratorDropExpectedValue(levelNum) {
+// Lv.1 = 1 điểm, Lv.2 = 2 điểm, Lv.3 = 4 điểm, Lv.4 = 8 điểm
+function getGeneratorDropExpectedValue(levelNum, genId) {
     var dropCfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.generatorDrops)
         ? GAME_CONFIG.gameplay.generatorDrops
         : null;
 
+    var effLv = Math.max(1, levelNum || 1);
+    if (isGeneratorHighLevelActive(genId, effLv)) {
+        return (0.20 * 2) + (0.30 * 4) + (0.50 * 8); // = 5.6 điểm kỳ vọng
+    }
+
     var minTierLv = (dropCfg && dropCfg.minLevelForTierDrops != null) ? dropCfg.minLevelForTierDrops : 4;
     var minLv3 = (dropCfg && dropCfg.minLevelForLv3Drops != null) ? dropCfg.minLevelForLv3Drops : 8;
-    var effLv = Math.max(1, levelNum || 1);
     if (effLv < minTierLv) return 1.0;
 
     var tiers = (dropCfg && dropCfg.tiers) || [
         { maxLevel: 3,   lv1: 1.00, lv2: 0.00, lv3: 0.00 },
         { maxLevel: 5,   lv1: 0.50, lv2: 0.50, lv3: 0.00 },
         { maxLevel: 7,   lv1: 0.30, lv2: 0.70, lv3: 0.00 },
-        { maxLevel: 99,  lv1: 0.10, lv2: 0.30, lv3: 0.60 }
+        { maxLevel: 99,  lv1: 0.00, lv2: 0.20, lv3: 0.30, lv4: 0.50 }
     ];
 
     var tier = tiers.find(function (t) { return effLv <= t.maxLevel; }) || tiers[tiers.length - 1];
@@ -736,7 +810,7 @@ function spawnItem(board, genId, activeOrders, levelCfg) {
         ? SAVE.playerLevel
         : ((typeof currentLevel !== 'undefined' && currentLevel) ? currentLevel : ((levelCfg && (levelCfg.num || levelCfg.level)) || 1));
     var minTierLv = (dropCfg && dropCfg.minLevelForTierDrops != null) ? dropCfg.minLevelForTierDrops : 4;
-    var dropLv = getGeneratorDropLevel(pLv);
+    var dropLv = getGeneratorDropLevel(pLv, genId);
 
     // Khi bàn cờ sắp đầy (<= 6 ô trống), nếu nhánh vừa chọn đang có món lẻ hoặc nhện chờ ghép thì khớp đúng cấp đó để ghép ngay
     // (nhưng chỉ cho phép sinh Lv.2 khi người chơi đã đạt tối thiểu Level 4 theo đúng luật minLevelForTierDrops)
@@ -1985,6 +2059,49 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
         }
     });
 
+    // -------------------------------------------------------------------------
+    // CƠ CHẾ LẶP LẠI 2 LẦN CHO CHIẾC GHẾ Ở SLOT 1 (CÁCH NHAU ĐÚNG 3 NHIỆM VỤ)
+    // Để người chơi chắc chắn thu thập đủ 2 chiếc ghế giống nhau trang trí khu trại
+    // -------------------------------------------------------------------------
+    if (sIdx === 0) {
+        if (SAVE.slot1ChairRepeat && typeof SAVE.slot1ChairRepeat === 'object' && SAVE.slot1ChairRepeat.itemId) {
+            if (SAVE.slot1ChairRepeat.gapRemaining > 0) {
+                // Đang trong 3 nhiệm vụ đệm ở giữa: giảm bộ đếm và loại trừ 'ghe' để dành cho lần 2
+                SAVE.slot1ChairRepeat.gapRemaining--;
+                exclude = exclude.concat(['ghe']);
+            } else {
+                // Đúng 3 nhiệm vụ đệm đã trôi qua: LẬP TỨC GIAO LẠI CHIẾC GHẾ NÀY LẦN THỨ 2!
+                var repeatChairId = SAVE.slot1ChairRepeat.itemId;
+                var repeatChairLv = parseInt(String(repeatChairId).split('_lv')[1], 10) || 2;
+                SAVE.slot1ChairRepeat = null; // Đã xong đủ 2 lần ghế cấp này
+
+                // Nếu chiếc ghế này đã có >= 3 lần trong kho đồ cắm trại thì không lặp lại nữa
+                if (typeof isItemCompletedMaxTimes === 'function' && isItemCompletedMaxTimes(repeatChairId)) {
+                    // Tiếp tục rơi xuống thuật toán chọn bình thường bên dưới
+                } else {
+                    SAVE.slot1BranchLevelMap['ghe'] = repeatChairLv;
+                    SAVE.slot1RecentBranches.push('ghe');
+                    if (SAVE.slot1RecentBranches.length > 40) {
+                        SAVE.slot1RecentBranches = SAVE.slot1RecentBranches.slice(-40);
+                    }
+                    if (SAVE.slot1CompletedIds.indexOf(repeatChairId) === -1) {
+                        SAVE.slot1CompletedIds.push(repeatChairId);
+                    }
+                    if (typeof recordHistoricalOrderedItem === 'function') {
+                        recordHistoricalOrderedItem(repeatChairId);
+                    }
+                    return repeatChairId;
+                }
+            }
+        } else {
+            // Sau khi vừa hoàn thành Ghế Lần 2, tạo khoảng cách ít nhất 2 nhiệm vụ trước khi xét cấp ghế kế tiếp
+            var recentLast = SAVE.slot1RecentBranches.slice(-Math.min(lines.length - 1, 2));
+            if (recentLast.indexOf('ghe') !== -1) {
+                exclude = exclude.concat(['ghe']);
+            }
+        }
+    }
+
     // Tìm cấp độ kế tiếp chưa hoàn thành của từng nhánh đang hoạt động (trừ các nhánh đã chọn trong cùng đơn)
     var candidateLines = lines.filter(function (ln) { return exclude.indexOf(ln) === -1; });
     if (candidateLines.length === 0) candidateLines = lines.slice();
@@ -1993,7 +2110,7 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
     candidateLines.forEach(function (ln) {
         var maxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
         var nextLv = (SAVE.slot1BranchLevelMap[ln] || 1) + 1;
-        while (nextLv <= maxLv && SAVE.slot1CompletedIds.indexOf(ln + '_lv' + nextLv) !== -1) {
+        while (nextLv <= maxLv && (SAVE.slot1CompletedIds.indexOf(ln + '_lv' + nextLv) !== -1 || (typeof isItemCompletedMaxTimes === 'function' && isItemCompletedMaxTimes(ln + '_lv' + nextLv)))) {
             nextLv++;
         }
         if (nextLv <= maxLv) {
@@ -2046,24 +2163,50 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
 
         chosenEntry = candidates[0];
     } else {
-        // Fallback End-Game (sau khi đã hoàn thành trọn bộ 95 vật phẩm từ Lv.2 -> Lv.12):
-        // Xoay vòng đều qua các nhánh & cấp độ xa nhất trong lịch sử MRU để không bao giờ lặp lại liên tiếp
+        // Fallback End-Game (sau khi đã hoàn thành trọn bộ các vật phẩm):
+        // Xoay vòng đều qua các nhánh & cấp độ xa nhất trong lịch sử MRU, tuân thủ giới hạn hoàn thành
         var sortedEndLines = candidateLines.slice().sort(function (a, bLn) {
             return recentSlot1.lastIndexOf(a) - recentSlot1.lastIndexOf(bLn);
         });
-        var endLine = sortedEndLines[0] || 'ban';
-        var maxEndLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(endLine) : (endLine === 'tham' ? 8 : 12);
-        var endCandidates = [];
-        for (var eLv = 3; eLv <= maxEndLv; eLv++) {
-            endCandidates.push(eLv);
+        var chosenEndLine = null;
+        var chosenEndLv = null;
+        for (var sIdx2 = 0; sIdx2 < sortedEndLines.length; sIdx2++) {
+            var testEndLine = sortedEndLines[sIdx2];
+            var testMaxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(testEndLine) : (testEndLine === 'tham' ? 8 : 12);
+            var testCands = [];
+            for (var eLv = 2; eLv <= testMaxLv; eLv++) {
+                var eCandId = testEndLine + '_lv' + eLv;
+                if (typeof isItemCompletedMaxTimes === 'function' && isItemCompletedMaxTimes(eCandId)) continue;
+                testCands.push(eLv);
+            }
+            if (testCands.length > 0) {
+                testCands.sort(function (lvA, lvB) {
+                    return recentOrders.lastIndexOf(testEndLine + '_lv' + lvA) - recentOrders.lastIndexOf(testEndLine + '_lv' + lvB);
+                });
+                chosenEndLine = testEndLine;
+                chosenEndLv = testCands[0];
+                break;
+            }
         }
-        endCandidates.sort(function (lvA, lvB) {
-            return recentOrders.lastIndexOf(endLine + '_lv' + lvA) - recentOrders.lastIndexOf(endLine + '_lv' + lvB);
-        });
+        if (!chosenEndLine) {
+            // Khi toàn bộ item đều đã đạt trần hoàn thành, xoay vòng qua các item trung cấp (Lv.3..6) ít xuất hiện nhất
+            var endCandidatesAll = [];
+            sortedEndLines.forEach(function (ln) {
+                var mCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
+                for (var l = 3; l <= Math.min(mCap, 6); l++) {
+                    endCandidatesAll.push({ line: ln, level: l, id: ln + '_lv' + l });
+                }
+            });
+            endCandidatesAll.sort(function (a, b) {
+                return (recentOrders.lastIndexOf(a.id) || 0) - (recentOrders.lastIndexOf(b.id) || 0);
+            });
+            chosenEndLine = (endCandidatesAll[0] && endCandidatesAll[0].line) || sortedEndLines[0] || 'ban';
+            chosenEndLv = (endCandidatesAll[0] && endCandidatesAll[0].level) || 3;
+        }
         chosenEntry = {
-            line: endLine,
-            nextLv: endCandidates[0] || maxEndLv,
-            maxLv: maxEndLv
+            line: chosenEndLine,
+            nextLv: chosenEndLv,
+            maxLv: (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(chosenEndLine) : (chosenEndLine === 'tham' ? 8 : 12)
         };
     }
 
@@ -2071,8 +2214,26 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
     var chosenLv = chosenEntry.nextLv;
     var chosenItemId = chosenBranch + '_lv' + chosenLv;
 
-    // Ghi nhận tiến trình không lặp lại
-    SAVE.slot1BranchLevelMap[chosenBranch] = chosenLv;
+    // Cơ chế lặp lại 2 lần cho Chiếc Ghế ở Slot 1 (cách nhau đúng 3 nhiệm vụ):
+    // Lần 1: Thiết lập bộ đếm 3 nhiệm vụ đệm (gapRemaining: 3), chưa đưa vào slot1CompletedIds
+    if (sIdx === 0 && chosenBranch === 'ghe') {
+        SAVE.slot1ChairRepeat = {
+            itemId: chosenItemId,
+            gapRemaining: 3
+        };
+        SAVE.slot1BranchLevelMap[chosenBranch] = Math.max(SAVE.slot1BranchLevelMap[chosenBranch] || 1, chosenLv);
+        SAVE.slot1RecentBranches.push(chosenBranch);
+        if (SAVE.slot1RecentBranches.length > 40) {
+            SAVE.slot1RecentBranches = SAVE.slot1RecentBranches.slice(-40);
+        }
+        if (typeof recordHistoricalOrderedItem === 'function') {
+            recordHistoricalOrderedItem(chosenItemId);
+        }
+        return chosenItemId;
+    }
+
+    // Ghi nhận tiến trình không lặp lại cho các nhánh khác (hoặc Slot khác)
+    SAVE.slot1BranchLevelMap[chosenBranch] = Math.max(SAVE.slot1BranchLevelMap[chosenBranch] || 1, chosenLv);
     SAVE.slot1RecentBranches.push(chosenBranch);
     if (SAVE.slot1RecentBranches.length > 40) {
         SAVE.slot1RecentBranches = SAVE.slot1RecentBranches.slice(-40);
@@ -2101,14 +2262,14 @@ function pickBacklogSlot2Item(board, slot1Id, activeLines, activeGens, boardStat
         ? activeLines.slice()
         : ['ban', 'ghe', 'trai'];
     var slot1Line = slot1Id ? ((typeof itemLine === 'function') ? itemLine(slot1Id) : slot1Id.split('_lv')[0]) : '';
-    var slot1Lv = slot1Id ? ((typeof itemLevel === 'function') ? itemLevel(slot1Id) : (parseInt((slot1Id.match(/_lv(\d+)$/) || [])[1], 10) || 2)) : 2;
+    var slot1Lv = slot1Id ? ((typeof itemLevel === 'function') ? itemLevel(slot1Id) : (parseInt((slot1Id.match(/_lv(\d+)$/) || [])[1], 10) || 0)) : 0;
 
     // Nhánh ứng viên cho Slot 2: khác nhánh với Slot 1
     var candidateLines = lines.filter(function (ln) { return ln !== slot1Line; });
     if (candidateLines.length === 0) candidateLines = lines.slice();
 
-    // Giới hạn cấp độ: bắt buộc thấp hơn Slot 1 (lv < slot1Lv, tối thiểu Lv.2)
-    var maxAllowedLv = Math.max(2, slot1Lv - 1);
+    // Giới hạn cấp độ: bắt buộc thấp hơn Slot 1 (lv < slot1Lv, tối thiểu Lv.2). Nếu Slot 1 nghỉ (slot1Id null), cho phép tới Lv.6
+    var maxAllowedLv = slot1Lv > 0 ? Math.max(2, slot1Lv - 1) : 6;
 
     var stats = boardStats || getBoardBranchStats(b, lines);
     var recentOrders = (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.recentOrdersHistory))
@@ -2126,6 +2287,10 @@ function pickBacklogSlot2Item(board, slot1Id, activeLines, activeGens, boardStat
         var branchCap = Math.min(maxLineCap, maxAllowedLv);
         for (var l = 2; l <= branchCap; l++) {
             var candId = ln + '_lv' + l;
+            // KIỂM TRA KHO ĐỒ CẮM TRẠI: Đã hoàn thành quá 3 lần thì không thực hiện lại
+            if (typeof isItemCompletedMaxTimes === 'function' && isItemCompletedMaxTimes(candId)) {
+                continue;
+            }
             allAllowedCandidates.push({ line: ln, level: l, id: candId });
             var alreadyDone = (typeof isItemEverOrdered === 'function')
                 ? isItemEverOrdered(candId)
@@ -2175,8 +2340,25 @@ function pickBacklogSlot2Item(board, slot1Id, activeLines, activeGens, boardStat
         });
         chosenCand = allAllowedCandidates[0];
     } else {
-        var fallbackLine = candidateLines[0] || 'ghe';
-        chosenCand = { line: fallbackLine, level: 2, id: fallbackLine + '_lv2' };
+        // Fallback an toàn: quét toàn bộ candidateLines tìm món chưa đạt trần hoàn thành
+        var fallbackCand = null;
+        for (var cIdx = 0; cIdx < candidateLines.length; cIdx++) {
+            var fbLine = candidateLines[cIdx];
+            var fbMax = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(fbLine) : (fbLine === 'tham' ? 8 : 12);
+            for (var fLv = 2; fLv <= Math.min(fbMax, 6); fLv++) {
+                var testFbId = fbLine + '_lv' + fLv;
+                if (typeof isItemCompletedMaxTimes !== 'function' || !isItemCompletedMaxTimes(testFbId)) {
+                    fallbackCand = { line: fbLine, level: fLv, id: testFbId };
+                    break;
+                }
+            }
+            if (fallbackCand) break;
+        }
+        if (!fallbackCand) {
+            var defaultLine = candidateLines[0] || 'ghe';
+            fallbackCand = { line: defaultLine, level: 2, id: defaultLine + '_lv2' };
+        }
+        chosenCand = fallbackCand;
     }
 
     var chosenItemId = chosenCand.id;
@@ -2202,7 +2384,7 @@ function pickBoardExcessSlot3Item(board, slot1Id, slot2Id, activeLines, activeGe
         : ['ban', 'ghe', 'trai'];
     var line0 = slot1Id ? ((typeof itemLine === 'function') ? itemLine(slot1Id) : slot1Id.split('_lv')[0]) : '';
     var line1 = slot2Id ? ((typeof itemLine === 'function') ? itemLine(slot2Id) : slot2Id.split('_lv')[0]) : '';
-    var lv0 = slot1Id ? ((typeof itemLevel === 'function') ? itemLevel(slot1Id) : (parseInt((slot1Id.match(/_lv(\d+)$/) || [])[1], 10) || 2)) : 2;
+    var lv0 = slot1Id ? ((typeof itemLevel === 'function') ? itemLevel(slot1Id) : (parseInt((slot1Id.match(/_lv(\d+)$/) || [])[1], 10) || 0)) : 0;
 
     // Nhánh ứng viên cho Slot 3: loại trừ cả Slot 1 và Slot 2
     var candidateLines = lines.filter(function (ln) { return ln !== line0 && ln !== line1; });
@@ -2236,7 +2418,7 @@ function pickBoardExcessSlot3Item(board, slot1Id, slot2Id, activeLines, activeGe
         });
     }
 
-    var maxSlot3Lv = Math.max(3, lv0);
+    var maxSlot3Lv = lv0 > 0 ? Math.max(3, lv0) : 6;
     var excessCandidates = [];
 
     Object.keys(boardItemCounts).forEach(function (itId) {
@@ -2255,6 +2437,11 @@ function pickBoardExcessSlot3Item(board, slot1Id, slot2Id, activeLines, activeGe
         } else if (targetLv > maxSlot3Lv) {
             targetLv = Math.min(maxLineCap, maxSlot3Lv);
             targetId = ln + '_lv' + targetLv;
+        }
+
+        // KIỂM TRA KHO ĐỒ CẮM TRẠI: Đã hoàn thành quá 3 lần thì không thực hiện lại
+        if (typeof isItemCompletedMaxTimes === 'function' && isItemCompletedMaxTimes(targetId)) {
+            return;
         }
 
         excessCandidates.push({
@@ -2295,9 +2482,21 @@ function pickBoardExcessSlot3Item(board, slot1Id, slot2Id, activeLines, activeGe
             var idxB = recentBranches.lastIndexOf(bLn);
             return idxA - idxB;
         });
-        var fallbackLine = rankedLines[0] || 'trai';
-        var fallbackLv = (lv0 >= 4) ? 3 : 2;
-        chosenItemId = fallbackLine + '_lv' + fallbackLv;
+        for (var rIdx = 0; rIdx < rankedLines.length; rIdx++) {
+            var fallbackLine = rankedLines[rIdx];
+            var fallbackMax = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(fallbackLine) : (fallbackLine === 'tham' ? 8 : 12);
+            for (var fbLv = 2; fbLv <= Math.min(fallbackMax, 6); fbLv++) {
+                var candFbId = fallbackLine + '_lv' + fbLv;
+                if (typeof isItemCompletedMaxTimes !== 'function' || !isItemCompletedMaxTimes(candFbId)) {
+                    chosenItemId = candFbId;
+                    break;
+                }
+            }
+            if (chosenItemId) break;
+        }
+        if (!chosenItemId) {
+            chosenItemId = (candidateLines[0] || 'trai') + '_lv2';
+        }
     }
 
     if (typeof recordHistoricalOrderedItem === 'function') {
@@ -2307,11 +2506,23 @@ function pickBoardExcessSlot3Item(board, slot1Id, slot2Id, activeLines, activeGe
     return chosenItemId;
 }
 
+// Tính toán số lượt đơn hàng BỎ TRỐNG Slot 1 (khoảng nghỉ Tension & Release) theo cấp độ vừa xong
+function getSlot1RestOrdersForLevel(lv) {
+    var l = parseInt(lv, 10) || 1;
+    if (l <= 4) return 0;
+    if (l <= 6) return 1;
+    if (l <= 8) return 2;
+    if (l <= 10) return 3;
+    if (l === 11) return 4;
+    return 5; // Lv.12+
+}
+window.getSlot1RestOrdersForLevel = getSlot1RestOrdersForLevel;
+
 // Sinh danh sách item theo kịch bản 3 Slot phân vai rõ ràng:
-// - Slot 1: Kịch bản chính cố định, tăng dần / xoay vòng không lặp lại.
+// - Slot 1: Kịch bản chính cố định, tăng dần / xoay vòng không lặp lại (có khoảng nghỉ sau các món cấp cao).
 // - Slot 2: Nhiệm vụ hồi cứu quét lại các item chưa từng làm nhiệm vụ (có cấp thấp hơn Slot 1).
 // - Slot 3: Van xả dọn bàn quét vật phẩm dư thừa nhiều nhất trên bàn cờ.
-// - Cả 3 Slot bắt buộc thuộc các nhánh khác nhau và không đè các điều kiện lên nhau!
+// - Cả 3 Slot bắt buộc thuộc các nhánh khác nhau và không thực hiện lại item đã có >= 3 lần trong kho cắm trại!
 function generateDynamicOrderItems(board, orderNum, existingIds, activeGens) {
     var b = board || (typeof boardData !== 'undefined' ? boardData : null);
     var gens = Array.isArray(activeGens) && activeGens.length ? activeGens : getActiveGeneratorsForOrders(b);
@@ -2335,32 +2546,110 @@ function generateDynamicOrderItems(board, orderNum, existingIds, activeGens) {
     var chosenLines = [];
     var items = [];
 
-    // 1. SLOT 1: Trụ cột kịch bản đi đều qua các chuỗi và tăng dần cấp độ không lặp lại
-    var item0 = pickScriptedSlot1MainQuestItem(b, orderNum, activeLines, gens, chosenLines, stats, 0);
-    var line0 = (typeof itemLine === 'function') ? itemLine(item0) : item0.split('_lv')[0];
-    chosenLines.push(line0);
-    items.push(item0);
-
-    // 2. SLOT 2: Quét lại các item chưa từng được làm nhiệm vụ (cấp thấp hơn Slot 1, khác nhánh Slot 1)
-    if (numSlots >= 2) {
-        var item1 = pickBacklogSlot2Item(b, item0, activeLines, gens, stats, orderNum);
-        var line1 = (typeof itemLine === 'function') ? itemLine(item1) : item1.split('_lv')[0];
-        chosenLines.push(line1);
-        items.push(item1);
+    // KIỂM TRA KHOẢNG NGHỈ CHO SLOT 1 (TENSION & RELEASE):
+    // Khi đang trong đợt nghỉ: Bỏ trống Slot 1, chỉ giao Slot 2 & Slot 3 để người chơi xả đồ thừa & dọn bàn
+    var isRestOrder = false;
+    if (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.slot1RestCooldown === 'number' && SAVE.slot1RestCooldown > 0) {
+        SAVE.slot1RestCooldown--;
+        isRestOrder = true;
     }
 
-    // 3. SLOT 3: Van xả dọn bàn quét vật phẩm dư thừa nhiều nhất trên bàn (khác hoàn toàn nhánh Slot 1 & 2)
-    if (numSlots >= 3) {
-        var item2 = pickBoardExcessSlot3Item(b, item0, items[1], activeLines, gens, stats, orderNum);
-        var line2 = (typeof itemLine === 'function') ? itemLine(item2) : item2.split('_lv')[0];
-        chosenLines.push(line2);
-        items.push(item2);
+    if (!isRestOrder) {
+        // 1. SLOT 1: Trụ cột kịch bản đi đều qua các chuỗi và tăng dần cấp độ không lặp lại
+        var item0 = pickScriptedSlot1MainQuestItem(b, orderNum, activeLines, gens, chosenLines, stats, 0);
+        var line0 = (typeof itemLine === 'function') ? itemLine(item0) : item0.split('_lv')[0];
+        chosenLines.push(line0);
+        items.push(item0);
+
+        // 2. SLOT 2: Quét lại các item chưa từng được làm nhiệm vụ (cấp thấp hơn Slot 1, khác nhánh Slot 1)
+        if (numSlots >= 2) {
+            var item1 = pickBacklogSlot2Item(b, item0, activeLines, gens, stats, orderNum);
+            var line1 = (typeof itemLine === 'function') ? itemLine(item1) : item1.split('_lv')[0];
+            chosenLines.push(line1);
+            items.push(item1);
+        }
+
+        // 3. SLOT 3: Van xả dọn bàn quét vật phẩm dư thừa nhiều nhất trên bàn (khác hoàn toàn nhánh Slot 1 & 2)
+        if (numSlots >= 3) {
+            var item2 = pickBoardExcessSlot3Item(b, item0, items[1], activeLines, gens, stats, orderNum);
+            var line2 = (typeof itemLine === 'function') ? itemLine(item2) : item2.split('_lv')[0];
+            chosenLines.push(line2);
+            items.push(item2);
+        }
+    } else {
+        // TRONG ĐƠN NGHỈ CHÂN: Bỏ trống Slot 1, chỉ giao Slot 2 và Slot 3
+        var restItem1 = pickBacklogSlot2Item(b, null, activeLines, gens, stats, orderNum);
+        var restLine1 = (typeof itemLine === 'function') ? itemLine(restItem1) : restItem1.split('_lv')[0];
+        chosenLines.push(restLine1);
+        items.push(restItem1);
+
+        if (numSlots >= 2) {
+            var restItem2 = pickBoardExcessSlot3Item(b, null, restItem1, activeLines, gens, stats, orderNum);
+            var restLine2 = (typeof itemLine === 'function') ? itemLine(restItem2) : restItem2.split('_lv')[0];
+            chosenLines.push(restLine2);
+            items.push(restItem2);
+        }
+    }
+
+    // BẢO VỆ TUYỆT ĐỐI CHO CẢ 3 SLOT: Nếu item nào đã hoàn thành quá số lần cho phép trong kho cắm trại -> Đổi sang item hợp lệ
+    for (var idx = 0; idx < items.length; idx++) {
+        var itId = items[idx];
+        if (typeof isItemCompletedMaxTimes === 'function' && isItemCompletedMaxTimes(itId)) {
+            var replaced = false;
+            // 1. Thử tìm item chưa đạt trần trong cùng nhánh
+            var bLn = (typeof itemLine === 'function') ? itemLine(itId) : itId.split('_lv')[0];
+            var maxLineLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(bLn) : (bLn === 'tham' ? 8 : 12);
+            for (var sLv = 2; sLv <= maxLineLv; sLv++) {
+                var testId = bLn + '_lv' + sLv;
+                if (!isItemCompletedMaxTimes(testId) && items.indexOf(testId) === -1) {
+                    items[idx] = testId;
+                    replaced = true;
+                    break;
+                }
+            }
+            // 2. Nếu cả nhánh bLn đều đã đạt trần hoàn thành, quét qua tất cả các nhánh khác trong activeLines
+            if (!replaced) {
+                for (var aIdx = 0; aIdx < activeLines.length; aIdx++) {
+                    var otherLn = activeLines[aIdx];
+                    var otherMax = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(otherLn) : (otherLn === 'tham' ? 8 : 12);
+                    for (var oLv = 2; oLv <= otherMax; oLv++) {
+                        var oTestId = otherLn + '_lv' + oLv;
+                        if (!isItemCompletedMaxTimes(oTestId) && items.indexOf(oTestId) === -1) {
+                            items[idx] = oTestId;
+                            chosenLines[idx] = otherLn;
+                            replaced = true;
+                            break;
+                        }
+                    }
+                    if (replaced) break;
+                }
+            }
+            // 3. Khi toàn bộ kho đồ game (240 lần hoàn thành) đã làm hết, xoay vòng đều qua các item trung cấp (Lv.3..6)
+            if (!replaced) {
+                var allEligible = [];
+                activeLines.forEach(function (ln) {
+                    var mCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
+                    for (var l = 3; l <= Math.min(mCap, 6); l++) {
+                        var cId = ln + '_lv' + l;
+                        if (items.indexOf(cId) === -1) allEligible.push(cId);
+                    }
+                });
+                if (allEligible.length > 0) {
+                    var recentOrdersMRU = (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.recentOrdersHistory)) ? SAVE.recentOrdersHistory : [];
+                    allEligible.sort(function (idA, idB) {
+                        return (recentOrdersMRU.lastIndexOf(idA) || 0) - (recentOrdersMRU.lastIndexOf(idB) || 0);
+                    });
+                    items[idx] = allEligible[0];
+                    chosenLines[idx] = (typeof itemLine === 'function') ? itemLine(allEligible[0]) : allEligible[0].split('_lv')[0];
+                }
+            }
+        }
     }
 
     // Cập nhật lại SAVE.recentOrdersHistory (MRU)
     if (typeof SAVE !== 'undefined' && SAVE) {
-        items.forEach(function (itId) {
-            recordItemInRecentOrdersHistory(itId);
+        items.forEach(function (itmId) {
+            recordItemInRecentOrdersHistory(itmId);
         });
     }
 
@@ -2369,7 +2658,8 @@ function generateDynamicOrderItems(board, orderNum, existingIds, activeGens) {
         items: items,
         stats: stats,
         minGap: minGap,
-        slotCount: items.length
+        slotCount: items.length,
+        isRestOrder: isRestOrder
     };
 }
 
@@ -2623,10 +2913,15 @@ function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
     // Sinh các Slot hoàn toàn linh động theo nhịp điệu (1, 2 hoặc 3 món): 100% không trùng nhánh
     var genResult = generateDynamicOrderItems(b, orderNum, existingIds, activeGens);
     var finalIds = genResult.items;
-    var contextDialogue = getDynamicOrderContextDialogue(finalIds, orderNum, b);
+    var isRest = !!genResult.isRestOrder;
+    var contextDialogue = isRest
+        ? "Đơn hàng nghỉ chân! Cùng thư giãn và thu dọn một chút đồ đạc nhé!"
+        : getDynamicOrderContextDialogue(finalIds, orderNum, b);
 
     var orders = finalIds.map(function (itemId, sIdx) {
-        var slotName = (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy');
+        var slotName = isRest
+            ? ((sIdx === 0) ? 'medium' : 'easy')
+            : ((sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy'));
         var goldRw = (typeof orderReward === 'function') ? orderReward(itemId) : 50;
         var expRw = (typeof orderExp === 'function')
             ? orderExp(itemId)
@@ -2651,6 +2946,7 @@ function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
         petId: pId,
         orderNum: orderNum,
         isHybrid: true,
+        isRestOrder: isRest,
         contextDialogue: contextDialogue,
         orders: orders
     };

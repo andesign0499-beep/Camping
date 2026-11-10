@@ -384,6 +384,17 @@
         var activeGroup = SAVE.petOrderGroups[0];
         if (!activeGroup || activeGroup._isDelivering) return;
 
+        // BƯỚC 0: TỰ ĐỘNG NẠP THÊM NĂNG LƯỢNG KHI HẾT (AUTO-REFILL CHO BOT)
+        // Đảm bảo bot luôn có năng lượng dồi dào chơi liên tục, không bị ngắt quãng hoặc bị popup cửa hàng chặn lại
+        if (typeof playerEnergy !== 'undefined' && playerEnergy < 30) {
+            playerEnergy = (playerEnergy || 0) + 100;
+            if (typeof SAVE !== 'undefined' && SAVE) SAVE.energy = playerEnergy;
+            if (typeof updateUIStats === 'function') updateUIStats();
+            if (typeof closeModal === 'function') closeModal();
+            var modalEl0 = document.getElementById('modal-overlay');
+            if (modalEl0) modalEl0.remove();
+        }
+
         // BƯỚC 1: TỰ ĐỘNG CẤT NGAY VẬT PHẨM ĐÃ HOÀN THÀNH LÊN KHAY ĐƠN HÀNG (STASH)
         // Giúp giải phóng ô cờ tức thì và tránh tuyệt đối việc ghép nhầm hoặc bán nhầm món đã xong!
         if (Array.isArray(activeGroup.orders)) {
@@ -521,11 +532,14 @@
             }
         }
 
-        // 5.2. Tự hồi năng lượng nếu cạn (giả lập xem ads +50⚡)
-        if (typeof playerEnergy !== 'undefined' && playerEnergy <= 5) {
-            playerEnergy = 50;
-            if (SAVE) SAVE.energy = 50;
+        // 5.2. Tự nạp năng lượng khi sắp hết trước khi bấm máy phát
+        if (typeof playerEnergy !== 'undefined' && playerEnergy <= 10) {
+            playerEnergy = (playerEnergy || 0) + 100;
+            if (SAVE) SAVE.energy = playerEnergy;
             if (typeof updateUIStats === 'function') updateUIStats();
+            if (typeof closeModal === 'function') closeModal();
+            var modalEl2 = document.getElementById('modal-overlay');
+            if (modalEl2) modalEl2.remove();
         }
 
         // 5.3. Chọn máy phát thông minh: Ưu tiên hoàn thành món đơn hàng nào cần ÍT năng lượng/đơn vị còn thiếu nhất trước
@@ -599,6 +613,12 @@
                 }
                 autoBotStats.taps++;
                 autoBotStats.energySpent++;
+                // Đóng trạm năng lượng nếu vô tình mở ra
+                var modalEl3 = document.getElementById('modal-overlay');
+                if (modalEl3) {
+                    if (typeof closeModal === 'function') closeModal();
+                    else modalEl3.remove();
+                }
                 updateBotStatusUI();
             }
         }
