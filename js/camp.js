@@ -2089,14 +2089,14 @@ function showLuckyDropModal(onReward) {
 
 // ---------- 5. CẨM NANG SƯU TẬP VẬT PHẨM DÃ NGOẠI ----------
 function openDiscoveryBook() {
-    var totalItems = ITEM_CHAINS.reduce(function (sum, ch) { return sum + (ch.names ? ch.names.length : 8); }, 0);
+    var totalItems = ITEM_CHAINS.reduce(function (sum, ch) { return sum + (ch.names ? ch.names.length : 12); }, 0);
     var discCount = countDiscoveredItems();
 
     var chainsHtml = '';
     ITEM_CHAINS.forEach(function (ch) {
         var slotsHtml = '';
         var chainDisc = 0;
-        var maxChainLv = ch.names ? ch.names.length : 8;
+        var maxChainLv = ch.names ? ch.names.length : 12;
         var bgClass = typeof getCellBgClass === 'function' ? getCellBgClass(ch.line) : 'cell-bg-01';
         for (var lv = 1; lv <= maxChainLv; lv++) {
             var id = ch.line + '_lv' + lv;

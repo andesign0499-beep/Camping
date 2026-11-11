@@ -448,7 +448,7 @@ var MYCAMP_CONFIG = {
             name: 'Lều cắm trại (Bãi cỏ bên trái)',
             type: 'slot',
             slotKey: 'tent',
-            left: 85,
+            left: 108,
             top: 250,
             width: 140,
             height: 'auto',

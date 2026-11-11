@@ -755,6 +755,15 @@ body {
     max-height: calc(10.5pt * 3 + 6px);
 }
 
+.npc-speech-bubble.is-item-guide {
+    max-width: min(350px, calc(100vw - 24px));
+}
+
+.npc-speech-bubble.is-item-guide .npc-speech-text {
+    -webkit-line-clamp: 4;
+    max-height: calc(10.5pt * 4 + 8px);
+}
+
 #orders-container {
     display: flex;
     gap: 8px;

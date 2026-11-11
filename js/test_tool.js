@@ -229,7 +229,7 @@
 
         var ln = getItemLineHelper(itemId);
         var lv = getItemLvHelper(itemId);
-        var maxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
+        var maxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : 12;
         if (lv >= maxLv) return false;
 
         // Nếu ghép vào ô mạng nhện (consumeCount === 1): luôn cho phép vì không làm giảm cấp mà còn mở khóa ô!

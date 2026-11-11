@@ -1062,7 +1062,7 @@ function getPetThankDialogue(petId, orderId) {
 }
 window.getPetThankDialogue = getPetThankDialogue;
 
-function setPetSpeech(petId, speechText, autoHideMs) {
+function setPetSpeech(petId, speechText, autoHideMs, options) {
     var pId = petId || (typeof SAVE !== 'undefined' && SAVE && SAVE.activePet) || 'character01';
     var pet = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS.find(function (p) { return p.id === pId; }) : null;
 
@@ -1085,16 +1085,20 @@ function setPetSpeech(petId, speechText, autoHideMs) {
     if (!npcSpeechBubble) npcSpeechBubble = document.getElementById('npc-speech-bubble');
     if (!npcSpeechText) npcSpeechText = document.getElementById('npc-speech-text');
 
+    var allowFullText = !!(options && options.noTruncate);
+    var isGuide = !!(options && options.isGuide);
     if (speechText && typeof speechText === 'string') {
         speechText = speechText.trim();
-        // Giới hạn cứng câu thoại tối đa 80 ký tự
-        if (speechText.length > 80) {
-            speechText = speechText.slice(0, 77).trim() + '...';
+        // Giới hạn cứng câu thoại tối đa 80 ký tự (riêng câu hướng dẫn chạm item giữ trọn đủ ý)
+        var maxLen = allowFullText ? 140 : 80;
+        if (speechText.length > maxLen) {
+            speechText = speechText.slice(0, maxLen - 3).trim() + '...';
         }
     }
 
     if (speechText && npcSpeechBubble && npcSpeechText) {
         npcSpeechText.textContent = speechText;
+        npcSpeechBubble.classList.toggle('is-item-guide', isGuide);
         if (targetWrap && npcSpeechBubble.parentNode !== targetWrap) {
             targetWrap.appendChild(npcSpeechBubble);
         }
@@ -1209,15 +1213,77 @@ function hideNpcBubble() {
         clearTimeout(npcBubbleTimer);
         npcBubbleTimer = null;
     }
-    if (npcSpeechBubble) npcSpeechBubble.style.display = 'none';
+    if (npcSpeechBubble) {
+        npcSpeechBubble.style.display = 'none';
+        npcSpeechBubble.classList.remove('is-item-guide');
+    }
     document.querySelectorAll('.pet-group-avatar-wrap.talking').forEach(function (el) {
         el.classList.remove('talking');
     });
     if (npcAvatarBtn) npcAvatarBtn.classList.remove('talking');
 }
 
+function buildOrderItemGuideSpeech(itemId) {
+    if (!itemId) return '';
+    var lv = (typeof itemLv === 'function') ? itemLv(itemId) : (parseInt(String(itemId).split('_lv')[1], 10) || 1);
+    var ln = (typeof itemLine === 'function') ? itemLine(itemId) : String(itemId).split('_lv')[0];
+    var cleanName = '';
+    if (typeof I18N !== 'undefined' && typeof I18N.getItemName === 'function') {
+        cleanName = I18N.getItemName(itemId);
+    } else if (typeof getItemCleanName === 'function') {
+        cleanName = getItemCleanName(itemId);
+    } else if (typeof getItemDisplayName === 'function') {
+        cleanName = getItemDisplayName(itemId).replace(/\s*\(Lv\.\d+\)\s*$/, '');
+    } else {
+        cleanName = itemId;
+    }
+
+    var genId = (typeof getGeneratorForLine === 'function')
+        ? getGeneratorForLine(ln)
+        : ((typeof getChainGenerator === 'function') ? getChainGenerator(ln).id : 'generator_cooler');
+    var genName = (typeof I18N !== 'undefined' && typeof I18N.getItemName === 'function')
+        ? I18N.getItemName(genId)
+        : ((typeof getChainGenerator === 'function') ? getChainGenerator(ln).name : genId);
+
+    if (typeof I18N !== 'undefined' && typeof I18N.t === 'function') {
+        var msg = I18N.t('npc.item_guide', { name: cleanName, lv: lv, gen: genName });
+        if (msg && msg !== 'npc.item_guide') return msg;
+    }
+    return 'Món này là ' + cleanName + ' (Level ' + lv + '), nằm trong ' + genName + ' nhé!';
+}
+
+function highlightGeneratorForOrderItem(itemId) {
+    if (!itemId) return;
+    var ln = (typeof itemLine === 'function') ? itemLine(itemId) : String(itemId).split('_lv')[0];
+    var genId = (typeof getGeneratorForLine === 'function')
+        ? getGeneratorForLine(ln)
+        : ((typeof getChainGenerator === 'function') ? getChainGenerator(ln).id : null);
+    if (!genId) return;
+
+    clearHintVisuals();
+    document.querySelectorAll('.pending-gen-slot.hint-pulse').forEach(function (el) {
+        el.classList.remove('hint-pulse');
+    });
+    if (Array.isArray(boardData) && boardElement) {
+        var genIdx = boardData.findIndex(function (c) {
+            return c && c.id === genId && !c.isRock && !c.isLocked;
+        });
+        if (genIdx !== -1 && boardElement.children[genIdx]) {
+            boardElement.children[genIdx].classList.add('hint-pulse');
+            return;
+        }
+    }
+    var pendingDockSlot = document.querySelector('.pending-gen-slot[data-gen-id="' + genId + '"]');
+    if (pendingDockSlot) {
+        pendingDockSlot.classList.add('hint-pulse');
+    }
+}
+
 function clearHintVisuals() {
     clearTutorialHand();
+    document.querySelectorAll('.pending-gen-slot.hint-pulse').forEach(function (el) {
+        el.classList.remove('hint-pulse');
+    });
     if (!boardElement) return;
     boardElement.querySelectorAll('.hint-pulse').forEach(c => c.classList.remove('hint-pulse'));
 }
@@ -2836,14 +2902,19 @@ function renderOrders() {
                 slot.appendChild(chk);
             }
 
-            // Chạm vào ô đơn hàng trên khay
+            // Chạm vào ô đơn hàng trên khay: NPC hướng dẫn tên item, Level và Thùng sinh đồ
             slot.addEventListener('click', function (e) {
                 e.stopPropagation();
                 var liveGroup = (SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[gIdx]) ? SAVE.petOrderGroups[gIdx] : group;
                 var liveOrder = (liveGroup && Array.isArray(liveGroup.orders) && liveGroup.orders[oIdx]) ? liveGroup.orders[oIdx] : o;
+                var guideSpeech = buildOrderItemGuideSpeech(liveOrder.id);
+
+                if (typeof playSound === 'function') playSound('tap');
+
                 if (!liveOrder.stashed) {
                     var matchIdx = findOrderMatch(boardData, liveOrder.id);
                     if (matchIdx !== -1) {
+                        setPetSpeech(liveGroup.petId, guideSpeech, 4500, { noTruncate: true, isGuide: true });
                         liveOrder.stashed = true;
                         liveOrder.stashedVerified = true;
                         flyItemToTraySlot(matchIdx, slot, function () {
@@ -2852,13 +2923,11 @@ function renderOrders() {
                             renderBoard();
                         });
                     } else {
-                        var quote = (typeof getPetOrderDialogue === 'function')
-                            ? getPetOrderDialogue(liveOrder.id, liveGroup.petId)
-                            : ('Hãy giúp mình ghép ' + getItemDisplayName(liveOrder.id) + ' nhé!');
-                        setPetSpeech(liveGroup.petId, quote, 2800);
+                        highlightGeneratorForOrderItem(liveOrder.id);
+                        setPetSpeech(liveGroup.petId, guideSpeech, 5000, { noTruncate: true, isGuide: true });
                     }
                 } else {
-                    setPetSpeech(liveGroup.petId, 'Món này đã nằm sẵn trong khay rồi nè!', 2000);
+                    setPetSpeech(liveGroup.petId, guideSpeech, 4500, { noTruncate: true, isGuide: true });
                 }
             });
 
@@ -4453,7 +4522,7 @@ function openCampJourneyModal(playerLevel, playerExp) {
         {
             lv: 9,
             title: 'Bứt Phá Giới Hạn',
-            desc: '+25 ⚡, +650 🪙, +2 💎 • Đơn hàng Lv.9 (Bò Wagyu Thượng Hạng)',
+            desc: '+25 ⚡, +650 🪙, +2 💎 • Đơn hàng Lv.9 (Hải Sản Hấp Tôm Ngao)',
             icon: '🔥'
         },
         {
@@ -4479,13 +4548,13 @@ function openCampJourneyModal(playerLevel, playerExp) {
         {
             lv: 13,
             title: 'Biệt Thự Glamping',
-            desc: '+25 ⚡, +850 🪙, +2 💎 • Biệt Thự Lều Glamping & Đơn Lv.11',
+            desc: '+25 ⚡, +850 🪙, +2 💎 • Lều Đường Hầm & Đơn Lv.11',
             icon: '⛺'
         },
         {
             lv: 15,
             title: 'Bậc Thầy Cắm Trại',
-            desc: 'Mở 5 ô đá tầng 3 • +25 ⚡, +950 🪙, +5 💎 (Mốc Gem) • Kén Nghỉ Mái Vòm',
+            desc: 'Mở 5 ô đá tầng 3 • +25 ⚡, +950 🪙, +5 💎 (Mốc Gem) • Lều Mái Vòm Sàn Gỗ',
             icon: '⭐',
             special: true
         },

@@ -884,77 +884,78 @@ var ITEM_CHAINS = [
     {
         line: 'an', icon: '', title: 'Ẩm Thực Dã Ngoại',
         names: [
-            'Quả Táo Đỏ', 'Ổ Bánh Mì Dài', 'Bánh Sandwich Kẹp', 'Tô Mì Sợi Nóng',
-            'Đĩa Trái Cây Tươi', 'Tô Hoa Quả Thập Cẩm', 'Đĩa Bánh Quy Nướng', 'Đại Tiệc BBQ Xiên Nướng',
-            'Đĩa Bò Wagyu Thượng Hạng', 'Cua Hoàng Đế Hấp Dã Ngoại', 'Tiệc Cua Hoàng Đế Thượng Hạng', 'Đại Tiệc Hải Sản Cung Đình'
+            'Quả Táo Đỏ', 'Giỏ Trái Cây Tươi', 'Bánh Sandwich Kẹp', 'Đùi Gà Nướng',
+            'Bánh Pizza Dã Ngoại', 'Nồi Lẩu Thập Cẩm Nóng', 'Khay Sushi Cá Hồi', 'Sườn Nướng BBQ Sốt Đậm',
+            'Đĩa Hải Sản Hấp Tôm Ngao', 'Đùi Heo Xông Khói', 'Thịt Bò Wagyu Thượng Hạng', 'Cua Hoàng Đế Thượng Hạng'
         ]
     },
     {
         line: 'ban', icon: '', title: 'Bàn Dã Ngoại',
         names: [
-            'Bàn Nhôm Vuông Mini', 'Bàn Vải Gấp Dã Ngoại', 'Bàn Trà Dã Ngoại', 'Bàn Gỗ Cuộn Dã Ngoại',
-            'Bàn Dã Ngoại Kèm Giá Lưới', 'Bàn Cắm Trại Đa Năng', 'Bàn Chiến Thuật IGT', 'Trạm Bếp Nấu Ăn Glamping',
-            'Trạm Bếp Dã Ngoại Đôi', 'Bàn Đảo Bếp Dã Ngoại Inox', 'Bàn Đảo Bếp Glamping Đa Năng', 'Đại Trạm Bếp Glamping Hoàng Gia'
+            'Bàn Nhôm Vuông Mini', 'Bàn Vải Khung Gấp', 'Bàn Gỗ Xếp Chữ X', 'Bàn Xếp Chiến Thuật Xanh',
+            'Bàn Xếp Thổ Cẩm Dã Ngoại', 'Bàn Gỗ Nan Xếp Dã Ngoại', 'Bàn Gỗ Khung Hợp Kim', 'Bàn Nhôm Gấp Cắm Trại',
+            'Bàn Dã Ngoại Gỗ Sồi', 'Bàn Gỗ Óc Chó Chân Cao', 'Bàn Bếp IGT Đơn Đa Năng', 'Trạm Bếp Inox Glamping'
         ]
     },
     {
-        line: 'cafe', icon: '', title: 'Cà Phê Sương Sớm',
+        line: 'cafe', icon: '', title: 'Cà Phê & Đồ Uống',
         names: [
-            'Hạt Cà Phê Robusta', 'Cối Xay Cà Phê Tay Gỗ', 'Ấm Rót Cổ Ngỗng', 'Tách Cà Phê Nóng',
-            'Gói Cà Phê Specialty', 'Cối Xay Cầm Tay Inox', 'Ấm Pha Moka Pot Ý', 'Cốc Cà Phê Men Đỏ',
-            'Phin Cà Phê Dã Ngoại Đồng', 'Máy Pha Espresso Dã Ngoại', 'Máy Pha Cà Phê Áp Suất Glamping', 'Quầy Barista Cà Phê Glamping'
+            'Hạt Cà Phê Rang', 'Bao Tải Cà Phê Hạt', 'Cối Xay Cà Phê Cầm Tay', 'Ấm Pha Moka Pot',
+            'Cốc Cà Phê Sứ Đỏ', 'Ly Cappuccino Bọt Sữa', 'Ly Cà Phê Đen Đá', 'Ly Cà Phê Sữa Đá',
+            'Trà Trái Cây Nhiệt Đới', 'Hũ Trà Đào Cam Sả', 'Ấm Trà Hoa Thảo Mộc', 'Bình Trà Trái Cây Tiệc Trại'
         ]
     },
     {
         line: 'trai', icon: '', title: 'Lều Trại Trú Ngụ',
         names: [
-            'Cọc Ghim Lều Kim Loại', 'Cuộn Dây Dù Căng Lều', 'Bộ Khung Cọc Chống Lều', 'Bạt Tăng Che Mưa Nắng',
-            'Lều Vòm Cắm Trại 2 Người', 'Lều Gia Đình Chống Gió', 'Lều Kim Tự Tháp Glamping', 'Biệt Thự Lều Glamping',
-            'Lều Chuông Glamping', 'Lều Bán Cầu Geodesic', 'Kén Nghỉ Dưỡng Mái Vòm', 'Biệt Thự Lều Safari Sang Trọng'
+            'Cọc Ghim Lều Xanh', 'Cuộn Dây Dù Căng Lều', 'Bộ Khung Cọc Lều', 'Lều Vòm Mini Cam Xanh',
+            'Lều Vòm Cắm Trại Xanh Rêu', 'Lều Chữ A Vải Vàng', 'Lều Vòm Gia Đình Nâu', 'Lều Đường Hầm Gia Đình',
+            'Lều Chuông Bell Glamping', 'Lều Vòm Cầu Geodesic', 'Lều Mái Vòm Sàn Gỗ Đèn LED', 'Biệt Thự Lều Safari Hoàng Gia'
         ]
     },
     {
         line: 'tham', icon: '', title: 'Chỗ Ngủ Êm Ái',
         names: [
-            'Bạt Trải Đất Dã Ngoại', 'Thảm Xốp Cuộn Cách Nhiệt', 'Thảm Thổ Cẩm Dã Ngoại', 'Chăn Đệm Gấp Ấm Áp',
-            'Túi Ngủ Dã Ngoại', 'Võng Dù Giữa Rừng', 'Sofa Hơi Dã Ngoại', 'Đệm Hơi Đôi Cao Cấp'
+            'Tấm Chăn Cuộn Xám', 'Gối Hơi Dã Ngoại Xanh', 'Thảm Picnic Kẻ Ca-rô Đỏ', 'Thảm Cuộn Cách Nhiệt Xanh',
+            'Bộ Túi Ngủ Cuộn Cam', 'Túi Ngủ Xanh Rêu Ấm Áp', 'Đệm Hơi Đơn Kèm Bơm Tay', 'Bộ Chăn Đệm Gấp Dã Ngoại',
+            'Đệm Hơi Đôi Cao Cấp', 'Giường Xếp Khung Nhôm', 'Giường Xếp Chăn Bông Ấm', 'Giường Ngủ Glamping Hoàng Gia'
         ]
     },
     {
         line: 'ghe', icon: '', title: 'Ghế Nghỉ Ngơi',
         names: [
-            'Ghế Đôn Xếp Mini', 'Ghế Xếp Tựa Lưng Xanh', 'Ghế Xếp Dã Ngoại Màu Cát', 'Ghế Xếp Có Tay Vịn',
-            'Ghế Câu Cá Có Khay', 'Ghế Mặt Trăng Moon Chair', 'Ghế Tựa Lưng Cao Có Gối', 'Ghế Đạo Diễn Cao Cấp',
-            'Ghế Xếp Thư Giãn Bập Bênh', 'Ghế Sofa Đôi Glamping', 'Giường Ghế Xếp Đa Năng', 'Ghế Bành Glamping Sang Trọng'
+            'Ghế Đôn Xếp Cầu Vồng', 'Ghế Xếp Mini Xanh Ngọc', 'Ghế Xếp Vải Bố Màu Cát', 'Ghế Xếp Xanh Rêu Tay Vịn',
+            'Ghế Xếp Thổ Cẩm Dã Ngoại', 'Ghế Xếp Siêu Nhẹ Khung Cong', 'Ghế Xếp Xanh Navy Cao Cấp', 'Ghế Gỗ Đệm Nâu Cổ Điển',
+            'Ghế Khung Gỗ Vải Kem', 'Ghế Đạo Diễn Đỏ Trắng', 'Ghế Tựa Cao Khung Bạc', 'Ghế Đạo Diễn Glamping Đỏ'
         ]
     },
     {
         line: 'bep', icon: '', title: 'Lửa & Bếp Trại',
         names: [
-            'Nhánh Củi Khô', 'Khúc Gỗ Tròn', 'Bó Củi Buộc Dây', 'Hố Đá Xếp Lửa',
-            'Đống Củi Trại Vòng Đá', 'Lửa Trại Rực Hồng', 'Lò Nướng Than Hoa Tròn', 'Bếp Nướng BBQ Chữ Nhật',
-            'Bếp Gas Dã Ngoại Đôi', 'Lò Nướng Bánh Pizza Dã Ngoại', 'Bếp Nấu Đa Năng Glamping', 'Bếp Hoàng Gia Lửa Trại Glamping'
+            'Nhánh Củi Khô', 'Khúc Gỗ Tròn', 'Bó Củi Buộc Dây', 'Hố Đá Xếp Củi',
+            'Đống Củi Trại Vòng Đá', 'Lửa Trại Rực Hồng', 'Lò Nướng Than Hoa Tròn', 'Bếp Nướng Than Inox Mini',
+            'Bếp Nướng Than Chân Xếp', 'Bếp Nướng Thuyền Đen', 'Bếp Nướng Chân Cao BBQ', 'Đại Bếp Nướng BBQ Inox'
         ]
     },
     {
         line: 'congcu', icon: '', title: 'Chiếu Sáng Dã Ngoại',
         names: [
-            'Bóng Đèn LED Treo Lều', 'Đèn Pin Cầm Tay Dã Ngoại', 'Dây Đèn LED Đom Đóm', 'Đèn Lồng Dã Ngoại',
-            'Đèn Bảng LED Dã Ngoại', 'Đèn Bão Dã Ngoại Vintage', 'Đèn Cắm Trại Chân Cao Tripod', 'Đèn Bão Cổ Điển Retro',
-            'Cột Đèn Glamping Đôi', 'Đèn Thao Tác Chuyên Dụng', 'Hệ Thống Chiếu Sáng Trại Glamping', 'Đèn Cực Quang Glamping Thượng Hạng'
+            'Bóng Đèn Treo Lều', 'Đèn Pin Cầm Tay', 'Dây Đèn LED Đom Đóm', 'Đèn Lồng Sạc Dã Ngoại',
+            'Đèn Bảng LED Dã Ngoại', 'Đèn Bão Dã Ngoại Cam', 'Đèn Bão Xanh Rêu Cổ Điển', 'Đèn Bão Đỏ Cổ Điển',
+            'Đèn Măng-Xông Quân Đội', 'Đèn Măng-Xông Chụp Bạc', 'Đèn Măng-Xông Đồng Vàng', 'Đèn Măng-Xông Hoàng Gia'
         ]
     },
     {
-        line: 'antoan', icon: '', title: 'Nguồn Điện & Trạm Năng Lượng',
+        line: 'antoan', icon: '', title: 'An Toàn & Năng Lượng',
         names: [
-            'Cáp Sạc Dã Ngoại Bọc Dù', 'Củ Sạc Nhanh Dã Ngoại', 'Pin Sạc Dự Phòng Bỏ Túi', 'Pin Sạc Dự Phòng Chống Sốc',
-            'Quạt Tích Điện Dã Ngoại', 'Tấm Pin Năng Lượng Mặt Trời', 'Trạm Điện Di Động Mini', 'Trạm Điện Dã Ngoại Glamping',
-            'Bộ Lưu Điện Dung Lượng Cao', 'Trạm Điện Mặt Trời Công Suất Lớn', 'Máy Phát Điện Siêu Cách Âm', 'Trạm Năng Lượng Glamping Hoàng Gia'
+            'Chai Xịt Chống Muỗi', 'Kem Chống Nắng Dã Ngoại', 'Túi Bàn Chải & Vệ Sinh', 'Cáp Sạc Bọc Dù',
+            'Pin Sạc Dự Phòng', 'Túi Y Tế Sơ Cứu', 'Đèn Khò Gas Mini', 'Quạt Tích Điện Dã Ngoại',
+            'Tấm Pin Năng Lượng Mặt Trời', 'Loa Bluetooth Dã Ngoại', 'Trạm Sạc Dự Phòng Mini', 'Trạm Năng Lượng Glamping'
         ]
     }
 ];
 
-// Đồng bộ danh mục 72 vật phẩm với bộ từ điển đa ngôn ngữ
+// Đồng bộ danh mục 108 vật phẩm với bộ từ điển đa ngôn ngữ
 if (typeof I18N !== 'undefined' && typeof I18N.syncItemChainsLanguage === 'function') {
     I18N.syncItemChainsLanguage();
 }
@@ -1038,24 +1039,22 @@ function removeCampItem(uid) {
 }
 
 function getChainGenerator(line) {
+    var genId = 'generator_backpack';
+    var fallbackName = 'Ba Lô Dã Ngoại';
     if (line === 'ban' || line === 'ghe' || line === 'trai') {
-        return {
-            id: 'generator_cooler',
-            name: 'Xe Kéo',
-            icon: 'assets/images_webp/items/generator_cooler.webp'
-        };
+        genId = 'generator_cooler';
+        fallbackName = 'Xe Kéo Dã Ngoại';
+    } else if (line === 'tham' || line === 'antoan' || line === 'bep') {
+        genId = 'generator_crate';
+        fallbackName = 'Thùng Dụng Cụ';
     }
-    if (line === 'tham' || line === 'antoan' || line === 'bep') {
-        return {
-            id: 'generator_crate',
-            name: 'Thùng Dụng Cụ',
-            icon: 'assets/images_webp/items/generator_crate.webp'
-        };
-    }
+    var resolvedName = (typeof I18N !== 'undefined' && typeof I18N.getItemName === 'function')
+        ? I18N.getItemName(genId)
+        : fallbackName;
     return {
-        id: 'generator_backpack',
-        name: 'Ba Lô',
-        icon: 'assets/images_webp/items/generator_backpack.webp'
+        id: genId,
+        name: resolvedName,
+        icon: 'assets/images_webp/items/' + genId + '.webp'
     };
 }
 

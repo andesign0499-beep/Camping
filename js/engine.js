@@ -69,7 +69,6 @@ function getItemMaxLevel(lineOrId) {
             }
         }
     }
-    if (line === 'tham') return 8;
     return 12;
 }
 
@@ -978,87 +977,87 @@ function findBestMerge(board, orders, level) {
 var ITEM_STORY_DIALOGUES = {
     // 1. Chuỗi Bàn dã ngoại (ban_lv1 -> ban_lv12)
     'ban_lv1':  'Đặt chiếc bàn nhôm mini nhỏ gọn ra bãi cỏ làm góc để đồ nhé!',
-    'ban_lv2':  'Ghép chiếc bàn gấp xanh có khay lưới để xếp gọn đồ nghề nhé!',
-    'ban_lv3':  'Mình cần chiếc bàn vải xanh họa tiết lá để bày trà chiều nào!',
-    'ban_lv4':  'Ghép chiếc bàn gỗ cuộn chân chữ X cho góc trại thêm ấm cúng nhé!',
-    'ban_lv5':  'Thêm một chiếc bàn gỗ sẫm màu khung thép thật vững chãi nào!',
-    'ban_lv6':  'Tuyệt quá, ghép bàn đa năng có sẵn vỉ nướng và thớt gỗ nhé!',
-    'ban_lv7':  'Một chiếc bàn gỗ sáng rộng rãi để bày biện bữa trưa dã ngoại!',
-    'ban_lv8':  'Ghép bàn gỗ viền hợp kim bo góc sang trọng cho khu trại nào!',
-    'ban_lv9':  'Chuẩn bị bàn tiệc gỗ mặt rộng để cả nhóm cùng quây quần nhé!',
-    'ban_lv10': 'Nâng cấp lên bàn gỗ cao khung hợp kim thật chắc chắn nào!',
-    'ban_lv11': 'Ghép bàn đảo bếp có tích hợp sẵn bếp ga đơn siêu tiện lợi nhé!',
-    'ban_lv12': 'Đỉnh cao! Hoàn thiện hệ tủ bếp inox có cả bồn rửa và kệ treo!',
+    'ban_lv2':  'Ghép chiếc bàn vải xanh có khay lưới để xếp gọn đồ nghề nhé!',
+    'ban_lv3':  'Mình cần chiếc bàn gỗ xếp chữ X nhỏ gọn để bày trà chiều nào!',
+    'ban_lv4':  'Ghép chiếc bàn gấp xanh rêu khung chữ X gọn nhẹ cho chuyến đi!',
+    'ban_lv5':  'Thêm chiếc bàn xếp họa tiết thổ cẩm rực rỡ làm nổi bật khu trại!',
+    'ban_lv6':  'Ghép chiếc bàn gỗ nan xếp chân gỗ ấm cúng để quây quần ăn tối!',
+    'ban_lv7':  'Mình thích chiếc bàn gỗ viền cam khung hợp kim thật vững chãi!',
+    'ban_lv8':  'Dựng chiếc bàn nhôm gấp màu xanh nhạt siêu nhẹ và sạch sẽ nhé!',
+    'ban_lv9':  'Chuẩn bị chiếc bàn gỗ sồi mặt rộng để cả nhóm cùng bày đồ ăn!',
+    'ban_lv10': 'Nâng cấp lên bàn gỗ óc chó chân cao tăng chỉnh thật chắc chắn!',
+    'ban_lv11': 'Ghép bàn bếp IGT có sẵn bếp đơn giữa mặt bàn siêu tiện lợi!',
+    'ban_lv12': 'Đỉnh cao! Hoàn thiện trạm bếp inox có cả bếp nấu và bồn rửa!',
 
     // 2. Chuỗi Ghế nghỉ ngơi (ghe_lv1 -> ghe_lv12)
-    'ghe_lv1':  'Lấy chiếc ghế đôn tròn cầu vồng nhỏ xinh để ngồi nghỉ chân nhé!',
-    'ghe_lv2':  'Chân mỏi rồi, ghép chiếc ghế xếp tựa lưng màu xanh ngồi nghỉ nhé!',
-    'ghe_lv3':  'Thêm chiếc ghế vải bố màu kem êm ái để ngồi ngắm mây trời nào!',
-    'ghe_lv4':  'Ghép ghế xếp xanh rêu có tay vịn để ngồi đọc sách thật thoải mái!',
-    'ghe_lv5':  'Mình muốn chiếc ghế khung gỗ vải xanh viền cam thật nổi bật nhé!',
-    'ghe_lv6':  'Ghép chiếc ghế xếp lưng cong ôm dáng để ngả lưng thư giãn nào!',
-    'ghe_lv7':  'Nâng cấp lên ghế xếp khung kim loại xanh rêu thật bền bỉ nhé!',
-    'ghe_lv8':  'Ghép chiếc ghế đạo diễn màu đen sang trọng cho buổi tối quanh lửa!',
-    'ghe_lv9':  'Thêm một chiếc ghế đạo diễn cao cấp để đón khách ghé thăm trại!',
-    'ghe_lv10': 'Chuẩn bị ghế đạo diễn khung hợp kim siêu nhẹ cho chuyến đi nhé!',
-    'ghe_lv11': 'Ghép ghế đạo diễn đệm dày thượng hạng để ngồi ngắm sao đêm nào!',
-    'ghe_lv12': 'Tuyệt tác! Hoàn thiện chiếc ghế đạo diễn hoàng gia đỉnh cao nhé!',
+    'ghe_lv1':  'Lấy chiếc ghế đôn xếp cầu vồng nhỏ xinh để ngồi nghỉ chân nhé!',
+    'ghe_lv2':  'Chân mỏi rồi, ghép chiếc ghế xếp mini màu xanh ngọc ngồi nghỉ nhé!',
+    'ghe_lv3':  'Thêm chiếc ghế vải bố màu cát êm ái để ngồi ngắm mây trời nào!',
+    'ghe_lv4':  'Ghép ghế xếp xanh rêu có tay vịn và gối đầu thật thoải mái!',
+    'ghe_lv5':  'Mình muốn chiếc ghế xếp họa tiết thổ cẩm thật nổi bật giữa rừng!',
+    'ghe_lv6':  'Ghép chiếc ghế xếp khung cong siêu nhẹ để ngả lưng thư giãn nào!',
+    'ghe_lv7':  'Nâng cấp lên ghế xếp màu xanh navy rộng rãi và cực kỳ bền bỉ!',
+    'ghe_lv8':  'Ghép chiếc ghế gỗ đệm nâu cổ điển ngồi đọc sách quanh lửa trại!',
+    'ghe_lv9':  'Thêm chiếc ghế khung gỗ vải kem thanh lịch đón khách ghé trại!',
+    'ghe_lv10': 'Chuẩn bị ghế đạo diễn đỏ tay vịn trắng cực phong cách cho trại!',
+    'ghe_lv11': 'Ghép ghế tựa lưng cao màu nâu khung bạc để ngắm sao đêm nhé!',
+    'ghe_lv12': 'Tuyệt tác! Chiếc ghế đạo diễn glamping màu đỏ rực rỡ nhất trại!',
 
     // 3. Chuỗi Lều trại trú ngụ (trai_lv1 -> trai_lv12)
     'trai_lv1':  'Đóng chiếc cọc ghim xanh lá xuống đất để cố định góc lều nhé!',
     'trai_lv2':  'Chuẩn bị cuộn dây dù màu cam chắc chắn để căng lều đón gió nhé!',
     'trai_lv3':  'Ghép bộ khung cọc kim loại để sẵn sàng dựng chiếc lều đầu tiên!',
-    'trai_lv4':  'Dựng chiếc lều chữ A màu cam xinh xắn để che nắng che sương nào!',
-    'trai_lv5':  'Ghép chiếc lều vòm xanh rêu ấm áp cho giấc ngủ trưa giữa rừng!',
-    'trai_lv6':  'Mình thích chiếc lều vải trắng kem hai mái thoáng mát này quá!',
-    'trai_lv7':  'Dựng lều vòm gia đình chống gió thật vững vàng cho đêm nay nhé!',
-    'trai_lv8':  'Nâng cấp lên lều đường hầm rộng rãi để chứa được nhiều đồ đạc!',
-    'trai_lv9':  'Ghép chiếc lều chóp Bell Tent Glamping đẹp như trong cổ tích nhé!',
-    'trai_lv10': 'Oa! Dựng lều cầu Dome trắng hiện đại để nằm ngắm bầu trời đêm!',
-    'trai_lv11': 'Hoàn thiện kén nghỉ dưỡng mái vòm khung gỗ sang trọng bậc nhất!',
-    'trai_lv12': 'Kiệt tác! Dựng biệt thự lều gỗ sàn cao có hiên nghỉ dưỡng hoàng gia!',
+    'trai_lv4':  'Dựng chiếc lều vòm mini màu cam xanh xinh xắn che nắng sương nào!',
+    'trai_lv5':  'Ghép chiếc lều vòm xanh rêu có ô cửa tròn cho giấc ngủ trưa nhé!',
+    'trai_lv6':  'Mình thích chiếc lều chữ A vải vàng cổ điển thoáng mát này quá!',
+    'trai_lv7':  'Dựng lều vòm gia đình màu nâu chống gió thật vững vàng đêm nay!',
+    'trai_lv8':  'Nâng cấp lên lều đường hầm màu be rộng rãi chứa được nhiều đồ!',
+    'trai_lv9':  'Ghép chiếc lều chóp Bell Tent Glamping màu kem đẹp như cổ tích!',
+    'trai_lv10': 'Oa! Dựng lều vòm cầu Geodesic trắng ngắm bầu trời sao lung linh!',
+    'trai_lv11': 'Hoàn thiện lều mái vòm sàn gỗ có dây đèn LED ấm áp tuyệt đẹp!',
+    'trai_lv12': 'Kiệt tác! Biệt thự lều Safari sàn gỗ có hiên nghỉ dưỡng hoàng gia!',
 
     // 4. Chuỗi Ẩm thực dã ngoại (an_lv1 -> an_lv12)
     'an_lv1':  'Một quả táo đỏ giòn ngọt tráng miệng cho đầu buổi dã ngoại nhé!',
-    'an_lv2':  'Bụng đói rồi, lấy ổ bánh mì dài thơm phức lót dạ buổi sáng nhé!',
+    'an_lv2':  'Chuẩn bị giỏ trái cây tươi đầy ắp nho, táo và lê ngọt lành nhé!',
     'an_lv3':  'Kẹp thêm rau thịt làm chiếc bánh sandwich ngon lành tiếp sức nào!',
-    'an_lv4':  'Nấu một tô mì sợi nóng hổi thơm lừng giữa tiết trời se lạnh nhé!',
-    'an_lv5':  'Bày đĩa trái cây tươi gồm táo, lê và chuối tráng miệng thật mát!',
-    'an_lv6':  'Gọt thêm đĩa hoa quả thập cẩm đầy màu sắc cho buổi chiều vui vẻ!',
-    'an_lv7':  'Nướng đĩa bánh quy và bánh sừng bò thơm bơ nhâm nhi cùng trà nhé!',
-    'an_lv8':  'Chuẩn bị đĩa thịt xiên nướng BBQ và xúc xích thơm phức đãi bạn bè!',
-    'an_lv9':  'Chuẩn bị phần thịt bò Wagyu vân cẩm thạch tươi ngon để áp chảo nào!',
-    'an_lv10': 'Bữa tối thịnh soạn với món cua hoàng đế hấp đỏ au thơm ngọt nhé!',
-    'an_lv11': 'Thêm một đại tiệc cua hoàng đế thượng hạng cho đêm hội lửa trại!',
-    'an_lv12': 'Đỉnh cao ẩm thực! Hoàn thiện mâm đại tiệc cua hoàng đế cung đình!',
+    'an_lv4':  'Nướng chiếc đùi gà vàng ruộm thơm phức nạp năng lượng cho cả nhóm!',
+    'an_lv5':  'Nướng nóng một chiếc bánh pizza dã ngoại thơm lừng phô mai nhé!',
+    'an_lv6':  'Bắc nồi lẩu thập cẩm nóng hổi đầy thịt và rau giữa trời se lạnh!',
+    'an_lv7':  'Bày khay sushi cá hồi và cuộn rong biển tươi ngon đổi vị nhé!',
+    'an_lv8':  'Chuẩn bị dẻ sườn nướng BBQ phết sốt đậm đà thơm nức mũi nào!',
+    'an_lv9':  'Làm đĩa hải sản hấp tôm ngao vắt thêm lát chanh tươi ngọt thịt!',
+    'an_lv10': 'Thái lát chiếc đùi heo xông khói thơm lừng đãi tiệc lửa trại nhé!',
+    'an_lv11': 'Chuẩn bị phần thịt bò Wagyu vân cẩm thạch thượng hạng để áp chảo!',
+    'an_lv12': 'Đỉnh cao ẩm thực! Cua hoàng đế đỏ au hấp ướp đá cực sang trọng!',
 
-    // 5. Chuỗi Cà phê sương sớm (cafe_lv1 -> cafe_lv12)
+    // 5. Chuỗi Cà phê & Đồ uống (cafe_lv1 -> cafe_lv12)
     'cafe_lv1':  'Những hạt cà phê rang mộc thơm nức mũi cho buổi sáng tỉnh táo!',
-    'cafe_lv2':  'Dùng cối xay gỗ cổ điển xay nhuyễn những hạt cà phê thơm lừng nhé!',
-    'cafe_lv3':  'Đun nước bằng ấm rót cổ ngỗng để chuẩn bị pha cà phê thủ công nào!',
-    'cafe_lv4':  'Rót một tách cà phê nóng hổi vừa thổi vừa nhấp môi ngắm bình minh!',
-    'cafe_lv5':  'Khui gói cà phê Specialty thượng hạng cho hương vị đậm đà hơn nhé!',
-    'cafe_lv6':  'Nâng cấp lên cối xay cà phê cầm tay inox sáng bóng thật chuyên nghiệp!',
-    'cafe_lv7':  'Đặt ấm pha Moka Pot kiểu Ý lên bếp đun lấy cốt cà phê sánh đặc nào!',
-    'cafe_lv8':  'Pha một cốc cà phê sứ đỏ bốc khói thơm ngậy lớp kem bọt quyến rũ!',
-    'cafe_lv9':  'Thêm một cốc cà phê men đỏ nóng ấm để tỉnh táo suốt chuyến đi nhé!',
-    'cafe_lv10': 'Thưởng thức cốc cà phê Espresso đậm đặc giữa làn sương sớm mai nào!',
-    'cafe_lv11': 'Pha cốc cà phê Latte béo ngậy chuẩn vị Barista ngay tại khu trại!',
-    'cafe_lv12': 'Tuyệt phẩm! Cốc cà phê đặc sản hoàng gia thơm lừng cả góc rừng!',
+    'cafe_lv2':  'Mang bao tải hạt cà phê rang mộc dự trữ cho cả chuyến dã ngoại!',
+    'cafe_lv3':  'Dùng cối xay cầm tay inox xay nhuyễn những hạt cà phê thơm lừng!',
+    'cafe_lv4':  'Đặt ấm pha Moka Pot kiểu Ý lên bếp đun lấy cốt cà phê sánh đặc!',
+    'cafe_lv5':  'Rót một cốc cà phê sứ đỏ nóng hổi thơm ngậy lớp bọt kem nhé!',
+    'cafe_lv6':  'Pha ly Cappuccino phân tầng phủ bột ca cao cực chill buổi sáng!',
+    'cafe_lv7':  'Làm ly cà phê đen đá mát lạnh giải nhiệt giữa trưa nắng rừng nhé!',
+    'cafe_lv8':  'Pha ly cà phê sữa đá béo ngậy ngọt dịu cho buổi chiều thư giãn!',
+    'cafe_lv9':  'Thưởng thức ly trà trái cây nhiệt đới chanh dâu cam cực sảng khoái!',
+    'cafe_lv10': 'Pha hũ trà đào cam sả mát rượi thơm dịu hương thảo mộc thiên nhiên!',
+    'cafe_lv11': 'Hãm ấm trà hoa thảo mộc nóng đặt trên đế giữ nhiệt thật thanh tao!',
+    'cafe_lv12': 'Tuyệt phẩm! Bình trà trái cây cỡ lớn có vòi rót phục vụ cả tiệc!',
 
     // 6. Chuỗi Chiếu sáng dã ngoại (congcu_lv1 -> congcu_lv12)
-    'congcu_lv1':  'Treo bóng đèn tròn nhỏ xinh lên nóc lều cho buổi tối ấm áp nhé!',
+    'congcu_lv1':  'Treo bóng đèn tròn nhỏ xinh lên dây lều cho buổi tối ấm áp nhé!',
     'congcu_lv2':  'Bật chiếc đèn pin cầm tay màu xanh để soi đường quanh bãi cỏ nhé!',
     'congcu_lv3':  'Giăng dây đèn LED đom đóm lung linh trang trí trước cửa lều nào!',
-    'congcu_lv4':  'Đặt chiếc đèn lồng nhỏ gọn lên bàn để chiếu sáng góc sinh hoạt nhé!',
-    'congcu_lv5':  'Bật đèn pha bảng LED vuông công suất lớn soi sáng cả khoảng sân!',
+    'congcu_lv4':  'Đặt chiếc đèn lồng sạc quai cam nhỏ gọn chiếu sáng góc sinh hoạt!',
+    'congcu_lv5':  'Bật đèn bảng LED gấp gọn công suất lớn soi sáng cả khoảng sân!',
     'congcu_lv6':  'Thắp chiếc đèn bão màu cam cổ điển mang lại cảm giác thật ấm cúng!',
     'congcu_lv7':  'Treo thêm chiếc đèn bão màu xanh rêu vững chãi trước hiên lều nhé!',
     'congcu_lv8':  'Chiếc đèn bão màu đỏ rực rỡ sẽ làm góc trại đêm nổi bật lắm đây!',
-    'congcu_lv9':  'Thắp sáng đèn măng-xông cổ điển màu xanh quân đội cực kỳ bền bỉ!',
-    'congcu_lv10': 'Nâng cấp lên đèn măng-xông chao bạc tỏa ánh sáng rộng khắp bãi cỏ!',
-    'congcu_lv11': 'Ghép chiếc đèn bão đồng thau sang trọng tỏa ánh vàng dịu mắt nhé!',
-    'congcu_lv12': 'Kiệt tác ánh sáng! Đèn bão hoàng gia mạ vàng rực rỡ nhất khu trại!',
+    'congcu_lv9':  'Thắp sáng đèn măng-xông quân đội màu xanh cực kỳ bền bỉ nhé!',
+    'congcu_lv10': 'Nâng cấp lên đèn măng-xông chụp bạc tỏa ánh sáng rộng khắp bãi cỏ!',
+    'congcu_lv11': 'Ghép chiếc đèn măng-xông đồng vàng sang trọng tỏa ánh sáng dịu mắt!',
+    'congcu_lv12': 'Kiệt tác ánh sáng! Đèn măng-xông hoàng gia mạ vàng rực rỡ nhất trại!',
 
     // 7. Chuỗi Lửa & Bếp trại (bep_lv1 -> bep_lv12)
     'bep_lv1':  'Nhặt vài nhánh củi khô làm mồi nhen nhóm ngọn lửa trại đầu tiên!',
@@ -1068,35 +1067,39 @@ var ITEM_STORY_DIALOGUES = {
     'bep_lv5':  'Chất đầy củi vào vòng đá, sẵn sàng châm lửa sưởi ấm cả khu trại!',
     'bep_lv6':  'Châm lửa thôi! Đống lửa trại bùng cháy rực hồng ấm áp quá đi mất!',
     'bep_lv7':  'Chuẩn bị lò nướng than hoa tròn để nướng thịt thơm phức chiều nay!',
-    'bep_lv8':  'Nâng cấp lên bếp nướng BBQ chữ nhật inox rộng rãi cho bữa tiệc lớn!',
-    'bep_lv9':  'Thêm trạm bếp nướng inox cao cấp để nướng đồ ăn nhanh và đều hơn!',
-    'bep_lv10': 'Ghép lò nướng đại tiệc ngoài trời cho những món nướng thượng hạng!',
-    'bep_lv11': 'Hoàn thiện hệ thống bếp nướng Glamping chuyên nghiệp của đầu bếp!',
-    'bep_lv12': 'Đỉnh cao! Đại trạm bếp nướng BBQ hoàng gia phục vụ mọi bữa tiệc!',
+    'bep_lv8':  'Nâng cấp lên bếp nướng than inox mini chữ nhật có tay cầm tiện lợi!',
+    'bep_lv9':  'Ghép bếp nướng than chân xếp gọn nhẹ với vỉ nướng rực than hồng!',
+    'bep_lv10': 'Chuẩn bị bếp nướng kiểu thùng đen nắp gập cho bữa tiệc BBQ đêm!',
+    'bep_lv11': 'Bếp nướng chân cao gọn gàng đã đỏ lửa sẵn sàng nướng thịt thơm lừng!',
+    'bep_lv12': 'Đỉnh cao! Đại bếp nướng BBQ inox rộng rãi phục vụ mọi đại tiệc!',
 
-    // 8. Chuỗi Chỗ ngủ êm ái (tham_lv1 -> tham_lv8)
-    'tham_lv1': 'Trải tấm bạt xanh chống ẩm xuống bãi cỏ trước khi dựng đồ nhé!',
-    'tham_lv2': 'Thêm chiếc gối tựa họa tiết thổ cẩm êm ái để dựa lưng nghỉ ngơi nhé!',
-    'tham_lv3': 'Trải tấm thảm thổ cẩm rực rỡ ra bãi cỏ để ngồi chơi cùng nhau nào!',
-    'tham_lv4': 'Chuẩn bị tấm chăn đệm gấp cách nhiệt giữ ấm lưng khi ngủ đêm nhé!',
-    'tham_lv5': 'Chui vào chiếc túi ngủ cuộn xanh cam êm ấm thì chẳng sợ gió lạnh!',
-    'tham_lv6': 'Mắc chiếc võng dù khung gỗ đung đưa đọc sách dưới tán cây mát rượi!',
-    'tham_lv7': 'Bơm chiếc ghế sofa hơi đôi màu xanh rêu để ngồi tâm sự thật êm nào!',
-    'tham_lv8': 'Tuyệt đỉnh êm ái! Đệm hơi đôi cỡ lớn cho giấc ngủ ngon như ở nhà!',
+    // 8. Chuỗi Chỗ ngủ êm ái (tham_lv1 -> tham_lv12)
+    'tham_lv1':  'Mang tấm chăn cuộn màu xám mềm mại giữ ấm khi ngồi ngoài trời nhé!',
+    'tham_lv2':  'Thổi chiếc gối hơi màu xanh nhỏ gọn để tựa lưng nghỉ ngơi êm ái!',
+    'tham_lv3':  'Trải tấm thảm picnic kẻ ca-rô đỏ trắng ra bãi cỏ cùng dã ngoại nào!',
+    'tham_lv4':  'Chuẩn bị tấm thảm cuộn cách nhiệt xanh rêu chống ẩm mặt đất nhé!',
+    'tham_lv5':  'Mang bộ túi ngủ cuộn màu cam đen gọn gàng sẵn sàng ngủ qua đêm!',
+    'tham_lv6':  'Chui vào chiếc túi ngủ con nhộng xanh rêu lót lông cực ấm áp nhé!',
+    'tham_lv7':  'Bơm chiếc đệm hơi đơn màu xanh kèm ống bơm tay thật nhanh gọn nào!',
+    'tham_lv8':  'Gấp gọn bộ chăn đệm dã ngoại kèm gối trắng êm như ở nhà nhé!',
+    'tham_lv9':  'Nâng cấp lên đệm hơi đôi cỡ lớn có hai gối liền cực kỳ êm ái!',
+    'tham_lv10': 'Dựng chiếc giường xếp khung nhôm cách ly hoàn toàn hơi lạnh mặt đất!',
+    'tham_lv11': 'Phủ thêm chăn bông chần màu cam ấm áp lên giường xếp Glamping nhé!',
+    'tham_lv12': 'Đỉnh cao Glamping! Giường gỗ hoàng gia cùng thảm thổ cẩm 5 sao!',
 
-    // 9. Chuỗi Nguồn điện & Năng lượng (antoan_lv1 -> antoan_lv12)
-    'antoan_lv1':  'Lấy sợi cáp sạc bọc dù màu cam bền bỉ để kết nối nguồn điện nhé!',
-    'antoan_lv2':  'Chuẩn bị củ sạc nhanh màu xanh để nạp điện cho các thiết bị nhỏ nhé!',
-    'antoan_lv3':  'Ghép viên pin sạc dự phòng bỏ túi màu xanh lá gọn nhẹ mang theo người!',
-    'antoan_lv4':  'Nâng cấp lên pin dự phòng chống sốc hầm hố không lo va đập khi đi rừng!',
-    'antoan_lv5':  'Trời hơi oi rồi, bật chiếc quạt tích điện màu cam thổi gió mát rượi!',
-    'antoan_lv6':  'Dựng tấm pin năng lượng mặt trời đón nắng để tự tạo nguồn điện sạch!',
-    'antoan_lv7':  'Ghép trạm điện di động mini màu đen cấp nguồn cho đèn và quạt nhé!',
-    'antoan_lv8':  'Nâng cấp lên trạm phát điện dã ngoại có tay xách khỏe khoắn và bền bỉ!',
-    'antoan_lv9':  'Bộ lưu điện dung lượng cao giúp khu trại sáng đèn suốt cả tuần lễ!',
-    'antoan_lv10': 'Trạm điện công suất lớn đủ sức chạy cả bếp điện lẫn dàn đèn trại!',
-    'antoan_lv11': 'Ghép máy phát điện siêu cách âm vận hành êm ru giữa thiên nhiên nhé!',
-    'antoan_lv12': 'Đỉnh cao công nghệ! Trạm năng lượng hoàng gia cung cấp điện vô tận!'
+    // 9. Chuỗi An toàn & Năng lượng (antoan_lv1 -> antoan_lv12)
+    'antoan_lv1':  'Xịt chút chai chống muỗi màu cam để thoải mái vui chơi giữa rừng nhé!',
+    'antoan_lv2':  'Thoa kem chống nắng tuýp vàng bảo vệ làn da suốt ngày dã ngoại!',
+    'antoan_lv3':  'Mang theo túi bàn chải kem đánh răng giữ vệ sinh sạch sẽ nhé!',
+    'antoan_lv4':  'Lấy sợi cáp sạc bọc dù màu cam bền bỉ kết nối các thiết bị điện!',
+    'antoan_lv5':  'Cất gọn viên pin sạc dự phòng màu xanh lá để nạp điện khi cần!',
+    'antoan_lv6':  'Luôn sẵn sàng túi y tế sơ cứu màu đỏ bảo vệ an toàn cho cả nhóm!',
+    'antoan_lv7':  'Dùng đèn khò gas mini đầu xanh hỗ trợ nhóm bếp nhanh chóng nhé!',
+    'antoan_lv8':  'Bật chiếc quạt tích điện màu cam thổi gió mát rượi giữa trưa hè!',
+    'antoan_lv9':  'Dựng tấm pin năng lượng mặt trời đón nắng tự tạo nguồn điện sạch!',
+    'antoan_lv10': 'Bật loa Bluetooth xanh rêu lên chill vài bản nhạc bên bờ suối nhé!',
+    'antoan_lv11': 'Ghép trạm sạc dự phòng mini màu đen cấp nguồn cho đèn và quạt!',
+    'antoan_lv12': 'Đỉnh cao công nghệ! Trạm năng lượng Glamping cấp điện cả khu trại!'
 };
 
 var PET_ORDER_DIALOGUES = {
@@ -2108,7 +2111,7 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
 
     var uncompleted = [];
     candidateLines.forEach(function (ln) {
-        var maxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
+        var maxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : 12;
         var nextLv = (SAVE.slot1BranchLevelMap[ln] || 1) + 1;
         while (nextLv <= maxLv && (SAVE.slot1CompletedIds.indexOf(ln + '_lv' + nextLv) !== -1 || (typeof isItemCompletedMaxTimes === 'function' && isItemCompletedMaxTimes(ln + '_lv' + nextLv)))) {
             nextLv++;
@@ -2172,7 +2175,7 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
         var chosenEndLv = null;
         for (var sIdx2 = 0; sIdx2 < sortedEndLines.length; sIdx2++) {
             var testEndLine = sortedEndLines[sIdx2];
-            var testMaxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(testEndLine) : (testEndLine === 'tham' ? 8 : 12);
+            var testMaxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(testEndLine) : 12;
             var testCands = [];
             for (var eLv = 2; eLv <= testMaxLv; eLv++) {
                 var eCandId = testEndLine + '_lv' + eLv;
@@ -2192,7 +2195,7 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
             // Khi toàn bộ item đều đã đạt trần hoàn thành, xoay vòng qua các item trung cấp (Lv.3..6) ít xuất hiện nhất
             var endCandidatesAll = [];
             sortedEndLines.forEach(function (ln) {
-                var mCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
+                var mCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : 12;
                 for (var l = 3; l <= Math.min(mCap, 6); l++) {
                     endCandidatesAll.push({ line: ln, level: l, id: ln + '_lv' + l });
                 }
@@ -2206,7 +2209,7 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
         chosenEntry = {
             line: chosenEndLine,
             nextLv: chosenEndLv,
-            maxLv: (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(chosenEndLine) : (chosenEndLine === 'tham' ? 8 : 12)
+            maxLv: (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(chosenEndLine) : 12
         };
     }
 
@@ -2283,7 +2286,7 @@ function pickBacklogSlot2Item(board, slot1Id, activeLines, activeGens, boardStat
     var allAllowedCandidates = [];
 
     candidateLines.forEach(function (ln) {
-        var maxLineCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
+        var maxLineCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : 12;
         var branchCap = Math.min(maxLineCap, maxAllowedLv);
         for (var l = 2; l <= branchCap; l++) {
             var candId = ln + '_lv' + l;
@@ -2344,7 +2347,7 @@ function pickBacklogSlot2Item(board, slot1Id, activeLines, activeGens, boardStat
         var fallbackCand = null;
         for (var cIdx = 0; cIdx < candidateLines.length; cIdx++) {
             var fbLine = candidateLines[cIdx];
-            var fbMax = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(fbLine) : (fbLine === 'tham' ? 8 : 12);
+            var fbMax = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(fbLine) : 12;
             for (var fLv = 2; fLv <= Math.min(fbMax, 6); fLv++) {
                 var testFbId = fbLine + '_lv' + fLv;
                 if (typeof isItemCompletedMaxTimes !== 'function' || !isItemCompletedMaxTimes(testFbId)) {
@@ -2425,7 +2428,7 @@ function pickBoardExcessSlot3Item(board, slot1Id, slot2Id, activeLines, activeGe
         var count = boardItemCounts[itId];
         var ln = (typeof itemLine === 'function') ? itemLine(itId) : itId.split('_lv')[0];
         var lv = (typeof itemLevel === 'function') ? itemLevel(itId) : (parseInt((itId.match(/_lv(\d+)$/) || [])[1], 10) || 1);
-        var maxLineCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
+        var maxLineCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : 12;
 
         var targetId = itId;
         var targetLv = lv;
@@ -2484,7 +2487,7 @@ function pickBoardExcessSlot3Item(board, slot1Id, slot2Id, activeLines, activeGe
         });
         for (var rIdx = 0; rIdx < rankedLines.length; rIdx++) {
             var fallbackLine = rankedLines[rIdx];
-            var fallbackMax = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(fallbackLine) : (fallbackLine === 'tham' ? 8 : 12);
+            var fallbackMax = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(fallbackLine) : 12;
             for (var fbLv = 2; fbLv <= Math.min(fallbackMax, 6); fbLv++) {
                 var candFbId = fallbackLine + '_lv' + fbLv;
                 if (typeof isItemCompletedMaxTimes !== 'function' || !isItemCompletedMaxTimes(candFbId)) {
@@ -2598,7 +2601,7 @@ function generateDynamicOrderItems(board, orderNum, existingIds, activeGens) {
             var replaced = false;
             // 1. Thử tìm item chưa đạt trần trong cùng nhánh
             var bLn = (typeof itemLine === 'function') ? itemLine(itId) : itId.split('_lv')[0];
-            var maxLineLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(bLn) : (bLn === 'tham' ? 8 : 12);
+            var maxLineLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(bLn) : 12;
             for (var sLv = 2; sLv <= maxLineLv; sLv++) {
                 var testId = bLn + '_lv' + sLv;
                 if (!isItemCompletedMaxTimes(testId) && items.indexOf(testId) === -1) {
@@ -2611,7 +2614,7 @@ function generateDynamicOrderItems(board, orderNum, existingIds, activeGens) {
             if (!replaced) {
                 for (var aIdx = 0; aIdx < activeLines.length; aIdx++) {
                     var otherLn = activeLines[aIdx];
-                    var otherMax = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(otherLn) : (otherLn === 'tham' ? 8 : 12);
+                    var otherMax = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(otherLn) : 12;
                     for (var oLv = 2; oLv <= otherMax; oLv++) {
                         var oTestId = otherLn + '_lv' + oLv;
                         if (!isItemCompletedMaxTimes(oTestId) && items.indexOf(oTestId) === -1) {
@@ -2628,7 +2631,7 @@ function generateDynamicOrderItems(board, orderNum, existingIds, activeGens) {
             if (!replaced) {
                 var allEligible = [];
                 activeLines.forEach(function (ln) {
-                    var mCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : (ln === 'tham' ? 8 : 12);
+                    var mCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : 12;
                     for (var l = 3; l <= Math.min(mCap, 6); l++) {
                         var cId = ln + '_lv' + l;
                         if (items.indexOf(cId) === -1) allEligible.push(cId);
