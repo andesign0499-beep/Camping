@@ -1,0 +1,267 @@
+{
+  "meta": {
+    "image": "goden_bark_sheet.webp",
+    "format": "WebP",
+    "size": {
+      "w": 1188,
+      "h": 1380
+    },
+    "scale": 1,
+    "totalFrames": 31,
+    "frameWidth": 198,
+    "frameHeight": 230,
+    "columns": 6,
+    "rows": 6,
+    "fps": 8
+  },
+  "frames": [
+    {
+      "name": "goden_bark1",
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark2",
+      "index": 1,
+      "x": 198,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark3",
+      "index": 2,
+      "x": 396,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark4",
+      "index": 3,
+      "x": 594,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark5",
+      "index": 4,
+      "x": 792,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark6",
+      "index": 5,
+      "x": 990,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark7",
+      "index": 6,
+      "x": 0,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark8",
+      "index": 7,
+      "x": 198,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark9",
+      "index": 8,
+      "x": 396,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark10",
+      "index": 9,
+      "x": 594,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark11",
+      "index": 10,
+      "x": 792,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark12",
+      "index": 11,
+      "x": 990,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark13",
+      "index": 12,
+      "x": 0,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark14",
+      "index": 13,
+      "x": 198,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark15",
+      "index": 14,
+      "x": 396,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark16",
+      "index": 15,
+      "x": 594,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark17",
+      "index": 16,
+      "x": 792,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark18",
+      "index": 17,
+      "x": 990,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark19",
+      "index": 18,
+      "x": 0,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark20",
+      "index": 19,
+      "x": 198,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark21",
+      "index": 20,
+      "x": 396,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark22",
+      "index": 21,
+      "x": 594,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark23",
+      "index": 22,
+      "x": 792,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark24",
+      "index": 23,
+      "x": 990,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark25",
+      "index": 24,
+      "x": 0,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark26",
+      "index": 25,
+      "x": 198,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark27",
+      "index": 26,
+      "x": 396,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark28",
+      "index": 27,
+      "x": 594,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark29",
+      "index": 28,
+      "x": 792,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark30",
+      "index": 29,
+      "x": 990,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "goden_bark31",
+      "index": 30,
+      "x": 0,
+      "y": 1150,
+      "width": 198,
+      "height": 230
+    }
+  ]
+}
