@@ -180,6 +180,9 @@ body {
     -webkit-user-select: none;
     will-change: transform;
 }
+.backdrop-cloud:not([src]) {
+    display: none;
+}
 
 /* Đám mây 1: Cấu hình qua GAME_CONFIG.clouds trong js/config.js */
 .backdrop-cloud.cloud-1 {
@@ -257,7 +260,7 @@ body {
             rgba(41, 59, 37, 0.82) 64%, 
             rgba(38, 54, 34, 0.90) 80%, 
             #263622 100%),
-        url('../assets/images_webp/background/bg_doibu.webp');
+        url('../assets/images_webp/background/bg_hodongdo.webp');
     background-position: center top, center -20px;
     background-repeat: no-repeat, no-repeat;
     background-size: 100% 100%, 80% auto;
@@ -580,20 +583,9 @@ body {
     }
 }
 
-/* Nền đồi cỏ gò đất cho chú chó & item nhiệm vụ (đè lên đám mây, load sau cùng khi các thành phần sẵn sàng) */
+/* Nền đồi cỏ gò đất cũ: đã chuyển vào gắn trực tiếp bên trong .pet-group-avatar-wrap để di chuyển cùng NPC */
 .npc-stage-bg {
-    position: absolute;
-    left: 0;
-    bottom: -8px;
-    width: clamp(260px, 78vw, 340px);
-    pointer-events: none;
-    z-index: 2;
-    line-height: 0;
-    user-select: none;
-    -webkit-user-select: none;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.45s ease-out;
+    display: none !important;
 }
 
 .npc-stage-bg.is-ready {
@@ -808,7 +800,24 @@ body {
     transform: scale(0.94);
 }
 
+.pet-group-island-img {
+    position: absolute;
+    left: calc(50% + 4px);
+    bottom: -28px;
+    transform: translateX(-50%);
+    width: 70px;
+    height: auto;
+    pointer-events: none;
+    z-index: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
+}
+
 .pet-group-avatar-img {
+    position: relative;
+    bottom: 4px;
+    z-index: 1;
     height: 76px;
     width: auto;
     max-width: 54px;
@@ -821,6 +830,9 @@ body {
 
 /* Canvas render chuỗi hoạt ảnh spritesheet của thú cưng */
 .pet-group-avatar-canvas {
+    position: relative;
+    bottom: 4px;
+    z-index: 1;
     height: 76px;
     width: auto;
     max-width: 58px;

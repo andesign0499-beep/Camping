@@ -2806,6 +2806,13 @@ function renderOrders() {
         avatarWrap.className = 'pet-group-avatar-wrap';
         avatarWrap.title = 'Chạm để trò chuyện cùng ' + petName;
 
+        // Hòn đảo nhỏ gắn trực tiếp dưới chân NPC để luôn di chuyển cùng nhau
+        var islandImg = document.createElement('img');
+        islandImg.className = 'pet-group-island-img';
+        islandImg.src = 'assets/images_webp/board/npc_bg.webp';
+        islandImg.alt = '';
+        avatarWrap.appendChild(islandImg);
+
         var petAvatarObj = createPetAvatarElement(group.petId, petName, petImgSrc);
         avatarWrap.appendChild(petAvatarObj.element);
         groupEl._petAvatarObj = petAvatarObj;

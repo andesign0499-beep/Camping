@@ -1315,11 +1315,12 @@ function openCamp(highlightLevel, onBack, initialTab) {
     }
 
     function renderLocationsList() {
-        if (!SAVE.ownedLocations || !Array.isArray(SAVE.ownedLocations)) SAVE.ownedLocations = ['loc_doibu'];
-        if (!SAVE.ownedLocations.includes('loc_doibu')) SAVE.ownedLocations.unshift('loc_doibu');
+        if (!SAVE.ownedLocations || !Array.isArray(SAVE.ownedLocations)) SAVE.ownedLocations = ['loc_dongdo'];
+        SAVE.ownedLocations = SAVE.ownedLocations.filter(function (id) { return id !== 'loc_doibu'; });
+        if (!SAVE.ownedLocations.includes('loc_dongdo')) SAVE.ownedLocations.unshift('loc_dongdo');
         var locations = (typeof CAMP_LOCATIONS !== 'undefined') ? CAMP_LOCATIONS : [];
         if (!SAVE.activeLocation || !locations.some(function (l) { return l.id === SAVE.activeLocation; })) {
-            SAVE.activeLocation = 'loc_doibu';
+            SAVE.activeLocation = 'loc_dongdo';
         }
         var ownedCount = SAVE.ownedLocations.length;
         if (locSub) {
@@ -3577,11 +3578,13 @@ function startCampAnimators() {
     if (petConfig) {
         var f1 = petConfig.state1Frames || petConfig.standFrames || petConfig.idleFrames || [];
         var f2 = petConfig.state2Frames || petConfig.sitFrames || petConfig.helloFrames || [];
+        var f3 = petConfig.state3Frames || petConfig.barkFrames || [];
         var sheet1 = petConfig.state1Sheet || null;
         var sheet2 = petConfig.state2Sheet || null;
-        var hasSheet = !!(sheet1 || sheet2);
+        var sheet3 = petConfig.state3Sheet || null;
+        var hasSheet = !!(sheet1 || sheet2 || sheet3);
 
-        if (f1.length || f2.length || hasSheet) {
+        if (f1.length || f2.length || f3.length || hasSheet) {
             var elemId = 'mycamp-anim-pet';
             var canvasElem = document.getElementById(elemId + '-canvas');
             var imgElem = document.getElementById(elemId + '-img');
@@ -3589,6 +3592,7 @@ function startCampAnimators() {
             if (canvasElem || imgElem) {
                 var sheet1Img = null;
                 var sheet2Img = null;
+                var sheet3Img = null;
                 if (sheet1) {
                     sheet1Img = new Image();
                     sheet1Img.src = sheet1.image;
@@ -3597,9 +3601,13 @@ function startCampAnimators() {
                     sheet2Img = new Image();
                     sheet2Img.src = sheet2.image;
                 }
+                if (sheet3) {
+                    sheet3Img = new Image();
+                    sheet3Img.src = sheet3.image;
+                }
                 if (!hasSheet) {
                     // Preload toàn bộ frames PNG nếu dùng ảnh rời
-                    f1.concat(f2).forEach(function (src) {
+                    f1.concat(f2).concat(f3).forEach(function (src) {
                         var img = new Image();
                         img.src = src;
                     });
@@ -3610,8 +3618,11 @@ function startCampAnimators() {
 
                 var s1DurationMs = (petConfig.state1Duration || petConfig.standDuration || petConfig.idleDuration || 5) * 1000;
                 var s2DurationMs = (petConfig.state2Duration || petConfig.sitDuration || petConfig.helloDuration || 5) * 1000;
+                var s3DurationMs = (petConfig.state3Duration || petConfig.barkDuration || 4) * 1000;
                 var s1Width = petConfig.state1Width || petConfig.standWidth || petConfig.idleWidth || 60;
                 var s2Width = petConfig.state2Width || petConfig.sitWidth || petConfig.helloWidth || 60;
+                var s3Width = petConfig.state3Width || petConfig.barkWidth || s1Width;
+                var s3Chance = (typeof petConfig.state3Chance === 'number') ? petConfig.state3Chance : 0.35;
 
                 var currentState = (sheet1 || f1.length) ? 'state1' : 'state2';
                 var currentFrameIdx = 0;
@@ -3651,14 +3662,14 @@ function startCampAnimators() {
                     var img = document.getElementById(elemId + '-img');
                     if (!canvas && !img) return;
 
-                    var activeSheet = (currentState === 'state1') ? sheet1 : sheet2;
-                    var activeSheetImg = (currentState === 'state1') ? sheet1Img : sheet2Img;
-                    var frames = (currentState === 'state1') ? f1 : f2;
+                    var activeSheet = (currentState === 'state1') ? sheet1 : (currentState === 'state2' ? sheet2 : sheet3);
+                    var activeSheetImg = (currentState === 'state1') ? sheet1Img : (currentState === 'state2' ? sheet2Img : sheet3Img);
+                    var frames = (currentState === 'state1') ? f1 : (currentState === 'state2' ? f2 : f3);
                     var totalCount = activeSheet ? activeSheet.totalFrames : (frames ? frames.length : 0);
                     if (totalCount <= 0) return;
 
                     currentFrameIdx = (currentFrameIdx + 1) % totalCount;
-                    var targetWidth = (currentState === 'state1') ? s1Width : s2Width;
+                    var targetWidth = (currentState === 'state1') ? s1Width : (currentState === 'state2' ? s2Width : s3Width);
 
                     if (canvas && activeSheet && activeSheetImg) {
                         drawSheetFrame(canvas, activeSheet, activeSheetImg, currentFrameIdx, targetWidth);
@@ -3669,14 +3680,24 @@ function startCampAnimators() {
                         }
                     }
 
-                    // Nếu có cả 2 trạng thái và không đang giữ vuốt ve thì luân phiên
-                    var canAlternate = (sheet1 && sheet2) || (f1.length && f2.length);
+                    // Nếu có nhiều trạng thái và không đang giữ vuốt ve thì luân phiên (thi thoảng chuyển sang state3 nếu có)
+                    var hasState2 = !!(sheet2 || f2.length);
+                    var hasState3 = !!(sheet3 || f3.length);
+                    var canAlternate = hasState2 || hasState3;
                     if (canAlternate && !petHoldState.isHolding) {
                         stateElapsedMs += intervalMs;
-                        var currentLimit = (currentState === 'state1') ? s1DurationMs : s2DurationMs;
+                        var currentLimit = (currentState === 'state1') ? s1DurationMs : (currentState === 'state2' ? s2DurationMs : s3DurationMs);
 
                         if (stateElapsedMs >= currentLimit && currentFrameIdx === 0) {
-                            currentState = (currentState === 'state1') ? 'state2' : 'state1';
+                            if (currentState === 'state1') {
+                                if (hasState3 && (!hasState2 || Math.random() < s3Chance)) {
+                                    currentState = 'state3';
+                                } else if (hasState2) {
+                                    currentState = 'state2';
+                                }
+                            } else {
+                                currentState = 'state1';
+                            }
                             stateElapsedMs = 0;
                             currentFrameIdx = 0;
                         }
@@ -4135,11 +4156,13 @@ function renderMyCampScene() {
             // Nếu con vật chưa có chuyển động (chưa có frame animation hay spritesheet) thì tự động để trống bãi cỏ
             var f1 = petConfig ? (petConfig.state1Frames || petConfig.standFrames || petConfig.idleFrames || []) : [];
             var f2 = petConfig ? (petConfig.state2Frames || petConfig.sitFrames || petConfig.helloFrames || []) : [];
+            var f3 = petConfig ? (petConfig.state3Frames || petConfig.barkFrames || []) : [];
             var s1Sheet = petConfig ? petConfig.state1Sheet : null;
             var s2Sheet = petConfig ? petConfig.state2Sheet : null;
-            var hasSheet = !!(s1Sheet || s2Sheet);
+            var s3Sheet = petConfig ? petConfig.state3Sheet : null;
+            var hasSheet = !!(s1Sheet || s2Sheet || s3Sheet);
 
-            if (!petConfig || (!f1.length && !f2.length && !hasSheet)) {
+            if (!petConfig || (!f1.length && !f2.length && !f3.length && !hasSheet)) {
                 // "Nếu con vật nào chưa có chuyển động thì cứ để trống"
                 return;
             }

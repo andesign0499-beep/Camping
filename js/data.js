@@ -8,18 +8,16 @@
 
 // Danh sách ảnh nền màn chơi (Tự động lặp tuần hoàn theo bộ ảnh WebP 3D mới)
 var LEVEL_BACKGROUNDS = [
-    'assets/images_webp/background/bg_doibu.webp?v=10.46',          // Level 1: Đồi Bù (Đứng đầu)
-    'assets/images_webp/background/bg_hodongdo.webp',       // Level 2: Cao nguyên Lâm Viên (Đứng thứ 2)
-    'assets/images_webp/background/bg_nuimatthan.webp',     // Level 3: Núi Mắt Thần
-    'assets/images_webp/background/bg_thacbandoc.webp',     // Level 4: Thác Bản Giốc
-    'assets/images_webp/background/bg_doichatmuine.webp?v=10.46',   // Level 5: Đồi Cát Mũi Né
-    'assets/images_webp/background/bg_songnuocbinhba.webp?v=10.46'  // Level 6: Sóng nước Bình Ba
+    'assets/images_webp/background/bg_hodongdo.webp',               // Level 1: Cao nguyên Lâm Viên (Mặc định)
+    'assets/images_webp/background/bg_nuimatthan.webp',             // Level 2: Núi Mắt Thần
+    'assets/images_webp/background/bg_thacbandoc.webp',             // Level 3: Thác Bản Giốc
+    'assets/images_webp/background/bg_doichatmuine.webp?v=10.46',   // Level 4: Đồi Cát Mũi Né
+    'assets/images_webp/background/bg_songnuocbinhba.webp?v=10.46'  // Level 5: Sóng nước Bình Ba
 ];
 
-// Danh sách Điểm Đến cắm trại bán trong Khu Trại (Mỗi địa điểm đều có ảnh nền 3D khu trại WebP tương ứng)
+// Danh sách Điểm Đến cắm trại bán trong Khu Trại (5 địa điểm - Mỗi địa điểm đều có ảnh nền 3D khu trại WebP tương ứng)
 var CAMP_LOCATIONS = [
-    { id: 'loc_doibu', nameKey: 'dest_doibu', name: 'Đồi Bù', img: 'assets/images_webp/background/bg_doibu.webp?v=10.46', campBg: 'assets/images_webp/background/bg_doibu.webp?v=10.46', price: 0 },
-    { id: 'loc_dongdo', nameKey: 'dest_dongdo', name: 'Cao nguyên Lâm Viên', img: 'assets/images_webp/background/bg_hodongdo.webp', campBg: 'assets/images_webp/background/bg_hodongdo.webp', price: 4000 },
+    { id: 'loc_dongdo', nameKey: 'dest_dongdo', name: 'Cao nguyên Lâm Viên', img: 'assets/images_webp/background/bg_hodongdo.webp', campBg: 'assets/images_webp/background/bg_hodongdo.webp', price: 0 },
     { id: 'loc_matthan', nameKey: 'dest_matthan', name: 'Núi Mắt Thần', img: 'assets/images_webp/background/bg_nuimatthan.webp', campBg: 'assets/images_webp/background/bg_nuimatthan.webp', price: 8000 },
     { id: 'loc_bangioc', nameKey: 'dest_bangioc', name: 'Thác Bản Giốc', img: 'assets/images_webp/background/bg_thacbandoc.webp', campBg: 'assets/images_webp/background/bg_thacbandoc.webp', price: 15000 },
     { id: 'loc_muine', nameKey: 'dest_muine', name: 'Đồi Cát Mũi Né', img: 'assets/images_webp/background/bg_doichatmuine.webp?v=10.46', campBg: 'assets/images_webp/background/bg_doichatmuine.webp?v=10.46', price: 23000 },
@@ -75,7 +73,7 @@ function updateActiveLocationBackground() {
     var islandEl = document.getElementById('backdrop-island');
     var targetEl = islandEl || backdropEl || document.getElementById('game-app');
     var customBg = getActiveLocationBackground();
-    var bgUrl = customBg || (typeof currentLevel !== 'undefined' ? getLevelBackground(currentLevel) : 'assets/images_webp/background/bg_doibu.webp');
+    var bgUrl = customBg || (typeof currentLevel !== 'undefined' ? getLevelBackground(currentLevel) : 'assets/images_webp/background/bg_hodongdo.webp');
     if (bgUrl && targetEl) {
         var gradientOverlay = 'linear-gradient(180deg, ' +
             'rgba(53, 76, 48, 0) 0%, ' +

@@ -373,7 +373,7 @@ var GAME_CONFIG = {
                 generator_crate:    { tham: 1, antoan: 1, bep: 1 }    // Thùng Chứa: 33.3% Thảm, 33.3% An Toàn, 33.3% Bếp
             },
             minLevelForTierDrops: 4,    // Bắt đầu sinh đồ Lv.2 từ Level 4 (Level 1-3 sinh 100% đồ Lv.1)
-            minLevelForLv3Drops: 8,     // Từ Level 8 trở lên phát ra item vật phẩm Lv.3 lên tới 60%
+            minLevelForLv3Drops: 8,     // Từ Level 8 trở lên bắt đầu pha thêm đồ Lv.3 mượt mà (không bị tụt EV)
             // Công thức đặc biệt: Khi người chơi làm nhiệm vụ với item từ Level 8 trở lên (chỉ áp dụng cho máy phát chứa món đó)
             // HOẶC khi cấp độ tài khoản người chơi >= 12 (áp dụng cho tất cả máy phát):
             // Tăng tỷ lệ rơi Cấp 4 = 50%, Cấp 3 = 30%, Cấp 2 = 20%, Cấp 1 = 0%
@@ -385,11 +385,19 @@ var GAME_CONFIG = {
                 lv2: 0.20,
                 lv1: 0.00
             },
+            // Chế độ Siêu Cấp (Capstone Boost): Chỉ kích hoạt cho máy phát đang gánh nhiệm vụ đỉnh cao Lv.11 - Lv.12
+            // giúp món Lv.11-12 nằm trong ~1 bình năng lượng (165-260⚡) thay vì kéo dài 4-6 tiếng
+            capstoneQuestDrops: {
+                lv11: { lv5: 0.20, lv4: 0.50, lv3: 0.30, lv2: 0.00 },
+                lv12: { lv5: 0.40, lv4: 0.45, lv3: 0.15, lv2: 0.00 }
+            },
             tiers: [
-                { maxLevel: 3,  lv1: 1.00, lv2: 0.00, lv3: 0.00, lv4: 0.00 }, // Level 1-3:  100% Cấp 1
-                { maxLevel: 5,  lv1: 0.50, lv2: 0.50, lv3: 0.00, lv4: 0.00 }, // Level 4-5:  50% Cấp 1, 50% Cấp 2
-                { maxLevel: 7,  lv1: 0.30, lv2: 0.70, lv3: 0.00, lv4: 0.00 }, // Level 6-7:  30% Cấp 1, 70% Cấp 2
-                { maxLevel: 99, lv1: 0.00, lv2: 0.20, lv3: 0.30, lv4: 0.50 }  // Từ Level 12+ hoặc khi làm nhiệm vụ Lv.8+: 50% Cấp 4, 30% Cấp 3, 20% Cấp 2
+                { maxLevel: 3,  lv1: 1.00, lv2: 0.00, lv3: 0.00, lv4: 0.00 }, // Level 1-3:  100% Cấp 1 (EV 1.00)
+                { maxLevel: 5,  lv1: 0.50, lv2: 0.50, lv3: 0.00, lv4: 0.00 }, // Level 4-5:  50% C1, 50% C2 (EV 1.50)
+                { maxLevel: 7,  lv1: 0.25, lv2: 0.75, lv3: 0.00, lv4: 0.00 }, // Level 6-7:  25% C1, 75% C2 (EV 1.75)
+                { maxLevel: 9,  lv1: 0.15, lv2: 0.60, lv3: 0.25, lv4: 0.00 }, // Level 8-9:  15% C1, 60% C2, 25% C3 (EV 2.35)
+                { maxLevel: 11, lv1: 0.00, lv2: 0.50, lv3: 0.40, lv4: 0.10 }, // Level 10-11: 50% C2, 40% C3, 10% C4 (EV 3.40)
+                { maxLevel: 99, lv1: 0.00, lv2: 0.20, lv3: 0.30, lv4: 0.50 }  // Level 12+:  50% C4, 30% C3, 20% C2 (EV 5.60)
             ]
         },
 

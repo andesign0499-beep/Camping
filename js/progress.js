@@ -75,8 +75,8 @@ function defaultSave() {
         claimedBook: {},
         ownedPets: ['character01'],
         activePet: 'character01',
-        ownedLocations: ['loc_doibu'],
-        activeLocation: 'loc_doibu',
+        ownedLocations: ['loc_dongdo'],
+        activeLocation: 'loc_dongdo',
         campItems: [],
         campItemsMigrated: false,
         myCampEquipped: {},
@@ -199,9 +199,10 @@ function loadSave() {
                     });
                 });
             }
-            if (!Array.isArray(s.ownedLocations) || !s.ownedLocations.length) s.ownedLocations = ['loc_doibu'];
-            if (!s.ownedLocations.includes('loc_doibu')) s.ownedLocations.unshift('loc_doibu');
-            if (!s.activeLocation) s.activeLocation = 'loc_doibu';
+            if (!Array.isArray(s.ownedLocations) || !s.ownedLocations.length) s.ownedLocations = ['loc_dongdo'];
+            s.ownedLocations = s.ownedLocations.filter(function (id) { return id !== 'loc_doibu'; });
+            if (!s.ownedLocations.includes('loc_dongdo')) s.ownedLocations.unshift('loc_dongdo');
+            if (!s.activeLocation || s.activeLocation === 'loc_doibu') s.activeLocation = 'loc_dongdo';
             if (!Array.isArray(s.campItems)) s.campItems = [];
             if (!s.myCampEquipped || typeof s.myCampEquipped !== 'object') {
                 s.myCampEquipped = {};

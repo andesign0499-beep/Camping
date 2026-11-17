@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=10.84">
+    <link rel="stylesheet" href="css/style.css?v=10.85">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -17,10 +17,10 @@
         <div id="game-backdrop" class="game-backdrop" aria-hidden="true">
             <div class="backdrop-sky"></div>
             <div class="backdrop-clouds" id="backdrop-clouds">
-                <img src="assets/images_webp/ui/bg_all_may1.webp" class="backdrop-cloud cloud-1" alt="">
-                <img src="assets/images_webp/ui/bg_all_may2.webp" class="backdrop-cloud cloud-2" alt="">
-                <img src="assets/images_webp/ui/bg_all_may3.webp" class="backdrop-cloud cloud-3" alt="">
-                <img src="assets/images_webp/ui/bg_all_may4.webp" class="backdrop-cloud cloud-4" alt="">
+                <img data-src="assets/images_webp/ui/bg_all_may1.webp" class="backdrop-cloud cloud-1" alt="">
+                <img data-src="assets/images_webp/ui/bg_all_may2.webp" class="backdrop-cloud cloud-2" alt="">
+                <img data-src="assets/images_webp/ui/bg_all_may3.webp" class="backdrop-cloud cloud-3" alt="">
+                <img data-src="assets/images_webp/ui/bg_all_may4.webp" class="backdrop-cloud cloud-4" alt="">
             </div>
             <div class="backdrop-island" id="backdrop-island"></div>
         </div>
@@ -146,10 +146,10 @@
         <div id="my-camp-screen" class="my-camp-screen" style="display: none;">
             <!-- MÂY BAY NỀN HOÀNG HÔN CHO KHU TRẠI (PHÍA SAU ĐẢO) -->
             <div class="backdrop-clouds mycamp-clouds" aria-hidden="true">
-                <img src="assets/images_webp/ui/bg_all_may1.webp" class="backdrop-cloud cloud-1" alt="">
-                <img src="assets/images_webp/ui/bg_all_may2.webp" class="backdrop-cloud cloud-2" alt="">
-                <img src="assets/images_webp/ui/bg_all_may3.webp" class="backdrop-cloud cloud-3" alt="">
-                <img src="assets/images_webp/ui/bg_all_may4.webp" class="backdrop-cloud cloud-4" alt="">
+                <img data-src="assets/images_webp/ui/bg_all_may1.webp" class="backdrop-cloud cloud-1" alt="">
+                <img data-src="assets/images_webp/ui/bg_all_may2.webp" class="backdrop-cloud cloud-2" alt="">
+                <img data-src="assets/images_webp/ui/bg_all_may3.webp" class="backdrop-cloud cloud-3" alt="">
+                <img data-src="assets/images_webp/ui/bg_all_may4.webp" class="backdrop-cloud cloud-4" alt="">
             </div>
 
             <!-- VIEWPORT KÉO (PAN) & ZOOM KHÔNG GIAN BÃI TRẠI -->
@@ -195,16 +195,32 @@
     <script src="js/libs/gsap.min.js"></script>
     <script src="js/libs/MotionPathPlugin.min.js"></script>
 
-    <script src="js/i18n.js?v=10.84"></script>
-    <script src="js/config.js?v=10.84"></script>
-    <script src="js/data.js?v=10.84"></script>
-    <script src="js/engine.js?v=10.84"></script>
-    <script src="js/progress.js?v=10.84"></script>
-    <script src="js/firebase-sync.js?v=10.84"></script>
-    <script src="js/mycamp_config.js?v=10.84"></script>
-    <script src="js/visual_fx.js?v=10.84"></script>
-    <script src="js/camp.js?v=10.84"></script>
-    <script src="js/components/board.js?v=10.84"></script>
-    <script src="js/test_tool.js?v=10.84"></script>
+    <script src="js/i18n.js?v=10.85"></script>
+    <script src="js/config.js?v=10.85"></script>
+    <script src="js/data.js?v=10.85"></script>
+    <script src="js/engine.js?v=10.85"></script>
+    <script src="js/progress.js?v=10.85"></script>
+    <script src="js/firebase-sync.js?v=10.85"></script>
+    <script src="js/mycamp_config.js?v=10.85"></script>
+    <script src="js/visual_fx.js?v=10.85"></script>
+    <script src="js/camp.js?v=10.85"></script>
+    <script src="js/components/board.js?v=10.85"></script>
+    <script src="js/test_tool.js?v=10.85"></script>
+    <script>
+        // Tải 4 đám mây nền sau cùng (sau khi toàn bộ ảnh nền, giao diện & script đã tải xong)
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                var clouds = document.querySelectorAll('.backdrop-cloud[data-src]');
+                for (var i = 0; i < clouds.length; i++) {
+                    var el = clouds[i];
+                    var src = el.getAttribute('data-src');
+                    if (src) {
+                        el.setAttribute('src', src);
+                        el.removeAttribute('data-src');
+                    }
+                }
+            }, 150);
+        });
+    </script>
 </body>
 </html>

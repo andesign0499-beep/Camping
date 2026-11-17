@@ -118,11 +118,10 @@ var MYCAMP_CONFIG = {
     // Khi người chơi mua và trang bị Điểm Đến trong Cửa Hàng, bãi trại sẽ tự động đổi sang ảnh nền tương ứng.
     // Nếu địa điểm chưa có ảnh riêng thì hệ thống tự động sử dụng ảnh nền mặc định bg_nuimatthan.webp.
     locationBackgrounds: {
-        'loc_doibu': 'assets/images_webp/background/bg_doibu.webp',                    // Đồi Bù (Đứng đầu)
-        'loc_dongdo': 'assets/images_webp/background/bg_hodongdo.webp',          // Cao nguyên Lâm Viên (Đứng thứ 2)
-        'loc_matthan': 'assets/images_webp/background/bg_nuimatthan.webp',       // Núi Mắt Thần (WebP nén ~40.6%)
-        'loc_bangioc': 'assets/images_webp/background/bg_thacbandoc.webp',       // Thác Bản Giốc (WebP nén ~42.4%)
-        'loc_muine': 'assets/images_webp/background/bg_doichatmuine.webp',       // Đồi Cát Mũi Né (WebP nén ~47.2%)
+        'loc_dongdo': 'assets/images_webp/background/bg_hodongdo.webp',             // Cao nguyên Lâm Viên (Mặc định)
+        'loc_matthan': 'assets/images_webp/background/bg_nuimatthan.webp',          // Núi Mắt Thần (WebP nén ~40.6%)
+        'loc_bangioc': 'assets/images_webp/background/bg_thacbandoc.webp',          // Thác Bản Giốc (WebP nén ~42.4%)
+        'loc_muine': 'assets/images_webp/background/bg_doichatmuine.webp',          // Đồi Cát Mũi Né (WebP nén ~47.2%)
         'loc_songnuocbinhba': 'assets/images_webp/background/bg_songnuocbinhba.webp' // Sóng nước Bình Ba (WebP nén ~44.9%)
     },
 
@@ -246,7 +245,21 @@ var MYCAMP_CONFIG = {
                 'assets/images_webp/npc_anim/goden_sit18.webp',
                 'assets/images_webp/npc_anim/goden_sit19.webp',
                 'assets/images_webp/npc_anim/goden_sit20.webp'
-            ]
+            ],
+
+            // Động tác 3: SỦA (Bark - 31 frame, 8 fps, thi thoảng sủa)
+            state3Name: 'bark',
+            state3Duration: 3.875,   // 31 frames / 8 fps = 3.875 giây (1 chu kỳ trọn vẹn)
+            state3Width: 74,         // Chiều rộng khi sủa (px)
+            state3Chance: 0.35,      // Tỉ lệ chuyển sang sủa sau khi đứng (35%)
+            state3Sheet: {
+                image: 'assets/images_webp/npc_sheets/goden_bark_sheet.webp',
+                frameWidth: 198,
+                frameHeight: 230,
+                cols: 6,
+                rows: 6,
+                totalFrames: 31
+            }
         },
 
         // 2. CHÚ MÈO ANH (character07) - Mua trong Cửa Hàng
@@ -493,9 +506,9 @@ var MYCAMP_CONFIG = {
             name: 'Bếp nướng dã ngoại (Phía trước ghế 1)',
             type: 'slot',
             slotKey: 'stove',
-            left: 180,
-            top: 395,
-            width: 58,
+            left: 194,
+            top: 406,
+            width: 40,
             height: 'auto',
             zIndex: 17
         },
