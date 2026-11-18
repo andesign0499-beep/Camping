@@ -1,0 +1,273 @@
+{
+  "generatedAt": "2026-11-18T04:57:37.411Z",
+  "sfx": [
+    {
+      "id": "spawn_crystal_pop",
+      "file": "spawn_crystal_pop.wav",
+      "category": "spawn",
+      "name": "💎 Pop Pha Lê Nảy Sáng (Khuyên dùng)",
+      "desc": "Tiếng bật nắp giọt sương kết hợp chuông pha lê C6 sáng giòn, bấm nhanh cực bắt tai",
+      "path": "assets/sfx_library/spawn_crystal_pop.wav"
+    },
+    {
+      "id": "spawn_candy_bubble",
+      "file": "spawn_candy_bubble.wav",
+      "category": "spawn",
+      "name": "🍬 Bong Bóng Kẹo Ngọt Giòn",
+      "desc": "Tiếng pop kẹo ngọt vui nhộn quãng cao (620Hz -> 1480Hz)",
+      "path": "assets/sfx_library/spawn_candy_bubble.wav"
+    },
+    {
+      "id": "spawn_star_plink",
+      "file": "spawn_star_plink.wav",
+      "category": "spawn",
+      "name": "✨ Sao Rơi Lấp Lánh (Star Plink)",
+      "desc": "Hai nốt chuông nhỏ lướt cực nhanh G6 -> C7 tạo cảm giác phép thuật",
+      "path": "assets/sfx_library/spawn_star_plink.wav"
+    },
+    {
+      "id": "spawn_kalimba_high",
+      "file": "spawn_kalimba_high.wav",
+      "category": "spawn",
+      "name": "🎵 Kalimba Quãng Cao Sáng Trong",
+      "desc": "Tiếng gảy phím đàn Kalimba ở quãng 6 (E6 1318Hz) trong veo không trầm",
+      "path": "assets/sfx_library/spawn_kalimba_high.wav"
+    },
+    {
+      "id": "spawn_cork_snap",
+      "file": "spawn_cork_snap.wav",
+      "category": "spawn",
+      "name": "🍾 Bật Nắp Giòn Vui Nhộn",
+      "desc": "Tiếng bật nút chai nảy cao giòn rụm",
+      "path": "assets/sfx_library/spawn_cork_snap.wav"
+    },
+    {
+      "id": "merge_celesta_sparkle",
+      "file": "merge_celesta_sparkle.wav",
+      "category": "merge",
+      "name": "🌟 Chuông Celesta Lấp Lánh (Khuyên dùng)",
+      "desc": "Tiếng chuông Celesta kết hợp bụi sao (C6 + G6 + C7) cực kỳ cuốn hút khi leo Combo",
+      "path": "assets/sfx_library/merge_celesta_sparkle.wav"
+    },
+    {
+      "id": "merge_fairy_harp",
+      "file": "merge_fairy_harp.wav",
+      "category": "merge",
+      "name": "🧚 Đàn Hạc Tiên Nữ (Fairy Harp)",
+      "desc": "Lướt 3 dây đàn hạc sáng trong C6 -> E6 -> G6 lung linh",
+      "path": "assets/sfx_library/merge_fairy_harp.wav"
+    },
+    {
+      "id": "merge_crystal_drop",
+      "file": "merge_crystal_drop.wav",
+      "category": "merge",
+      "name": "💧 Giọt Sương Pha Lê Nảy Sáng",
+      "desc": "Tiếng giọt nước bật lên cao vút kèm tiếng ngân chuông thuỷ tinh",
+      "path": "assets/sfx_library/merge_crystal_drop.wav"
+    },
+    {
+      "id": "merge_marimba_bright",
+      "file": "merge_marimba_bright.wav",
+      "category": "merge",
+      "name": "🎶 Marimba Sáng Rực Rỡ",
+      "desc": "Tiếng gõ phím Marimba quãng cao kết hợp chuông G6 vui nhộn",
+      "path": "assets/sfx_library/merge_marimba_bright.wav"
+    },
+    {
+      "id": "merge_candy_ding",
+      "file": "merge_candy_ding.wav",
+      "category": "merge",
+      "name": "🍭 Chuông Kẹo Ngọt (Candy Ding)",
+      "desc": "Tiếng Pop-Ding phong cách game giải đố kẹo ngọt cực nịnh tai",
+      "path": "assets/sfx_library/merge_candy_ding.wav"
+    },
+    {
+      "id": "merge_magic_bell",
+      "file": "merge_magic_bell.wav",
+      "category": "merge",
+      "name": "🔔 Chuông Phép Thuật Ngân Trong",
+      "desc": "Âm chuông bạc trong vắt kích thích cảm giác thành tựu",
+      "path": "assets/sfx_library/merge_magic_bell.wav"
+    },
+    {
+      "id": "bubble_soap_bright",
+      "file": "bubble_soap_bright.wav",
+      "category": "bubble",
+      "name": "🫧 Bong Bóng Xà Phòng Trong Veo (Khuyên dùng)",
+      "desc": "Tiếng bong bóng căng tròn nảy lên quãng sáng kèm tia lấp lánh",
+      "path": "assets/sfx_library/bubble_soap_bright.wav"
+    },
+    {
+      "id": "bubble_water_sparkle",
+      "file": "bubble_water_sparkle.wav",
+      "category": "bubble",
+      "name": "💦 Bong Bóng Nước Lấp Lánh",
+      "desc": "Ba nhịp bong bóng nước nảy liên tiếp lên cao",
+      "path": "assets/sfx_library/bubble_water_sparkle.wav"
+    },
+    {
+      "id": "bonus_gift_chime",
+      "file": "bonus_gift_chime.wav",
+      "category": "bonus",
+      "name": "🎁 Nhận Hộp Quà May Mắn",
+      "desc": "Hợp âm chuông sáng C6 - E6 - G6 - C7 rạng rỡ",
+      "path": "assets/sfx_library/bonus_gift_chime.wav"
+    },
+    {
+      "id": "rock_crack_crisp",
+      "file": "rock_crack_crisp.wav",
+      "category": "rock_crack",
+      "name": "⛏️ Tách Mở Ô Đá Giòn Tan",
+      "desc": "Tiếng tách giòn kèm chuông báo mở khóa sáng sủa",
+      "path": "assets/sfx_library/rock_crack_crisp.wav"
+    },
+    {
+      "id": "order_ready_celesta",
+      "file": "order_ready_celesta.wav",
+      "category": "order_ready",
+      "name": "✅ Đủ Đơn Hàng Chuông Đôi Sáng (Khuyên dùng)",
+      "desc": "Hai nốt chuông pha lê G5 -> C6 -> E6 báo đơn hàng sẵn sàng cực vui tai",
+      "path": "assets/sfx_library/order_ready_celesta.wav"
+    },
+    {
+      "id": "order_ready_harp",
+      "file": "order_ready_harp.wav",
+      "category": "order_ready",
+      "name": "🎵 Đủ Đơn Hàng Lướt Đàn Hạc",
+      "desc": "Tiếng lướt hạc 4 nốt nhanh báo hoàn thành món đồ yêu cầu",
+      "path": "assets/sfx_library/order_ready_harp.wav"
+    },
+    {
+      "id": "order_ready_bell_triad",
+      "file": "order_ready_bell_triad.wav",
+      "category": "order_ready",
+      "name": "🔔 Đủ Đơn Hàng Tam Âm Pha Lê",
+      "desc": "Tiếng chuông ngân tam âm Đô Trưởng cao vút",
+      "path": "assets/sfx_library/order_ready_bell_triad.wav"
+    },
+    {
+      "id": "win_fanfare_bright",
+      "file": "win_fanfare_bright.wav",
+      "category": "win",
+      "name": "🏆 Khải Hoàn Cắm Trại Rực Rỡ (Khuyên dùng)",
+      "desc": "Khúc nhạc giao đơn / thắng màn 5 nốt Celesta & Harp tưng bừng",
+      "path": "assets/sfx_library/win_fanfare_bright.wav"
+    },
+    {
+      "id": "win_magic_arpeggio",
+      "file": "win_magic_arpeggio.wav",
+      "category": "win",
+      "name": "✨ Chuông Vàng Chiến Thắng",
+      "desc": "Chuỗi hợp âm lấp lánh mừng hoàn thành đơn hàng thú cưng",
+      "path": "assets/sfx_library/win_magic_arpeggio.wav"
+    },
+    {
+      "id": "coin_gold_shimmer",
+      "file": "coin_gold_shimmer.wav",
+      "category": "coin",
+      "name": "🪙 Đồng Xu Vàng Lấp Lánh (Khuyên dùng)",
+      "desc": "Tiếng đồng xu vàng keng sáng trong ở tần số cao (E6 -> B6)",
+      "path": "assets/sfx_library/coin_gold_shimmer.wav"
+    },
+    {
+      "id": "coin_silver_clink",
+      "file": "coin_silver_clink.wav",
+      "category": "coin",
+      "name": "🥈 Tiếng Keng Bạc Trong Trẻo",
+      "desc": "Tiếng xu chạm nhau mảnh, sắc nét và cực kỳ vui tai",
+      "path": "assets/sfx_library/coin_silver_clink.wav"
+    },
+    {
+      "id": "coin_ruby_crystal",
+      "file": "coin_ruby_crystal.wav",
+      "category": "coin",
+      "name": "💎 Kim Cương Pha Lê Tinh Khiết",
+      "desc": "Tiếng thu hoạch kim cương lấp lánh cao vút",
+      "path": "assets/sfx_library/coin_ruby_crystal.wav"
+    },
+    {
+      "id": "coin_jackpot_ding",
+      "file": "coin_jackpot_ding.wav",
+      "category": "coin",
+      "name": "🎰 Tiếng Chuông Thưởng Jackpot",
+      "desc": "Tiếng chuông nhận thưởng lớn rộn ràng",
+      "path": "assets/sfx_library/coin_jackpot_ding.wav"
+    },
+    {
+      "id": "ui_move_crisp",
+      "file": "ui_move_crisp.wav",
+      "category": "move",
+      "name": "👆 Đặt Đồ Nhẹ Thanh Thoát",
+      "desc": "Tiếng chạm nhẹ sáng thanh (không bị trầm đục)",
+      "path": "assets/sfx_library/ui_move_crisp.wav"
+    },
+    {
+      "id": "ui_button_bright",
+      "file": "ui_button_bright.wav",
+      "category": "move",
+      "name": "🔘 Bấm Nút Giao Diện Sáng",
+      "desc": "Tiếng click giao diện giòn gọn",
+      "path": "assets/sfx_library/ui_button_bright.wav"
+    },
+    {
+      "id": "full_board_soft_bell",
+      "file": "full_board_soft_bell.wav",
+      "category": "full_board",
+      "name": "🚫 Báo Đầy Bàn Chuông Gỗ Sáng (Khuyên dùng)",
+      "desc": "Hai nhịp gõ E5 -> C5 vừa lịch sự vừa rõ ràng, không bị trầm tối",
+      "path": "assets/sfx_library/full_board_soft_bell.wav"
+    },
+    {
+      "id": "full_board_boing",
+      "file": "full_board_boing.wav",
+      "category": "full_board",
+      "name": "🌀 Báo Đầy Bàn Nhún Lò Xo Vui Nhộn",
+      "desc": "Tiếng nhún đàn hồi vui tai khi bàn cờ hết chỗ",
+      "path": "assets/sfx_library/full_board_boing.wav"
+    }
+  ],
+  "bgm": [
+    {
+      "id": "bgm_khu_trai_rang_ro",
+      "file": "Khu_Trại_Rạng_Rỡ.mp3",
+      "path": "assets/music/Khu_Trại_Rạng_Rỡ.mp3",
+      "name": "🏕️ Khu Trại Rạng Rỡ (Bản gốc)",
+      "bpm": 105
+    },
+    {
+      "id": "bgm_goc_nho_nang_mai",
+      "file": "Goc_Nho_Nang_Mai.wav",
+      "path": "assets/music/Goc_Nho_Nang_Mai.wav",
+      "name": "☀️ Góc Nhỏ Nắng Mai (Acoustic & Celesta Sáng)",
+      "bpm": 110
+    },
+    {
+      "id": "bgm_mua_vang_khu_trai",
+      "file": "Mua_Vang_Tren_Khu_Trai.wav",
+      "path": "assets/music/Mua_Vang_Tren_Khu_Trai.wav",
+      "name": "🌼 Mưa Vàng Trên Khu Trại (Kalimba & Chuông Gió)",
+      "bpm": 116
+    },
+    {
+      "id": "bgm_ukulele_suoi_nang",
+      "file": "Ukulele_Suoi_Nang.wav",
+      "path": "assets/music/Ukulele_Suoi_Nang.wav",
+      "name": "🎸 Ukulele Suối Nắng (Dã Ngoại Rộn Ràng)",
+      "bpm": 122
+    },
+    {
+      "id": "bgm_hop_nhac_sao_dem",
+      "file": "Hop_Nhac_Sao_Dem.wav",
+      "path": "assets/music/Hop_Nhac_Sao_Dem.wav",
+      "name": "🌌 Hộp Nhạc Sao Đêm (Music Box & Harp Lung Linh)",
+      "bpm": 98
+    },
+    {
+      "id": "bgm_pha_le_rung_thong",
+      "file": "Pha_Le_Rung_Thong.wav",
+      "path": "assets/music/Pha_Le_Rung_Thong.wav",
+      "name": "🌲 Pha Lê Rừng Thông (Marimba & Bell Chime)",
+      "bpm": 118
+    }
+  ]
+}
