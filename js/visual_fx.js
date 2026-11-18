@@ -309,6 +309,11 @@
                 if (lv >= 6) {
                     img.classList.add('vfx-glow-lantern');
                 }
+            } else if (id.indexOf('bep_lv') === 0) {
+                var blv = parseInt(id.split('_lv')[1], 10) || 1;
+                if (blv >= 6) {
+                    img.classList.add('vfx-glow-fire');
+                }
             }
         }
     }
@@ -372,9 +377,12 @@
         var cy = center.y;
 
         var line = itemId ? String(itemId).split('_lv')[0] : '';
+        var itemLvNum = itemId ? (parseInt(String(itemId).split('_lv')[1], 10) || 2) : 2;
+        var isHighTier = itemLvNum >= 5;
+        var isEpicTier = itemLvNum >= 7;
         var startColor = '#ffffff';
-        var midColor = '#ffd54f';
-        var endColor = '#ff9800';
+        var midColor = isEpicTier ? '#fff176' : '#ffd54f';
+        var endColor = isEpicTier ? '#ff6d00' : '#ff9800';
 
         if (line === 'trai' || line === 'ban' || line === 'ghe') {
             startColor = '#ffffff';
@@ -386,26 +394,46 @@
         var ringSprite = new PIXI.Sprite(ringTex);
         ringSprite.anchor.set(0.5);
         ringSprite.position.set(cx, cy);
-        ringSprite.tint = 0xfff59d;
-        var targetRingScale = (center.size / 96) * 1.45;
+        ringSprite.tint = isEpicTier ? 0xffe082 : 0xfff59d;
+        var targetRingScale = (center.size / 96) * (isEpicTier ? 1.85 : (isHighTier ? 1.65 : 1.45));
         ringSprite.scale.set(targetRingScale * 0.25);
-        ringSprite.alpha = 0.85;
+        ringSprite.alpha = 0.9;
         boardFxContainer.addChild(ringSprite);
         boardActiveRings.push({
             sprite: ringSprite,
             elapsed: 0,
-            duration: 0.28,
+            duration: isHighTier ? 0.34 : 0.28,
             startScale: targetRingScale * 0.25,
             endScale: targetRingScale,
-            startAlpha: 0.85
+            startAlpha: 0.9
         });
 
+        // Vòng sóng thứ 2 cho vật phẩm cấp cao (Lv.5+) tạo độ nảy thị giác kiểu Flambé
+        if (isHighTier) {
+            var ring2 = new PIXI.Sprite(ringTex);
+            ring2.anchor.set(0.5);
+            ring2.position.set(cx, cy);
+            ring2.tint = 0xffffff;
+            ring2.scale.set(targetRingScale * 0.15);
+            ring2.alpha = 0.75;
+            boardFxContainer.addChild(ring2);
+            boardActiveRings.push({
+                sprite: ring2,
+                elapsed: -0.06,
+                duration: 0.36,
+                startScale: targetRingScale * 0.15,
+                endScale: targetRingScale * 1.22,
+                startAlpha: 0.75
+            });
+        }
+
+        var waveCount = isEpicTier ? 30 : (isHighTier ? 24 : 18);
         var emitterCfg = {
-            lifetime: { min: 0.28, max: 0.52 },
+            lifetime: { min: 0.28, max: isHighTier ? 0.62 : 0.52 },
             frequency: 0.001,
-            particlesPerWave: 18,
+            particlesPerWave: waveCount,
             emitterLifetime: 0.03,
-            maxParticles: 18,
+            maxParticles: waveCount,
             addAtBack: false,
             pos: { x: 0, y: 0 },
             behaviors: [
@@ -1102,11 +1130,13 @@
         var gsap = window.gsap;
 
         if (sourceEl) {
-            gsap.killTweensOf(sourceEl);
-            gsap.fromTo(sourceEl,
-                { scaleX: 1.18, scaleY: 0.82 },
-                { scaleX: 1, scaleY: 1, duration: 0.46, ease: 'elastic.out(1, 0.42)', overwrite: 'auto' }
-            );
+            var genImg = sourceEl.querySelector('.item-img') || sourceEl;
+            gsap.killTweensOf(genImg);
+            gsap.timeline()
+                .set(genImg, { transformOrigin: '50% 85%' })
+                .to(genImg, { scaleX: 1.22, scaleY: 0.78, y: 3, duration: 0.07, ease: 'power2.out' })
+                .to(genImg, { scaleX: 0.92, scaleY: 1.12, y: -4, duration: 0.11, ease: 'power2.out' })
+                .to(genImg, { scaleX: 1, scaleY: 1, y: 0, duration: 0.36, ease: 'elastic.out(1, 0.45)' });
         }
 
         var peakX = dx * 0.48;
@@ -1191,18 +1221,35 @@
         } catch (e) {}
 
         var gsap = window.gsap;
+        var lvNum = itemId ? (parseInt(String(itemId).split('_lv')[1], 10) || 2) : 2;
+        var peakScale = lvNum >= 6 ? 1.32 : 1.22;
         gsap.killTweensOf(img);
-        gsap.set(img, { transformOrigin: '50% 50%', scale: 0 });
+        gsap.set(img, { transformOrigin: '50% 65%', scaleX: 0.2, scaleY: 0.2 });
+        if (lvNum >= 5) {
+            cellEl.classList.remove('merge-tier-flash');
+            void cellEl.offsetWidth;
+            cellEl.classList.add('merge-tier-flash');
+        }
         gsap.timeline()
             .to(img, {
-                scale: 1.2,
-                duration: 0.14,
+                scaleX: peakScale * 1.06,
+                scaleY: peakScale * 0.86,
+                duration: 0.08,
                 ease: 'power2.out'
             })
             .to(img, {
-                scale: 1.0,
-                duration: 0.58,
-                ease: 'elastic.out(1, 0.5)'
+                scaleX: peakScale * 0.92,
+                scaleY: peakScale * 1.08,
+                y: -5,
+                duration: 0.11,
+                ease: 'power2.out'
+            })
+            .to(img, {
+                scaleX: 1.0,
+                scaleY: 1.0,
+                y: 0,
+                duration: 0.52,
+                ease: 'elastic.out(1, 0.45)'
             });
 
         return true;

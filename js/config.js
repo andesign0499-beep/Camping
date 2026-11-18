@@ -254,32 +254,38 @@ var GAME_CONFIG = {
     initialProfile: {
         coins: 500,     // Vàng khởi đầu cân bằng vừa phải
         gems: 25,       // Kim Cương khởi đầu
-        energy: 150     // Năng lượng khởi đầu dồi dào
+        energy: 110     // Năng lượng khởi đầu đủ chơi mượt Lv.1 -> Lv.4-5
     },
 
     // -------------------------------------------------------------------------
-    // 4. HỆ THỐNG NĂNG LƯỢNG (ENERGY SYSTEM)
+    // 4. HỆ THỐNG NĂNG LƯỢNG (ENERGY SYSTEM - CÂN BẰNG CHO GAME THUẦN ADS)
     // -------------------------------------------------------------------------
     energy: {
-        startEnergy: 150,           // Năng lượng ban đầu khi tạo tài khoản
-        maxEnergyBase: 120,         // Năng lượng tối đa ở Level 1
-        maxEnergyPerLevel: 5,       // Mỗi cấp độ tăng thêm giới hạn năng lượng tối đa
-        maxEnergyCap: 250,          // Giới hạn kịch trần thanh năng lượng tự hồi
-        regenIntervalSec: 30        // Thời gian hồi phục 1 điểm Năng lượng chuẩn: 30 giây (1 tiếng hồi đầy bình 120⚡)
+        startEnergy: 110,           // Năng lượng ban đầu khi tạo tài khoản
+        maxEnergyBase: 100,         // Năng lượng tối đa ở Level 1
+        maxEnergyPerLevel: 2,       // Mỗi cấp độ tăng thêm +2 giới hạn năng lượng tối đa
+        maxEnergyCap: 150,          // Giới hạn kịch trần thanh năng lượng tự hồi
+        regenIntervalSec: 60,       // Thời gian hồi phục 1 điểm Năng lượng: 60 giây (100 phút đầy bình 100⚡)
+        overflowCap: 999,           // Trần năng lượng tràn khi nhận thưởng (Ads/Rương/Lên cấp) vượt bình
+        levelUpEnergy: 30,          // Thưởng năng lượng mỗi lần lên cấp (cộng thẳng, có thể tràn bình)
+        levelUpCoinsBase: 200,      // Vàng lên cấp = base + perLevel * cấp mới
+        levelUpCoinsPerLevel: 50,
+        levelUpGems: 2,             // Kim cương mỗi cấp
+        levelUpGemsMilestone: 5     // Kim cương ở mốc chia hết cho 5 (Lv.5, 10, 15...)
     },
 
     // -------------------------------------------------------------------------
     // 5. TRẠM TIẾP NĂNG LƯỢNG (ENERGY SHOP)
-    // Cân bằng hợp lý: 1⚡ ≈ 20 Vàng
+    // Cân bằng chuẩn Ad-Supported: 1⚡ ≈ 40 Vàng (để Vàng không làm mất giá trị xem Ads +40⚡)
     // -------------------------------------------------------------------------
     energyShop: {
         coinPacks: [
-            { energy: 30, coinCost: 600, desc: 'Dùng Vàng mua 30 Năng Lượng' },
-            { energy: 60, coinCost: 1100, desc: 'Dùng Vàng mua 60 Năng Lượng (Tiết kiệm ~10%)' }
+            { energy: 30, coinCost: 1200, desc: 'Dùng Vàng mua 30 Năng Lượng' },
+            { energy: 60, coinCost: 2200, desc: 'Dùng Vàng mua 60 Năng Lượng (Tiết kiệm ~8%)' }
         ],
         coinPack: {
             energy: 30,
-            coinCost: 600
+            coinCost: 1200
         },
         gemPack: {
             energy: 50,
@@ -287,7 +293,8 @@ var GAME_CONFIG = {
         },
         rescue: {
             enabled: true,
-            amount: 25              // Cứu trợ khẩn cấp 25⚡ khi hết sạch năng lượng
+            amount: 25,             // Cứu trợ khẩn cấp 25⚡ khi hết sạch năng lượng
+            dailyLimit: 2           // Tối đa 2 lần/ngày (chống lặp vô hạn làm mất giá trị xem Ads)
         }
     },
 
@@ -298,26 +305,26 @@ var GAME_CONFIG = {
         {
             id: 'coin_pack_1',
             name: 'Túi Vàng Nhỏ',
-            coins: 1000,
+            coins: 1500,
             gemCost: 5,
             badge: null,
-            desc: 'Đổi từ 5 Kim Cương (1💎 = 200🪙)'
+            desc: 'Đổi từ 5 Kim Cương (1💎 = 300🪙)'
         },
         {
             id: 'coin_pack_2',
             name: 'Rương Vàng Lớn',
-            coins: 3200,
+            coins: 5000,
             gemCost: 15,
             badge: 'TIẾT KIỆM 15%',
-            desc: 'Đổi từ 15 Kim Cương (1💎 = 213🪙)'
+            desc: 'Đổi từ 15 Kim Cương (1💎 = 333🪙)'
         },
         {
             id: 'coin_pack_3',
             name: 'Kho Vàng Hoàng Gia',
-            coins: 7000,
+            coins: 11000,
             gemCost: 30,
-            badge: 'SIÊU LỜI +35%',
-            desc: 'Đổi từ 30 Kim Cương (1💎 = 233🪙)'
+            badge: 'SIÊU LỜI +22%',
+            desc: 'Đổi từ 30 Kim Cương (1💎 = 367🪙)'
         }
     ],
 
@@ -325,32 +332,46 @@ var GAME_CONFIG = {
     // 7. CÂN BẰNG THƯỞNG TRONG VÁN CHƠI (GAMEPLAY ECONOMY & REWARDS)
     // -------------------------------------------------------------------------
     gameplay: {
-        // Hệ số thưởng Vàng khi nộp đơn hàng: Vàng = 12 * itemUnits(id) (Cân bằng chuẩn, chống lạm phát)
+        // Hệ số thưởng Vàng khi nộp đơn hàng & bán đồ (đọc theo bảng cân bằng theo EV máy phát, chống lạm phát & chống farm vô hạn)
         orderRewardMultiplier: 12,
+        itemGoldByLevel: {
+            1: 10, 2: 22, 3: 46, 4: 90, 5: 165, 6: 280,
+            7: 440, 8: 680, 9: 1020, 10: 1500, 11: 2150, 12: 3000
+        },
 
-        // Hệ số tính giá bán vật phẩm trên bàn cờ: Giá bán = itemUnits(id) * 5 (~40% giá trị đơn hàng)
+        // Hệ số tính giá bán vật phẩm trên bàn cờ (~15% giá trị đơn hàng, luôn thấp hơn giá mua 40🪙/⚡)
         sellMultiplier: 5,
         sellMinLevel: 1,
         sellDivisor: 1,
-
-        // Thưởng Vàng và Kim Cương khi tạo ra vật phẩm cấp cao
-        mergeRewards: {
-            2: { coins: 0, gems: 0 },
-            3: { coins: 2, gems: 0 },
-            4: { coins: 5, gems: 0 },
-            5: { coins: 10, gems: 0 },
-            6: { coins: 20, gems: 0 },
-            7: { coins: 40, gems: 1 },
-            8: { coins: 80, gems: 1 }
+        itemSellByLevel: {
+            1: 2, 2: 4, 3: 8, 4: 15, 5: 28, 6: 50,
+            7: 85, 8: 140, 9: 225, 10: 360, 11: 550, 12: 800
         },
 
-        // Thưởng chuỗi Combo ghép đồ liên tiếp
+        // Thưởng Vàng và Kim Cương trực tiếp khi tạo ra vật phẩm cấp rất cao (Lv.8+)
+        // Các cấp Lv.4 - Lv.7 đã có cơ chế rớt Xu/Năng lượng trực tiếp lên bàn chơi (board_coin / board_energy) nên đặt = 0 để không thưởng trùng
+        mergeRewards: {
+            2: { coins: 0, gems: 0 },
+            3: { coins: 0, gems: 0 },
+            4: { coins: 0, gems: 0 },
+            5: { coins: 0, gems: 0 },
+            6: { coins: 0, gems: 0 },
+            7: { coins: 0, gems: 0 },
+            8: { coins: 5, gems: 0 },
+            9: { coins: 10, gems: 0 },
+            10: { coins: 20, gems: 1 }
+        },
+
+        // Chuỗi Combo ghép đồ liên tiếp:
+        // Tắt thưởng Vàng bay trực tiếp (enabled: false) vì đã có cơ chế sinh Xu trên bàn chơi (board_coin_lv1..5).
+        // Giữ lại hiệu ứng âm nhạc leo thang âm & huy hiệu Combo thị giác, chỉ rớt 1 Xu Lv.1 lên bàn khi đạt mốc Combo cao (x6, x12).
         combo: {
-            enabled: true,
-            windowSec: 4.0,
-            baseCoins: 4,
-            stepCoins: 3,
-            maxCoins: 25
+            enabled: false,
+            windowSec: 3.8,
+            baseCoins: 0,
+            stepCoins: 0,
+            maxCoins: 0,
+            boardCoinEveryNCombos: 6
         },
 
         // Hệ số nhân điểm kinh nghiệm EXP nhận được từ mỗi đơn hàng (mặc định: 1.0)
@@ -359,6 +380,99 @@ var GAME_CONFIG = {
         // Nhấp liên tiếp vào thùng sinh đồ
         generatorBulkClicks: 6,
         generatorClickWindowMs: 550,
+
+        // Cấu hình Âm thanh SFX chủ đạo: Bộ Kalimba Sáng Trong (bright_kalimba - Sáng, Mộc Ấm, Trong Trẻo)
+        // Người chơi / nhà phát triển có thể tinh chỉnh, chọn thư viện mẫu âm thanh miễn phí hoặc phối nhạc nền tại sfx-studio.html
+        audioSfx: {
+            presetName: 'bright_kalimba',
+            masterVolume: 1.15,
+            bgmVolume: 0.14,
+            preferredBgmIndex: 5,        // Mặc định chọn bài số 5: Pha Lê Rừng Thông (Marimba & Bell Chime) lặp liền mạch
+            pitchSemitoneOffset: 0,      // Cho phép nâng/hạ cao độ toàn bộ game (-12 đến +24 bán cung)
+            brightnessHighShelfDb: 5.5,  // Độ sáng Treble vừa vặn giúp tiếng Kalimba trong trẻo mà không bị chói gắt
+            sparkleBellMix: 0.30,        // Độ ngân phím đàn Kalimba mộc sáng
+            // 1. Tiếng bấm máy phát sinh đồ: Pop giọt sương + Gảy phím Kalimba B5 (987.77Hz) sáng giòn 45ms
+            spawn: {
+                fStart: 480,
+                fEnd: 1180,
+                duration: 0.045,
+                gain: 0.16,
+                bellFreq: 987.77,
+                woodFreq: 392,
+                woodGain: 0.09,
+                filterCutoff: 4600,
+                jitter: 0.035
+            },
+            // 2. Tiếng đặt/di chuyển đồ sang ô trống: tiếng gõ phím Kalimba nhẹ thanh thoát 24ms
+            move: {
+                fStart: 520,
+                fEnd: 840,
+                duration: 0.024,
+                gain: 0.05,
+                filterCutoff: 3400
+            },
+            // 3. Tiếng ghép đồ cố định theo từng Cấp độ vật phẩm (Level 1 -> 7 tăng từ C5 -> B5, từ Level 8 vòng lại C5 -> G5):
+            // Ghép cùng cấp thì giữ nguyên cao độ của cấp đó; chỉ khi ghép nâng lên cấp cao hơn thì âm thanh mới thay đổi!
+            merge: {
+                fixedByItemLevel: true,
+                baseNotes: [
+                    523.25,  // Level 1: C5 (Đô 5)
+                    587.33,  // Level 2: D5 (Rê 5)
+                    659.25,  // Level 3: E5 (Mi 5)
+                    698.46,  // Level 4: F5 (Pha 5)
+                    783.99,  // Level 5: G5 (Son 5)
+                    880.00,  // Level 6: A5 (La 5)
+                    987.77,  // Level 7: B5 (Si 5)
+                    523.25,  // Level 8: Vòng lại C5 (Đô 5)
+                    587.33,  // Level 9: D5 (Rê 5)
+                    659.25,  // Level 10: E5 (Mi 5)
+                    698.46,  // Level 11: F5 (Pha 5)
+                    783.99   // Level 12: G5 (Son 5)
+                ],
+                popRatioStart: 0.58,
+                popDuration: 0.024,
+                bodyDuration: 0.115,
+                gain: 0.18,
+                harmonic2Gain: 0.30,
+                sparkleGain: 0.09,
+                filterCutoff: 4800,
+                waveType: 'sine'
+            },
+            // 4. Tiếng sinh Bong Bóng: tiếng bong bóng nước + gảy Kalimba C6 (420Hz -> 980Hz -> 1480Hz)
+            bubble: {
+                fStart: 420,
+                fMid: 980,
+                fEnd: 1480,
+                duration: 0.120,
+                gain: 0.16
+            },
+            // 5. Tiếng cảnh báo Bàn Cờ Đầy: 2 nốt gõ Kalimba mộc D5 -> A4 (587.33Hz -> 440Hz) lịch sự, rõ ràng
+            full_board: {
+                f1: 587.33,
+                f2: 440.00,
+                duration: 0.065,
+                gap: 0.065,
+                gain: 0.13,
+                filterCutoff: 2400
+            },
+            // 6. Tiếng hoàn thành món trong đơn hàng: Tam âm Kalimba sáng trong (G5 -> C6 -> E6)
+            order_ready: {
+                note1: 783.99,
+                note2: 1046.50,
+                note3: 1318.51,
+                gap: 0.052,
+                duration: 0.130,
+                gain: 0.15
+            },
+            // 7. Tiếng xu bay & thu hoạch vàng: tiếng chuông Kalimba vàng trong trẻo (C6 -> A6)
+            coin: {
+                baseFreq: 1318.51,
+                duration: 0.110,
+                gain: 0.10,
+                shimmerRatio: 2.3,
+                filterCutoff: 5200
+            }
+        },
 
         // Tỷ lệ rơi vật phẩm từ 3 nguồn phát (Thùng chứa / Xe kéo / Ba lô)
         // Tăng tỷ lệ rơi thẳng Lv.2 và Lv.3 ngay từ đầu game để giảm 55% số lượng đồ Lv.1 gây chật bàn cờ!
@@ -478,11 +592,13 @@ var GAME_CONFIG = {
     // 10. QUẢNG CÁO XEM THƯỞNG & QUÀ TẶNG HÀNG NGÀY (REWARDED ADS)
     // -------------------------------------------------------------------------
     adRewards: {
-        energy: { amount: 30, dailyLimit: 6 },
-        gem: { amount: 8, dailyLimit: 6 },
-        coin: { amount: 600, dailyLimit: 5 },
+        energy: { amount: 40, dailyLimit: 6 },   // 1 Ad = 40⚡ (nguồn năng lượng mạnh nhất qua Ads)
+        gem: { amount: 3, dailyLimit: 5 },       // 1 Ad = 3💎 (≈30⚡ quy đổi) để Ad Năng lượng luôn đáng xem hơn
+        coin: { amount: 2500, dailyLimit: 5 },
+        bubble: { dailyLimit: 5 },               // Tối đa 5 lần xem Ad mở bong bóng/ngày
         dailyGift: { amount: 5, doubleAmount: 10 },
-        mysteryChest: { minGems: 12, maxGems: 25, dailyLimit: 3 }
+        mysteryChest: { minGems: 12, maxGems: 25, dailyLimit: 3 },
+        luckyDrop: { energy: 40, coin: 2500, gem: 4, dailyLimit: 3 }
     },
 
     // -------------------------------------------------------------------------

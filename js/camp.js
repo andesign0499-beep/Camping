@@ -22,7 +22,6 @@ function enhance3sButton(btn) {
     if (!btn || btn.nodeType !== 1) return;
     var matches = btn.classList.contains('btn-3s') ||
                   btn.classList.contains('modal-btn') ||
-                  btn.classList.contains('footer-img-btn') ||
                   btn.classList.contains('pet-action-btn') ||
                   btn.classList.contains('loc-action-btn') ||
                   btn.classList.contains('st-act-btn') ||
@@ -55,7 +54,6 @@ function enhanceAll3sButtons(root) {
     if (scope.nodeType === 1 && (
         scope.classList.contains('btn-3s') ||
         scope.classList.contains('modal-btn') ||
-        scope.classList.contains('footer-img-btn') ||
         scope.classList.contains('pet-action-btn') ||
         scope.classList.contains('loc-action-btn') ||
         scope.classList.contains('st-act-btn') ||
@@ -64,7 +62,7 @@ function enhanceAll3sButtons(root) {
         enhance3sButton(scope);
     }
     if (scope.querySelectorAll) {
-        var btns = scope.querySelectorAll('.btn-3s, .modal-btn, .footer-img-btn, .pet-action-btn, .loc-action-btn, .st-act-btn, .camp-tab-btn');
+        var btns = scope.querySelectorAll('.btn-3s, .modal-btn, .pet-action-btn, .loc-action-btn, .st-act-btn, .camp-tab-btn');
         btns.forEach(enhance3sButton);
     }
 }
@@ -180,375 +178,6 @@ function showToast(msg) {
     toastTimer = setTimeout(function () {
         if (t.parentNode) t.remove();
     }, 1800);
-}
-
-// ---------- HIỆU ỨNG PHÁO HOA ĂN MỪNG CHIẾN THẮNG ----------
-function startWinFireworks(targetOverlay, starCount) {
-    if (typeof window.stopWinFireworks === 'function') {
-        window.stopWinFireworks();
-    }
-    var oldCanvas = document.getElementById('win-fireworks-canvas');
-    if (oldCanvas) oldCanvas.remove();
-
-    var canvas = document.createElement('canvas');
-    canvas.id = 'win-fireworks-canvas';
-    canvas.style.position = 'fixed';
-    canvas.style.inset = '0';
-    canvas.style.width = '100vw';
-    canvas.style.height = '100vh';
-    canvas.style.pointerEvents = 'none';
-    canvas.style.zIndex = '200001';
-
-    var parent = targetOverlay || document.body;
-    parent.appendChild(canvas);
-
-    var ctx = canvas.getContext('2d');
-    var w = canvas.width = window.innerWidth;
-    var h = canvas.height = window.innerHeight;
-
-    var handleResize = function () {
-        w = canvas.width = window.innerWidth;
-        h = canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    var particles = [];
-    var rockets = [];
-    var isRunning = true;
-    var animId = null;
-
-    var colors = [
-        '#ff1744', '#f50057', '#d500f9', '#651fff',
-        '#00e5ff', '#00e676', '#ffea00', '#ff9100',
-        '#ffffff', '#ff80ab', '#ffd700'
-    ];
-
-    function createExplosion(x, y, count, baseColor) {
-        var pCount = count || 65;
-        for (var i = 0; i < pCount; i++) {
-            var angle = Math.random() * Math.PI * 2;
-            var speed = 2.4 + Math.random() * 5.6;
-            var col = baseColor || colors[Math.floor(Math.random() * colors.length)];
-            particles.push({
-                x: x,
-                y: y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                alpha: 1,
-                decay: 0.012 + Math.random() * 0.016,
-                color: col,
-                size: 2.4 + Math.random() * 2.8,
-                gravity: 0.08
-            });
-        }
-    }
-
-    function launchRocket() {
-        if (!isRunning) return;
-        var startX = w * (0.15 + Math.random() * 0.7);
-        var targetY = h * (0.12 + Math.random() * 0.28);
-        rockets.push({
-            x: startX,
-            y: h,
-            targetY: targetY,
-            vy: -(8.5 + Math.random() * 4),
-            color: colors[Math.floor(Math.random() * colors.length)]
-        });
-    }
-
-    // Nổ đợt đầu chúc mừng ngay lập tức (1 sao, 2 sao hay 3 sao đều có)
-    setTimeout(function () {
-        createExplosion(w * 0.28, h * 0.22, 75, '#ffd700');
-        createExplosion(w * 0.72, h * 0.24, 75, '#00e5ff');
-    }, 100);
-    setTimeout(function () {
-        createExplosion(w * 0.5, h * 0.16, 95, '#ff4081');
-    }, 320);
-
-    // Nếu đạt 3 sao thì nổ thêm đợt kim tuyến bùng nổ hoành tráng
-    if (starCount >= 3) {
-        setTimeout(function () {
-            createExplosion(w * 0.38, h * 0.28, 80, '#ffeb3b');
-            createExplosion(w * 0.62, h * 0.28, 80, '#d500f9');
-        }, 550);
-    }
-
-    var launchInterval = setInterval(function () {
-        if (!isRunning) return;
-        launchRocket();
-    }, 600);
-
-    function loop() {
-        if (!isRunning) return;
-        ctx.clearRect(0, 0, w, h);
-
-        // Update rockets
-        for (var r = rockets.length - 1; r >= 0; r--) {
-            var rk = rockets[r];
-            rk.y += rk.vy;
-            ctx.fillStyle = rk.color;
-            ctx.beginPath();
-            ctx.arc(rk.x, rk.y, 2.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Trail
-            particles.push({
-                x: rk.x,
-                y: rk.y,
-                vx: (Math.random() - 0.5) * 0.8,
-                vy: Math.random() * 1.5,
-                alpha: 0.6,
-                decay: 0.05,
-                color: rk.color,
-                size: 1.5,
-                gravity: 0.02
-            });
-
-            if (rk.y <= rk.targetY) {
-                createExplosion(rk.x, rk.y, 70, rk.color);
-                rockets.splice(r, 1);
-            }
-        }
-
-        // Update particles
-        for (var i = particles.length - 1; i >= 0; i--) {
-            var p = particles[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += p.gravity || 0.06;
-            p.vx *= 0.98;
-            p.alpha -= p.decay;
-
-            if (p.alpha <= 0) {
-                particles.splice(i, 1);
-            } else {
-                ctx.save();
-                ctx.globalAlpha = p.alpha;
-                ctx.fillStyle = p.color;
-                ctx.shadowBlur = 6;
-                ctx.shadowColor = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-        }
-
-        animId = requestAnimationFrame(loop);
-    }
-    loop();
-
-    window.stopWinFireworks = function () {
-        isRunning = false;
-        clearInterval(launchInterval);
-        window.removeEventListener('resize', handleResize);
-        if (animId) cancelAnimationFrame(animId);
-        if (canvas.parentNode) canvas.remove();
-    };
-}
-
-// ---------- 2. MÀN HÌNH CHIẾN THẮNG QUA MÀN ----------
-function showWinModal(info, onReplay, onNext) {
-    // 1. Level Up Banner
-    var levelUpHtml = '<div class="win-levelup-header">' +
-        '<img src="assets/images_webp/ui/level_up.webp" class="win-levelup-img" alt="Level Up!">' +
-    '</div>';
-
-    // 2. Stars
-    var starsHtml = '<div class="win-stars">';
-    for (var i = 1; i <= 3; i++) {
-        var isStarOn = i <= info.stars;
-        starsHtml += '<img src="assets/images_webp/ui/icon_star.webp" class="win-star-img' + (isStarOn ? ' on' : ' off') + '" ' +
-            'style="animation-delay:' + (i * 0.16) + 's" alt="">';
-    }
-    starsHtml += '</div>';
-
-    // 3. Level label
-    var levelTextHtml = '<div class="win-level-label">Level ' + info.level + '</div>';
-
-    // 4. Kết hợp Vàng thưởng và Vàng bán vật phẩm thừa thành 1
-    var baseWinCoins = (info.alreadyDoubled ? info.coins * 2 : info.coins);
-    var totalCoins = baseWinCoins + (info.sweepCoins || 0);
-
-    // 5. Rewards row (Năng lượng, Vàng tổng hợp, Kim cương)
-    var rewardsHtml = '<div class="win-rewards-row">';
-    if (info.energy && info.energy > 0) {
-        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.energy + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_nangluong.webp" alt="Năng lượng"></div>';
-    }
-    rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + totalCoins.toLocaleString('vi-VN') + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_glod.webp" alt="Vàng"></div>';
-    if (info.gems && info.gems > 0) {
-        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.gems + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương"></div>';
-    }
-    rewardsHtml += '</div>';
-
-    // 6. Vật phẩm thu thập vào khu trại (Icon cách đều nhau không cần nền)
-    var completedList = (info.completedOrders && info.completedOrders.length)
-        ? info.completedOrders
-        : (info.decor ? [info.decor[1]] : []);
-    var decorHtml = '';
-    if (completedList.length > 0) {
-        var itemsHtml = completedList.map(function (oId) {
-            var imgPath = getItemImagePath(oId);
-            return '<img src="' + imgPath + '" class="win-bare-item-img" alt="">';
-        }).join('');
-        var decorLabel = (typeof I18N !== 'undefined' && I18N.currentLang === 'en')
-            ? 'Items collected to camp'
-            : 'Vật phẩm thu thập vào khu trại';
-        decorHtml = '<div class="win-decor-subtitle">' + decorLabel + '</div>' +
-            '<div class="win-items-bare-row">' + itemsHtml + '</div>';
-    }
-
-    // 7. Dark Rounded Card chứa phần thưởng & vật phẩm
-    var cardHtml = '<div class="win-dark-card">' +
-        rewardsHtml +
-        decorHtml +
-    '</div>';
-
-    // 8. Buttons
-    var nextBtnHtml = info.hasNext
-        ? '<button class="modal-btn primary" id="mb-next">' + (typeof I18N !== 'undefined' ? I18N.t('win.btn_next') : 'Màn tiếp') + '</button>'
-        : '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('settings.close_btn') : 'Đóng') + '</button>';
-
-    var replayBtnHtml = '<button class="modal-btn gem-btn" id="mb-replay">' + (typeof I18N !== 'undefined' ? I18N.t('win.btn_replay') : 'Chơi lại') + '</button>';
-
-    var buttonsHtml = '<div class="win-buttons-system">' +
-        '<div class="win-btn-row">' +
-            replayBtnHtml +
-            nextBtnHtml +
-        '</div>' +
-    '</div>';
-
-    var innerHtml = levelUpHtml + starsHtml + levelTextHtml + cardHtml + buttonsHtml;
-
-    var overlay = createModal(innerHtml, 'win-box', null);
-
-    // KÍCH HOẠT PHÁO HOA SAU KHI TẠO MODAL OVERLAY (Cho tất cả các màn: 1 sao, 2 sao, 3 sao)
-    startWinFireworks(overlay, info.stars || 1);
-
-    // 1. Level Up Banner
-    var levelUpHtml = '<div class="win-levelup-header">' +
-        '<img src="assets/images_webp/ui/level_up.webp" class="win-levelup-img" alt="Level Up!">' +
-    '</div>';
-
-    // 2. Stars
-    var starsHtml = '<div class="win-stars">';
-    for (var i = 1; i <= 3; i++) {
-        var isStarOn = i <= info.stars;
-        starsHtml += '<img src="assets/images_webp/ui/icon_star.webp" class="win-star-img' + (isStarOn ? ' on' : ' off') + '" ' +
-            'style="animation-delay:' + (i * 0.16) + 's" alt="">';
-    }
-    starsHtml += '</div>';
-
-    // 3. Level label
-    var levelTextHtml = '<div class="win-level-label">Level ' + info.level + '</div>';
-
-    // 4. Kết hợp Vàng thưởng và Vàng bán vật phẩm thừa thành 1
-    var baseWinCoins = (info.alreadyDoubled ? info.coins * 2 : info.coins);
-    var totalCoins = baseWinCoins + (info.sweepCoins || 0);
-
-    // 5. Rewards row (Năng lượng, Vàng tổng hợp, Kim cương)
-    var rewardsHtml = '<div class="win-rewards-row">';
-    if (info.energy && info.energy > 0) {
-        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.energy + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_nangluong.webp" alt="Năng lượng"></div>';
-    }
-    rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + totalCoins.toLocaleString('vi-VN') + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_glod.webp" alt="Vàng"></div>';
-    if (info.gems && info.gems > 0) {
-        rewardsHtml += '<div class="win-reward-item"><span class="reward-val">+' + info.gems + '</span> <img class="reward-icon" src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương"></div>';
-    }
-    rewardsHtml += '</div>';
-
-    // 6. Vật phẩm thu thập vào khu trại (Icon cách đều nhau không cần nền)
-    var completedList = (info.completedOrders && info.completedOrders.length)
-        ? info.completedOrders
-        : (info.decor ? [info.decor[1]] : []);
-    var decorHtml = '';
-    if (completedList.length > 0) {
-        var itemsHtml = completedList.map(function (oId) {
-            var imgPath = getItemImagePath(oId);
-            return '<img src="' + imgPath + '" class="win-bare-item-img" alt="">';
-        }).join('');
-        var decorLabel = (typeof I18N !== 'undefined' && I18N.currentLang === 'en')
-            ? 'Items collected to camp'
-            : 'Vật phẩm thu thập vào khu trại';
-        decorHtml = '<div class="win-decor-subtitle">' + decorLabel + '</div>' +
-            '<div class="win-items-bare-row">' + itemsHtml + '</div>';
-    }
-
-    // 7. Dark Rounded Card chứa phần thưởng & vật phẩm
-    var cardHtml = '<div class="win-dark-card">' +
-        rewardsHtml +
-        decorHtml +
-    '</div>';
-
-    // 8. Buttons
-    var nextBtnHtml = info.hasNext
-        ? '<button class="modal-btn primary" id="mb-next">' + (typeof I18N !== 'undefined' ? I18N.t('win.btn_next') : 'Màn tiếp') + '</button>'
-        : '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('settings.close_btn') : 'Đóng') + '</button>';
-
-    var replayBtnHtml = '<button class="modal-btn gem-btn" id="mb-replay">' + (typeof I18N !== 'undefined' ? I18N.t('win.btn_replay') : 'Chơi lại') + '</button>';
-
-    var buttonsHtml = '<div class="win-buttons-system">' +
-        '<div class="win-btn-row">' +
-            replayBtnHtml +
-            nextBtnHtml +
-        '</div>' +
-    '</div>';
-
-    var innerHtml = levelUpHtml + starsHtml + levelTextHtml + cardHtml + buttonsHtml;
-
-    var overlay = createModal(innerHtml, 'win-box', null);
-
-    var didClickNext = false;
-    var leaveWithoutNext = function () {
-        if (!didClickNext && typeof onReplay === 'function') {
-            onReplay();
-        }
-    };
-
-    var closeBtn = overlay.querySelector('#mb-close');
-    if (closeBtn) {
-        closeBtn.onclick = function () {
-            closeModal();
-            leaveWithoutNext();
-        };
-    }
-
-    var doubleBtn = overlay.querySelector('#mb-double-ad');
-    if (doubleBtn && !info.alreadyDoubled) {
-        doubleBtn.onclick = function () {
-            simulateWatchAd('Nhân Đôi Vàng Thưởng Màn Chơi (+' + info.coins + ' Vàng)', function () {
-                if (typeof playerCoins !== 'undefined') playerCoins += info.coins;
-                if (typeof updateUIStats === 'function') updateUIStats();
-                if (typeof playSound === 'function') playSound('win');
-                var coinEl = document.getElementById('btn-coin-shop') || document.body;
-                if (typeof spawnFlyingCurrency === 'function') spawnFlyingCurrency(coinEl, 'gold', Math.min(info.coins, 100));
-                showToast('Đã x2 Vàng: +' + info.coins + ' Vàng!');
-                var updatedInfo = Object.assign({}, info, { alreadyDoubled: true });
-                showWinModal(updatedInfo, onReplay, onNext);
-            });
-        };
-    }
-
-    overlay.querySelector('#mb-replay').onclick = function () {
-        closeModal();
-        onReplay();
-    };
-
-    var nextBtn = overlay.querySelector('#mb-next');
-    if (nextBtn) {
-        nextBtn.onclick = function () {
-            didClickNext = true;
-            closeModal();
-            onNext();
-        };
-    }
-
-    overlay.addEventListener('click', function (e) {
-        if (e.target === overlay) {
-            closeModal();
-            leaveWithoutNext();
-        }
-    });
 }
 
 // ==========================================
@@ -1110,7 +739,7 @@ function getActiveCampLampItemData() {
 
     if (typeof boardData !== 'undefined' && Array.isArray(boardData)) {
         boardData.forEach(function (cell) {
-            if (!cell || cell.isLocked || !cell.id) return;
+            if (!cell || cell.isLocked || cell.isRock || cell.isBubble || !cell.id) return;
             var lv = parseLampLv(cell.id);
             if (lv > bestLampLv) {
                 bestLampLv = lv;
@@ -1119,7 +748,7 @@ function getActiveCampLampItemData() {
         });
     } else if (SAVE.currentBoardState && Array.isArray(SAVE.currentBoardState.board)) {
         SAVE.currentBoardState.board.forEach(function (cell) {
-            if (!cell || cell.isLocked || !cell.id) return;
+            if (!cell || cell.isLocked || cell.isRock || cell.isBubble || !cell.id) return;
             var lv = parseLampLv(cell.id);
             if (lv > bestLampLv) {
                 bestLampLv = lv;
@@ -1741,11 +1370,6 @@ function simulateWatchAd(title, onReward) {
     }, 800);
 }
 
-// ---------- MÔ PHỎNG MUA IAP (ĐÃ ĐƯỢC CHUYỂN HOÀN TOÀN SANG QUẢNG CÁO MIỄN PHÍ) ----------
-function simulateBuyIAP(pack, onConfirm) {
-    if (onConfirm) onConfirm(pack);
-}
-
 // ---------- 4A. CỬA HÀNG NĂNG LƯỢNG & CỨU TRỢ (TRẠM TIẾP NĂNG LƯỢNG) ----------
 // opts: { energy, maxEnergy, coins, gems, secLeft, adsLeft, onBuyCoins, onBuyGems, onWatchAd, onRescue, onOpenGemShop }
 function showEnergyShopModal(opts) {
@@ -1810,7 +1434,7 @@ function showEnergyShopModal(opts) {
             'Hiện có: <b>' + opts.energy + ' ' + ICON_ENERGY_HTML + '</b> &nbsp;|&nbsp; ' +
             '<b>' + opts.coins.toLocaleString('vi-VN') + ' ' + ICON_GOLD_HTML + '</b> &nbsp;|&nbsp; ' +
             '<b>' + opts.gems + ' ' + ICON_RUBY_HTML + '</b><br>' +
-            '<small>Tự động hồi +1 năng lượng sau mỗi ' + curRegenSec + 's khi tương tác (còn ' + opts.secLeft + 's)</small>' +
+            '<small>Tự động hồi +1 năng lượng sau mỗi ' + curRegenSec + 's (cả khi tắt game, còn ' + opts.secLeft + 's)</small>' +
         '</div>' +
         '<div class="shop-scroll">' +
             // 1. Xem Ads nhận năng lượng
@@ -1921,24 +1545,14 @@ function showGemShopModal(opts) {
         '</button>' +
     '</div>';
 
-    // 3. Gói Test Thử Nghiệm (+500 Kim Cương)
-    var testPackHtml = '<div class="shop-card has-badge" style="background:#f3e5f5;border-color:#ba68c8;">' +
-        '<div class="shop-badge" style="background:#8e24aa;">TEST</div>' +
-        '<div class="shop-card-left">' +
-            '<div class="shop-card-title">+500 ' + ICON_RUBY_HTML + ' Gói Thử Nghiệm</div>' +
-            '<div class="shop-card-desc">Gói nhận nhanh Kim Cương để kiểm tra tính năng</div>' +
-        '</div>' +
-        '<button class="modal-btn primary" id="btn-claim-test-gem" style="background:linear-gradient(180deg,#ab47bc,#7b1fa2);border-color:#6a1b9a;">Nhận Ngay</button>' +
-    '</div>';
-
-    // 4. Mẹo kiếm Kim Cương trong game
+    // 3. Mẹo kiếm Kim Cương trong game
     var tipHtml = '<div class="shop-card" style="background:#fffde7;border:2px dashed #fbc02d;">' +
         '<div class="shop-card-left">' +
             '<div class="shop-card-title" style="color:#e65100;font-size:0.875rem;">Mẹo Nhận Thêm Kim Cương Trong Game</div>' +
             '<div class="shop-card-desc" style="font-size:0.75rem;line-height:1.4;">' +
-                '• Vượt màn đạt 3 sao: <b>+2 ' + ICON_RUBY_HTML + '</b><br>' +
+                '• Lên cấp Trại: <b>+2 ' + ICON_RUBY_HTML + '</b> (mốc Lv.5, 10, 15...: <b>+5</b>)<br>' +
                 '• Khám phá món mới trong Cẩm Nang: <b>+1 ' + ICON_RUBY_HTML + '</b><br>' +
-                '• Ghép vật phẩm Cấp 8 hoàn hảo: <b>+1 ' + ICON_RUBY_HTML + '</b>' +
+                '• Ghép vật phẩm Cấp 8 / 9 / 10: <b>+1 / +2 / +3 ' + ICON_RUBY_HTML + '</b><br>• Mở Rương Sao: <b>+2 → +6 ' + ICON_RUBY_HTML + '</b>' +
             '</div>' +
         '</div>' +
     '</div>';
@@ -1953,7 +1567,6 @@ function showGemShopModal(opts) {
         '<div class="shop-scroll">' +
             dailyHtml +
             gemAdHtml +
-            testPackHtml +
             tipHtml +
         '</div>' +
         '<div class="modal-buttons">' +
@@ -1977,20 +1590,12 @@ function showGemShopModal(opts) {
             if (opts.onWatchAd) opts.onWatchAd();
         };
     }
-    var testBtn = overlay.querySelector('#btn-claim-test-gem');
-    if (testBtn) {
-        testBtn.onclick = function () {
-            closeModal();
-            if (opts.onClaimTestGem) opts.onClaimTestGem();
-        };
-    }
-
     overlay.querySelector('#mb-close').onclick = closeModal;
 }
 
 // ---------- 4C. NGÂN HÀNG VÀNG ----------
 function showCoinShopModal(opts) {
-    var coinAdAmt = (typeof AD_REWARDS !== 'undefined' && AD_REWARDS.coin) ? AD_REWARDS.coin.amount : 1500;
+    var coinAdAmt = (typeof AD_REWARDS !== 'undefined' && AD_REWARDS.coin) ? AD_REWARDS.coin.amount : 2500;
     var coinAdsLeft = typeof getAdsLeft === 'function' ? getAdsLeft('coin') : 0;
     var coinAdHtml = '<div class="shop-card">' +
         '<div class="shop-card-left">' +
@@ -2052,17 +1657,21 @@ function showCoinShopModal(opts) {
 
 // ---------- 4D. HỘP TIẾP TẾ MAY MẮN (LUCKY AIR DROP) ----------
 function showLuckyDropModal(onReward) {
+    var ldCfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards && GAME_CONFIG.adRewards.luckyDrop)
+        ? GAME_CONFIG.adRewards.luckyDrop
+        : { energy: 40, coin: 2500, gem: 4, dailyLimit: 3 };
+    var leftCnt = (typeof getAdsLeft === 'function') ? getAdsLeft('mystery') : (ldCfg.dailyLimit || 3);
     var overlay = createModal(
         '<div class="lucky-drop-dialog">' +
             '<div class="lucky-drop-visual"></div>' +
             '<div class="lucky-drop-desc">' +
                 'Kiểm lâm vừa thả dù một kiện hàng tiếp tế đặc biệt xuống khu trại!<br>' +
-                'Xem một đoạn video ngắn từ nhà tài trợ để nhận ngẫu nhiên phần quà:' +
+                'Xem một đoạn video ngắn để nhận ngẫu nhiên phần quà (còn <b>' + leftCnt + '</b> lượt hôm nay):' +
             '</div>' +
             '<div class="lucky-drop-rewards-list">' +
-                '<div class="lucky-reward-pill">' + ICON_ENERGY_HTML + ' +35 Năng Lượng</div>' +
-                '<div class="lucky-reward-pill">' + ICON_GOLD_HTML + ' +1.800 Vàng</div>' +
-                '<div class="lucky-reward-pill">' + ICON_RUBY_HTML + ' +8 Kim Cương</div>' +
+                '<div class="lucky-reward-pill">' + ICON_ENERGY_HTML + ' +' + ldCfg.energy + ' Năng Lượng</div>' +
+                '<div class="lucky-reward-pill">' + ICON_GOLD_HTML + ' +' + ldCfg.coin.toLocaleString('vi-VN') + ' Vàng</div>' +
+                '<div class="lucky-reward-pill">' + ICON_RUBY_HTML + ' +' + ldCfg.gem + ' Kim Cương</div>' +
             '</div>' +
             '<div class="modal-buttons lucky-buttons">' +
                 '<button class="modal-btn primary" id="btn-lucky-cancel">Đóng</button>' +
@@ -2078,9 +1687,9 @@ function showLuckyDropModal(onReward) {
         closeModal();
         simulateWatchAd('Mở Kiện Hàng Tiếp Tế May Mắn', function () {
             var rolls = [
-                { type: 'energy', val: 35, text: '+35 Năng lượng', color: '#2e7d32' },
-                { type: 'coin', val: 1800, text: '+1.800 Vàng', color: '#f57f17' },
-                { type: 'gem', val: 8, text: '+8 Kim cương', color: '#1565c0' }
+                { type: 'energy', val: ldCfg.energy, text: '+' + ldCfg.energy + ' Năng lượng', color: '#2e7d32' },
+                { type: 'coin', val: ldCfg.coin, text: '+' + ldCfg.coin.toLocaleString('vi-VN') + ' Vàng', color: '#f57f17' },
+                { type: 'gem', val: ldCfg.gem, text: '+' + ldCfg.gem + ' Kim cương', color: '#1565c0' }
             ];
             var roll = rolls[Math.floor(Math.random() * rolls.length)];
             if (onReward) onReward(roll);
@@ -2193,144 +1802,6 @@ function openDiscoveryBook() {
     });
 
     overlay.querySelector('#mb-close').onclick = closeModal;
-}
-
-// ---------- 6. BẢN ĐỒ HÀNH TRÌNH (WORLD MAP - LƯỚI 4 CỘT X 5 HÀNG, PHÂN 3 CHẶNG X 20 MÀN = 60 MÀN) ----------
-function openWorldMap(currentLv, onSelectLevel) {
-    var unlockAll = SAVE.settings && SAVE.settings.unlockAllLevels;
-
-    // Đảm bảo tối thiểu 60 level được sinh cấu hình
-    for (var genLv = RAW_LEVELS.length + 1; genLv <= 60; genLv++) {
-        getLevelConfig(genLv);
-    }
-
-    // Tự động chuyển tới chặng của màn hiện tại (hoặc maxLevel)
-    var cur = Math.min(60, currentLv || SAVE.maxLevel || 1);
-    var currentStage = Math.max(1, Math.min(3, Math.ceil(cur / 20)));
-
-    var overlay = createModal(
-        '<div class="map-nav-header">' +
-            '<button class="map-nav-btn" id="map-btn-prev" type="button" aria-label="Chặng trước">' +
-                '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>' +
-            '</button>' +
-            '<div class="map-nav-title" id="map-nav-title"></div>' +
-            '<button class="map-nav-btn" id="map-btn-next" type="button" aria-label="Chặng sau">' +
-                '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>' +
-            '</button>' +
-        '</div>' +
-        '<div class="map-scroll-area">' +
-            '<div class="map-grid-5col" id="map-grid-container"></div>' +
-        '</div>' +
-        '<div class="map-stage-req" id="map-stage-req"></div>' +
-        '<div class="modal-buttons map-modal-buttons">' +
-            '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('map.btn_close') : 'Đóng') + '</button>' +
-        '</div>',
-        'map-popup-box',
-        (typeof I18N !== 'undefined' ? I18N.t('map.title') : 'BẢN ĐỒ HÀNH TRÌNH')
-    );
-
-    var closeBtn = overlay.querySelector('#mb-close');
-    if (closeBtn) closeBtn.onclick = closeModal;
-
-    var navTitle = overlay.querySelector('#map-nav-title');
-    var stageReqEl = overlay.querySelector('#map-stage-req');
-    var gridContainer = overlay.querySelector('#map-grid-container');
-    var btnPrev = overlay.querySelector('#map-btn-prev');
-    var btnNext = overlay.querySelector('#map-btn-next');
-
-    function renderStage(stage) {
-        currentStage = Math.max(1, Math.min(3, stage));
-        var stageSize = 20;
-        var fromLv = (currentStage - 1) * stageSize + 1;
-        var toLv = currentStage * stageSize;
-
-        btnPrev.disabled = (currentStage <= 1);
-        btnNext.disabled = (currentStage >= 3);
-
-        var stageStars = 0;
-        var nodesHtml = '';
-
-        for (var lv = fromLv; lv <= toLv; lv++) {
-            var st = SAVE.stars[lv] || 0;
-            stageStars += st;
-            var unlocked = unlockAll || lv <= SAVE.maxLevel;
-            var isCur = lv === currentLv;
-
-            var starsHtml = '<div class="map-level-stars">' +
-                '<img src="assets/images_webp/ui/icon_star.webp" class="map-star-img' + (st >= 1 ? ' on' : ' off') + '" alt="">' +
-                '<img src="assets/images_webp/ui/icon_star.webp" class="map-star-img' + (st >= 2 ? ' on' : ' off') + '" alt="">' +
-                '<img src="assets/images_webp/ui/icon_star.webp" class="map-star-img' + (st >= 3 ? ' on' : ' off') + '" alt="">' +
-            '</div>';
-
-            if (unlocked) {
-                nodesHtml += '<button class="map-level-btn' + (isCur ? ' current' : '') + '" data-lv="' + lv + '">' +
-                    '<span class="map-level-num">' + lv + '</span>' +
-                    starsHtml +
-                '</button>';
-            } else {
-                nodesHtml += '<button class="map-level-btn locked" data-lv="' + lv + '">' +
-                    '<img src="assets/images_webp/ui/icon_lock.webp" class="map-level-lock" alt="Khóa">' +
-                    starsHtml +
-                '</button>';
-            }
-        }
-
-        navTitle.innerHTML = 'Chặng <b>' + currentStage + '</b>' +
-            ' <span class="map-title-dot">•</span> ' +
-            '<b>' + stageStars + '/60</b> ' +
-            '<img src="assets/images_webp/ui/icon_star.webp" class="map-title-star-img" alt="">';
-        gridContainer.innerHTML = nodesHtml;
-
-        if (stageReqEl) {
-            var starImgHtml = '<img src="assets/images_webp/ui/icon_star.webp" class="map-req-star-img" alt="">';
-            var nextStage = currentStage + 1;
-            if (nextStage <= 3) {
-                if (stageStars >= 30) {
-                    stageReqEl.className = 'map-stage-req unlocked';
-                    stageReqEl.innerHTML = starImgHtml + ' <span>Đã đạt <b>30</b> sao để mở chặng <b>' + nextStage + '</b></span>';
-                } else {
-                    stageReqEl.className = 'map-stage-req';
-                    stageReqEl.innerHTML = starImgHtml + ' <span>Đạt <b>30</b> sao để mở chặng <b>' + nextStage + '</b></span>';
-                }
-            } else {
-                stageReqEl.className = 'map-stage-req unlocked';
-                stageReqEl.innerHTML = '<span>Chặng cuối cùng của hành trình!</span>';
-            }
-        }
-
-        gridContainer.querySelectorAll('.map-level-btn').forEach(function (btn) {
-            btn.onclick = function () {
-                var lv = parseInt(btn.dataset.lv, 10);
-                var isUnlocked = unlockAll || lv <= SAVE.maxLevel;
-                if (isUnlocked) {
-                    if (typeof playSound === 'function') playSound('tap');
-                    closeModal();
-                    if (typeof onSelectLevel === 'function') {
-                        onSelectLevel(lv);
-                    }
-                } else {
-                    if (typeof playSound === 'function') playSound('error');
-                    showToast('Hãy hoàn thành Level ' + (lv - 1) + ' trước nhé!', '#c62828');
-                }
-            };
-        });
-    }
-
-    btnPrev.onclick = function () {
-        if (currentStage > 1) {
-            if (typeof playSound === 'function') playSound('tap');
-            renderStage(currentStage - 1);
-        }
-    };
-
-    btnNext.onclick = function () {
-        if (currentStage < 3) {
-            if (typeof playSound === 'function') playSound('tap');
-            renderStage(currentStage + 1);
-        }
-    };
-
-    renderStage(currentStage);
 }
 
 // ---------- 7. MÀN HÌNH CÀI ĐẶT & CHỌN MÀN NHANH ----------

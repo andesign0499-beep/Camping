@@ -323,7 +323,32 @@ var NPC_CHARACTERS = {
 
 var NPC_ORDER = ['gau', 'cao', 'de'];
 
-var LEVEL_STORY_DIALOGUES = {};
+// Kịch bản cốt truyện Hành Trình Xuyên Việt theo từng Cấp độ & 5 Địa điểm
+var LOCATION_STORY_INTROS = {
+    'loc_dongdo': '🌲 Chương 1 — Cao nguyên Lâm Viên: Sương sớm se lạnh, dựng trại giữa đồi thông thôi!',
+    'loc_matthan': '⛰️ Chương 2 — Núi Mắt Thần: Thung lũng cỏ xanh kỳ vĩ đang chờ chúng mình khám phá!',
+    'loc_bangioc': '🌊 Chương 3 — Thác Bản Giốc: Tiếng thác đổ hùng vĩ quá, bày tiệc bên bờ suối nào!',
+    'loc_muine': '🏜️ Chương 4 — Đồi Cát Mũi Né: Hoàng hôn rực lửa trên đồi cát, chuẩn bị nghỉ đêm nhé!',
+    'loc_songnuocbinhba': '🏝️ Chương 5 — Sóng Nước Bình Ba: Biển xanh cát trắng, mở đại tiệc Glamping thôi!'
+};
+
+var LEVEL_STORY_DIALOGUES = {
+    1: { npc: 'gau', texts: ['Chào mừng đến Cao nguyên Lâm Viên! Cùng mình lấy đồ từ Xe Kéo dựng góc trại đầu tiên nhé!'] },
+    2: { npc: 'gau', texts: ['Sương chiều bắt đầu xuống rồi, ghép đồ sát các ô mạng nhện để mở rộng bãi cỏ nào!'] },
+    3: { npc: 'gau', texts: ['Tuyệt lắm! Đá khóa tầng 1 đã nứt, khu trại của chúng mình thoáng đãng hơn hẳn!'] },
+    4: { npc: 'cao', texts: ['🎒 Ba Lô Dã Ngoại đã mở! Kéo Ba Lô vào bàn để pha cà phê nóng và làm đồ ăn nhé!'] },
+    5: { npc: 'cao', texts: ['Hương cà phê thơm lừng cả đồi thông! Tiếp tục ghép đồ tích Sao mở Rương Quà nào!'] },
+    6: { npc: 'cao', texts: ['Đường mòn ven suối lộ diện rồi! Máy phát giờ rớt nhiều đồ cấp cao hơn đó!'] },
+    7: { npc: 'de', texts: ['🧰 Thùng Bếp & Sinh Tồn đã sẵn sàng! Kéo vào bàn để nhóm lửa trại và trải đệm êm nhé!'] },
+    8: { npc: 'de', texts: ['Đêm rừng ấm áp nhờ ánh lửa trại! Bạn có thể bật ⚡×2 để ghép đồ nhanh gấp đôi!'] },
+    9: { npc: 'gau', texts: ['Bữa tối hải sản bên lửa trại đang chờ! Nếu chật bàn, nhớ cất bớt vào Kho Tạm nhé!'] },
+    10: { npc: 'gau', texts: ['🎉 Cột mốc Cấp 10! Khu trại sơ khai giờ đã thành điểm dừng chân mơ ước rồi!'] },
+    11: { npc: 'cao', texts: ['Đất trại tầng 2 vừa mở rộng! Chuẩn bị đón những thử thách Glamping cao cấp hơn nào!'] },
+    12: { npc: 'de', texts: ['Tấm pin mặt trời đã sẵn sàng cấp điện cho cả khu trại lung linh suốt đêm!'] },
+    15: { npc: 'gau', texts: ['⭐ Bậc thầy cắm trại! Khu lều vòm sàn gỗ đèn LED đã hiện lên đẹp như cổ tích!'] },
+    18: { npc: 'cao', texts: ['🏆 Toàn bộ đá khóa trên bàn cờ đã được giải phóng! Không gian ghép đồ rộng tối đa!'] },
+    20: { npc: 'gau', texts: ['👑 Đỉnh cao Thủ Lĩnh Dã Ngoại! Hãy chinh phục trọn bộ siêu phẩm Glamping Cấp 12 nhé!'] }
+};
 if (typeof GAME_CONFIG !== 'undefined' && Array.isArray(GAME_CONFIG.levels)) {
     GAME_CONFIG.levels.forEach(function (l) {
         if (l.dialogue && l.level) {

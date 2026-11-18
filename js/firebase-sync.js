@@ -198,13 +198,15 @@ var FIREBASE_SYNC = (function () {
                 var cloudPayload = doc.data();
                 var cloudSave = cloudPayload ? cloudPayload.saveData : null;
                 if (cloudSave) {
-                    // So sánh tiến trình giữa máy và đám mây
-                    var localLv = (SAVE && SAVE.level) || 1;
-                    var cloudLv = cloudSave.level || 1;
-                    var localStars = (SAVE && SAVE.stars) ? Object.keys(SAVE.stars).length : 0;
-                    var cloudStars = cloudSave.stars ? Object.keys(cloudSave.stars).length : 0;
+                    // So sánh tiến trình giữa máy và đám mây theo playerLevel & playerExp
+                    var localLv = (SAVE && (SAVE.playerLevel || SAVE.level)) || 1;
+                    var cloudLv = cloudSave.playerLevel || cloudSave.level || 1;
+                    var localExp = (SAVE && SAVE.playerExp) || 0;
+                    var cloudExp = cloudSave.playerExp || 0;
+                    var localCoins = (SAVE && SAVE.coins) || 0;
+                    var cloudCoins = cloudSave.coins || 0;
 
-                    if (cloudLv > localLv || (cloudLv === localLv && cloudStars >= localStars)) {
+                    if (cloudLv > localLv || (cloudLv === localLv && (cloudExp > localExp || (cloudExp === localExp && cloudCoins > localCoins)))) {
                         console.log('Loading higher progress from Firebase Firestore...');
                         SAVE = Object.assign(defaultSave(), cloudSave);
                         SAVE.googleUser = {
@@ -217,7 +219,7 @@ var FIREBASE_SYNC = (function () {
                         };
                         try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {}
                         if (typeof window.loadLevel === 'function') {
-                            window.loadLevel(SAVE.level || 1, { restoreState: true });
+                            window.loadLevel(SAVE.playerLevel || SAVE.level || 1, { restoreState: true });
                         }
                     } else {
                         // Máy hiện tại có tiến trình mới hơn -> cập nhật lên Firestore

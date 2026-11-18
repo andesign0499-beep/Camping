@@ -138,7 +138,7 @@
         var available = {};
         if (typeof boardData !== 'undefined' && Array.isArray(boardData)) {
             boardData.forEach(function (c) {
-                if (c && c.id && !c.isRock && !c.isLocked && !GENERATORS[c.id]) {
+                if (c && c.id && !c.isRock && !c.isLocked && !c.isBubble && !GENERATORS[c.id]) {
                     available[c.id] = (available[c.id] || 0) + 1;
                 }
             });
@@ -171,7 +171,7 @@
                     emptyCount++;
                     continue;
                 }
-                if (c.isRock || GENERATORS[c.id]) continue;
+                if (c.isRock || c.isBubble || GENERATORS[c.id]) continue;
                 var ln = getItemLineHelper(c.id);
                 var lv = getItemLvHelper(c.id);
                 if (c.isLocked) {
@@ -229,7 +229,8 @@
 
         var ln = getItemLineHelper(itemId);
         var lv = getItemLvHelper(itemId);
-        var maxLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : 12;
+        var isCurItem = (String(itemId).indexOf('board_coin_') === 0 || String(itemId).indexOf('board_energy_') === 0);
+        var maxLv = isCurItem ? 5 : ((typeof getItemMaxLevel === 'function') ? getItemMaxLevel(ln) : 12);
         if (lv >= maxLv) return false;
 
         // Nếu ghép vào ô mạng nhện (consumeCount === 1): luôn cho phép vì không làm giảm cấp mà còn mở khóa ô!
@@ -290,7 +291,8 @@
 
         for (var idx = 0; idx < boardData.length; idx++) {
             var c = boardData[idx];
-            if (!c || !c.id || c.isRock || c.isLocked || GENERATORS[c.id]) continue;
+            if (!c || !c.id || c.isRock || c.isLocked || c.isBubble || GENERATORS[c.id]) continue;
+            if (String(c.id).indexOf('board_coin_') === 0 || String(c.id).indexOf('board_energy_') === 0) continue;
             var ln = getItemLineHelper(c.id);
             var lv = getItemLvHelper(c.id);
 
@@ -382,21 +384,45 @@
         if (typeof SAVE === 'undefined' || !SAVE || !Array.isArray(SAVE.petOrderGroups) || !SAVE.petOrderGroups.length) return;
 
         var activeGroup = SAVE.petOrderGroups[0];
-        if (!activeGroup || activeGroup._isDelivering) return;
+        if (!activeGroup) return;
+        if (activeGroup._isDelivering) {
+            if (!activeGroup._botDeliverWatchTs) {
+                activeGroup._botDeliverWatchTs = Date.now();
+            } else if (Date.now() - activeGroup._botDeliverWatchTs > 2500) {
+                activeGroup._isDelivering = false;
+                activeGroup._botDeliverWatchTs = 0;
+            } else {
+                return;
+            }
+        } else {
+            activeGroup._botDeliverWatchTs = 0;
+        }
 
-        // BƯỚC 0: TỰ ĐỘNG NẠP THÊM NĂNG LƯỢNG KHI HẾT (AUTO-REFILL CHO BOT)
-        // Đảm bảo bot luôn có năng lượng dồi dào chơi liên tục, không bị ngắt quãng hoặc bị popup cửa hàng chặn lại
+        // BƯỚC 0: TỰ ĐỘNG NẠP THÊM NĂNG LƯỢNG KHI HẾT & DỌN POPUP NẾU ĐANG CHẶN BOT
+        var strayModal = document.getElementById('modal-overlay');
+        if (strayModal && !document.getElementById('dev-test-modal-overlay')) {
+            if (typeof closeModal === 'function') closeModal();
+            else strayModal.remove();
+        }
         if (typeof playerEnergy !== 'undefined' && playerEnergy < 30) {
             playerEnergy = (playerEnergy || 0) + 100;
             if (typeof SAVE !== 'undefined' && SAVE) SAVE.energy = playerEnergy;
             if (typeof updateUIStats === 'function') updateUIStats();
-            if (typeof closeModal === 'function') closeModal();
-            var modalEl0 = document.getElementById('modal-overlay');
-            if (modalEl0) modalEl0.remove();
         }
 
-        // BƯỚC 1: TỰ ĐỘNG CẤT NGAY VẬT PHẨM ĐÃ HOÀN THÀNH LÊN KHAY ĐƠN HÀNG (STASH)
-        // Giúp giải phóng ô cờ tức thì và tránh tuyệt đối việc ghép nhầm hoặc bán nhầm món đã xong!
+        // BƯỚC 0.5: THU HOẠCH XU / NĂNG LƯỢNG CẤP TỐI ĐA (LV.5) HOẶC GIẢI PHÓNG BONG BÓNG KHI BÀN SẮP ĐẦY
+        for (var ci = 0; ci < boardData.length; ci++) {
+            var curCell = boardData[ci];
+            if (!curCell || !curCell.id || curCell.isRock || curCell.isLocked) continue;
+            if (!curCell.isBubble && (curCell.id === 'board_coin_lv5' || curCell.id === 'board_energy_lv5')) {
+                if (typeof handleCellDoubleClick === 'function') {
+                    handleCellDoubleClick(ci);
+                    return;
+                }
+            }
+        }
+
+        // BƯỚC 1: TỰ ĐỘNG CẤT NGAY VẬT PHẨM ĐÃ HOÀN THÀNH LÊN KHAY ĐƠN HÀNG (STASH - BỎ QUA Ô ĐANG TRONG BONG BÓNG)
         if (Array.isArray(activeGroup.orders)) {
             for (var oi = 0; oi < activeGroup.orders.length; oi++) {
                 var ord = activeGroup.orders[oi];
@@ -404,7 +430,7 @@
                     var matchIdx = -1;
                     for (var bi = 0; bi < boardData.length; bi++) {
                         var cell = boardData[bi];
-                        if (cell && cell.id === ord.id && !cell.isRock && !cell.isLocked) {
+                        if (cell && cell.id === ord.id && !cell.isRock && !cell.isLocked && !cell.isBubble) {
                             matchIdx = bi;
                             break;
                         }
@@ -436,21 +462,20 @@
             return;
         }
 
-        // BƯỚC 4: GHÉP ĐỒ THÔNG MINH THEO THỨ TỰ ƯU TIÊN CHIẾN THUẬT
+        // BƯỚC 4: GHÉP ĐỒ THÔNG MINH THEO THỨ TỰ ƯU TIÊN CHIẾN THUẬT (BỎ QUA Ô ĐANG TRONG BONG BÓNG)
         var analysis = analyzeBoardForBot();
 
         // 4.1. Ưu tiên số 1: Ghép mở khóa ô mạng nhện (c1 tự do + c2 bị khóa mạng nhện)
-        // Sắp xếp ưu tiên: Ô nhện sát đá -> Nhánh đơn hàng đang cần -> Cấp độ cao nhất trước
         var webMerges = [];
         for (var i = 0; i < boardData.length; i++) {
             var c1 = boardData[i];
-            if (!c1 || !c1.id || c1.isRock || c1.isLocked || GENERATORS[c1.id]) continue;
+            if (!c1 || !c1.id || c1.isRock || c1.isLocked || c1.isBubble || GENERATORS[c1.id]) continue;
             if (!canConsumeItemsForMerge(c1.id, 1, analysis)) continue;
 
             for (var j = 0; j < boardData.length; j++) {
                 if (i === j) continue;
                 var c2 = boardData[j];
-                if (!c2 || !c2.id || c2.isRock || GENERATORS[c2.id]) continue;
+                if (!c2 || !c2.id || c2.isRock || c2.isBubble || GENERATORS[c2.id]) continue;
                 if (c2.isLocked && c2.id === c1.id) {
                     var lnW = getItemLineHelper(c1.id);
                     var lvW = getItemLvHelper(c1.id);
@@ -466,27 +491,26 @@
         }
         if (webMerges.length > 0) {
             webMerges.sort(function (a, b) { return b.score - a.score; });
-            var resW = executeMoveAndEffects(webMerges[0].from, webMerges[0].to);
-            if (!resW || resW.type === 'merge') {
-                autoBotStats.merges++;
+            for (var wm = 0; wm < webMerges.length; wm++) {
+                var resW = executeMoveAndEffects(webMerges[wm].from, webMerges[wm].to);
+                if (resW && resW.type !== 'none') {
+                    if (resW.type === 'merge') autoBotStats.merges++;
+                    updateBotStatusUI();
+                    return;
+                }
             }
-            updateBotStatusUI();
-            return;
         }
 
-        // 4.2. Thu thập tất cả các cặp ô tự do có thể ghép hợp lệ và phân loại ưu tiên:
-        // - Nhóm A (type 1): Nhánh mục tiêu của đơn hàng hiện tại (lv < maxNeededLv) -> Ghép từ cấp thấp nhất lên cao (Lv.1 -> Lv.2 -> Lv.3...)
-        // - Nhóm B (type 2): Nhánh có ô mạng nhện cấp cao hơn đang chờ trên bàn (lv < maxWebLv) -> Ghép bắc cầu để phá nhện
-        // - Nhóm C (type 3): Ghép thu gọn bàn cờ & dọn sạch đồ trùng lặp -> Ghép từ cấp thấp nhất lên
+        // 4.2. Thu thập tất cả các cặp ô tự do có thể ghép hợp lệ (không ghép ô đang trong bong bóng)
         var freeMerges = [];
         for (var m1 = 0; m1 < boardData.length; m1++) {
             var item1 = boardData[m1];
-            if (!item1 || !item1.id || item1.isRock || item1.isLocked || GENERATORS[item1.id]) continue;
+            if (!item1 || !item1.id || item1.isRock || item1.isLocked || item1.isBubble || GENERATORS[item1.id]) continue;
             if (!canConsumeItemsForMerge(item1.id, 2, analysis)) continue;
 
             for (var m2 = m1 + 1; m2 < boardData.length; m2++) {
                 var item2 = boardData[m2];
-                if (!item2 || !item2.id || item2.isRock || item2.isLocked || GENERATORS[item2.id]) continue;
+                if (!item2 || !item2.id || item2.isRock || item2.isLocked || item2.isBubble || GENERATORS[item2.id]) continue;
                 if (item2.id === item1.id) {
                     var lnM = getItemLineHelper(item1.id);
                     var lvM = getItemLvHelper(item1.id);
@@ -502,7 +526,7 @@
                         priorityGroup: priorityGroup,
                         lv: lvM
                     });
-                    break; // Đã tìm được cặp cho m1
+                    break;
                 }
             }
         }
@@ -510,21 +534,37 @@
         if (freeMerges.length > 0) {
             freeMerges.sort(function (a, b) {
                 if (a.priorityGroup !== b.priorityGroup) return a.priorityGroup - b.priorityGroup;
-                // Luôn ghép từ cấp thấp nhất (Lv.1 -> Lv.2 -> Lv.3) để dồn chuỗi gọn gàng, không để sót đồ lẻ
                 return a.lv - b.lv;
             });
-            var resF = executeMoveAndEffects(freeMerges[0].from, freeMerges[0].to);
-            if (!resF || resF.type === 'merge') {
-                autoBotStats.merges++;
+            for (var fm = 0; fm < freeMerges.length; fm++) {
+                var resF = executeMoveAndEffects(freeMerges[fm].from, freeMerges[fm].to);
+                if (resF && resF.type !== 'none') {
+                    if (resF.type === 'merge') autoBotStats.merges++;
+                    updateBotStatusUI();
+                    return;
+                }
             }
-            updateBotStatusUI();
-            return;
         }
 
         // BƯỚC 5: BẤM MÁY PHÁT ĐỂ SINH ĐỒ
-        // 5.1. Kiểm tra ô trống trên bàn cờ; nếu đầy và không còn cặp ghép thì bán món đồ rác ít giá trị nhất
+        // 5.1. Kiểm tra ô trống trên bàn cờ; nếu đầy thì ưu tiên thu hoạch Xu/Năng lượng lẻ, làm nổ Bong Bóng hoặc bán đồ rác
         var empties = (typeof getEmptyIndexes === 'function') ? getEmptyIndexes(boardData) : [];
         if (!empties.length) {
+            for (var bbi = 0; bbi < boardData.length; bbi++) {
+                var bc = boardData[bbi];
+                if (!bc || !bc.id || bc.isRock || bc.isLocked) continue;
+                if (bc.isBubble) {
+                    boardData[bbi] = makeEmptyCell();
+                    if (typeof renderBoard === 'function') renderBoard();
+                    return;
+                }
+                if (String(bc.id).indexOf('board_coin_') === 0 || String(bc.id).indexOf('board_energy_') === 0) {
+                    if (typeof handleCellDoubleClick === 'function') {
+                        handleCellDoubleClick(bbi);
+                        return;
+                    }
+                }
+            }
             var sellIdx = findBestTrashItemToSell();
             if (sellIdx !== -1 && typeof sellItemAtIndex === 'function') {
                 sellItemAtIndex(sellIdx);

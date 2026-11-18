@@ -354,9 +354,9 @@ var MYCAMP_CONFIG = {
         minHoldSeconds: 1,       // Thời gian giữ tối thiểu để nhận vàng (1s)
         maxHoldSeconds: 3,       // Thời gian giữ tối đa (3s = mốc cao nhất)
         tiers: [
-            { seconds: 1, gold: 750 },   // 1s -> 750 Vàng
-            { seconds: 2, gold: 1200 },  // 2s -> 1.200 Vàng
-            { seconds: 3, gold: 2000 }   // 3s -> 2.000 Vàng (tối đa)
+            { seconds: 1, gold: 400 },   // 1s -> 400 Vàng
+            { seconds: 2, gold: 700 },   // 2s -> 700 Vàng
+            { seconds: 3, gold: 1200 }   // 3s -> 1.200 Vàng (tối đa)
         ]
     },
 
@@ -494,10 +494,10 @@ var MYCAMP_CONFIG = {
             name: 'Bàn dã ngoại (Phía trước ghế 2)',
             type: 'slot',
             slotKey: 'table',
-            left: 238,
-            top: 358,
-            width: 85,
-            height: 85,
+            left: 236,
+            top: 364,
+            width: 75,
+            height: 75,
             zIndex: 16,
             fit: 'contain'
         },
@@ -506,8 +506,8 @@ var MYCAMP_CONFIG = {
             name: 'Bếp nướng dã ngoại (Phía trước ghế 1)',
             type: 'slot',
             slotKey: 'stove',
-            left: 194,
-            top: 406,
+            left: 202,
+            top: 410,
             width: 40,
             height: 'auto',
             zIndex: 17

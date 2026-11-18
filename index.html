@@ -8,8 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=10.85">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="css/style.css?v=11.17">
 </head>
 <body>
     <div id="game-app">
@@ -74,11 +73,6 @@
                     <img data-src="assets/images_webp/background/may1.webp" class="npc-stage-cloud-img" alt="">
                 </div>
 
-                <!-- NỀN ĐỒI CỎ GÒ ĐẤT CHO CHÚ CHÓ & ITEM NHIỆM VỤ (LOAD SAU CÙNG KHI CÁC THÀNH PHẦN CHÍNH ĐÃ SẴN SÀNG) -->
-                <div id="npc-stage-bg" class="npc-stage-bg" aria-hidden="true">
-                    <img data-src="assets/images_webp/board/npc_bg.webp" class="npc-stage-bg-img" alt="">
-                </div>
-
                 <div id="npc-guide-wrap" class="npc-guide-wrap">
                     <button id="npc-avatar-btn" class="npc-character-btn" title="Chạm vào nhân vật để trò chuyện & xem gợi ý">
                         <img id="npc-avatar-img" class="npc-character-img" src="assets/images_webp/ui/character01.webp" alt="Nhân vật đồng hành">
@@ -96,10 +90,17 @@
                     </div>
                     <div id="orders-container"></div>
                 </div>
+
+                <!-- RƯƠNG SAO ĐẶT GỌN Ở GÓC PHẢI CẢNH (KHÔNG CHỮ ĐẾM, ĐẦY SAO SẼ RUNG LÊN) -->
+                <div class="scene-right-tools" id="scene-right-tools">
+                    <button id="btn-star-chest" class="scene-tool-btn star-chest-tool-btn" type="button" title="Tích Sao từ đơn hàng để mở Rương Sao">
+                        <img id="star-chest-icon" src="assets/images_webp/ui/icon_ruongdong.webp" class="scene-tool-icon" alt="Rương Sao">
+                    </button>
+                </div>
             </div>
         </section>
 
-        <!-- PHẦN DƯỚI: KHUNG BÀN CỜ 7x9 & 3 NÚT CHỨC NĂNG -->
+        <!-- PHẦN DƯỚI: KHUNG BÀN CỜ 7x9 & 4 NÚT CHỨC NĂNG GỌN GÀNG -->
         <section id="bottom-play-area">
             <main class="board-container">
                 <div class="board-frame-wrapper">
@@ -119,7 +120,7 @@
             </main>
 
             <footer id="game-footer">
-                <!-- NÚT BÁN VẬT PHẨM: ĐẶT GIỮA BÀN CHƠI, CÁCH HỆ 3 NÚT CỬA HÀNG/CẨM NANG/TRẠI 80PX -->
+                <!-- NÚT BÁN VẬT PHẨM: ĐẶT GIỮA BÀN CHƠI PHÍA TRÊN FOOTER -->
                 <button id="btn-sell" class="btn-3s btn-green board-sell-btn" type="button" style="display: none;" title="Bán vật phẩm đang chọn">
                     <span class="btn-3s-bg" aria-hidden="true">
                         <span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span>
@@ -127,17 +128,21 @@
                     <span class="btn-3s-text" id="sell-btn-text">Bán</span>
                 </button>
 
-                <button id="btn-camp" class="footer-img-btn btn-camp-ui size-44" type="button" title="Cửa Hàng">
-                    <span class="btn-3s-bg" aria-hidden="true"><span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span></span>
-                    <span class="footer-btn-label">CỬA HÀNG</span>
+                <button id="btn-camp" class="footer-img-btn btn-camp-ui" type="button" title="Cửa Hàng">
+                    <img src="assets/images_webp/ui/icon_shop.webp" class="footer-btn-icon" alt="Cửa hàng">
+                    <span class="footer-btn-label">Cửa hàng</span>
                 </button>
-                <button id="btn-book" class="footer-img-btn btn-book-ui size-44" type="button" title="Cẩm Nang Trò Chơi">
-                    <span class="btn-3s-bg" aria-hidden="true"><span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span></span>
-                    <span class="footer-btn-label">CẨM NANG</span>
+                <button id="btn-storage" class="footer-img-btn btn-storage-ui" type="button" title="Kho Lưu Trữ Tạm (4 ô): Kéo đồ vào hoặc bấm để cất/lấy đồ">
+                    <img src="assets/images_webp/ui/icon_box.webp" class="footer-btn-icon" alt="Kho đồ">
+                    <span class="footer-btn-label">Kho đồ <span id="storage-count-label">0/4</span></span>
                 </button>
-                <button id="btn-my-camp" class="footer-img-btn btn-mycamp-ui size-44" type="button" title="Trại của bạn">
-                    <span class="btn-3s-bg" aria-hidden="true"><span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span></span>
-                    <span class="footer-btn-label">Trại của bạn</span>
+                <button id="btn-book" class="footer-img-btn btn-book-ui" type="button" title="Cẩm Nang Trò Chơi">
+                    <img src="assets/images_webp/ui/icon_book.webp" class="footer-btn-icon" alt="Khám phá">
+                    <span class="footer-btn-label">Khám phá</span>
+                </button>
+                <button id="btn-my-camp" class="footer-img-btn btn-mycamp-ui" type="button" title="Xem trại">
+                    <img src="assets/images_webp/ui/icon_trai.webp" class="footer-btn-icon" alt="Xem trại">
+                    <span class="footer-btn-label">Xem trại</span>
                 </button>
             </footer>
         </section>
@@ -195,17 +200,17 @@
     <script src="js/libs/gsap.min.js"></script>
     <script src="js/libs/MotionPathPlugin.min.js"></script>
 
-    <script src="js/i18n.js?v=10.85"></script>
-    <script src="js/config.js?v=10.85"></script>
-    <script src="js/data.js?v=10.85"></script>
-    <script src="js/engine.js?v=10.85"></script>
-    <script src="js/progress.js?v=10.85"></script>
-    <script src="js/firebase-sync.js?v=10.85"></script>
-    <script src="js/mycamp_config.js?v=10.85"></script>
-    <script src="js/visual_fx.js?v=10.85"></script>
-    <script src="js/camp.js?v=10.85"></script>
-    <script src="js/components/board.js?v=10.85"></script>
-    <script src="js/test_tool.js?v=10.85"></script>
+    <script src="js/i18n.js?v=11.17"></script>
+    <script src="js/config.js?v=11.17"></script>
+    <script src="js/data.js?v=11.17"></script>
+    <script src="js/engine.js?v=11.17"></script>
+    <script src="js/progress.js?v=11.17"></script>
+    <script src="js/firebase-sync.js?v=11.17"></script>
+    <script src="js/mycamp_config.js?v=11.17"></script>
+    <script src="js/visual_fx.js?v=11.17"></script>
+    <script src="js/camp.js?v=11.17"></script>
+    <script src="js/components/board.js?v=11.17"></script>
+    <script src="js/test_tool.js?v=11.17"></script>
     <script>
         // Tải 4 đám mây nền sau cùng (sau khi toàn bộ ảnh nền, giao diện & script đã tải xong)
         window.addEventListener('load', function () {

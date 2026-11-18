@@ -95,8 +95,8 @@ body {
     --gap-bar: 8px;
     --order-card-sz: 44px;
     --board-pad: 12px;
-    --top-scene-min-h: 168px; /* Giảm 16px (184px - 16px) để nhường không gian cho bàn cờ và 3 nút */
-    --footer-h: 52px; /* 44px nút + 4px padding trên + 4px padding dưới */
+    --top-scene-min-h: 168px; /* Giảm 16px (184px - 16px) để nhường không gian cho bàn cờ và 4 nút */
+    --footer-h: 66px; /* 44px icon + 16px nhãn + padding gọn gàng */
 }
 
 * {
@@ -657,14 +657,16 @@ body {
     transform: none;
 }
 
-/* Hộp thoại gợi ý 3 mảnh (talk_bg_left, talk_bg_center, talk_bg_right), đặt chuẩn trên đầu các con vật */
+/* Hộp thoại gợi ý 3 mảnh (talk_bg_left, talk_bg_center, talk_bg_right), đặt cố định trên đầu thú cưng và dài tối đa 320px */
 .npc-speech-bubble {
     position: absolute;
-    bottom: calc(100% - 4px);
-    left: 22px;
+    bottom: 84px;
+    left: 12px;
     transform: none;
-    width: max-content;
-    max-width: min(320px, calc(100vw - 28px));
+    width: fit-content;
+    max-width: min(320px, calc(100vw - 24px));
+    min-width: 0;
+    box-sizing: border-box;
     background: transparent;
     border: none;
     padding: 0;
@@ -730,25 +732,28 @@ body {
 .npc-speech-text {
     position: relative;
     z-index: 1;
+    width: 100%;
+    max-width: 100%;
     font-family: 'Baloo 2', 'Nunito', -apple-system, sans-serif;
     font-size: 8pt !important;
     line-height: 10.5pt !important;
     font-weight: 800;
     color: #4a2c11;
     word-break: break-word;
+    overflow-wrap: anywhere;
     white-space: normal;
-    padding: 3px 8px 3px 14px;
+    padding: 4px 10px 4px 14px;
     text-align: center;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-height: calc(10.5pt * 3 + 6px);
+    max-height: calc(10.5pt * 3 + 8px);
 }
 
 .npc-speech-bubble.is-item-guide {
-    max-width: min(350px, calc(100vw - 24px));
+    max-width: min(320px, calc(100vw - 24px));
 }
 
 .npc-speech-bubble.is-item-guide .npc-speech-text {
@@ -1367,10 +1372,10 @@ body {
     pointer-events: none;
 }
 
-/* Nút Bán màu xanh đặt giữa bàn chơi (đã hạ xuống 40px và bỏ viền vuông bao quanh) */
+/* Nút Bán màu xanh đặt giữa bàn chơi phía trên footer */
 .board-sell-btn {
     position: absolute !important;
-    bottom: calc(100% + 36px) !important;
+    bottom: calc(100% + 4px) !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     z-index: 60 !important;
@@ -1406,6 +1411,547 @@ body {
 
 .cell-floating-sell-btn {
     display: none !important;
+}
+
+/* Cụm công cụ bên phải khu vực cảnh: Năng lượng X2 & Rương Sao */
+.scene-right-tools {
+    position: absolute;
+    right: 10px;
+    bottom: 9px;
+    z-index: 26;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: auto;
+}
+
+.scene-tool-btn {
+    position: relative;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.14s ease;
+}
+
+.scene-tool-btn:active {
+    transform: scale(0.92);
+}
+
+.scene-tool-icon {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+    transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.star-chest-tool-btn .scene-tool-icon {
+    width: 33px;
+    height: 33px;
+}
+
+.scene-tool-pill {
+    position: relative;
+    margin-top: -5px;
+    width: fit-content;
+    min-width: 0;
+    height: 20px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+}
+
+.scene-tool-pill .btn-3s-bg {
+    filter: none;
+}
+
+.scene-tool-pill .b3-left {
+    background-image: url('../assets/images_webp/ui/bt_none_left.webp');
+}
+
+.scene-tool-pill .b3-mid {
+    background-image: url('../assets/images_webp/ui/bt_none_center.webp');
+}
+
+.scene-tool-pill .b3-right {
+    background-image: url('../assets/images_webp/ui/bt_none_right.webp');
+}
+
+.scene-tool-pill-text {
+    position: relative;
+    z-index: 1;
+    padding: 0 5px;
+    color: #ffffff;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 20px;
+    letter-spacing: 0.2px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+    white-space: nowrap;
+}
+
+.scene-tool-btn.is-active .scene-tool-pill .b3-left,
+.scene-tool-btn.is-ready .scene-tool-pill .b3-left,
+.scene-tool-btn.is-opening .scene-tool-pill .b3-left {
+    background-image: url('../assets/images_webp/ui/bt03_left.webp');
+}
+
+.scene-tool-btn.is-active .scene-tool-pill .b3-mid,
+.scene-tool-btn.is-ready .scene-tool-pill .b3-mid,
+.scene-tool-btn.is-opening .scene-tool-pill .b3-mid {
+    background-image: url('../assets/images_webp/ui/bt03_center.webp');
+}
+
+.scene-tool-btn.is-active .scene-tool-pill .b3-right,
+.scene-tool-btn.is-ready .scene-tool-pill .b3-right,
+.scene-tool-btn.is-opening .scene-tool-pill .b3-right {
+    background-image: url('../assets/images_webp/ui/bt03_right.webp');
+}
+
+.scene-tool-btn.is-active .scene-tool-pill-text,
+.scene-tool-btn.is-ready .scene-tool-pill-text,
+.scene-tool-btn.is-opening .scene-tool-pill-text {
+    color: #fffde7;
+}
+
+.scene-tool-btn.is-active .scene-tool-icon {
+    filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.9)) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+    transform: scale(1.06);
+}
+
+.star-chest-tool-btn.is-ready .scene-tool-icon {
+    animation: starChestReadyWobble 1.1s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(255, 213, 79, 0.95)) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+}
+
+@keyframes starChestReadyWobble {
+    0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+    25% { transform: translateY(-3px) scale(1.06) rotate(-4deg); }
+    50% { transform: translateY(0) scale(1.02) rotate(4deg); }
+    75% { transform: translateY(-2px) scale(1.05) rotate(-2deg); }
+}
+
+/* Màn hình mở Rương Sao căn giữa màn hình: nền mờ tối, chữ Star Reward!, thẻ mờ chứa 3 quà + rương 4 frame + nổ hạt */
+.star-chest-opening-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 170000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.star-chest-opening-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 16, 14, 0.56);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.star-chest-opening-stage {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+}
+
+.star-chest-title-img {
+    width: min(280px, 82vw);
+    height: auto;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+    filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.5));
+    animation: starChestTitlePop 0.45s cubic-bezier(0.22, 1.35, 0.36, 1) forwards;
+}
+
+@keyframes starChestTitlePop {
+    0% { transform: scale(0.75); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.star-chest-progress-line {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 19px;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+.star-chest-progress-line img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+.star-chest-card {
+    width: 100%;
+    background: rgba(18, 22, 20, 0.44);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    padding: 20px 14px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+}
+
+.star-chest-rewards-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 36px;
+    opacity: 0;
+    transform: translateY(18px) scale(0.75);
+    pointer-events: none;
+    transition: opacity 0.28s ease, transform 0.38s cubic-bezier(0.22, 1.35, 0.36, 1);
+}
+
+.star-chest-rewards-row.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.star-chest-rw-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    transform: translateY(26px) scale(0.45);
+    transition: opacity 0.25s ease, transform 0.38s cubic-bezier(0.22, 1.4, 0.36, 1);
+}
+
+.star-chest-rw-inline.is-revealed {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.star-chest-rw-inline .rw-plus {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+}
+
+.star-chest-rw-inline img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
+}
+
+.star-chest-hero-wrap {
+    position: relative;
+    width: 168px;
+    height: 158px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2px 0;
+}
+
+.star-chest-glow-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 210px;
+    height: 210px;
+    transform: translate(-50%, -50%) scale(0.8);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 224, 130, 0.48) 0%, rgba(255, 193, 7, 0.16) 46%, rgba(255, 193, 7, 0) 72%);
+    pointer-events: none;
+    opacity: 0.65;
+    transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+.star-chest-glow-ring.is-burst {
+    transform: translate(-50%, -50%) scale(1.18);
+    opacity: 1;
+}
+
+.star-chest-fx-canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 320px;
+    height: 320px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.star-chest-shockwave {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 72px;
+    height: 72px;
+    transform: translate(-50%, -50%) scale(0.3);
+    border-radius: 50%;
+    border: 3px solid rgba(255, 235, 130, 0.9);
+    box-shadow: 0 0 16px rgba(255, 213, 79, 0.85);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.star-chest-shockwave.is-active {
+    animation: starChestShockwaveAnim 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes starChestShockwaveAnim {
+    0% {
+        opacity: 0.95;
+        transform: translate(-50%, -50%) scale(0.35);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2.65);
+    }
+}
+
+.star-chest-hero-img {
+    position: relative;
+    z-index: 3;
+    width: 142px;
+    height: 142px;
+    object-fit: contain;
+    transform-origin: center bottom;
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.52));
+}
+
+.star-chest-hero-img.is-bouncing {
+    animation: starChestHeroInvite 0.95s ease-in-out infinite;
+    cursor: pointer;
+}
+
+.star-chest-hero-img.is-step-pop {
+    animation: starChestStepPop 0.32s cubic-bezier(0.22, 1.35, 0.36, 1) forwards;
+}
+
+.star-chest-hero-img.is-opened {
+    animation:
+        starChestHeroPopOpen 0.42s cubic-bezier(0.22, 1.35, 0.36, 1) 1,
+        starChestHeroOpenedGentle 1.9s ease-in-out 0.42s infinite;
+    filter: drop-shadow(0 0 18px rgba(255, 224, 130, 0.8)) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5));
+    cursor: pointer;
+}
+
+@keyframes starChestHeroInvite {
+    0%, 100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+    18% { transform: translateY(-7px) scale(0.97, 1.05) rotate(-4deg); }
+    36% { transform: translateY(0) scale(1.05, 0.94) rotate(4deg); }
+    54% { transform: translateY(-5px) scale(0.98, 1.03) rotate(-3deg); }
+    72% { transform: translateY(0) scale(1.03, 0.96) rotate(2deg); }
+}
+
+@keyframes starChestHeroOpenedGentle {
+    0%, 100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+    25% { transform: translateY(-3px) scale(0.985, 1.02) rotate(-1.8deg); }
+    50% { transform: translateY(0) scale(1.02, 0.98) rotate(1.8deg); }
+    75% { transform: translateY(-2px) scale(0.99, 1.015) rotate(-1.2deg); }
+}
+
+@keyframes starChestStepPop {
+    0% { transform: scale(0.9, 1.08); }
+    45% { transform: scale(1.1, 0.94); }
+    100% { transform: scale(1, 1); }
+}
+
+@keyframes starChestHeroPopOpen {
+    0% { transform: scale(0.88, 1.12); }
+    45% { transform: scale(1.14, 0.93); }
+    100% { transform: scale(1, 1); }
+}
+
+.star-chest-next-line {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 4px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: #f5f5f5;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.star-chest-next-line img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+.star-chest-tap-hint {
+    margin-top: 2px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.star-chest-tap-hint.is-visible {
+    opacity: 1;
+    animation: starChestHintPulse 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes starChestHintPulse {
+    0% { opacity: 0.6; transform: scale(0.98); }
+    100% { opacity: 1; transform: scale(1.03); }
+}
+
+/* Bong bóng vật phẩm trên bàn cờ: hiệu ứng bay lơ lửng nhẹ, vật phẩm bên trong bồng bềnh lệch pha tự nhiên */
+.cell.has-bubble .item-img,
+.bubble-modal-inner-item {
+    transform-origin: center center;
+    will-change: transform;
+    animation: bubbleInnerItemFloat 3.0s ease-in-out -0.45s infinite;
+}
+
+.bubble-overlay,
+.bubble-modal-outer-shell {
+    position: absolute;
+    inset: 2px;
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 6;
+    transform-origin: center center;
+    will-change: transform;
+    animation: bubbleShellFloat 3.0s ease-in-out infinite;
+    filter: drop-shadow(0 4px 7px rgba(79, 195, 247, 0.52));
+}
+
+.bubble-timer {
+    display: none !important;
+}
+
+@keyframes bubbleShellFloat {
+    0%, 100% {
+        transform: translate3d(0, 2.5px, 0) scale(0.96, 0.93);
+    }
+    25% {
+        transform: translate3d(1px, -0.5px, 0) scale(0.94, 0.97);
+    }
+    50% {
+        transform: translate3d(0, -3.5px, 0) scale(0.97, 0.95);
+    }
+    75% {
+        transform: translate3d(-1px, -0.5px, 0) scale(0.95, 0.97);
+    }
+}
+
+@keyframes bubbleInnerItemFloat {
+    0%, 100% {
+        transform: translate3d(0, 2.5px, 0) scale(0.73) rotate(-3.5deg);
+    }
+    50% {
+        transform: translate3d(0, -3.5px, 0) scale(0.76) rotate(3.5deg);
+    }
+}
+
+.cell.drag-match-highlight {
+    box-shadow: inset 0 0 0 2.5px #ffd54f, 0 0 10px rgba(255, 213, 79, 0.85);
+}
+
+.cell.merge-tier-flash .item-img {
+    animation: mergeTierFlashAnim 0.42s ease-out;
+}
+
+@keyframes mergeTierFlashAnim {
+    0% { filter: brightness(1.55) drop-shadow(0 0 14px rgba(255, 235, 59, 0.95)); }
+    100% { filter: brightness(1) drop-shadow(0 0 0 rgba(255, 235, 59, 0)); }
+}
+
+.storage-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.storage-slot-card {
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 2px dashed rgba(255, 255, 255, 0.35);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    padding: 6px;
+}
+
+.storage-slot-card.filled {
+    background: rgba(255, 255, 255, 0.22);
+    border-style: solid;
+    border-color: #ffe082;
+}
+
+.storage-slot-card img {
+    width: 78%;
+    height: 78%;
+    object-fit: contain;
+}
+
+.boost-pill-btn.is-active {
+    background: linear-gradient(180deg, #ffb300 0%, #ef6c00 100%);
+    border-color: #fff8e1;
+    box-shadow: 0 0 12px rgba(255, 167, 38, 0.85), 0 3px 8px rgba(0, 0, 0, 0.35);
+    color: #fffde7;
+}
+
+.star-chest-pill-btn {
+    right: 12px;
+    background: linear-gradient(180deg, #4a3f6b 0%, #2f264a 100%);
+}
+
+.star-chest-pill-btn.is-ready {
+    background: linear-gradient(180deg, #43a047 0%, #2e7d32 100%);
+    border-color: #ffe082;
+    box-shadow: 0 0 14px rgba(255, 213, 79, 0.9), 0 3px 8px rgba(0, 0, 0, 0.35);
+    animation: bounceSellBtn 0.9s infinite alternate ease-in-out;
 }
 
 @keyframes bounceSellBtn {
@@ -1524,7 +2070,7 @@ body {
     animation: rockTapShake 0.25s ease-in-out;
 }
 
-/* ================== FOOTER 3 NÚT HÌNH ẢNH (LUÔN RỘNG BẰNG BÀN CHƠI Ở CẢ 2 KHOẢNG <=600PX VÀ >600PX) ================== */
+/* ================== FOOTER 4 NÚT ICON + NHÃN GỌN GÀNG (LUÔN RỘNG BẰNG BÀN CHƠI) ================== */
 #game-footer {
     position: relative;
     flex: 0 0 auto;
@@ -1540,16 +2086,48 @@ body {
     box-sizing: border-box;
     background-color: transparent;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: center;
-    gap: var(--sp-3);
+    gap: var(--sp-2);
     z-index: 30;
 }
 
 .footer-img-btn {
+    position: relative;
     width: 100%;
     min-width: 0;
-    height: 44px;
+    height: auto;
+    min-height: 56px;
+    border: none;
+    background: transparent;
+    padding: 2px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.14s ease, filter 0.18s ease;
+}
+
+.footer-img-btn:active {
+    transform: scale(0.92);
+}
+
+.footer-img-btn.drag-over {
+    transform: scale(1.12);
+    filter: drop-shadow(0 0 12px rgba(255, 213, 79, 0.95));
+}
+
+.footer-btn-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
 }
 
 .footer-btn-label {
@@ -1558,15 +2136,14 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 3px;
     width: 100%;
-    height: 100%;
     font-family: 'Baloo 2', 'Nunito', sans-serif;
     color: #ffffff;
     font-weight: 800;
-    font-size: var(--fs-md);
-    line-height: var(--lh-md);
-    text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.45), 0 0 4px rgba(0, 0, 0, 0.25);
+    font-size: 12px;
+    line-height: 1.15;
+    text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.75), 0 0 6px rgba(0, 0, 0, 0.4);
     white-space: nowrap !important;
     user-select: none;
     pointer-events: none;
@@ -2141,7 +2718,6 @@ body {
    Hỗ trợ 4 màu (Green, Blue, Orange-Red, Gray) và 5 kích thước chuẩn 4/8pt (24, 28, 32, 44, 48px). */
 .btn-3s,
 .modal-btn,
-.footer-img-btn,
 .pet-action-btn,
 .loc-action-btn,
 .st-act-btn {
@@ -2164,7 +2740,6 @@ body {
 
 .btn-3s:active,
 .modal-btn:active,
-.footer-img-btn:active,
 .pet-action-btn:active,
 .loc-action-btn:active,
 .st-act-btn:active {
@@ -2183,7 +2758,6 @@ body {
 
 .btn-3s:active .btn-3s-bg,
 .modal-btn:active .btn-3s-bg,
-.footer-img-btn:active .btn-3s-bg,
 .pet-action-btn:active .btn-3s-bg,
 .loc-action-btn:active .btn-3s-bg,
 .st-act-btn:active .btn-3s-bg {
@@ -2334,7 +2908,6 @@ body {
 /* Size 44px: Chuẩn Touch Target di động, Footer & Modals */
 .size-44,
 .modal-btn,
-.footer-img-btn,
 .st-act-btn {
     height: 44px;
     min-width: 96px;
@@ -5573,17 +6146,17 @@ button.hint-pulse {
         pointer-events: auto;
         width: 100%;
         max-width: 100%;
-        height: 44px;
-        min-height: 44px;
-        margin: 10px 0 0 0;
+        height: 64px;
+        min-height: 64px;
+        margin: 8px 0 0 0;
         padding: 0;
-        flex: 0 0 44px !important;
+        flex: 0 0 64px !important;
         flex-grow: 0 !important;
         flex-shrink: 0 !important;
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         align-items: center;
-        gap: var(--sp-3);
+        gap: var(--sp-2);
     }
 
     /* Chú chó và 3 order luôn bám sát mép trên bên trái của bàn chơi 7x9 */

@@ -24,18 +24,21 @@ function getTotalStars() {
 }
 
 function getEnergyRegenSec() {
-    var baseSec = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.regenIntervalSec : ENERGY_REGEN_SEC;
-    return getTotalStars() >= 60 ? Math.max(15, baseSec - 2) : baseSec;
+    return (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.regenIntervalSec : ENERGY_REGEN_SEC;
 }
 
+// Năng lượng tối đa tăng theo Cấp người chơi (playerLevel), không còn phụ thuộc hệ thống Sao màn chơi cũ
 function getMaxEnergy() {
-    var passed = (typeof SAVE !== 'undefined' && SAVE && SAVE.stars) ? Object.keys(SAVE.stars).length : 0;
+    var pLv = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number') ? SAVE.playerLevel : 1;
     var base = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyBase : MAX_ENERGY_BASE;
     var perLv = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyPerLevel : MAX_ENERGY_PER_LEVEL;
     var cap = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy) ? GAME_CONFIG.energy.maxEnergyCap : MAX_ENERGY_CAP;
-    var totalStars = getTotalStars();
-    var starBonus = totalStars >= 30 ? 5 : 0;
-    return Math.min(cap, base + passed * perLv + starBonus);
+    return Math.min(cap, base + Math.max(0, pLv - 1) * perLv);
+}
+
+// Trần năng lượng tràn khi nhận thưởng (Ads, Rương, Lên cấp...) — cho phép vượt bình tự hồi
+function getEnergyOverflowCap() {
+    return (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energy && GAME_CONFIG.energy.overflowCap) ? GAME_CONFIG.energy.overflowCap : 999;
 }
 
 function todayKey() {
@@ -83,8 +86,11 @@ function defaultSave() {
         myCampUnequipped: {},
         myCampManualEquipped: {},
         claimedStarChests: [],
+        questStars: 0,
+        powerBoost: 1,
+        campStorage: [],
         starterPackBought: false,
-        ads: { day: todayKey(), energy: 0, gem: 0, coin: 0, mystery: 0, dailyGemClaimed: false },
+        ads: { day: todayKey(), energy: 0, gem: 0, coin: 0, mystery: 0, bubble: 0, rescue: 0, dailyGemClaimed: false },
         settings: {
             sound: true,
             bgm: false,
@@ -214,6 +220,9 @@ function loadSave() {
                 s.myCampManualEquipped = {};
             }
             if (!Array.isArray(s.claimedStarChests)) s.claimedStarChests = [];
+            if (typeof s.questStars !== 'number' || s.questStars < 0) s.questStars = 0;
+            if (s.powerBoost !== 2) s.powerBoost = 1;
+            if (!Array.isArray(s.campStorage)) s.campStorage = [];
             if (!s.campItemsMigrated) {
                 s.campItemsMigrated = true;
                 var hasOrdersTable = (typeof PROCEDURAL_LEVEL_ORDERS !== 'undefined' && PROCEDURAL_LEVEL_ORDERS);
@@ -443,11 +452,30 @@ var PET_CHARACTERS = [
     { id: 'character06', name: 'Xiêm', img: 'assets/images_webp/ui/character06.webp', price: 68000 }
 ];
 
-// ---------- HỒI NĂNG LƯỢNG THEO TƯƠNG TÁC (ACTIVE INTERACTION REGEN) ----------
-// Năng lượng chỉ hồi khi người chơi tương tác với game (30 giây / 1 Năng lượng, hoặc 28 giây khi đạt 60 Sao).
-// Nếu sau thời gian đó người chơi không tương tác hoặc rời game, bộ đếm dừng lại chờ tương tác tiếp theo.
+// ---------- HỒI NĂNG LƯỢNG TỰ ĐỘNG THEO THỜI GIAN THỰC (KỂ CẢ KHI TẮT GAME) ----------
+// Năng lượng tự hồi mỗi 30 giây / 1 Năng lượng (hoặc 28 giây khi đạt 60 Sao) dựa trên SAVE.lastEnergyTs.
 function calcIdleEnergyRegen(currentEnergy, maxEnergy) {
-    return { added: 0, secLeft: getEnergyRegenSec() };
+    var intervalSec = getEnergyRegenSec();
+    var maxE = (typeof maxEnergy === 'number') ? maxEnergy : getMaxEnergy();
+    var curE = (typeof currentEnergy === 'number') ? currentEnergy : 0;
+    var now = Date.now();
+    if (curE >= maxE || typeof SAVE === 'undefined' || !SAVE) {
+        if (typeof SAVE !== 'undefined' && SAVE) SAVE.lastEnergyTs = now;
+        return { added: 0, secLeft: intervalSec };
+    }
+    var lastTs = (typeof SAVE.lastEnergyTs === 'number' && SAVE.lastEnergyTs > 0) ? SAVE.lastEnergyTs : now;
+    var elapsedMs = Math.max(0, now - lastTs);
+    var intervalMs = intervalSec * 1000;
+    var rawAdded = Math.floor(elapsedMs / intervalMs);
+    var added = Math.min(maxE - curE, rawAdded);
+    if (added > 0) {
+        SAVE.lastEnergyTs = (curE + added >= maxE) ? now : (lastTs + added * intervalMs);
+    } else if (typeof SAVE.lastEnergyTs !== 'number' || SAVE.lastEnergyTs <= 0) {
+        SAVE.lastEnergyTs = now;
+    }
+    var remMs = Math.max(0, (SAVE.lastEnergyTs + intervalMs) - now);
+    var secLeft = Math.max(1, Math.ceil(remMs / 1000));
+    return { added: added, secLeft: secLeft };
 }
 
 // ---------- KINH TẾ ----------
@@ -462,36 +490,31 @@ function itemUnits(id) {
 // Người dùng có thể điều chỉnh mọi chỉ số trong js/config.js
 // ==========================================
 
-// Giá bán: Tính theo năng lượng để tạo ra (15 Vàng / 1 Năng lượng, thu hồi 12.5% giá trị năng lượng)
+// Giá bán: Đọc bảng itemSellByLevel từ config.js để không vượt quá giá mua năng lượng khi lên cấp cao
 function sellPrice(id) {
     if (!id || String(id).indexOf('_lv') === -1) return 0;
     var minLv = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellMinLevel === 'number')
         ? GAME_CONFIG.gameplay.sellMinLevel : 1;
-    var lv = parseInt(String(id).split('_lv')[1]) || 1;
+    var lv = parseInt(String(id).split('_lv')[1], 10) || 1;
     if (lv < minLv) return 0;
 
-    var mul = 5;
-    if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellMultiplier === 'number') {
-        mul = GAME_CONFIG.gameplay.sellMultiplier;
-    } else if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.energyShop && GAME_CONFIG.energyShop.coinPack) {
-        var cost = GAME_CONFIG.energyShop.coinPack.coinCost || 600;
-        var eng = GAME_CONFIG.energyShop.coinPack.energy || 30;
-        mul = Math.round((cost / eng) * 0.125);
-    }
-    var divisor = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.sellDivisor === 'number')
-        ? GAME_CONFIG.gameplay.sellDivisor : 1;
-    return Math.floor(itemUnits(id) * mul / divisor);
+    var sellTable = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.itemSellByLevel)
+        ? GAME_CONFIG.gameplay.itemSellByLevel
+        : { 1: 2, 2: 4, 3: 8, 4: 15, 5: 28, 6: 50, 7: 85, 8: 140, 9: 225, 10: 360, 11: 550, 12: 800 };
+    if (typeof sellTable[lv] === 'number') return sellTable[lv];
+    return Math.max(2, Math.floor(itemUnits(id) * 2));
 }
 
-// Thưởng Vàng khi nộp đơn hàng: tăng theo độ khó (cấp) của món hàng (12 Vàng / 1 Năng lượng, +10% khi đạt 90 Sao)
+// Thưởng Vàng khi nộp đơn hàng: tăng mượt theo công sức thực tế (tương ứng bảng itemGoldByLevel trong config.js)
 function orderReward(id) {
+    var lv = parseInt(String(id).split('_lv')[1], 10) || 1;
+    var goldTable = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.itemGoldByLevel)
+        ? GAME_CONFIG.gameplay.itemGoldByLevel
+        : { 1: 10, 2: 22, 3: 46, 4: 90, 5: 165, 6: 280, 7: 440, 8: 680, 9: 1020, 10: 1500, 11: 2150, 12: 3000 };
+    if (typeof goldTable[lv] === 'number') return goldTable[lv];
     var mul = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && typeof GAME_CONFIG.gameplay.orderRewardMultiplier === 'number')
         ? GAME_CONFIG.gameplay.orderRewardMultiplier : 12;
-    var base = mul * itemUnits(id);
-    if (getTotalStars() >= 90) {
-        return Math.round(base * 1.1);
-    }
-    return base;
+    return mul * itemUnits(id);
 }
 
 // Thưởng Điểm Kinh Nghiệm (EXP) khi nộp đơn hàng cho Thú Cưng
@@ -654,14 +677,14 @@ function recordHistoricalOrderedItem(itemId) {
 }
 window.recordHistoricalOrderedItem = recordHistoricalOrderedItem;
 
-// Thưởng Vàng khi tạo chuỗi Combo ghép liên tiếp
+// Thưởng Vàng khi tạo chuỗi Combo ghép liên tiếp (mặc định tắt vì đã có cơ chế sinh Xu trên bàn chơi)
 function getComboReward(comboCount) {
     var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.combo)
         ? GAME_CONFIG.gameplay.combo
-        : { enabled: true, baseCoins: 10, stepCoins: 15, maxCoins: 200 };
+        : { enabled: false, baseCoins: 0, stepCoins: 0, maxCoins: 0 };
     if (!cfg.enabled || comboCount < 2) return 0;
-    var coins = (cfg.baseCoins || 10) + (comboCount - 2) * (cfg.stepCoins || 15);
-    return Math.min(cfg.maxCoins || 200, coins);
+    var coins = (cfg.baseCoins || 0) + (comboCount - 2) * (cfg.stepCoins || 0);
+    return Math.min(cfg.maxCoins || 0, coins);
 }
 
 // Shop năng lượng (đọc từ GAME_CONFIG.energyShop)
@@ -682,13 +705,16 @@ var AD_REWARDS = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards) ?
 function resetAdsIfNewDay() {
     var key = todayKey();
     if (!SAVE.ads || SAVE.ads.day !== key) {
-        SAVE.ads = { day: key, energy: 0, gem: 0, coin: 0, mystery: 0, dailyGemClaimed: false };
+        SAVE.ads = { day: key, energy: 0, gem: 0, coin: 0, mystery: 0, bubble: 0, rescue: 0, dailyGemClaimed: false };
     }
 }
 
 function getAdsLeft(type) {
     resetAdsIfNewDay();
     var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards) ? GAME_CONFIG.adRewards[type] : AD_REWARDS[type];
+    if (!cfg && type === 'mystery' && typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.adRewards && GAME_CONFIG.adRewards.mysteryChest) {
+        cfg = GAME_CONFIG.adRewards.mysteryChest;
+    }
     return cfg ? Math.max(0, cfg.dailyLimit - (SAVE.ads[type] || 0)) : 0;
 }
 
@@ -698,12 +724,15 @@ function consumeAd(type) {
     saveGame();
 }
 
-// Thưởng mỗi lần ghép: đọc từ GAME_CONFIG.gameplay.mergeRewards (Kinh tế x10)
+// Thưởng mỗi lần ghép: chỉ thưởng ở mốc cấp rất cao (Lv.8+) và không thưởng cho item tiền tệ trên bàn
 function mergeReward(newId) {
+    if (!newId || String(newId).indexOf('board_coin_') === 0 || String(newId).indexOf('board_energy_') === 0) {
+        return { coins: 0, gems: 0 };
+    }
     var lv = parseInt(String(newId).split('_lv')[1]) || 2;
     var table = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.gameplay && GAME_CONFIG.gameplay.mergeRewards)
         ? GAME_CONFIG.gameplay.mergeRewards
-        : { 4: { coins: 20, gems: 0 }, 5: { coins: 50, gems: 0 }, 6: { coins: 120, gems: 0 }, 7: { coins: 250, gems: 1 }, 8: { coins: 600, gems: 2 } };
+        : { 8: { coins: 5, gems: 0 }, 9: { coins: 10, gems: 0 }, 10: { coins: 20, gems: 1 } };
     var r = table[lv] || { coins: 0, gems: 0 };
     return { coins: r.coins || 0, gems: r.gems || 0 };
 }
@@ -994,8 +1023,30 @@ function getItemCleanName(id) {
     return id;
 }
 
+function isBoardCurrencyItem(id) {
+    if (!id || typeof id !== 'string') return false;
+    return id.indexOf('board_coin_lv') === 0 || id.indexOf('board_energy_lv') === 0;
+}
+
+function getBoardCurrencyInfo(id) {
+    if (!isBoardCurrencyItem(id)) return null;
+    var lv = Math.max(1, Math.min(5, parseInt(id.split('_lv')[1], 10) || 1));
+    if (id.indexOf('board_coin_lv') === 0) {
+        var coinVals = [2, 5, 12, 30, 75];
+        return { type: 'coin', level: lv, value: coinVals[lv - 1] };
+    }
+    var energyVals = [2, 5, 12, 30, 75];
+    return { type: 'energy', level: lv, value: energyVals[lv - 1] };
+}
+
 function getItemImagePath(id) {
     if (!id) return '';
+    if (id.indexOf('board_coin_lv') === 0) {
+        return 'assets/images_webp/items/icon_coin_lv' + (parseInt(id.split('_lv')[1], 10) || 1) + '.webp';
+    }
+    if (id.indexOf('board_energy_lv') === 0) {
+        return 'assets/images_webp/items/icon_nangluong_lv' + (parseInt(id.split('_lv')[1], 10) || 1) + '.webp';
+    }
     return 'assets/images_webp/items/' + id + '.webp';
 }
 
@@ -1075,8 +1126,9 @@ function getBookReward(id) {
 function scanBoardForDiscoveries(board) {
     var newlyDiscovered = [];
     board.forEach(function (c) {
-        if (!c || !c.id || c.isLocked || c.isRock) return;
+        if (!c || !c.id || c.isLocked || c.isRock || c.isBubble) return;
         if (typeof GENERATORS !== 'undefined' && GENERATORS[c.id]) return;
+        if (isBoardCurrencyItem(c.id)) return;
         if (!SAVE.discovered[c.id]) {
             SAVE.discovered[c.id] = true;
             newlyDiscovered.push(c.id);
@@ -1096,92 +1148,4 @@ function countUnclaimedBookRewards() {
         if (!SAVE.claimedBook[id]) count++;
     });
     return count;
-}
-
-// ---------- KHU CẮM TRẠI (60 VẬT PHẨM TƯƠNG ỨNG 60 LEVEL & 3 CHẶNG) ----------
-var CAMP_DECORS = [
-    // Chặng 1: Level 1 - 20 (Khởi đầu hành trình & Dựng trại tiện nghi)
-    [1, 'ghe_lv4', 'Ghế Xếp Có Tay Vịn'],
-    [2, 'an_lv4', 'Tô Mì Sợi Nóng'],
-    [3, 'tham_lv4', 'Chăn Đệm Gấp Ấm Áp'],
-    [4, 'ban_lv4', 'Bàn Gỗ Cuộn Dã Ngoại'],
-    [5, 'an_lv3', 'Bánh Sandwich Kẹp'],
-    [6, 'tham_lv3', 'Thảm Thổ Cẩm Dã Ngoại'],
-    [7, 'ghe_lv5', 'Ghế Câu Cá Có Khay'],
-    [8, 'an_lv5', 'Đĩa Trái Cây Tươi'],
-    [9, 'tham_lv5', 'Túi Ngủ Dã Ngoại'],
-    [10, 'trai_lv5', 'Lều Vòm Cắm Trại 2 Người'],
-    [11, 'cafe_lv5', 'Gói Cà Phê Specialty'],
-    [12, 'congcu_lv5', 'Đèn Bảng LED Dã Ngoại'],
-    [13, 'bep_lv5', 'Đống Củi Trại Vòng Đá'],
-    [14, 'antoan_lv5', 'Quạt Tích Điện Dã Ngoại'],
-    [15, 'an_lv6', 'Tô Hoa Quả Thập Cẩm'],
-    [16, 'cafe_lv6', 'Cối Xay Cầm Tay Inox'],
-    [17, 'ban_lv6', 'Bàn Cắm Trại Đa Năng'],
-    [18, 'bep_lv6', 'Lửa Trại Rực Hồng'],
-    [19, 'ghe_lv6', 'Ghế Mặt Trăng Moon Chair'],
-    [20, 'trai_lv6', 'Lều Gia Đình Chống Gió'],
-
-    // Chặng 2: Level 21 - 40 (Cắm trại chuyên nghiệp & Nâng cao)
-    [21, 'tham_lv6', 'Võng Dù Giữa Rừng'],
-    [22, 'congcu_lv6', 'Đèn Bão Dã Ngoại Vintage'],
-    [23, 'bep_lv6', 'Lửa Trại Rực Hồng'],
-    [24, 'antoan_lv6', 'Tấm Pin Năng Lượng Mặt Trời'],
-    [25, 'trai_lv6', 'Lều Gia Đình Chống Gió'],
-    [26, 'an_lv7', 'Đĩa Bánh Quy Nướng'],
-    [27, 'an_lv6', 'Tô Hoa Quả Thập Cẩm'],
-    [28, 'cafe_lv7', 'Ấm Pha Moka Pot Ý'],
-    [29, 'antoan_lv6', 'Tấm Pin Năng Lượng Mặt Trời'],
-    [30, 'ban_lv7', 'Bàn Chiến Thuật IGT'],
-    [31, 'an_lv7', 'Đĩa Bánh Quy Nướng'],
-    [32, 'bep_lv7', 'Lò Nướng Than Hoa Tròn'],
-    [33, 'cafe_lv7', 'Ấm Pha Moka Pot Ý'],
-    [34, 'congcu_lv7', 'Đèn Cắm Trại Chân Cao Tripod'],
-    [35, 'ban_lv7', 'Bàn Chiến Thuật IGT'],
-    [36, 'tham_lv7', 'Sofa Hơi Dã Ngoại'],
-    [37, 'tham_lv6', 'Võng Dù Giữa Rừng'],
-    [38, 'ghe_lv7', 'Ghế Tựa Lưng Cao Có Gối'],
-    [39, 'congcu_lv7', 'Đèn Cắm Trại Chân Cao Tripod'],
-    [40, 'trai_lv7', 'Lều Kim Tự Tháp Glamping'],
-
-    // Chặng 3: Level 41 - 60 (Đẳng cấp Glamping sang trọng & Masterpieces)
-    [41, 'tham_lv7', 'Sofa Hơi Dã Ngoại'],
-    [42, 'antoan_lv7', 'Trạm Điện Di Động Mini'],
-    [43, 'ghe_lv7', 'Ghế Tựa Lưng Cao Có Gối'],
-    [44, 'an_lv8', 'Đại Tiệc BBQ Xiên Nướng'],
-    [45, 'trai_lv7', 'Lều Kim Tự Tháp Glamping'],
-    [46, 'cafe_lv8', 'Cốc Cà Phê Men Đỏ'],
-    [47, 'antoan_lv7', 'Trạm Điện Di Động Mini'],
-    [48, 'ban_lv8', 'Trạm Bếp Nấu Ăn Glamping'],
-    [49, 'an_lv8', 'Đại Tiệc BBQ Xiên Nướng'],
-    [50, 'bep_lv8', 'Bếp Nướng BBQ Chữ Nhật'],
-    [51, 'cafe_lv8', 'Cốc Cà Phê Men Đỏ'],
-    [52, 'congcu_lv8', 'Đèn Bão Cổ Điển Retro'],
-    [53, 'ban_lv8', 'Trạm Bếp Nấu Ăn Glamping'],
-    [54, 'tham_lv8', 'Đệm Hơi Đôi Cao Cấp'],
-    [55, 'bep_lv8', 'Bếp Nướng BBQ Chữ Nhật'],
-    [56, 'ghe_lv8', 'Ghế Đạo Diễn Cao Cấp'],
-    [57, 'congcu_lv8', 'Đèn Bão Cổ Điển Retro'],
-    [58, 'antoan_lv8', 'Trạm Điện Dã Ngoại Glamping'],
-    [59, 'tham_lv8', 'Đệm Hơi Đôi Cao Cấp'],
-    [60, 'trai_lv8', 'Biệt Thự Lều Glamping']
-];
-
-function getCampDecor(level) {
-    return CAMP_DECORS.find(function (d) { return d[0] === level; });
-}
-
-function isCampDecorUnlocked(d) {
-    if (!d) return false;
-    var lv = d[0];
-    if (SAVE && SAVE.settings && SAVE.settings.unlockAllLevels) return true;
-    if (SAVE && SAVE.stars && SAVE.stars[lv]) return true;
-    return false;
-}
-
-function countUnlockedDecors() {
-    if (SAVE && Array.isArray(SAVE.campItems) && SAVE.campItems.length > 0) {
-        return SAVE.campItems.length;
-    }
-    return CAMP_DECORS.filter(function (d) { return isCampDecorUnlocked(d); }).length;
 }

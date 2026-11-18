@@ -16,14 +16,14 @@ var I18N_DATA = {
         gem_title: { vi: 'Bấm để mở Cửa Hàng Kim Cương', en: 'Tap to open Diamond Shop' },
         settings_title: { vi: 'Cài đặt trò chơi & Lưu trữ', en: 'Game Settings & Sync' },
         npc_avatar_title: { vi: 'Chạm vào nhân vật để trò chuyện & xem gợi ý', en: 'Tap character to chat & see hints' },
-        btn_camp: { vi: 'CỬA HÀNG', en: 'SHOP' },
+        btn_camp: { vi: 'Cửa hàng', en: 'Shop' },
         btn_camp_title: { vi: 'Cửa Hàng', en: 'Shop' },
-        btn_book: { vi: 'CẨM NANG', en: 'HANDBOOK' },
+        btn_book: { vi: 'Khám phá', en: 'Discover' },
         btn_book_title: { vi: 'Cẩm Nang Trò Chơi', en: 'Camping Handbook' },
         btn_sell: { vi: 'BÁN', en: 'SELL' },
         btn_sell_title: { vi: 'Bán Vật Phẩm Lấy Vàng', en: 'Sell Item for Gold' },
-        btn_mycamp: { vi: 'Trại của bạn', en: 'Your Camp' },
-        btn_mycamp_title: { vi: 'Trại của bạn', en: 'Your Camp' },
+        btn_mycamp: { vi: 'Xem trại', en: 'View Camp' },
+        btn_mycamp_title: { vi: 'Xem trại', en: 'View Camp' },
         deliver_tag: { vi: 'NỘP', en: 'DELIVER' }
     },
 

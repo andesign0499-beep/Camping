@@ -62,6 +62,7 @@ var itemLevel = itemLv;
 function getItemMaxLevel(lineOrId) {
     if (!lineOrId) return 12;
     var line = lineOrId.indexOf('_') !== -1 ? itemLine(lineOrId) : lineOrId;
+    if (line === 'board_coin' || line === 'board_energy') return 5;
     if (typeof ITEM_CHAINS !== 'undefined' && Array.isArray(ITEM_CHAINS)) {
         for (var i = 0; i < ITEM_CHAINS.length; i++) {
             if (ITEM_CHAINS[i].line === line && Array.isArray(ITEM_CHAINS[i].names)) {
@@ -392,7 +393,7 @@ function computeLineDeficits(board, activeOrders, levelCfg, includeAllOrders) {
 
         if (board && Array.isArray(board)) {
             board.forEach(function (c) {
-                if (!c || !c.id || c.isRock || GENERATORS[c.id]) return;
+                if (!c || !c.id || c.isRock || c.isBubble || GENERATORS[c.id]) return;
                 var line = itemLine(c.id);
                 var lv = itemLv(c.id);
                 if (!c.isLocked) {
@@ -657,7 +658,7 @@ function getGeneratorDropExpectedValue(levelNum, genId) {
 // Thuật toán chia đều 100% tỷ lệ giữa 3 nhánh vật phẩm của mỗi thùng chứa (1/3 : 1/3 : 1/3)
 // thông qua cơ chế Túi Xáo Trộn Cân Bằng (Balanced Shuffle Bag: mỗi 6 lượt bấm ra đúng 2 món của mỗi nhánh),
 // kết hợp hỗ trợ bắt cặp thông minh (smartPairAssist) khi bàn cờ còn ít ô trống để tránh kẹt màn.
-function spawnItem(board, genId, activeOrders, levelCfg) {
+function spawnItem(board, genId, activeOrders, levelCfg, opts) {
     var empty = getEmptyIndexes(board);
     if (!empty.length) {
         lastSpawnResult = { target: -1, id: null, line: null, itemLv: 1, wasUnwanted: false };
@@ -692,7 +693,7 @@ function spawnItem(board, genId, activeOrders, levelCfg) {
     if (smartAssist && board && board.length) {
         var countsByLineLv = {};
         board.forEach(function (c) {
-            if (!c || !c.id || c.isRock || GENERATORS[c.id]) return;
+            if (!c || !c.id || c.isRock || c.isBubble || GENERATORS[c.id]) return;
             var ln = itemLine(c.id);
             var lv = itemLv(c.id);
             if (lv <= 2) {
@@ -726,11 +727,11 @@ function spawnItem(board, genId, activeOrders, levelCfg) {
             ordersToCheck = (SAVE.petOrderGroups[0] && Array.isArray(SAVE.petOrderGroups[0].orders)) ? SAVE.petOrderGroups[0].orders : [];
         }
 
-        // Đếm các vật phẩm khả dụng đang có sẵn trên bàn cờ (không bị khóa nhện, không phải đá, không phải máy phát)
+        // Đếm các vật phẩm khả dụng đang có sẵn trên bàn cờ (không bị khóa nhện, không phải đá, không nằm trong bong bóng, không phải máy phát)
         var availableBoardItems = {};
         if (board && board.length) {
             board.forEach(function (c) {
-                if (c && c.id && !c.isLocked && !c.isRock && !GENERATORS[c.id]) {
+                if (c && c.id && !c.isLocked && !c.isRock && !c.isBubble && !GENERATORS[c.id]) {
                     availableBoardItems[c.id] = (availableBoardItems[c.id] || 0) + 1;
                 }
             });
@@ -896,6 +897,10 @@ function spawnItem(board, genId, activeOrders, levelCfg) {
         }
     }
 
+    if (opts && opts.powerBoost === 2) {
+        dropLv = Math.min(MAX_ITEM_LV, dropLv + 1);
+    }
+
     var finalId = pickedLine + '_lv' + dropLv;
 
     var target = empty[Math.floor(rand() * empty.length)];
@@ -931,7 +936,7 @@ function doMove(board, fromIdx, toIdx) {
         board[fromIdx] = makeEmptyCell();
         return { type: 'move', index: toIdx, newId: null, brokeDirectWeb: false };
     }
-    if (to.id === from.id && !GENERATORS[from.id]) {
+    if (!from.isBubble && !to.isBubble && to.id === from.id && !GENERATORS[from.id]) {
         var nid = nextItemId(from.id);
         if (!nid) return none;
         var broke = !!to.isLocked;
@@ -963,7 +968,7 @@ function spreadWeb(board) {
     if (countWebs(board) === 0) return -1;
     var best = [], bestLv = 99;
     board.forEach((c, idx) => {
-        if (!c || !c.id || c.isLocked || c.isRock || GENERATORS[c.id]) return;
+        if (!c || !c.id || c.isLocked || c.isRock || c.isBubble || GENERATORS[c.id]) return;
         var lv = itemLv(c.id);
         if (lv < bestLv) { bestLv = lv; best = [idx]; }
         else if (lv === bestLv) best.push(idx);
@@ -987,7 +992,7 @@ function neededLevels(board, orders) {
         need[l] = Math.max(need[l] || 0, itemLv(id));
     });
     board.forEach(c => {
-        if (c && c.id && c.isLocked && !c.isRock) {
+        if (c && c.id && c.isLocked && !c.isRock && !c.isBubble) {
             var l = itemLine(c.id);
             need[l] = Math.max(need[l] || 0, itemLv(c.id));
         }
@@ -996,7 +1001,7 @@ function neededLevels(board, orders) {
 }
 
 function findOrderMatch(board, orderId) {
-    return board.findIndex(c => c && c.id === orderId && !c.isLocked && !c.isRock && !GENERATORS[c.id]);
+    return board.findIndex(c => c && c.id === orderId && !c.isLocked && !c.isRock && !c.isBubble && !GENERATORS[c.id]);
 }
 
 // Nước ghép tốt nhất: ưu tiên phá nhện trực tiếp > phá nhện liền kề > tiến tới đơn hàng > ghép dọn bàn
@@ -1005,7 +1010,7 @@ function findBestMerge(board, orders, level) {
     var need = neededLevels(board, orders);
     var byId = {};
     board.forEach((c, i) => {
-        if (!c || !c.id || c.isRock || GENERATORS[c.id]) return;
+        if (!c || !c.id || c.isRock || c.isBubble || GENERATORS[c.id]) return;
         if (itemLv(c.id) >= getItemMaxLevel(c.id)) return;
         (byId[c.id] = byId[c.id] || []).push(i);
     });
@@ -1410,7 +1415,7 @@ function getMaxDiscoveredLevelForLine(line) {
     }
     if (typeof boardData !== 'undefined' && Array.isArray(boardData)) {
         boardData.forEach(function (c) {
-            if (c && c.id && c.id.indexOf(line + '_lv') === 0 && !c.isRock) {
+            if (c && c.id && c.id.indexOf(line + '_lv') === 0 && !c.isRock && !c.isBubble) {
                 var lv = parseInt(c.id.split('_lv')[1], 10) || 0;
                 if (lv > maxLv) maxLv = lv;
             }
@@ -1717,7 +1722,7 @@ function scanBoardForDynamicOrders(board, reservedIds, activeGens) {
                 openCells++;
                 if (c.id) occupiedCells++;
             }
-            if (!c.id || GENERATORS[c.id]) continue;
+            if (!c.id || c.isBubble || GENERATORS[c.id]) continue;
 
             var ln = itemLine(c.id);
             var lv = itemLv(c.id);
@@ -1837,7 +1842,7 @@ function getBoardBranchStats(board, activeLines) {
     if (Array.isArray(b)) {
         for (var i = 0; i < b.length; i++) {
             var c = b[i];
-            if (!c || c.isRock || !c.id || GENERATORS[c.id]) continue;
+            if (!c || c.isRock || c.isBubble || !c.id || GENERATORS[c.id]) continue;
             var ln = itemLine(c.id);
             var lv = itemLv(c.id);
             if (lines.indexOf(ln) === -1) continue;
@@ -2556,7 +2561,7 @@ function pickBoardExcessSlot3Item(board, slot1Id, slot2Id, activeLines, activeGe
     if (Array.isArray(b)) {
         b.forEach(function (cell) {
             if (!cell || !cell.id) return;
-            if (cell.type === 'rock' || cell.isRock || cell.locked || cell.ice || cell.isGenerator) return;
+            if (cell.type === 'rock' || cell.isRock || cell.locked || cell.isLocked || cell.isBubble || cell.ice || cell.isGenerator || GENERATORS[cell.id]) return;
             var itId = cell.id;
             var ln = (typeof itemLine === 'function') ? itemLine(itId) : itId.split('_lv')[0];
             if (candidateLines.indexOf(ln) !== -1) {
@@ -3229,7 +3234,10 @@ function buildCleanupOrderGroupForOldGens(newGenId, cleanupStep, orderNum, petId
         chosenIds.push(s3);
     }
 
-    var cleanupDialogue = getPetOrderDialogue(chosenIds[0]);
+    var newGenLabel = (newGenId === 'generator_backpack') ? 'Ba Lô Dã Ngoại' : 'Thùng Bếp & Sinh Tồn';
+    var cleanupDialogue = (cleanupStep === 1)
+        ? ('Dọn gọn các món trên bàn trước khi khui ' + newGenLabel + ' mới toanh nhé!')
+        : ('Thêm 1 nhịp dọn bàn nữa thôi là mình mở ' + newGenLabel + ' ngay!');
 
     var orders = chosenIds.map(function (itemId, sIdx) {
         var slotName = (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy');
@@ -3279,7 +3287,9 @@ function buildNewGenIntroOrderGroup(newGenId, orderNum, petId, board, existingId
         recordItemInRecentOrdersHistory(it);
     });
 
-    var introDialogue = getPetOrderDialogue(introIds[0]);
+    var introDialogue = (newGenId === 'generator_backpack')
+        ? '🎒 Ba Lô mới mở rồi! Chạm lấy đồ ăn, cà phê và đèn sáng cho trại nhé!'
+        : '🧰 Thùng Bếp mới mở rồi! Chạm lấy củi lửa, chăn đệm và đồ sinh tồn nào!';
 
     var orders = introIds.map(function (itemId, sIdx) {
         var slotName = (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy');
@@ -3315,10 +3325,17 @@ function buildNewGenIntroOrderGroup(newGenId, orderNum, petId, board, existingId
     };
 }
 
-// Tạo lời thoại ngữ cảnh khớp 100% với vật phẩm trụ cột ở Slot 1 (ngắn gọn 1 câu <= 80 ký tự, không gắn cứng địa điểm)
-function getDynamicOrderContextDialogue(finalIds, orderNum, board) {
+// Tạo lời thoại ngữ cảnh khớp 100% với vật phẩm trụ cột ở Slot 1 & cá tính thú cưng đang chọn
+var REST_ORDER_DIALOGUES = [
+    'Đơn nghỉ chân nhẹ nhàng! Cùng thư giãn và dọn gọn góc trại nhé!',
+    'Gió rừng mát rượi! Giao vài món nhỏ để lấy sức cho thử thách lớn nào!',
+    'Nghỉ tay chút xíu! Hoàn thành đơn gọn nhẹ này để dọn trống bàn cờ nhé!',
+    'Trời chiều êm ả quá, mình chuẩn bị vài món đơn giản chill cùng nhau nào!'
+];
+
+function getDynamicOrderContextDialogue(finalIds, orderNum, board, petId) {
     var primaryId = (Array.isArray(finalIds) && finalIds[0]) ? finalIds[0] : 'ban_lv2';
-    return getPetOrderDialogue(primaryId);
+    return getPetOrderDialogue(primaryId, petId);
 }
 
 // Tạo nhóm đơn hàng Linh Động Toàn Phần ( cả 3 Slot đều linh động 100% ):
@@ -3353,8 +3370,8 @@ function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
     var finalIds = genResult.items;
     var isRest = !!genResult.isRestOrder;
     var contextDialogue = isRest
-        ? "Đơn hàng nghỉ chân! Cùng thư giãn và thu dọn một chút đồ đạc nhé!"
-        : getDynamicOrderContextDialogue(finalIds, orderNum, b);
+        ? REST_ORDER_DIALOGUES[orderNum % REST_ORDER_DIALOGUES.length]
+        : getDynamicOrderContextDialogue(finalIds, orderNum, b, pId);
 
     var orders = finalIds.map(function (itemId, sIdx) {
         var slotName = isRest
@@ -3434,7 +3451,7 @@ function generateStartingOrders(playerLevel) {
 }
 
 // Đảm bảo luôn có đúng 1 thú cưng đồng hành đặt đơn hàng trên màn hình (đơn giản, thay thế NPC khi mua mới)
-function ensurePetOrderGroups(playerLevel) {
+function ensurePetOrderGroups(playerLevel, customBoard) {
     if (typeof SAVE === 'undefined' || !SAVE) return [];
     if (!Array.isArray(SAVE.petOrderGroups)) SAVE.petOrderGroups = [];
 
@@ -3455,7 +3472,7 @@ function ensurePetOrderGroups(playerLevel) {
 
     var existingIds = [];
     var hist15 = Array.isArray(SAVE.recentOrdersHistory) ? SAVE.recentOrdersHistory.slice(-15) : [];
-    var b = (typeof boardData !== 'undefined' && boardData && boardData.length) ? boardData : null;
+    var b = (customBoard && customBoard.length) ? customBoard : ((typeof boardData !== 'undefined' && boardData && boardData.length) ? boardData : null);
     var activeGens = (typeof getActiveGeneratorsForOrders === 'function') ? getActiveGeneratorsForOrders(b) : ['generator_cooler'];
 
     // Số thứ tự đơn hàng hiện tại của người chơi (bắt đầu từ 1)
