@@ -657,14 +657,14 @@ body {
     transform: none;
 }
 
-/* Hộp thoại gợi ý 3 mảnh (talk_bg_left, talk_bg_center, talk_bg_right), đặt cố định trên đầu thú cưng và dài tối đa 320px */
+/* Hộp thoại gợi ý 3 mảnh (talk_bg_left, talk_bg_center, talk_bg_right), đặt cố định trên đầu thú cưng và dài tối đa 300px */
 .npc-speech-bubble {
     position: absolute;
     bottom: 84px;
-    left: 12px;
+    left: 40px;
     transform: none;
     width: fit-content;
-    max-width: min(320px, calc(100vw - 24px));
+    max-width: min(300px, calc(100vw - 52px));
     min-width: 0;
     box-sizing: border-box;
     background: transparent;
@@ -753,7 +753,7 @@ body {
 }
 
 .npc-speech-bubble.is-item-guide {
-    max-width: min(320px, calc(100vw - 24px));
+    max-width: min(300px, calc(100vw - 52px));
 }
 
 .npc-speech-bubble.is-item-guide .npc-speech-text {
@@ -6198,10 +6198,10 @@ button.hint-pulse {
 
     #scene-right-column .npc-speech-bubble {
         position: absolute;
-        left: 12px;
+        left: 40px;
         bottom: 100%;
         top: auto;
-        max-width: min(320px, var(--desktop-board-w));
+        max-width: min(300px, var(--desktop-board-w));
         pointer-events: auto;
     }
 

@@ -57,9 +57,9 @@ var GAME_CONFIG = {
         cols: 7,
         rows: 9,
         totalCells: 63,
-        layoutVersion: 8,
+        layoutVersion: 11,
 
-        // A. VỊ TRÍ MÁY PHÁT MỞ SẴN BAN ĐẦU (CHỈ DUY NHẤT XE KÉO CẮM TRẠI Ở Ô 24)
+        // A. VỊ TRÍ MÁY PHÁT MỞ SẴN BAN ĐẦU (CHỈ DUY NHẤT XE KÉO CẮM TRẠI Ở Ô 24 - HÀNG 3 CỘT 3)
         // Mở sẵn ngay đầu game, sinh nhánh: Bàn ('ban'), Ghế ('ghe'), Lều ('trai')
         generators: [
             { cell: 24, id: 'generator_cooler', name: 'Xe Kéo Cắm Trại (Mở sẵn ở ô 24)' }
@@ -77,51 +77,53 @@ var GAME_CONFIG = {
         },
         hiddenGenerators: [],
 
-        // C. CÁC Ô TRỐNG ITEM BAN ĐẦU (5 Ô TRỐNG Ở TÂM: 23, 25, 30, 31, 32)
+        // C. CÁC Ô TRỐNG ITEM BAN ĐẦU (5 Ô TRỐNG CÂN ĐỐI Ở TÂM: 23, 25, 30, 31, 32)
         freeItems: [],
 
-        // D. VÒNG MẠNG NHỆN BAO QUANH VÙNG TÂM (9 Ô NHỆN CẤP 1-2 THUỘC NHÁNH XE KÉO)
-        // (Các ô 22, 26, 33 là Ô Đá Khóa mở ở Level 3 theo sơ đồ thiết kế)
+        // D. VÒNG MẠNG NHỆN ĐỐI XỨNG BAO QUANH VÙNG TÂM (10 Ô NHỆN CẤP 1-2 THUỘC NHÁNH XE KÉO)
+        // Tạo thành khung bát giác cân đối ở giữa bàn 7x9 (Hàng 2: 16..18, Hàng 3-4: 22,26,29,33, Hàng 5: 37..39)
         webItems: [
             { cell: 16, id: 'trai_lv1', name: 'Cọc Cắm Trại dính nhện (Lv.1)' },
             { cell: 17, id: 'ban_lv1',  name: 'Bàn Xếp dính nhện (Lv.1)' },
             { cell: 18, id: 'ghe_lv1',  name: 'Ghế Xếp dính nhện (Lv.1)' },
-            { cell: 29, id: 'ban_lv1',  name: 'Bàn Xếp dính nhện (Lv.1)' },
-            { cell: 36, id: 'ghe_lv1',  name: 'Ghế Xếp dính nhện (Lv.1)' },
+            { cell: 22, id: 'ban_lv1',  name: 'Bàn Xếp dính nhện (Lv.1)' },
+            { cell: 26, id: 'ghe_lv1',  name: 'Ghế Xếp dính nhện (Lv.1)' },
+            { cell: 29, id: 'trai_lv1', name: 'Cọc Cắm Trại dính nhện (Lv.1)' },
+            { cell: 33, id: 'ban_lv1',  name: 'Bàn Xếp dính nhện (Lv.1)' },
             { cell: 37, id: 'ghe_lv2',  name: 'Ghế Xếp dính nhện (Lv.2)' },
             { cell: 38, id: 'trai_lv2', name: 'Cọc Cắm Trại dính nhện (Lv.2)' },
-            { cell: 39, id: 'ban_lv2',  name: 'Bàn Xếp dính nhện (Lv.2)' },
-            { cell: 40, id: 'trai_lv1', name: 'Cọc Cắm Trại dính nhện (Lv.1)' }
+            { cell: 39, id: 'ban_lv2',  name: 'Bàn Xếp dính nhện (Lv.2)' }
         ],
 
-        // E. DANH SÁCH 48 Ô ĐÁ KHỞI ĐẦU (BAO GỒM ĐÁ THƯỜNG VÀ ĐÁ KHÓA THEO LEVEL)
+        // E. DANH SÁCH 47 Ô ĐÁ KHỞI ĐẦU ĐỐI XỨNG TRÁI-PHẢI (BAO GỒM ĐÁ THƯỜNG VÀ ĐÁ KHÓA THEO LEVEL)
         rocks: [
             0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 10, 11, 12, 13,
             14, 15, 19, 20,
-            21, 22, 26, 27,
-            28, 33, 34,
-            35, 41,
+            21, 27,
+            28, 34,
+            35, 36, 40, 41,
             42, 43, 44, 45, 46, 47, 48,
             49, 50, 51, 52, 53, 54, 55,
             56, 57, 58, 59, 60, 61, 62
         ],
 
         // F. DANH SÁCH Ô ĐÁ CÓ BIỂU TƯỢNG KHÓA (board_cell_rock_lock.png) THEO LEVEL NGƯỜI CHƠI
-        // Mạng nhện nổ bên cạnh KHÔNG THỂ phá vỡ các ô đá này khi người chơi chưa đạt đủ Level yêu cầu!
+        // Đã đổi chỗ 4 cặp ô khóa ↔ ô đất theo đúng hướng mũi tên đỏ (8↔2, 19↔11, 50↔44, 54↔60)
         lockedRocks: {
-            // Mở khóa ở Level 3 (8 ô)
-            19: 3, 22: 3, 26: 3, 33: 3, 47: 3, 58: 3, 59: 3, 60: 3,
-            // Mở khóa ở Level 5 (3 ô cụm trái giữa)
-            14: 5, 21: 5, 28: 5,
-            // Mở khóa ở Level 7 (7 ô: 3 ô cụm phải giữa + 4 ô góc dưới trái)
-            20: 7, 27: 7, 34: 7, 42: 7, 49: 7, 56: 7, 57: 7,
-            // Mở khóa ở Level 11 (4 ô góc dưới phải)
-            54: 11, 55: 11, 61: 11, 62: 11,
-            // Mở khóa ở Level 15 (5 ô góc trên trái)
-            0: 15, 1: 15, 7: 15, 8: 15, 9: 15,
-            // Mở khóa ở Level 18 (5 ô góc trên phải)
-            5: 18, 6: 18, 11: 18, 12: 18, 13: 18
+            // Mở khóa ở Level 3
+            15: 3, 11: 3, 36: 3, 40: 3,
+            // Mở khóa ở Level 5 (4 ô viền trái giữa)
+            14: 5, 21: 5, 28: 5, 35: 5,
+            // Mở khóa ở Level 7 (6 ô viền phải giữa & 2 ô đệm dưới)
+            20: 7, 27: 7, 34: 7, 41: 7, 43: 7, 47: 7,
+            // Mở khóa ở Level 11 (góc dưới trái & phải, đã đổi 50↔44 và 54↔60)
+            42: 11, 44: 11, 49: 11, 56: 11, 57: 11,
+            48: 11, 55: 11, 60: 11, 61: 11, 62: 11,
+            // Mở khóa ở Level 15 (góc trên trái, đã đổi 8↔2)
+            0: 15, 1: 15, 2: 15, 7: 15,
+            // Mở khóa ở Level 18 (góc trên phải)
+            5: 18, 6: 18, 12: 18, 13: 18
         }
     },
 
@@ -387,7 +389,7 @@ var GAME_CONFIG = {
             presetName: 'bright_kalimba',
             masterVolume: 1.15,
             bgmVolume: 0.14,
-            preferredBgmIndex: 5,        // Mặc định chọn bài số 5: Pha Lê Rừng Thông (Marimba & Bell Chime) lặp liền mạch
+            preferredBgmIndex: 0,        // Mặc định chọn bài đang có trong assets/music/ (Ukulele_Suoi_Nang.wav) lặp liền mạch
             pitchSemitoneOffset: 0,      // Cho phép nâng/hạ cao độ toàn bộ game (-12 đến +24 bán cung)
             brightnessHighShelfDb: 5.5,  // Độ sáng Treble vừa vặn giúp tiếng Kalimba trong trẻo mà không bị chói gắt
             sparkleBellMix: 0.30,        // Độ ngân phím đàn Kalimba mộc sáng

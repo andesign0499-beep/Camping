@@ -409,12 +409,7 @@ var playFluteNote = playKalimbaPluck;
 // Không bao giờ bị ngắt quãng giữa các vòng lặp hoặc khi chuyển bài
 // ==========================================
 var BGM_PLAYLIST = [
-    'assets/music/' + encodeURIComponent('Khu_Trại_Rạng_Rỡ.mp3'),
-    'assets/music/Goc_Nho_Nang_Mai.wav',
-    'assets/music/Mua_Vang_Tren_Khu_Trai.wav',
-    'assets/music/Ukulele_Suoi_Nang.wav',
-    'assets/music/Hop_Nhac_Sao_Dem.wav',
-    'assets/music/Pha_Le_Rung_Thong.wav'
+    'assets/music/Ukulele_Suoi_Nang.wav'
 ];
 var bgmAudioElement = null;
 var currentBgmIndex = -1;
@@ -5529,11 +5524,11 @@ function initGame() {
     function onFirstUserGesture() {
         initAudio();
         updateBgmPlayback();
-        document.removeEventListener('pointerdown', onFirstUserGesture);
-        document.removeEventListener('keydown', onFirstUserGesture);
+        document.removeEventListener('pointerdown', onFirstUserGesture, true);
+        document.removeEventListener('keydown', onFirstUserGesture, true);
     }
-    document.addEventListener('pointerdown', onFirstUserGesture);
-    document.addEventListener('keydown', onFirstUserGesture);
+    document.addEventListener('pointerdown', onFirstUserGesture, true);
+    document.addEventListener('keydown', onFirstUserGesture, true);
 
     // Tự động lưu nguyên trạng bàn cờ đang chơi khi thoát hoặc đổi tab
     window.addEventListener('beforeunload', persistCurrentBoardState);

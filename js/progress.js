@@ -93,7 +93,7 @@ function defaultSave() {
         ads: { day: todayKey(), energy: 0, gem: 0, coin: 0, mystery: 0, bubble: 0, rescue: 0, dailyGemClaimed: false },
         settings: {
             sound: true,
-            bgm: false,
+            bgm: true,
             vibrate: true,
             unlockAllLevels: false,
             showTestTool: false,
