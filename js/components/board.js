@@ -1341,22 +1341,62 @@ var tutNewGenTapped = false;
 var PET_ANIMATION_CONFIGS = {
     'character01': {
         idle: {
-            sheet: 'assets/images_webp/npc_sheets/goden_idle_sheet.webp',
-            frames: 20, frameW: 145, frameH: 229, cols: 5, rows: 4, fps: 12
+            sheet: 'assets/images_webp/npc_sheets/golden_anim1.webp',
+            frames: 20, frameW: 145, frameH: 229, cols: 5, rows: 4, fps: 8
         },
         action: {
-            sheet: 'assets/images_webp/npc_sheets/goden_sit_sheet.webp',
-            frames: 20, frameW: 200, frameH: 205, cols: 5, rows: 4, fps: 12
+            sheet: 'assets/images_webp/npc_sheets/golden_anim2.webp',
+            frames: 20, frameW: 200, frameH: 205, cols: 5, rows: 4, fps: 8
+        }
+    },
+    'character04': {
+        idle: {
+            sheet: 'assets/images_webp/npc_sheets/poodle_anim1.webp',
+            frames: 24, frameW: 140, frameH: 200, cols: 5, rows: 5, fps: 8
+        },
+        action: {
+            sheet: 'assets/images_webp/npc_sheets/poodle_anim2.webp',
+            frames: 25, frameW: 140, frameH: 200, cols: 5, rows: 5, fps: 8
+        }
+    },
+    'character03': {
+        idle: {
+            sheet: 'assets/images_webp/npc_sheets/bulldog_anim1.webp',
+            frames: 24, frameW: 174, frameH: 205, cols: 5, rows: 5, fps: 8
+        },
+        action: {
+            sheet: 'assets/images_webp/npc_sheets/bulldog_anim2.webp',
+            frames: 25, frameW: 174, frameH: 205, cols: 5, rows: 5, fps: 8
+        }
+    },
+    'character10': {
+        idle: {
+            sheet: 'assets/images_webp/npc_sheets/batu_anim1.webp',
+            frames: 24, frameW: 200, frameH: 209, cols: 5, rows: 5, fps: 8
+        },
+        action: {
+            sheet: 'assets/images_webp/npc_sheets/batu_anim2.webp',
+            frames: 25, frameW: 200, frameH: 209, cols: 5, rows: 5, fps: 8
         }
     },
     'character07': {
         idle: {
-            sheet: 'assets/images_webp/npc_sheets/meoanh_idle_sheet.webp',
-            frames: 15, frameW: 180, frameH: 214, cols: 5, rows: 3, fps: 12
+            sheet: 'assets/images_webp/npc_sheets/meoanh_anim1.webp',
+            frames: 24, frameW: 165, frameH: 189, cols: 5, rows: 5, fps: 8
         },
         action: {
-            sheet: 'assets/images_webp/npc_sheets/meoanh_hello_sheet.webp',
-            frames: 20, frameW: 180, frameH: 214, cols: 5, rows: 4, fps: 12
+            sheet: 'assets/images_webp/npc_sheets/meoanh_anim2.webp',
+            frames: 25, frameW: 165, frameH: 189, cols: 5, rows: 5, fps: 8
+        }
+    },
+    'character06': {
+        idle: {
+            sheet: 'assets/images_webp/npc_sheets/meoxiem_anim1.webp',
+            frames: 24, frameW: 143, frameH: 220, cols: 5, rows: 5, fps: 8
+        },
+        action: {
+            sheet: 'assets/images_webp/npc_sheets/meoxiem_anim2.webp',
+            frames: 25, frameW: 143, frameH: 220, cols: 5, rows: 5, fps: 8
         }
     }
 };
@@ -1588,6 +1628,16 @@ var PET_DIALOGUES = {
             'Meo meo! Ấm áp quá rồi, cảm ơn bạn tốt bụng!',
             'Purr... Giờ bé có thể ngủ một giấc thật ngon cùng {item} rồi!'
         ]
+    },
+    'character10': {
+        idle: {
+            sheet: 'assets/images_webp/npc_sheets/batu_anim1.webp',
+            frames: 24, frameW: 200, frameH: 209, cols: 5, rows: 5, fps: 8
+        },
+        action: {
+            sheet: 'assets/images_webp/npc_sheets/batu_anim2.webp',
+            frames: 25, frameW: 200, frameH: 209, cols: 5, rows: 5, fps: 8
+        }
     },
     'character07': {
         name: 'Mèo Anh',
@@ -4797,7 +4847,17 @@ function openGemShop() {
                 showToast('Nhận +' + amt + ' Kim cương tài trợ!');
             });
         },
-        onClaimTestGem: null
+        onClaimTestGem: function () {
+            playerGems += 500;
+            SAVE.gems = playerGems;
+            updateUIStats();
+            saveGame();
+            playSound('win');
+            var targetEl = document.getElementById('btn-gem-shop') || document.body;
+            spawnFlyingCurrency(targetEl, 'ruby', 500);
+            showToast('Đã nhận +500 Kim Cương Test!');
+            openGemShop();
+        }
     });
 }
 

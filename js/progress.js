@@ -160,8 +160,16 @@ function loadSave() {
             if (!s.discovered || typeof s.discovered !== 'object') s.discovered = {};
             if (!s.claimedBook || typeof s.claimedBook !== 'object') s.claimedBook = {};
             if (!s.ads || typeof s.ads !== 'object') s.ads = defaultSave().ads;
-            if (!Array.isArray(s.ownedPets) || !s.ownedPets.length) s.ownedPets = ['character01'];
-            if (!s.activePet) s.activePet = 'character01';
+            var validPetIds = (typeof PET_CHARACTERS !== 'undefined' && Array.isArray(PET_CHARACTERS))
+                ? PET_CHARACTERS.map(function (p) { return p.id; })
+                : ['character01', 'character04', 'character03', 'character10', 'character07', 'character06'];
+            if (!Array.isArray(s.ownedPets) || !s.ownedPets.length) {
+                s.ownedPets = ['character01'];
+            } else {
+                s.ownedPets = s.ownedPets.filter(function (id) { return validPetIds.indexOf(id) !== -1; });
+                if (s.ownedPets.indexOf('character01') === -1) s.ownedPets.unshift('character01');
+            }
+            if (!s.activePet || validPetIds.indexOf(s.activePet) === -1) s.activePet = 'character01';
             if (typeof s.lastPetRewardTime !== 'number') s.lastPetRewardTime = 0;
             if (!Array.isArray(s.recentOrdersHistory)) s.recentOrdersHistory = [];
             if (!Array.isArray(s.recentBranchHistory)) s.recentBranchHistory = [];
@@ -437,17 +445,13 @@ function importSyncCode(codeStr) {
     return false;
 }
 
-// ---------- DANH SÁCH THÚ CƯNG ĐỒNG HÀNH (PETS) ----------
+// ---------- DANH SÁCH THÚ CƯNG ĐỒNG HÀNH (PETS - HIỂN THỊ 6 NPC CÓ ĐỦ 3 ANIMATION) ----------
 var PET_PRICE = 2500;
 var PET_CHARACTERS = [
     { id: 'character01', name: 'Golden', img: 'assets/images_webp/ui/character01.webp', price: 0 },
-    { id: 'character05', name: 'Labrador', img: 'assets/images_webp/ui/character05.webp', price: 2500 },
     { id: 'character04', name: 'Poodle', img: 'assets/images_webp/ui/character04.webp', price: 5000 },
     { id: 'character03', name: 'Bulldog', img: 'assets/images_webp/ui/character03.webp', price: 9000 },
-    { id: 'character02', name: 'Béc-giê', img: 'assets/images_webp/ui/character02.webp', price: 14000 },
     { id: 'character10', name: 'Ba Tư', img: 'assets/images_webp/ui/character10.webp', price: 20000 },
-    { id: 'character09', name: 'Maine Coon', img: 'assets/images_webp/ui/character09.webp', price: 28000 },
-    { id: 'character08', name: 'Ragdoll', img: 'assets/images_webp/ui/character08.webp', price: 38000 },
     { id: 'character07', name: 'Mèo Anh', img: 'assets/images_webp/ui/character07.webp', price: 50000 },
     { id: 'character06', name: 'Xiêm', img: 'assets/images_webp/ui/character06.webp', price: 68000 }
 ];

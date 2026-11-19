@@ -170,90 +170,43 @@ var MYCAMP_CONFIG = {
         'character01': {
             id: 'character01',
             name: 'Chú chó Golden',
-            left: 108,               // Tọa độ ngang (px) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            top: 320,                // Tọa độ dọc (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            width: 76,               // Chiều rộng khung bãi cỏ (px)
-            height: 90,              // Chiều cao khung bãi cỏ (px)
-            zIndex: 18,              // Phân lớp hiển thị (nằm trên bãi cỏ, cạnh bếp/ghế)
-            fps: 8,                  // Tốc độ khung hình (8 hình/giây)
+            left: 108,
+            top: 320,
+            width: 76,
+            height: 90,
+            zIndex: 18,
+            fps: 8,
 
-            // Động tác 1: ĐỨNG (Idle - 20 frame)
-            state1Name: 'stand',
-            state1Duration: 14,       // Thời gian ĐỨNG (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            state1Width: 56,         // Chiều rộng khi đứng (px)
+            state1Name: 'anim1',
+            state1Duration: 12,
+            state1Width: 56,
             state1Sheet: {
-                image: 'assets/images_webp/npc_sheets/goden_idle_sheet.webp',
+                image: 'assets/images_webp/npc_sheets/golden_anim1.webp',
                 frameWidth: 145,
                 frameHeight: 229,
                 cols: 5,
                 rows: 4,
                 totalFrames: 20
             },
-            state1Frames: [
-                'assets/images_webp/npc_anim/goden_idle1.webp',
-                'assets/images_webp/npc_anim/goden_idle2.webp',
-                'assets/images_webp/npc_anim/goden_idle3.webp',
-                'assets/images_webp/npc_anim/goden_idle4.webp',
-                'assets/images_webp/npc_anim/goden_idle5.webp',
-                'assets/images_webp/npc_anim/goden_idle6.webp',
-                'assets/images_webp/npc_anim/goden_idle7.webp',
-                'assets/images_webp/npc_anim/goden_idle8.webp',
-                'assets/images_webp/npc_anim/goden_idle9.webp',
-                'assets/images_webp/npc_anim/goden_idle10.webp',
-                'assets/images_webp/npc_anim/goden_idle11.webp',
-                'assets/images_webp/npc_anim/goden_idle12.webp',
-                'assets/images_webp/npc_anim/goden_idle13.webp',
-                'assets/images_webp/npc_anim/goden_idle14.webp',
-                'assets/images_webp/npc_anim/goden_idle15.webp',
-                'assets/images_webp/npc_anim/goden_idle16.webp',
-                'assets/images_webp/npc_anim/goden_idle17.webp',
-                'assets/images_webp/npc_anim/goden_idle18.webp',
-                'assets/images_webp/npc_anim/goden_idle19.webp',
-                'assets/images_webp/npc_anim/goden_idle20.webp'
-            ],
 
-            // Động tác 2: NGỒI (Sit - 20 frame)
-            state2Name: 'sit',
-            state2Duration: 3,        // Thời gian NGỒI (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            state2Width: 72,         // Chiều rộng khi ngồi (px)
+            state2Name: 'anim2',
+            state2Duration: 3.5,
+            state2Width: 72,
             state2Sheet: {
-                image: 'assets/images_webp/npc_sheets/goden_sit_sheet.webp',
+                image: 'assets/images_webp/npc_sheets/golden_anim2.webp',
                 frameWidth: 200,
                 frameHeight: 205,
                 cols: 5,
                 rows: 4,
                 totalFrames: 20
             },
-            state2Frames: [
-                'assets/images_webp/npc_anim/goden_sit1.webp',
-                'assets/images_webp/npc_anim/goden_sit2.webp',
-                'assets/images_webp/npc_anim/goden_sit3.webp',
-                'assets/images_webp/npc_anim/goden_sit4.webp',
-                'assets/images_webp/npc_anim/goden_sit5.webp',
-                'assets/images_webp/npc_anim/goden_sit6.webp',
-                'assets/images_webp/npc_anim/goden_sit7.webp',
-                'assets/images_webp/npc_anim/goden_sit8.webp',
-                'assets/images_webp/npc_anim/goden_sit9.webp',
-                'assets/images_webp/npc_anim/goden_sit10.webp',
-                'assets/images_webp/npc_anim/goden_sit11.webp',
-                'assets/images_webp/npc_anim/goden_sit12.webp',
-                'assets/images_webp/npc_anim/goden_sit13.webp',
-                'assets/images_webp/npc_anim/goden_sit14.webp',
-                'assets/images_webp/npc_anim/goden_sit15.webp',
-                'assets/images_webp/npc_anim/goden_sit16.webp',
-                'assets/images_webp/npc_anim/goden_sit17.webp',
-                'assets/images_webp/npc_anim/goden_sit18.webp',
-                'assets/images_webp/npc_anim/goden_sit19.webp',
-                'assets/images_webp/npc_anim/goden_sit20.webp'
-            ],
 
-            // Động tác 3: SỦA (Bark - 31 frame, 8 fps, thi thoảng sủa)
-            state3Name: 'bark',
-            state3Duration: 3.875,   // 31 frames / 8 fps = 3.875 giây (1 chu kỳ trọn vẹn)
-            state3Width: 74,         // Chiều rộng khi sủa (px)
-            state3Chance: 0.35,      // Tỉ lệ chuyển sang sủa sau khi đứng (35%)
+            state3Name: 'anim3',
+            state3Duration: 3.875,
+            state3Width: 74,
+            state3Chance: 0.35,
             state3Sheet: {
-                image: 'assets/images_webp/npc_sheets/goden_bark_sheet.webp',
+                image: 'assets/images_webp/npc_sheets/golden_anim3.webp',
                 frameWidth: 198,
                 frameHeight: 230,
                 cols: 6,
@@ -262,86 +215,250 @@ var MYCAMP_CONFIG = {
             }
         },
 
-        // 2. CHÚ MÈO ANH (character07) - Mua trong Cửa Hàng
+        // 2. CHÚ CHÓ POODLE (character04)
+        'character04': {
+            id: 'character04',
+            name: 'Chú chó Poodle',
+            left: 108,
+            top: 320,
+            width: 76,
+            height: 90,
+            zIndex: 18,
+            fps: 8,
+
+            state1Name: 'anim1',
+            state1Duration: 10,
+            state1Width: 60,
+            state1Sheet: {
+                image: 'assets/images_webp/npc_sheets/poodle_anim1.webp',
+                frameWidth: 140,
+                frameHeight: 200,
+                cols: 5,
+                rows: 5,
+                totalFrames: 24
+            },
+
+            state2Name: 'anim2',
+            state2Duration: 3.125,
+            state2Width: 60,
+            state2Sheet: {
+                image: 'assets/images_webp/npc_sheets/poodle_anim2.webp',
+                frameWidth: 140,
+                frameHeight: 200,
+                cols: 5,
+                rows: 5,
+                totalFrames: 25
+            },
+
+            state3Name: 'anim3',
+            state3Duration: 3.0,
+            state3Width: 60,
+            state3Chance: 0.35,
+            state3Sheet: {
+                image: 'assets/images_webp/npc_sheets/poodle_anim3.webp',
+                frameWidth: 140,
+                frameHeight: 200,
+                cols: 5,
+                rows: 5,
+                totalFrames: 24
+            }
+        },
+
+        // 3. CHÚ CHÓ BULLDOG (character03)
+        'character03': {
+            id: 'character03',
+            name: 'Chú chó Bulldog',
+            left: 108,
+            top: 320,
+            width: 76,
+            height: 90,
+            zIndex: 18,
+            fps: 8,
+
+            state1Name: 'anim1',
+            state1Duration: 10,
+            state1Width: 68,
+            state1Sheet: {
+                image: 'assets/images_webp/npc_sheets/bulldog_anim1.webp',
+                frameWidth: 174,
+                frameHeight: 205,
+                cols: 5,
+                rows: 5,
+                totalFrames: 24
+            },
+
+            state2Name: 'anim2',
+            state2Duration: 3.125,
+            state2Width: 68,
+            state2Sheet: {
+                image: 'assets/images_webp/npc_sheets/bulldog_anim2.webp',
+                frameWidth: 174,
+                frameHeight: 205,
+                cols: 5,
+                rows: 5,
+                totalFrames: 25
+            },
+
+            state3Name: 'anim3',
+            state3Duration: 3.0,
+            state3Width: 68,
+            state3Chance: 0.35,
+            state3Sheet: {
+                image: 'assets/images_webp/npc_sheets/bulldog_anim3.webp',
+                frameWidth: 174,
+                frameHeight: 205,
+                cols: 5,
+                rows: 5,
+                totalFrames: 24
+            }
+        },
+
+        // 4. CHÚ MÈO BA TƯ (character10)
+        'character10': {
+            id: 'character10',
+            name: 'Chú mèo Ba Tư',
+            left: 108,
+            top: 320,
+            width: 76,
+            height: 90,
+            zIndex: 18,
+            fps: 8,
+
+            state1Name: 'anim1',
+            state1Duration: 10,
+            state1Width: 68,
+            state1Sheet: {
+                image: 'assets/images_webp/npc_sheets/batu_anim1.webp',
+                frameWidth: 200,
+                frameHeight: 209,
+                cols: 5,
+                rows: 5,
+                totalFrames: 24
+            },
+
+            state2Name: 'anim2',
+            state2Duration: 3.125,
+            state2Width: 68,
+            state2Sheet: {
+                image: 'assets/images_webp/npc_sheets/batu_anim2.webp',
+                frameWidth: 200,
+                frameHeight: 209,
+                cols: 5,
+                rows: 5,
+                totalFrames: 25
+            },
+
+            state3Name: 'anim3',
+            state3Duration: 3.0,
+            state3Width: 68,
+            state3Chance: 0.35,
+            state3Sheet: {
+                image: 'assets/images_webp/npc_sheets/batu_anim3.webp',
+                frameWidth: 200,
+                frameHeight: 209,
+                cols: 5,
+                rows: 5,
+                totalFrames: 24
+            }
+        },
+
+        // 5. CHÚ MÈO ANH (character07)
         'character07': {
             id: 'character07',
             name: 'Chú mèo Anh',
-            left: 108,               // Tọa độ ngang (px) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            top: 320,                // Tọa độ dọc (px)   - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            width: 76,               // Chiều rộng khung bãi cỏ (px)
-            height: 90,              // Chiều cao khung bãi cỏ (px)
-            zIndex: 18,              // Phân lớp hiển thị
-            fps: 8,                  // Tốc độ khung hình (8 hình/giây)
+            left: 108,
+            top: 320,
+            width: 76,
+            height: 90,
+            zIndex: 18,
+            fps: 8,
 
-            // Động tác 1: ĐỨNG NGHỈ (Idle - 15 frame)
-            state1Name: 'idle',
-            state1Duration: 8,        // Thời gian ĐỨNG NGHỈ (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            state1Width: 64,         // Chiều rộng khi đứng nghỉ (px) (tỷ lệ 180x214)
+            state1Name: 'anim1',
+            state1Duration: 10,
+            state1Width: 66,
             state1Sheet: {
-                image: 'assets/images_webp/npc_sheets/meoanh_idle_sheet.webp',
-                frameWidth: 180,
-                frameHeight: 214,
+                image: 'assets/images_webp/npc_sheets/meoanh_anim1.webp',
+                frameWidth: 165,
+                frameHeight: 189,
                 cols: 5,
-                rows: 3,
-                totalFrames: 15
+                rows: 5,
+                totalFrames: 24
             },
-            state1Frames: [
-                'assets/images_webp/npc_anim/meoanh_idle1.webp',
-                'assets/images_webp/npc_anim/meoanh_idle2.webp',
-                'assets/images_webp/npc_anim/meoanh_idle3.webp',
-                'assets/images_webp/npc_anim/meoanh_idle4.webp',
-                'assets/images_webp/npc_anim/meoanh_idle5.webp',
-                'assets/images_webp/npc_anim/meoanh_idle6.webp',
-                'assets/images_webp/npc_anim/meoanh_idle7.webp',
-                'assets/images_webp/npc_anim/meoanh_idle8.webp',
-                'assets/images_webp/npc_anim/meoanh_idle9.webp',
-                'assets/images_webp/npc_anim/meoanh_idle10.webp',
-                'assets/images_webp/npc_anim/meoanh_idle11.webp',
-                'assets/images_webp/npc_anim/meoanh_idle12.webp',
-                'assets/images_webp/npc_anim/meoanh_idle13.webp',
-                'assets/images_webp/npc_anim/meoanh_idle14.webp',
-                'assets/images_webp/npc_anim/meoanh_idle15.webp'
-            ],
 
-            // Động tác 2: VẪY TAY CHÀO (Hello - 20 frame)
-            state2Name: 'hello',
-            state2Duration: 4,        // Thời gian VẪY TAY CHÀO (giây) - BẠN CHỦ ĐỘNG SỬA TẠI ĐÂY
-            state2Width: 64,         // Chiều rộng khi vẫy tay (px)
+            state2Name: 'anim2',
+            state2Duration: 3.125,
+            state2Width: 66,
             state2Sheet: {
-                image: 'assets/images_webp/npc_sheets/meoanh_hello_sheet.webp',
-                frameWidth: 180,
-                frameHeight: 214,
+                image: 'assets/images_webp/npc_sheets/meoanh_anim2.webp',
+                frameWidth: 165,
+                frameHeight: 189,
                 cols: 5,
-                rows: 4,
-                totalFrames: 20
+                rows: 5,
+                totalFrames: 25
             },
-            state2Frames: [
-                'assets/images_webp/npc_anim/meoanh_hello1.webp',
-                'assets/images_webp/npc_anim/meoanh_hello2.webp',
-                'assets/images_webp/npc_anim/meoanh_hello3.webp',
-                'assets/images_webp/npc_anim/meoanh_hello4.webp',
-                'assets/images_webp/npc_anim/meoanh_hello5.webp',
-                'assets/images_webp/npc_anim/meoanh_hello6.webp',
-                'assets/images_webp/npc_anim/meoanh_hello7.webp',
-                'assets/images_webp/npc_anim/meoanh_hello8.webp',
-                'assets/images_webp/npc_anim/meoanh_hello9.webp',
-                'assets/images_webp/npc_anim/meoanh_hello10.webp',
-                'assets/images_webp/npc_anim/meoanh_hello11.webp',
-                'assets/images_webp/npc_anim/meoanh_hello12.webp',
-                'assets/images_webp/npc_anim/meoanh_hello13.webp',
-                'assets/images_webp/npc_anim/meoanh_hello14.webp',
-                'assets/images_webp/npc_anim/meoanh_hello15.webp',
-                'assets/images_webp/npc_anim/meoanh_hello16.webp',
-                'assets/images_webp/npc_anim/meoanh_hello17.webp',
-                'assets/images_webp/npc_anim/meoanh_hello18.webp',
-                'assets/images_webp/npc_anim/meoanh_hello19.webp',
-                'assets/images_webp/npc_anim/meoanh_hello20.webp'
-            ]
-        }
 
-        // CÁC CON VẬT KHÁC (Labrador, Poodle, Bulldog, Béc-giê, Ba Tư, Maine Coon, Ragdoll, Xiêm):
-        // Khi người chơi mua và chọn các con vật này, vì chưa có chuỗi ảnh chuyển động nên hệ thống
-        // sẽ TỰ ĐỘNG ĐỂ TRỐNG bãi cỏ như yêu cầu. Sau này bạn chỉ cần bổ sung vào đây là hiển thị ngay!
+            state3Name: 'anim3',
+            state3Duration: 3.0,
+            state3Width: 66,
+            state3Chance: 0.35,
+            state3Sheet: {
+                image: 'assets/images_webp/npc_sheets/meoanh_anim3.webp',
+                frameWidth: 165,
+                frameHeight: 189,
+                cols: 5,
+                rows: 5,
+                totalFrames: 24
+            }
+        },
+
+        // 5. CHÚ MÈO XIÊM (character06)
+        'character06': {
+            id: 'character06',
+            name: 'Chú mèo Xiêm',
+            left: 108,
+            top: 320,
+            width: 76,
+            height: 90,
+            zIndex: 18,
+            fps: 8,
+
+            state1Name: 'anim1',
+            state1Duration: 10,
+            state1Width: 58,
+            state1Sheet: {
+                image: 'assets/images_webp/npc_sheets/meoxiem_anim1.webp',
+                frameWidth: 143,
+                frameHeight: 220,
+                cols: 5,
+                rows: 5,
+                totalFrames: 24
+            },
+
+            state2Name: 'anim2',
+            state2Duration: 3.125,
+            state2Width: 58,
+            state2Sheet: {
+                image: 'assets/images_webp/npc_sheets/meoxiem_anim2.webp',
+                frameWidth: 143,
+                frameHeight: 220,
+                cols: 5,
+                rows: 5,
+                totalFrames: 25
+            },
+
+            state3Name: 'anim3',
+            state3Duration: 3.0,
+            state3Width: 58,
+            state3Chance: 0.35,
+            state3Sheet: {
+                image: 'assets/images_webp/npc_sheets/meoxiem_anim3.webp',
+                frameWidth: 143,
+                frameHeight: 220,
+                cols: 5,
+                rows: 5,
+                totalFrames: 24
+            }
+        }
     },
 
     // -------------------------------------------------------------------------

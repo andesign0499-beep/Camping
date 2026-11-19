@@ -767,13 +767,9 @@ if (typeof window !== 'undefined') {
 function openCamp(highlightLevel, onBack, initialTab) {
     var petsList = (typeof PET_CHARACTERS !== 'undefined') ? PET_CHARACTERS : [
         { id: 'character01', name: 'Golden', img: 'assets/images_webp/ui/character01.webp', price: 0 },
-        { id: 'character05', name: 'Labrador', img: 'assets/images_webp/ui/character05.webp', price: 2500 },
         { id: 'character04', name: 'Poodle', img: 'assets/images_webp/ui/character04.webp', price: 5000 },
         { id: 'character03', name: 'Bulldog', img: 'assets/images_webp/ui/character03.webp', price: 9000 },
-        { id: 'character02', name: 'Béc-giê', img: 'assets/images_webp/ui/character02.webp', price: 14000 },
         { id: 'character10', name: 'Ba Tư', img: 'assets/images_webp/ui/character10.webp', price: 20000 },
-        { id: 'character09', name: 'Maine Coon', img: 'assets/images_webp/ui/character09.webp', price: 28000 },
-        { id: 'character08', name: 'Ragdoll', img: 'assets/images_webp/ui/character08.webp', price: 38000 },
         { id: 'character07', name: 'Mèo Anh', img: 'assets/images_webp/ui/character07.webp', price: 50000 },
         { id: 'character06', name: 'Xiêm', img: 'assets/images_webp/ui/character06.webp', price: 68000 }
     ];
@@ -1545,7 +1541,19 @@ function showGemShopModal(opts) {
         '</button>' +
     '</div>';
 
-    // 3. Mẹo kiếm Kim Cương trong game
+    // 3. Gói Test +500 Kim Cương miễn phí
+    var testGemHtml = (typeof opts.onClaimTestGem === 'function')
+        ? '<div class="shop-card has-badge" style="border-color:#ab47bc;background:linear-gradient(180deg,#fdf7ff 0%,#f3e5f5 100%);">' +
+            '<div class="shop-badge" style="background:#8e24aa;">GÓI TEST</div>' +
+            '<div class="shop-card-left">' +
+                '<div class="shop-card-title">+500 ' + ICON_RUBY_HTML + ' Kim Cương Test</div>' +
+                '<div class="shop-card-desc">Nhận nhanh 500 Kim Cương miễn phí để thử nghiệm</div>' +
+            '</div>' +
+            '<button class="modal-btn gem-btn" id="btn-claim-test-gem">+500 💎</button>' +
+        '</div>'
+        : '';
+
+    // 4. Mẹo kiếm Kim Cương trong game
     var tipHtml = '<div class="shop-card" style="background:#fffde7;border:2px dashed #fbc02d;">' +
         '<div class="shop-card-left">' +
             '<div class="shop-card-title" style="color:#e65100;font-size:0.875rem;">Mẹo Nhận Thêm Kim Cương Trong Game</div>' +
@@ -1567,6 +1575,7 @@ function showGemShopModal(opts) {
         '<div class="shop-scroll">' +
             dailyHtml +
             gemAdHtml +
+            testGemHtml +
             tipHtml +
         '</div>' +
         '<div class="modal-buttons">' +
@@ -1575,6 +1584,14 @@ function showGemShopModal(opts) {
         'shop-box gem-shop-box',
         'TRẠM KIM CƯƠNG'
     );
+
+    var testGemBtn = overlay.querySelector('#btn-claim-test-gem');
+    if (testGemBtn && typeof opts.onClaimTestGem === 'function') {
+        testGemBtn.onclick = function () {
+            closeModal();
+            opts.onClaimTestGem();
+        };
+    }
 
     var dailyBtn = overlay.querySelector('#btn-claim-daily');
     if (dailyBtn && !dailyClaimed) {
