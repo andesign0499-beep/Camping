@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "image": "bulldog_anim3.webp",
+    "format": "WebP",
+    "size": {
+      "w": 870,
+      "h": 1025
+    },
+    "scale": 1,
+    "totalFrames": 24,
+    "frameWidth": 174,
+    "frameHeight": 205,
+    "columns": 5,
+    "rows": 5,
+    "fps": 8
+  },
+  "frames": [
+    {
+      "name": "bulldog_anim31",
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim32",
+      "index": 1,
+      "x": 174,
+      "y": 0,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim33",
+      "index": 2,
+      "x": 348,
+      "y": 0,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim34",
+      "index": 3,
+      "x": 522,
+      "y": 0,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim35",
+      "index": 4,
+      "x": 696,
+      "y": 0,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim36",
+      "index": 5,
+      "x": 0,
+      "y": 205,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim37",
+      "index": 6,
+      "x": 174,
+      "y": 205,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim38",
+      "index": 7,
+      "x": 348,
+      "y": 205,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim39",
+      "index": 8,
+      "x": 522,
+      "y": 205,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim310",
+      "index": 9,
+      "x": 696,
+      "y": 205,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim311",
+      "index": 10,
+      "x": 0,
+      "y": 410,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim312",
+      "index": 11,
+      "x": 174,
+      "y": 410,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim313",
+      "index": 12,
+      "x": 348,
+      "y": 410,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim314",
+      "index": 13,
+      "x": 522,
+      "y": 410,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim315",
+      "index": 14,
+      "x": 696,
+      "y": 410,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim316",
+      "index": 15,
+      "x": 0,
+      "y": 615,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim317",
+      "index": 16,
+      "x": 174,
+      "y": 615,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim318",
+      "index": 17,
+      "x": 348,
+      "y": 615,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim319",
+      "index": 18,
+      "x": 522,
+      "y": 615,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim320",
+      "index": 19,
+      "x": 696,
+      "y": 615,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim321",
+      "index": 20,
+      "x": 0,
+      "y": 820,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim322",
+      "index": 21,
+      "x": 174,
+      "y": 820,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim323",
+      "index": 22,
+      "x": 348,
+      "y": 820,
+      "width": 174,
+      "height": 205
+    },
+    {
+      "name": "bulldog_anim324",
+      "index": 23,
+      "x": 522,
+      "y": 820,
+      "width": 174,
+      "height": 205
+    }
+  ]
+}

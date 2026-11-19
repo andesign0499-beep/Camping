@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "image": "batu_anim3.webp",
+    "format": "WebP",
+    "size": {
+      "w": 1000,
+      "h": 1045
+    },
+    "scale": 1,
+    "totalFrames": 24,
+    "frameWidth": 200,
+    "frameHeight": 209,
+    "columns": 5,
+    "rows": 5,
+    "fps": 8
+  },
+  "frames": [
+    {
+      "name": "batu_anim31",
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim32",
+      "index": 1,
+      "x": 200,
+      "y": 0,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim33",
+      "index": 2,
+      "x": 400,
+      "y": 0,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim34",
+      "index": 3,
+      "x": 600,
+      "y": 0,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim35",
+      "index": 4,
+      "x": 800,
+      "y": 0,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim36",
+      "index": 5,
+      "x": 0,
+      "y": 209,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim37",
+      "index": 6,
+      "x": 200,
+      "y": 209,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim38",
+      "index": 7,
+      "x": 400,
+      "y": 209,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim39",
+      "index": 8,
+      "x": 600,
+      "y": 209,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim310",
+      "index": 9,
+      "x": 800,
+      "y": 209,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim311",
+      "index": 10,
+      "x": 0,
+      "y": 418,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim312",
+      "index": 11,
+      "x": 200,
+      "y": 418,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim313",
+      "index": 12,
+      "x": 400,
+      "y": 418,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim314",
+      "index": 13,
+      "x": 600,
+      "y": 418,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim315",
+      "index": 14,
+      "x": 800,
+      "y": 418,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim316",
+      "index": 15,
+      "x": 0,
+      "y": 627,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim317",
+      "index": 16,
+      "x": 200,
+      "y": 627,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim318",
+      "index": 17,
+      "x": 400,
+      "y": 627,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim319",
+      "index": 18,
+      "x": 600,
+      "y": 627,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim320",
+      "index": 19,
+      "x": 800,
+      "y": 627,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim321",
+      "index": 20,
+      "x": 0,
+      "y": 836,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim322",
+      "index": 21,
+      "x": 200,
+      "y": 836,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim323",
+      "index": 22,
+      "x": 400,
+      "y": 836,
+      "width": 200,
+      "height": 209
+    },
+    {
+      "name": "batu_anim324",
+      "index": 23,
+      "x": 600,
+      "y": 836,
+      "width": 200,
+      "height": 209
+    }
+  ]
+}

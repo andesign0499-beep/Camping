@@ -1,0 +1,267 @@
+{
+  "meta": {
+    "image": "golden_anim3.webp",
+    "format": "WebP",
+    "size": {
+      "w": 1188,
+      "h": 1380
+    },
+    "scale": 1,
+    "totalFrames": 31,
+    "frameWidth": 198,
+    "frameHeight": 230,
+    "columns": 6,
+    "rows": 6,
+    "fps": 8
+  },
+  "frames": [
+    {
+      "name": "golden_anim31",
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim32",
+      "index": 1,
+      "x": 198,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim33",
+      "index": 2,
+      "x": 396,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim34",
+      "index": 3,
+      "x": 594,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim35",
+      "index": 4,
+      "x": 792,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim36",
+      "index": 5,
+      "x": 990,
+      "y": 0,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim37",
+      "index": 6,
+      "x": 0,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim38",
+      "index": 7,
+      "x": 198,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim39",
+      "index": 8,
+      "x": 396,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim310",
+      "index": 9,
+      "x": 594,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim311",
+      "index": 10,
+      "x": 792,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim312",
+      "index": 11,
+      "x": 990,
+      "y": 230,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim313",
+      "index": 12,
+      "x": 0,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim314",
+      "index": 13,
+      "x": 198,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim315",
+      "index": 14,
+      "x": 396,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim316",
+      "index": 15,
+      "x": 594,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim317",
+      "index": 16,
+      "x": 792,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim318",
+      "index": 17,
+      "x": 990,
+      "y": 460,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim319",
+      "index": 18,
+      "x": 0,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim320",
+      "index": 19,
+      "x": 198,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim321",
+      "index": 20,
+      "x": 396,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim322",
+      "index": 21,
+      "x": 594,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim323",
+      "index": 22,
+      "x": 792,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim324",
+      "index": 23,
+      "x": 990,
+      "y": 690,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim325",
+      "index": 24,
+      "x": 0,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim326",
+      "index": 25,
+      "x": 198,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim327",
+      "index": 26,
+      "x": 396,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim328",
+      "index": 27,
+      "x": 594,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim329",
+      "index": 28,
+      "x": 792,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim330",
+      "index": 29,
+      "x": 990,
+      "y": 920,
+      "width": 198,
+      "height": 230
+    },
+    {
+      "name": "golden_anim331",
+      "index": 30,
+      "x": 0,
+      "y": 1150,
+      "width": 198,
+      "height": 230
+    }
+  ]
+}

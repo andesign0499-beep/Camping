@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "image": "meoanh_anim1.webp",
+    "format": "WebP",
+    "size": {
+      "w": 825,
+      "h": 945
+    },
+    "scale": 1,
+    "totalFrames": 24,
+    "frameWidth": 165,
+    "frameHeight": 189,
+    "columns": 5,
+    "rows": 5,
+    "fps": 8
+  },
+  "frames": [
+    {
+      "name": "meoanh_anim11",
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim12",
+      "index": 1,
+      "x": 165,
+      "y": 0,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim13",
+      "index": 2,
+      "x": 330,
+      "y": 0,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim14",
+      "index": 3,
+      "x": 495,
+      "y": 0,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim15",
+      "index": 4,
+      "x": 660,
+      "y": 0,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim16",
+      "index": 5,
+      "x": 0,
+      "y": 189,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim17",
+      "index": 6,
+      "x": 165,
+      "y": 189,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim18",
+      "index": 7,
+      "x": 330,
+      "y": 189,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim19",
+      "index": 8,
+      "x": 495,
+      "y": 189,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim110",
+      "index": 9,
+      "x": 660,
+      "y": 189,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim111",
+      "index": 10,
+      "x": 0,
+      "y": 378,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim112",
+      "index": 11,
+      "x": 165,
+      "y": 378,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim113",
+      "index": 12,
+      "x": 330,
+      "y": 378,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim114",
+      "index": 13,
+      "x": 495,
+      "y": 378,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim115",
+      "index": 14,
+      "x": 660,
+      "y": 378,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim116",
+      "index": 15,
+      "x": 0,
+      "y": 567,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim117",
+      "index": 16,
+      "x": 165,
+      "y": 567,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim118",
+      "index": 17,
+      "x": 330,
+      "y": 567,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim119",
+      "index": 18,
+      "x": 495,
+      "y": 567,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim120",
+      "index": 19,
+      "x": 660,
+      "y": 567,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim121",
+      "index": 20,
+      "x": 0,
+      "y": 756,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim122",
+      "index": 21,
+      "x": 165,
+      "y": 756,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim123",
+      "index": 22,
+      "x": 330,
+      "y": 756,
+      "width": 165,
+      "height": 189
+    },
+    {
+      "name": "meoanh_anim124",
+      "index": 23,
+      "x": 495,
+      "y": 756,
+      "width": 165,
+      "height": 189
+    }
+  ]
+}
