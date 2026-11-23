@@ -3129,9 +3129,12 @@ function startCampAnimators() {
                     var row = Math.floor(frameIdx / sheet.cols);
                     var sx = col * sheet.frameWidth;
                     var sy = row * sheet.frameHeight;
+                    var dyTrim = (typeof window !== 'undefined' && typeof window.getPetSheetBottomTrim === 'function')
+                        ? window.getPetSheetBottomTrim(sheet.image, sheetImg, sheet.frameWidth, sheet.frameHeight)
+                        : 0;
                     var ctx = canvas.getContext('2d');
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(sheetImg, sx, sy, sheet.frameWidth, sheet.frameHeight, 0, 0, sheet.frameWidth, sheet.frameHeight);
+                    ctx.drawImage(sheetImg, sx, sy, sheet.frameWidth, sheet.frameHeight, 0, dyTrim, sheet.frameWidth, sheet.frameHeight);
                 }
 
                 // Vẽ ngay frame đầu tiên nếu dùng Sprite Sheet

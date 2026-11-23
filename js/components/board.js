@@ -1402,6 +1402,7 @@ var PET_ANIMATION_CONFIGS = {
 };
 
 var _petSheetImages = {};
+var _petSheetBottomTrimCache = {};
 function getPetSheetImage(url) {
     if (!_petSheetImages[url]) {
         var img = new Image();
@@ -1409,6 +1410,46 @@ function getPetSheetImage(url) {
         _petSheetImages[url] = img;
     }
     return _petSheetImages[url];
+}
+
+// Đo phần khoảng trống trong suốt ở mép dưới của frame 0 để căn mọi NPC đứng chung 1 đường chân đế
+function getPetSheetBottomTrim(sheetUrl, img, frameW, frameH) {
+    var key = sheetUrl + '|' + frameW + 'x' + frameH;
+    if (typeof _petSheetBottomTrimCache[key] === 'number') {
+        return _petSheetBottomTrimCache[key];
+    }
+    if (!img || !img.complete || !frameW || !frameH) return 0;
+    try {
+        var off = document.createElement('canvas');
+        off.width = frameW;
+        off.height = frameH;
+        var octx = off.getContext('2d');
+        octx.drawImage(img, 0, 0, frameW, frameH, 0, 0, frameW, frameH);
+        var data = octx.getImageData(0, 0, frameW, frameH).data;
+        var bottomTrim = 0;
+        for (var y = frameH - 1; y >= 0; y--) {
+            var rowHasPixel = false;
+            var rowOffset = y * frameW * 4;
+            for (var x = 0; x < frameW; x++) {
+                if (data[rowOffset + x * 4 + 3] > 18) {
+                    rowHasPixel = true;
+                    break;
+                }
+            }
+            if (rowHasPixel) {
+                bottomTrim = (frameH - 1) - y;
+                break;
+            }
+        }
+        _petSheetBottomTrimCache[key] = bottomTrim;
+        return bottomTrim;
+    } catch (e) {
+        _petSheetBottomTrimCache[key] = 0;
+        return 0;
+    }
+}
+if (typeof window !== 'undefined') {
+    window.getPetSheetBottomTrim = getPetSheetBottomTrim;
 }
 
 // Khởi tạo và kích hoạt tải trước các file sheet WebP
@@ -1449,6 +1490,13 @@ function createPetAvatarElement(petId, petName, defaultImgSrc) {
     var actionLoopsLeft = 0;
     var rafId = null;
 
+    // Nghỉ thở nhẹ ở frame 1 khoảng 8 giây rồi diễn 2 vòng anim1, sau đó lặp lại tự nhiên
+    var REST_DURATION_MS = 8000;
+    var IDLE_LOOPS_PER_CYCLE = 2;
+    var isResting = true;
+    var restStartTime = 0;
+    var idleLoopsLeft = IDLE_LOOPS_PER_CYCLE;
+
     function render(time) {
         if (!canvas.isConnected) {
             if (rafId) cancelAnimationFrame(rafId);
@@ -1456,19 +1504,51 @@ function createPetAvatarElement(petId, petName, defaultImgSrc) {
         }
 
         rafId = requestAnimationFrame(render);
-        var fps = currentCfg.fps || 12;
+        if (!currentImg.complete) return;
+
+        if (isResting) {
+            if (!restStartTime) restStartTime = time;
+            var restElapsed = time - restStartTime;
+            if (restElapsed >= REST_DURATION_MS) {
+                isResting = false;
+                currentFrame = 0;
+                idleLoopsLeft = IDLE_LOOPS_PER_CYCLE;
+                lastTime = time;
+            } else {
+                // Giữ frame 0 và thở nhẹ theo nhịp sin (~2.8s/nhịp), neo chân cố định ở mép dưới
+                if (time - lastTime < 33) return; // ~30fps đủ mượt cho nhịp thở nhẹ
+                lastTime = time;
+                var breath = Math.sin((restElapsed / 1000) * (Math.PI * 2 / 2.8));
+                var scaleY = 1 + breath * 0.016;
+                var scaleX = 1 - breath * 0.008;
+                var dyTrimRest = getPetSheetBottomTrim(currentCfg.sheet, currentImg, currentCfg.frameW, currentCfg.frameH);
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height);
+                ctx.scale(scaleX, scaleY);
+                ctx.drawImage(
+                    currentImg,
+                    0, 0, currentCfg.frameW, currentCfg.frameH,
+                    -canvas.width / 2, -canvas.height + dyTrimRest, canvas.width, canvas.height
+                );
+                ctx.restore();
+                return;
+            }
+        }
+
+        var fps = currentCfg.fps || 8;
         if (time - lastTime < (1000 / fps)) return;
         lastTime = time;
-
-        if (!currentImg.complete) return;
 
         var col = currentFrame % currentCfg.cols;
         var row = Math.floor(currentFrame / currentCfg.cols);
         var sx = col * currentCfg.frameW;
         var sy = row * currentCfg.frameH;
+        var dyTrim = getPetSheetBottomTrim(currentCfg.sheet, currentImg, currentCfg.frameW, currentCfg.frameH);
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(currentImg, sx, sy, currentCfg.frameW, currentCfg.frameH, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(currentImg, sx, sy, currentCfg.frameW, currentCfg.frameH, 0, dyTrim, canvas.width, canvas.height);
 
         currentFrame++;
         if (currentFrame >= currentCfg.frames) {
@@ -1481,6 +1561,14 @@ function createPetAvatarElement(petId, petName, defaultImgSrc) {
                     currentImg = getPetSheetImage(currentCfg.sheet);
                     canvas.width = currentCfg.frameW;
                     canvas.height = currentCfg.frameH;
+                    isResting = true;
+                    restStartTime = time;
+                }
+            } else {
+                idleLoopsLeft--;
+                if (idleLoopsLeft <= 0) {
+                    isResting = true;
+                    restStartTime = time;
                 }
             }
         }
@@ -3961,15 +4049,29 @@ function executeMoveAndEffects(fromIdx, toIdx) {
                     : 6;
                 var isHighComboMilestone = (mergeComboCount >= comboMilestoneN && mergeComboCount % comboMilestoneN === 0 && newLvNum >= 3);
 
-                if (emptiesPost.length > 0 && newLvNum >= 4 && newLvNum <= 9 && Math.random() < 0.14) {
+                var activeBubbleCount = 0;
+                for (var bi = 0; bi < boardData.length; bi++) {
+                    if (boardData[bi] && boardData[bi].isBubble) activeBubbleCount++;
+                }
+                var nowBubbleTs = Date.now();
+                var lastBubbleTs = (typeof window !== 'undefined' && window._lastBubbleSpawnAt) ? window._lastBubbleSpawnAt : 0;
+                var bubbleChance = (newLvNum >= 5 && newLvNum <= 8) ? 0.07 : 0.05;
+                var canSpawnBubble = emptiesPost.length >= 3 &&
+                    activeBubbleCount < 1 &&
+                    (nowBubbleTs - lastBubbleTs >= 45000) &&
+                    newLvNum >= 4 && newLvNum <= 9 &&
+                    Math.random() < bubbleChance;
+
+                if (canSpawnBubble) {
                     var bIdx = emptiesPost[Math.floor(Math.random() * emptiesPost.length)];
                     boardData[bIdx] = {
                         id: res.newId,
                         isRock: false,
                         isLocked: false,
                         isBubble: true,
-                        bubbleExpiresAt: Date.now() + 60000
+                        bubbleExpiresAt: nowBubbleTs + 60000
                     };
+                    if (typeof window !== 'undefined') window._lastBubbleSpawnAt = nowBubbleTs;
                     playSound('bubble');
                     if (boardElement.children[bIdx]) {
                         showFloatingBadge(boardElement.children[bIdx], '🫧 Bong bóng!', '#0288d1');

@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SFX & BGM Studio Mã Nguồn Mở - Merge Camping Audio Workstation</title>
+    <script src="js/libs/tone.min.js"></script>
+    <script src="js/libs/riffwave.js"></script>
+    <script src="js/libs/sfxr.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f1520;
+            --bg-card: #192233;
+            --bg-panel: #222e46;
+            --accent: #00e5ff;
+            --accent-green: #00e676;
+            --gold: #ffd54f;
+            --pink: #ff4081;
+            --orange: #ff7043;
+            --text: #f0f4f8;
+            --text-muted: #9fb3c8;
+            --border: #314260;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.5;
+            padding-bottom: 60px;
+        }
+        header {
+            background: linear-gradient(135deg, #142238, #0b1320);
+            border-bottom: 2px solid var(--accent);
+            padding: 14px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.55);
+        }
+        .brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .brand h1 { font-size: 19px; font-weight: 800; color: #fff; }
+        .badge {
+            background: rgba(0, 229, 255, 0.16);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-size: 11.5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        button, .file-label-btn {
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 9px 14px;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        button:active { transform: scale(0.96); }
+        .btn-primary { background: var(--accent); color: #06141f; }
+        .btn-primary:hover { background: #6effff; }
+        .btn-green { background: var(--accent-green); color: #051b0e; }
+        .btn-green:hover { background: #69f0ae; }
+        .btn-gold { background: var(--gold); color: #1f1600; }
+        .btn-gold:hover { background: #ffe57f; }
+        .btn-pink { background: var(--pink); color: #fff; }
+        .btn-orange { background: var(--orange); color: #fff; }
+        .btn-secondary { background: var(--bg-panel); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--accent); color: #fff; }
+
+        .container { max-width: 1340px; margin: 18px auto; padding: 0 18px; }
+
+        .oscilloscope-bar {
+            background: #090e17;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            display: grid;
+            grid-template-columns: 1fr 410px;
+            gap: 18px;
+            align-items: center;
+        }
+        @media (max-width: 960px) { .oscilloscope-bar { grid-template-columns: 1fr; } }
+        canvas#wave-canvas {
+            width: 100%;
+            height: 90px;
+            background: #05080d;
+            border-radius: 8px;
+            border: 1px solid #1e2f48;
+        }
+        .quick-test-pad { display: flex; flex-wrap: wrap; gap: 7px; }
+        .quick-test-pad button {
+            flex: 1 1 calc(50% - 7px);
+            justify-content: center;
+            padding: 9px 8px;
+            font-size: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 18px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .tab-btn {
+            background: var(--bg-card);
+            color: var(--text-muted);
+            padding: 10px 18px;
+            font-size: 13.5px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: #06141f;
+            border-color: var(--accent);
+            box-shadow: 0 0 14px rgba(0,229,255,0.35);
+        }
+
+        .preset-strip {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .preset-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 16px;
+        }
+        .sfx-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+        }
+        .sfx-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .sfx-card-title { font-size: 15px; font-weight: 800; color: var(--accent); }
+        .sfx-card-sub { font-size: 12px; color: var(--text-muted); }
+
+        .slider-row {
+            display: grid;
+            grid-template-columns: 155px 1fr 64px;
+            align-items: center;
+            gap: 10px;
+            font-size: 12.5px;
+        }
+        .slider-row label { color: #d9e2ec; font-weight: 600; }
+        .slider-row input[type="range"], .slider-row select {
+            width: 100%;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        select {
+            background: #0e1624;
+            color: #fff;
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .slider-val {
+            text-align: right;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            color: var(--gold);
+            background: rgba(0,0,0,0.35);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* THƯ VIỆN ÂM THANH MIỄN PHÍ */
+        .lib-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 12px;
+        }
+        .lib-item {
+            background: #131c2b;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: border-color 0.15s;
+        }
+        .lib-item:hover { border-color: var(--accent); }
+        .lib-item.assigned {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 12px rgba(0, 230, 118, 0.2);
+        }
+        .lib-title { font-weight: 800; font-size: 13.5px; color: #fff; }
+        .lib-desc { font-size: 11.5px; color: var(--text-muted); }
+        .lib-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .lib-controls button, .lib-controls a {
+            padding: 6px 10px;
+            font-size: 11.5px;
+        }
+        .active-slot-pill {
+            display: inline-block;
+            background: rgba(0, 230, 118, 0.18);
+            color: #69f0ae;
+            border: 1px solid #00e676;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        .code-output {
+            width: 100%;
+            min-height: 120px;
+            background: #090d14;
+            color: #80deea;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+        }
+        .status-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #00c853;
+            color: #fff;
+            font-weight: 800;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+            display: none;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <h1>🎛️ SFX & BGM Studio Mã Nguồn Mở (Merge Camping)</h1>
+            <span class="badge">Tone.js + WebAudio + jsfxr + ZzFX + 34 File CC0</span>
+        </div>
+        <div class="top-actions">
+            <button class="btn-green" id="btn-save-live">💾 Lưu & Áp Dụng Ngay Vào Game</button>
+            <button class="btn-gold" id="btn-export-config">📋 Sao Chép Mã config.js</button>
+            <button class="btn-secondary" id="btn-reset-default">💎 Khôi Phục Mặc Định Sáng Lấp Lánh</button>
+            <button class="btn-orange" onclick="window.location.href='index.html'">🎮 Quay Lại Game</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- MÁY HIỆN SÓNG & BÀN TEST NHANH -->
+        <div class="oscilloscope-bar">
+            <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12.5px;color:var(--text-muted);">
+                    <span>📈 Máy hiện sóng âm thanh thời gian thực (Real-time Waveform & Brightness Analyzer)</span>
+                    <span id="last-played-label" style="color:var(--gold);font-weight:700;">Sẵn sàng phát thử âm thanh sáng C5-C7...</span>
+                </div>
+                <canvas id="wave-canvas" width="760" height="90"></canvas>
+            </div>
+            <div class="quick-test-pad">
+                <button class="btn-primary" id="pad-spawn">💎 Bấm Máy Phát (Spawn)</button>
+                <button class="btn-secondary" id="pad-spawn-burst">⚡ Xả Liên Hoàn x6</button>
+                <button class="btn-gold" id="pad-merge-step">✨ Ghép Đồ (Từng Cấp)</button>
+                <button class="btn-green" id="pad-merge-chain">🎵 Chuỗi 12 Level (1→12)</button>
+                <button class="btn-secondary" id="pad-bubble">🫧 Sinh Bong Bóng</button>
+                <button class="btn-secondary" id="pad-full">🚫 Bàn Cờ Đầy</button>
+                <button class="btn-secondary" id="pad-ready">✅ Đủ Món Đơn Hàng</button>
+                <button class="btn-secondary" id="pad-coins">🪙 Mưa Xu Pha Lê</button>
+            </div>
+        </div>
+
+        <!-- 4 TAB CHỨC NĂNG -->
+        <div class="tabs">
+            <button class="tab-btn active" id="tab-btn-mixer" onclick="switchStudioTab('mixer')">🎚️ Tab 1: Bộ Chỉnh Âm Sắc Sáng & Lấp Lánh (Crystal Mixer)</button>
+            <button class="tab-btn" id="tab-btn-library" onclick="switchStudioTab('library')">📚 Tab 2: Kho Thư Viện 28 Âm Thanh Miễn Phí (.WAV) & Tải Lên</button>
+            <button class="tab-btn" id="tab-btn-bgm" onclick="switchStudioTab('bgm')">🎼 Tab 3: Sáng Tác Nhạc Nền (BGM Composer) & 6 Bản Nhạc Mẫu</button>
+            <button class="tab-btn" id="tab-btn-zzfx" onclick="switchStudioTab('zzfx')">🧪 Tab 4: Phòng Thí Nghiệm Sóng Âm ZzFX & jsfxr</button>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- TAB 1: BỘ TRỘN ÂM THANH CRYSTAL DOPAMINE BRIGHT -->
+        <!-- ================================================================== -->
+        <div id="pane-mixer">
+            <div class="preset-strip">
+                <div>
+                    <strong style="color:#fff;">✨ Chọn Phong Cách Âm Sắc Chủ Đạo (Presets Quãng Sáng C5 – C7):</strong>
+                    <div style="font-size:12px;color:var(--text-muted);">Tất cả Preset dưới đây đã được nâng cao độ lên quãng sáng trong trẻo và mở rộng bộ lọc Treble.</div>
+                </div>
+                <div class="preset-btns">
+                    <button class="btn-primary" onclick="applyPreset('bright_kalimba')">🎵 Kalimba Sáng Trong (Mặc Định Chủ Đạo)</button>
+                    <button class="btn-secondary" onclick="applyPreset('crystal_dopamine_bright')">💎 Pha Lê Lấp Lánh</button>
+                    <button class="btn-gold" onclick="applyPreset('candy_celesta_pop')">🍬 Kẹo Ngọt & Chuông Celesta</button>
+                    <button class="btn-green" onclick="applyPreset('fairy_harp_dream')">🧚 Đàn Hạc Tiên Nữ (Fairy Harp)</button>
+                    <button class="btn-pink" onclick="applyPreset('casino_jackpot_joy')">🎰 Jackpot Siêu Bắt Tai</button>
+                </div>
+            </div>
+
+            <div class="grid-cards">
+                <!-- CARD 0: ĐỘ SÁNG, CAO ĐỘ TỔNG & ÂM LƯỢNG -->
+                <div class="sfx-card" style="border-color:var(--accent);">
+                    <div class="sfx-card-header">
+                        <div>
+                            <div class="sfx-card-title">🌟 0. Tăng Độ Sáng, Cao Độ Tổng & Chuông Lấp Lánh</div>
+                            <div class="sfx-card-sub">Kéo thanh "Nâng cao độ tổng" hoặc "Độ sáng Treble" để âm thanh cao vút, trong veo ngay lập tức!</div>
+                        </div>
+                    </div>
+                    <div class="slider-row">
+                        <label>Nâng cao độ (Bán cung)</label>
+                        <input type="range" id="sl-pitchSemitoneOffset" min="-6" max="18" step="1" value="0">
+                        <span class="slider-val" id="val-pitchSemitoneOffset">0</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Độ sáng Treble EQ (dB)</label>
+                        <input type="range" id="sl-brightnessHighShelfDb" min="0" max="15" step="0.5" value="6.5">
+                        <span class="slider-val" id="val-brightnessHighShelfDb">6.5</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Chuông pha lê (Sparkle)</label>
+                        <input type="range" id="sl-sparkleBellMix" min="0" max="1.0" step="0.05" value="0.42">
+                        <span class="slider-val" id="val-sparkleBellMix">0.42</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Âm lượng SFX tổng</label>
+                        <input type="range" id="sl-masterVolume" min="0.3" max="2.2" step="0.05" value="1.15">
+                        <span class="slider-val" id="val-masterVolume">1.15</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Âm lượng Nhạc nền</label>
+                        <input type="range" id="sl-bgmVolume" min="0.02" max="0.8" step="0.01" value="0.14">
+                        <span class="slider-val" id="val-bgmVolume">0.14</span>
+                    </div>
+                </div>
+
+                <!-- CARD 1: BẤM MÁY PHÁT -->
+                <div class="sfx-card">
+                    <div class="sfx-card-header">
+                        <div>
+                            <div class="sfx-card-title">1. Tiếng Bấm Máy Phát (Crystal Pop Spawn)</div>
+                            <div class="sfx-card-sub">Pop giọt sương quãng cao (540Hz -> 1320Hz) + Chuông pha lê C6</div>
+                        </div>
+                        <button class="btn-primary" onclick="previewGameSound('spawn')">▶ Nghe</button>
+                    </div>
+                    <div class="slider-row">
+                        <label>Tần số đầu (Hz)</label>
+                        <input type="range" id="sl-spawn-fStart" min="300" max="1000" step="10" value="540">
+                        <span class="slider-val" id="val-spawn-fStart">540</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Tần số bật lên (Hz)</label>
+                        <input type="range" id="sl-spawn-fEnd" min="700" max="2400" step="20" value="1320">
+                        <span class="slider-val" id="val-spawn-fEnd">1320</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Nốt chuông đệm (Hz)</label>
+                        <input type="range" id="sl-spawn-bellFreq" min="523" max="2093" step="15" value="1046.5">
+                        <span class="slider-val" id="val-spawn-bellFreq">1046.5</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Độ dài Pop (giây)</label>
+                        <input type="range" id="sl-spawn-duration" min="0.025" max="0.110" step="0.002" value="0.044">
+                        <span class="slider-val" id="val-spawn-duration">0.044</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Âm lượng Pop</label>
+                        <input type="range" id="sl-spawn-gain" min="0.04" max="0.35" step="0.01" value="0.17">
+                        <span class="slider-val" id="val-spawn-gain">0.17</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Độ mở sáng (Hz)</label>
+                        <input type="range" id="sl-spawn-filterCutoff" min="1500" max="8000" step="100" value="5200">
+                        <span class="slider-val" id="val-spawn-filterCutoff">5200</span>
+                    </div>
+                </div>
+
+                <!-- CARD 2: GHÉP ĐỒ -->
+                <div class="sfx-card">
+                    <div class="sfx-card-header">
+                        <div>
+                            <div class="sfx-card-title">2. Tiếng Ghép Đồ (Celesta & Sparkle Merge)</div>
+                            <div class="sfx-card-sub">Thang âm quãng sáng C5 -> C7 kèm bụi sao lấp lánh</div>
+                        </div>
+                        <button class="btn-gold" onclick="previewGameSound('merge')">▶ Nghe</button>
+                    </div>
+                    <div class="slider-row">
+                        <label>Độ nảy giọt sương</label>
+                        <input type="range" id="sl-merge-popRatioStart" min="0.40" max="0.95" step="0.02" value="0.62">
+                        <span class="slider-val" id="val-merge-popRatioStart">0.62</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Độ ngân chuông (s)</label>
+                        <input type="range" id="sl-merge-bodyDuration" min="0.060" max="0.260" step="0.005" value="0.125">
+                        <span class="slider-val" id="val-merge-bodyDuration">0.125</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Âm lượng Ghép</label>
+                        <input type="range" id="sl-merge-gain" min="0.05" max="0.38" step="0.01" value="0.19">
+                        <span class="slider-val" id="val-merge-gain">0.19</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Họa âm sáng bậc 2</label>
+                        <input type="range" id="sl-merge-harmonic2Gain" min="0.05" max="0.65" step="0.02" value="0.34">
+                        <span class="slider-val" id="val-merge-harmonic2Gain">0.34</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Bụi sao lấp lánh</label>
+                        <input type="range" id="sl-merge-sparkleGain" min="0.0" max="0.25" step="0.01" value="0.11">
+                        <span class="slider-val" id="val-merge-sparkleGain">0.11</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Độ mở sáng (Hz)</label>
+                        <input type="range" id="sl-merge-filterCutoff" min="2000" max="8000" step="100" value="5800">
+                        <span class="slider-val" id="val-merge-filterCutoff">5800</span>
+                    </div>
+                </div>
+
+                <!-- CARD 3: BONG BÓNG, ĐỦ ĐƠN & ĐỒNG XU -->
+                <div class="sfx-card">
+                    <div class="sfx-card-header">
+                        <div>
+                            <div class="sfx-card-title">3. Bong Bóng, Đủ Đơn Hàng & Tiếng Xu Pha Lê</div>
+                            <div class="sfx-card-sub">Tất cả đều ở dải tần cao trong trẻo (1046Hz – 2637Hz)</div>
+                        </div>
+                        <div style="display:flex;gap:5px;">
+                            <button class="btn-secondary" onclick="previewGameSound('bubble')">🫧</button>
+                            <button class="btn-secondary" onclick="previewGameSound('order_ready')">✅</button>
+                            <button class="btn-secondary" onclick="previewGameSound('coin')">🪙</button>
+                        </div>
+                    </div>
+                    <div class="slider-row">
+                        <label>Bong bóng Đỉnh (Hz)</label>
+                        <input type="range" id="sl-bubble-fEnd" min="900" max="2600" step="20" value="1680">
+                        <span class="slider-val" id="val-bubble-fEnd">1680</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Đủ đơn Nốt 1 (Hz)</label>
+                        <input type="range" id="sl-order_ready-note1" min="523" max="1760" step="10" value="1046.5">
+                        <span class="slider-val" id="val-order_ready-note1">1046.5</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Đủ đơn Nốt 2 (Hz)</label>
+                        <input type="range" id="sl-order_ready-note2" min="659" max="2093" step="10" value="1318.5">
+                        <span class="slider-val" id="val-order_ready-note2">1318.5</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Độ ngân tiếng Xu (s)</label>
+                        <input type="range" id="sl-coin-duration" min="0.05" max="0.24" step="0.005" value="0.115">
+                        <span class="slider-val" id="val-coin-duration">0.115</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Độ lấp lánh Xu</label>
+                        <input type="range" id="sl-coin-shimmerRatio" min="1.5" max="4.0" step="0.1" value="2.5">
+                        <span class="slider-val" id="val-coin-shimmerRatio">2.5</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Âm lượng Xu</label>
+                        <input type="range" id="sl-coin-gain" min="0.03" max="0.28" step="0.01" value="0.11">
+                        <span class="slider-val" id="val-coin-gain">0.11</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BẢNG 12 ÂM THANH GHÉP ĐỒ CỐ ĐỊNH THEO 12 LEVEL (LEVEL 1 -> LEVEL 12) -->
+            <div class="sfx-card" style="margin-top:16px;border-color:var(--gold);">
+                <div class="sfx-card-header" style="flex-wrap:wrap;">
+                    <div>
+                        <div class="sfx-card-title" style="color:var(--gold);">🎹 4. Bảng Tinh Chỉnh 12 Âm Thanh Ghép Đồ Theo 12 Cấp Độ (Level 1 → Level 12)</div>
+                        <div class="sfx-card-sub">
+                            Mỗi cấp độ vật phẩm (Lv.1 → Lv.12) có 1 âm thanh cố định riêng biệt. Ghép cùng cấp giữ nguyên âm thanh đó; chỉ khi ghép tăng lên cấp cao hơn thì âm thanh mới cao lên!
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="btn-gold" type="button" onclick="playAll12LevelsSequence()">🎵 Nghe Chuỗi Tăng Cấp Lv.1 → Lv.12</button>
+                        <button class="btn-secondary" type="button" onclick="reset12LevelNotes()">🔄 Đặt Lại 12 Nốt Chuẩn (C5 → C7)</button>
+                    </div>
+                </div>
+                <div id="twelve-levels-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px;margin-top:4px;"></div>
+            </div>
+
+            <div class="sfx-card" style="margin-top:16px;">
+                <div class="sfx-card-header">
+                    <div>
+                        <div class="sfx-card-title">📄 Cấu Hình JSON Hiện Tại (Đồng bộ trực tiếp vào Game)</div>
+                    </div>
+                </div>
+                <textarea id="config-json-box" class="code-output" readonly></textarea>
+            </div>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- TAB 2: KHO THƯ VIỆN 28 ÂM THANH MIỄN PHÍ (.WAV) & TẢI FILE LÊN -->
+        <!-- ================================================================== -->
+        <div id="pane-library" style="display:none;">
+            <div class="preset-strip">
+                <div>
+                    <strong style="color:#fff;">📚 Kho 28 File Âm Thanh Miễn Phí (CC0 44.1kHz Stereo .WAV tại <code>assets/sfx_library/</code>):</strong>
+                    <div style="font-size:12px;color:var(--text-muted);">
+                        Nghe thử, chỉnh Cao độ (Pitch) và bấm <b>"🎯 Dùng Cho Game"</b> để gán trực tiếp file âm thanh bạn thích vào game, hoặc tải file <code>.mp3/.wav</code> từ máy tính của bạn lên!
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <label class="file-label-btn btn-gold">
+                        📂 Tải File .MP3 / .WAV Từ Máy Lên
+                        <input type="file" id="custom-sfx-upload" accept="audio/*" style="display:none;">
+                    </label>
+                    <select id="upload-target-slot">
+                        <option value="spawn">Gán file tải lên cho: Bấm Máy Phát (Spawn)</option>
+                        <option value="merge">Gán file tải lên cho: Ghép Đồ Chung (Tự nâng theo 12 Level)</option>
+                        <option value="merge_lv1">Gán riêng cho: Ghép Đồ Level 1</option>
+                        <option value="merge_lv2">Gán riêng cho: Ghép Đồ Level 2</option>
+                        <option value="merge_lv3">Gán riêng cho: Ghép Đồ Level 3</option>
+                        <option value="merge_lv4">Gán riêng cho: Ghép Đồ Level 4</option>
+                        <option value="merge_lv5">Gán riêng cho: Ghép Đồ Level 5</option>
+                        <option value="merge_lv6">Gán riêng cho: Ghép Đồ Level 6</option>
+                        <option value="merge_lv7">Gán riêng cho: Ghép Đồ Level 7</option>
+                        <option value="merge_lv8">Gán riêng cho: Ghép Đồ Level 8</option>
+                        <option value="merge_lv9">Gán riêng cho: Ghép Đồ Level 9</option>
+                        <option value="merge_lv10">Gán riêng cho: Ghép Đồ Level 10</option>
+                        <option value="merge_lv11">Gán riêng cho: Ghép Đồ Level 11</option>
+                        <option value="merge_lv12">Gán riêng cho: Ghép Đồ Level 12</option>
+                        <option value="bubble">Gán file tải lên cho: Bong Bóng (Bubble)</option>
+                        <option value="order_ready">Gán file tải lên cho: Đủ Đơn Hàng</option>
+                        <option value="coin">Gán file tải lên cho: Tiếng Xu</option>
+                        <option value="win">Gán file tải lên cho: Thắng Màn / Giao Đơn</option>
+                        <option value="full_board">Gán file tải lên cho: Bàn Đầy</option>
+                    </select>
+                    <button class="btn-orange" onclick="clearAllSampleOverrides()">🔄 Dùng Lại Bộ Tổng Hợp Tab 1</button>
+                </div>
+            </div>
+
+            <div id="active-samples-banner" style="margin-bottom:14px;font-size:13px;color:var(--accent-green);"></div>
+            <div class="lib-grid" id="sfx-library-grid"></div>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- TAB 3: TRÌNH SÁNG TÁC NHẠC NỀN (BGM COMPOSER) & 6 BẢN NHẠC MẪU -->
+        <!-- ================================================================== -->
+        <div id="pane-bgm" style="display:none;">
+            <div class="grid-cards">
+                <!-- CỘT TRÁI: THƯ VIỆN 6 BẢN NHẠC NỀN MIỄN PHÍ -->
+                <div class="sfx-card">
+                    <div class="sfx-card-header">
+                        <div>
+                            <div class="sfx-card-title">🎵 Kho 6 Bản Nhạc Nền Cắm Trại Miễn Phí (<code>assets/music/</code>)</div>
+                            <div class="sfx-card-sub">Bấm nghe thử, chọn bài cố định cho game hoặc tải file nhạc nền .MP3/.WAV của bạn lên</div>
+                        </div>
+                        <button class="btn-orange" onclick="stopBgmPreview()">⏹ Dừng Nhạc</button>
+                    </div>
+
+                    <div class="slider-row">
+                        <label>Chế độ phát trong Game</label>
+                        <select id="bgm-select-mode" onchange="onChangeBgmMode()">
+                            <option value="-1">🔀 Phát ngẫu nhiên xoay vòng cả 6 bài</option>
+                            <option value="0">Bài 1: 🏕️ Khu Trại Rạng Rỡ (Bản gốc)</option>
+                            <option value="1">Bài 2: ☀️ Góc Nhỏ Nắng Mai (Acoustic & Celesta Sáng)</option>
+                            <option value="2">Bài 3: 🌼 Mưa Vàng Trên Khu Trại (Kalimba & Chuông Gió)</option>
+                            <option value="3">Bài 4: 🎸 Ukulele Suối Nắng (Dã Ngoại Rộn Ràng)</option>
+                            <option value="4">Bài 5: 🌌 Hộp Nhạc Sao Đêm (Music Box & Harp Lung Linh)</option>
+                            <option value="5">Bài 6: 🌲 Pha Lê Rừng Thông (Marimba & Bell Chime)</option>
+                        </select>
+                        <span class="slider-val">BGM</span>
+                    </div>
+
+                    <div class="slider-row">
+                        <label>Tốc độ Nhạc nền (Rate)</label>
+                        <input type="range" id="sl-bgmPlaybackRate" min="0.75" max="1.35" step="0.05" value="1.0" oninput="onBgmRateChange(this.value)">
+                        <span class="slider-val" id="val-bgmPlaybackRate">1.00x</span>
+                    </div>
+
+                    <div id="bgm-library-list" style="display:flex;flex-direction:column;gap:8px;margin-top:6px;"></div>
+
+                    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;">
+                        <label class="file-label-btn btn-gold">
+                            📂 Tải Bản Nhạc Nền (.MP3/.WAV) Từ Máy Tính Vào Game
+                            <input type="file" id="custom-bgm-upload" accept="audio/*" style="display:none;">
+                        </label>
+                        <button class="btn-secondary" onclick="clearCustomBgm()">Xóa Nhạc Tải Lên</button>
+                    </div>
+                </div>
+
+                <!-- CỘT PHẢI: PHÒNG THU SÁNG TÁC NHẠC NỀN TỰ ĐỘNG -->
+                <div class="sfx-card" style="border-color:var(--gold);">
+                    <div class="sfx-card-header">
+                        <div>
+                            <div class="sfx-card-title" style="color:var(--gold);">🎼 Phòng Thu Sáng Tác Nhạc Nền Tự Động (Procedural BGM Studio)</div>
+                            <div class="sfx-card-sub">Tự động phối hợp âm, giai điệu Celesta/Ukulele/Kalimba/Harp và xuất ra file .WAV hoặc áp dụng vào Game!</div>
+                        </div>
+                    </div>
+
+                    <div class="slider-row">
+                        <label>Nhạc cụ chủ đạo</label>
+                        <select id="comp-style">
+                            <option value="celesta">💎 Chuông Celesta & Guitar Sáng</option>
+                            <option value="ukulele">🎸 Ukulele Dã Ngoại Vui Nhộn</option>
+                            <option value="musicbox">🌌 Hộp Nhạc Pha Lê (Music Box)</option>
+                            <option value="kalimba">🎵 Đàn Kalimba & Chuông Gió</option>
+                        </select>
+                        <span class="slider-val">Style</span>
+                    </div>
+
+                    <div class="slider-row">
+                        <label>Vòng Hợp Âm</label>
+                        <select id="comp-chords">
+                            <option value="0">C - G - Am - F (Tươi sáng, kinh điển)</option>
+                            <option value="1">Fmaj7 - G - Em - Am (Ấm áp, mộng mơ)</option>
+                            <option value="2">D - A - Bm - G (Rộn ràng, năng lượng)</option>
+                            <option value="3">C - Am - Dm - G (Dã ngoại vui tươi)</option>
+                        </select>
+                        <span class="slider-val">Chords</span>
+                    </div>
+
+                    <div class="slider-row">
+                        <label>Tốc độ nhịp (BPM)</label>
+                        <input type="range" id="comp-bpm" min="84" max="144" step="2" value="116" oninput="document.getElementById('val-comp-bpm').textContent=this.value">
+                        <span class="slider-val" id="val-comp-bpm">116</span>
+                    </div>
+
+                    <div class="slider-row">
+                        <label>Quãng giai điệu</label>
+                        <select id="comp-octave">
+                            <option value="1.0">Quãng Sáng Vừa (C5 –E6)</option>
+                            <option value="1.5">Quãng Cao Rực Rỡ (G5 – G6)</option>
+                            <option value="2.0">Quãng Pha Lê Lung Linh (C6 – C7)</option>
+                        </select>
+                        <span class="slider-val">Octave</span>
+                    </div>
+
+                    <div class="slider-row">
+                        <label>Tiếng Chim Hót Rừng</label>
+                        <input type="range" id="comp-birds" min="0" max="0.5" step="0.05" value="0.15" oninput="document.getElementById('val-comp-birds').textContent=this.value">
+                        <span class="slider-val" id="val-comp-birds">0.15</span>
+                    </div>
+
+                    <div class="slider-row">
+                        <label>Độ dài bản nhạc (Ô nhịp)</label>
+                        <input type="range" id="comp-bars" min="8" max="32" step="8" value="16" oninput="document.getElementById('val-comp-bars').textContent=this.value">
+                        <span class="slider-val" id="val-comp-bars">16</span>
+                    </div>
+
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+                        <button class="btn-primary" onclick="composeAndPlayBgm(false)">▶ Sáng Tác & Nghe Thử</button>
+                        <button class="btn-gold" onclick="composeAndPlayBgm(true)">🎲 Đổi Giai Điệu Ngẫu Nhiên Mới</button>
+                        <button class="btn-green" onclick="applyComposedBgmToGame()">💾 Đặt Làm Nhạc Nền Trong Game</button>
+                        <button class="btn-secondary" onclick="downloadComposedBgmWav()">📥 Tải Bản Nhạc (.WAV)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- TAB 4: PHÒNG THÍ NGHIỆM ZZFX & JSFXR -->
+        <!-- ================================================================== -->
+        <div id="pane-zzfx" style="display:none;">
+            <div class="preset-strip">
+                <div>
+                    <strong style="color:#fff;">🧪 Trình Tạo Sóng Âm ZzFX & jsfxr Mã Nguồn Mở:</strong>
+                    <div style="font-size:12px;color:var(--text-muted);">Bấm tạo ngẫu nhiên theo chủ đề, tinh chỉnh sóng âm, xuất file .WAV hoặc gán vào Game.</div>
+                </div>
+                <div class="preset-btns">
+                    <button class="btn-primary" onclick="loadZzfxTemplate('crystal_pop')">💎 Pop Pha Lê</button>
+                    <button class="btn-gold" onclick="loadZzfxTemplate('celesta_merge')">🌟 Chuông Celesta</button>
+                    <button class="btn-green" onclick="loadZzfxTemplate('bright_bubble')">🫧 Bong Bóng Sáng</button>
+                    <button class="btn-secondary" onclick="loadZzfxTemplate('bright_coin')">🪙 Đồng Xu Bạc</button>
+                    <button class="btn-pink" onclick="generateJsfxrPreset('pickupCoin')">🎰 jsfxr: Pickup/Coin</button>
+                    <button class="btn-pink" onclick="generateJsfxrPreset('powerUp')">🚀 jsfxr: PowerUp</button>
+                    <button class="btn-secondary" onclick="mutateZzfx()">🎲 Biến Đổi Nhẹ (Mutate)</button>
+                </div>
+            </div>
+
+            <div class="grid-cards">
+                <div class="sfx-card">
+                    <div class="sfx-card-header">
+                        <div class="sfx-card-title">Thông Số Sóng Âm ZzFX</div>
+                        <button class="btn-primary" onclick="playCurrentZzfx()">▶ Phát Thử ZzFX</button>
+                    </div>
+                    <div class="slider-row">
+                        <label>Âm lượng (Volume)</label>
+                        <input type="range" id="zz-vol" min="0.1" max="2.0" step="0.05" value="1.1">
+                        <span class="slider-val" id="v-zz-vol">1.1</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Tần số gốc (Hz)</label>
+                        <input type="range" id="zz-freq" min="150" max="2400" step="10" value="784">
+                        <span class="slider-val" id="v-zz-freq">784</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Attack (giây)</label>
+                        <input type="range" id="zz-atk" min="0.0" max="0.10" step="0.002" value="0.002">
+                        <span class="slider-val" id="v-zz-atk">0.002</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Sustain (giây)</label>
+                        <input type="range" id="zz-sus" min="0.0" max="0.25" step="0.005" value="0.020">
+                        <span class="slider-val" id="v-zz-sus">0.020</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Release / Ngân (giây)</label>
+                        <input type="range" id="zz-rel" min="0.02" max="0.45" step="0.005" value="0.095">
+                        <span class="slider-val" id="v-zz-rel">0.095</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Dạng sóng (0=Sine..4)</label>
+                        <input type="range" id="zz-shape" min="0" max="4" step="1" value="0">
+                        <span class="slider-val" id="v-zz-shape">0</span>
+                    </div>
+                </div>
+
+                <div class="sfx-card">
+                    <div class="sfx-card-header">
+                        <div class="sfx-card-title">Uốn Cao Độ & Bước Nhảy Nốt (Pitch Slide & Jump)</div>
+                        <button class="btn-gold" onclick="exportCurrentZzfxWav()">📥 Tải File .WAV</button>
+                    </div>
+                    <div class="slider-row">
+                        <label>Trượt tần số (Slide)</label>
+                        <input type="range" id="zz-slide" min="-15" max="15" step="0.2" value="3.5">
+                        <span class="slider-val" id="v-zz-slide">3.5</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Bước nhảy nốt (Hz)</label>
+                        <input type="range" id="zz-pjump" min="-800" max="1200" step="20" value="392">
+                        <span class="slider-val" id="v-zz-pjump">392</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Thời điểm nhảy (s)</label>
+                        <input type="range" id="zz-pjumpt" min="0" max="0.18" step="0.005" value="0.03">
+                        <span class="slider-val" id="v-zz-pjumpt">0.03</span>
+                    </div>
+                    <div class="slider-row">
+                        <label>Độ cong sóng (Curve)</label>
+                        <input type="range" id="zz-curve" min="0.3" max="2.5" step="0.1" value="1.1">
+                        <span class="slider-val" id="v-zz-curve">1.1</span>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">
+                        <button class="btn-secondary" onclick="assignZzfxToSlot('spawn')">Gán: Bấm Máy Phát</button>
+                        <button class="btn-secondary" onclick="assignZzfxToSlot('merge')">Gán: Ghép Đồ</button>
+                        <button class="btn-secondary" onclick="assignZzfxToSlot('bubble')">Gán: Bong Bóng</button>
+                        <button class="btn-secondary" onclick="assignZzfxToSlot('coin')">Gán: Tiếng Xu</button>
+                        <button class="btn-orange" onclick="clearZzfxOverrides()">Xóa Gán ZzFX</button>
+                    </div>
+                    <textarea id="zzfx-code-box" class="code-output" style="min-height:60px;" readonly></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-toast" id="status-toast">Đã lưu cấu hình!</div>
+
+    <script>
+        var STORAGE_KEY = 'MERGE_CAMPING_CUSTOM_SFX_V1';
+        var audioCtx = null;
+        var analyser = null;
+        var highShelfNode = null;
+        var mergePreviewStep = 0;
+        var bgmPreviewAudio = null;
+        var lastComposedWavBlob = null;
+        var lastComposedDataUrl = null;
+        var compSeed = 101;
+
+        var MERGE_SCALE_BRIGHT = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 523.25, 587.33, 659.25, 698.46, 783.99];
+
+        var PRESETS = {
+            crystal_dopamine_bright: {
+                presetName: 'crystal_dopamine_bright',
+                masterVolume: 1.15,
+                bgmVolume: 0.14,
+                pitchSemitoneOffset: 0,
+                brightnessHighShelfDb: 6.5,
+                sparkleBellMix: 0.42,
+                spawn: { fStart: 540, fEnd: 1320, bellFreq: 1046.5, duration: 0.044, gain: 0.17, woodFreq: 420, woodGain: 0.08, filterCutoff: 5200, jitter: 0.035 },
+                move: { fStart: 580, fEnd: 920, duration: 0.024, gain: 0.06, filterCutoff: 3800 },
+                merge: { baseNotes: MERGE_SCALE_BRIGHT, popRatioStart: 0.62, popDuration: 0.022, bodyDuration: 0.125, gain: 0.19, harmonic2Gain: 0.34, sparkleGain: 0.11, filterCutoff: 5800, waveType: 'sine' },
+                bubble: { fStart: 460, fMid: 1120, fEnd: 1680, duration: 0.125, gain: 0.17 },
+                full_board: { f1: 659.25, f2: 523.25, duration: 0.065, gap: 0.065, gain: 0.14, filterCutoff: 2800 },
+                order_ready: { note1: 1046.5, note2: 1318.5, note3: 1568.0, gap: 0.052, duration: 0.135, gain: 0.16 },
+                coin: { baseFreq: 1568.0, duration: 0.115, gain: 0.11, shimmerRatio: 2.5, filterCutoff: 6500 },
+                zzfxOverrides: {},
+                sampleOverrides: {}
+            },
+            candy_celesta_pop: {
+                presetName: 'candy_celesta_pop',
+                masterVolume: 1.20,
+                bgmVolume: 0.14,
+                pitchSemitoneOffset: 2,
+                brightnessHighShelfDb: 8.0,
+                sparkleBellMix: 0.55,
+                spawn: { fStart: 620, fEnd: 1560, bellFreq: 1318.5, duration: 0.042, gain: 0.18, woodFreq: 520, woodGain: 0.09, filterCutoff: 6200, jitter: 0.04 },
+                move: { fStart: 640, fEnd: 1040, duration: 0.022, gain: 0.06, filterCutoff: 4200 },
+                merge: { baseNotes: MERGE_SCALE_BRIGHT, popRatioStart: 0.58, popDuration: 0.024, bodyDuration: 0.135, gain: 0.20, harmonic2Gain: 0.42, sparkleGain: 0.14, filterCutoff: 6500, waveType: 'sine' },
+                bubble: { fStart: 520, fMid: 1240, fEnd: 1860, duration: 0.13, gain: 0.18 },
+                full_board: { f1: 784.0, f2: 659.25, duration: 0.065, gap: 0.06, gain: 0.14, filterCutoff: 3200 },
+                order_ready: { note1: 1174.66, note2: 1480.0, note3: 1760.0, gap: 0.05, duration: 0.14, gain: 0.17 },
+                coin: { baseFreq: 1760.0, duration: 0.12, gain: 0.12, shimmerRatio: 2.6, filterCutoff: 7000 },
+                zzfxOverrides: {},
+                sampleOverrides: {}
+            },
+            fairy_harp_dream: {
+                presetName: 'fairy_harp_dream',
+                masterVolume: 1.15,
+                bgmVolume: 0.14,
+                pitchSemitoneOffset: 0,
+                brightnessHighShelfDb: 7.5,
+                sparkleBellMix: 0.60,
+                spawn: { fStart: 580, fEnd: 1420, bellFreq: 1174.66, duration: 0.046, gain: 0.16, woodFreq: 480, woodGain: 0.08, filterCutoff: 6000, jitter: 0.03 },
+                move: { fStart: 600, fEnd: 980, duration: 0.024, gain: 0.05, filterCutoff: 4000 },
+                merge: { baseNotes: MERGE_SCALE_BRIGHT, popRatioStart: 0.72, popDuration: 0.020, bodyDuration: 0.165, gain: 0.19, harmonic2Gain: 0.45, sparkleGain: 0.15, filterCutoff: 6800, waveType: 'sine' },
+                bubble: { fStart: 480, fMid: 1180, fEnd: 1760, duration: 0.13, gain: 0.17 },
+                full_board: { f1: 659.25, f2: 523.25, duration: 0.065, gap: 0.065, gain: 0.13, filterCutoff: 3000 },
+                order_ready: { note1: 1046.5, note2: 1318.5, note3: 2093.0, gap: 0.048, duration: 0.15, gain: 0.16 },
+                coin: { baseFreq: 1975.5, duration: 0.13, gain: 0.11, shimmerRatio: 2.4, filterCutoff: 7000 },
+                zzfxOverrides: {},
+                sampleOverrides: {}
+            },
+            casino_jackpot_joy: {
+                presetName: 'casino_jackpot_joy',
+                masterVolume: 1.25,
+                bgmVolume: 0.14,
+                pitchSemitoneOffset: 4,
+                brightnessHighShelfDb: 9.0,
+                sparkleBellMix: 0.65,
+                spawn: { fStart: 660, fEnd: 1680, bellFreq: 1318.5, duration: 0.040, gain: 0.19, woodFreq: 540, woodGain: 0.10, filterCutoff: 6800, jitter: 0.03 },
+                move: { fStart: 680, fEnd: 1100, duration: 0.022, gain: 0.06, filterCutoff: 4500 },
+                merge: { baseNotes: MERGE_SCALE_BRIGHT, popRatioStart: 0.65, popDuration: 0.022, bodyDuration: 0.14, gain: 0.21, harmonic2Gain: 0.48, sparkleGain: 0.16, filterCutoff: 7200, waveType: 'sine' },
+                bubble: { fStart: 540, fMid: 1320, fEnd: 1980, duration: 0.13, gain: 0.18 },
+                full_board: { f1: 784.0, f2: 587.33, duration: 0.065, gap: 0.06, gain: 0.15, filterCutoff: 3500 },
+                order_ready: { note1: 1318.5, note2: 1568.0, note3: 2093.0, gap: 0.045, duration: 0.15, gain: 0.18 },
+                coin: { baseFreq: 2093.0, duration: 0.13, gain: 0.13, shimmerRatio: 2.7, filterCutoff: 7500 },
+                zzfxOverrides: {},
+                sampleOverrides: {}
+            },
+            bright_kalimba: {
+                presetName: 'bright_kalimba',
+                masterVolume: 1.15,
+                bgmVolume: 0.14,
+                pitchSemitoneOffset: 0,
+                brightnessHighShelfDb: 5.5,
+                sparkleBellMix: 0.32,
+                spawn: { fStart: 480, fEnd: 1180, bellFreq: 987.77, duration: 0.045, gain: 0.16, woodFreq: 392, woodGain: 0.09, filterCutoff: 4600, jitter: 0.035 },
+                move: { fStart: 520, fEnd: 840, duration: 0.024, gain: 0.05, filterCutoff: 3400 },
+                merge: { baseNotes: MERGE_SCALE_BRIGHT, popRatioStart: 0.58, popDuration: 0.024, bodyDuration: 0.115, gain: 0.18, harmonic2Gain: 0.30, sparkleGain: 0.09, filterCutoff: 4800, waveType: 'sine' },
+                bubble: { fStart: 420, fMid: 980, fEnd: 1480, duration: 0.12, gain: 0.16 },
+                full_board: { f1: 587.33, f2: 440.0, duration: 0.065, gap: 0.065, gain: 0.13, filterCutoff: 2400 },
+                order_ready: { note1: 987.77, note2: 1318.5, note3: 1568.0, gap: 0.052, duration: 0.13, gain: 0.15 },
+                coin: { baseFreq: 1568.0, duration: 0.11, gain: 0.10, shimmerRatio: 2.3, filterCutoff: 5800 },
+                zzfxOverrides: {},
+                sampleOverrides: {}
+            }
+        };
+
+        var currentConfig = JSON.parse(JSON.stringify(PRESETS.bright_kalimba));
+        var libraryManifest = { sfx: [], bgm: [] };
+
+        function ensureAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                highShelfNode = audioCtx.createBiquadFilter();
+                highShelfNode.type = 'highshelf';
+                highShelfNode.frequency.setValueAtTime(2200, audioCtx.currentTime);
+                highShelfNode.gain.setValueAtTime(currentConfig.brightnessHighShelfDb || 6.5, audioCtx.currentTime);
+
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 1024;
+                highShelfNode.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                drawOscilloscope();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (highShelfNode) {
+                highShelfNode.gain.setValueAtTime(currentConfig.brightnessHighShelfDb || 6.5, audioCtx.currentTime);
+            }
+        }
+
+        function getOutNode() {
+            ensureAudio();
+            return highShelfNode || analyser || audioCtx.destination;
+        }
+
+        function drawOscilloscope() {
+            var canvas = document.getElementById('wave-canvas');
+            var ctx = canvas.getContext('2d');
+            var bufLen = analyser.frequencyBinCount;
+            var data = new Uint8Array(bufLen);
+
+            function render() {
+                requestAnimationFrame(render);
+                analyser.getByteTimeDomainData(data);
+                ctx.fillStyle = '#05080d';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#00e5ff';
+                ctx.beginPath();
+                var slice = canvas.width / bufLen;
+                var x = 0;
+                for (var i = 0; i < bufLen; i++) {
+                    var v = data[i] / 128.0;
+                    var y = v * canvas.height / 2;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                    x += slice;
+                }
+                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.stroke();
+            }
+            render();
+        }
+
+        function showStatus(msg) {
+            var el = document.getElementById('status-toast');
+            el.textContent = msg;
+            el.style.display = 'block';
+            clearTimeout(el._timer);
+            el._timer = setTimeout(function () { el.style.display = 'none'; }, 2800);
+        }
+
+        function getSemiMul() {
+            return Math.pow(2, (currentConfig.pitchSemitoneOffset || 0) / 12);
+        }
+
+        function playSweep(f0, f1, dur, gainVal, wave, cutoff, delaySec) {
+            ensureAudio();
+            var semi = getSemiMul();
+            var t0 = audioCtx.currentTime + (delaySec || 0);
+            var osc = audioCtx.createOscillator();
+            var flt = audioCtx.createBiquadFilter();
+            var g = audioCtx.createGain();
+            osc.type = wave || 'sine';
+            osc.frequency.setValueAtTime(Math.max(40, f0 * semi), t0);
+            osc.frequency.exponentialRampToValueAtTime(Math.max(40, f1 * semi), t0 + dur);
+            flt.type = 'lowpass';
+            flt.frequency.setValueAtTime(cutoff || 5200, t0);
+            var peak = Math.max(0.001, gainVal * (currentConfig.masterVolume || 1.15));
+            g.gain.setValueAtTime(0.0005, t0);
+            g.gain.linearRampToValueAtTime(peak, t0 + Math.min(0.003, dur * 0.14));
+            g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur);
+            osc.connect(flt);
+            flt.connect(g);
+            g.connect(getOutNode());
+            osc.start(t0);
+            osc.stop(t0 + dur + 0.012);
+        }
+
+        function playPluck(freq, startTime, dur, peakGain, graceRatio, cutoff, harm2Ratio) {
+            ensureAudio();
+            var semi = getSemiMul();
+            var targetFreq = Math.min(6500, Math.max(120, freq * semi));
+            var masterVol = currentConfig.masterVolume || 1.15;
+            var finalGain = Math.max(0.002, peakGain * masterVol);
+            var bellMix = (currentConfig.sparkleBellMix !== undefined) ? currentConfig.sparkleBellMix : 0.42;
+
+            var mainOsc = audioCtx.createOscillator();
+            var harmOsc = audioCtx.createOscillator();
+            var bellOsc = audioCtx.createOscillator();
+            var filter = audioCtx.createBiquadFilter();
+            var mainGain = audioCtx.createGain();
+            var harmGain = audioCtx.createGain();
+            var bellGain = audioCtx.createGain();
+
+            mainOsc.type = 'sine';
+            harmOsc.type = 'triangle';
+            bellOsc.type = 'sine';
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(cutoff || 5800, startTime);
+
+            var startFreq = graceRatio ? targetFreq * graceRatio : targetFreq;
+            mainOsc.frequency.setValueAtTime(startFreq, startTime);
+            harmOsc.frequency.setValueAtTime(targetFreq * 2.0, startTime);
+            bellOsc.frequency.setValueAtTime(targetFreq * 3.0, startTime);
+            if (graceRatio && graceRatio !== 1) {
+                mainOsc.frequency.exponentialRampToValueAtTime(targetFreq, startTime + Math.min(0.022, dur * 0.28));
+            }
+            var attack = Math.min(0.003, dur * 0.10);
+            mainGain.gain.setValueAtTime(0.0005, startTime);
+            mainGain.gain.linearRampToValueAtTime(finalGain, startTime + attack);
+            mainGain.gain.exponentialRampToValueAtTime(0.0005, startTime + dur);
+
+            harmGain.gain.setValueAtTime(0.0005, startTime);
+            harmGain.gain.linearRampToValueAtTime(finalGain * (harm2Ratio !== undefined ? harm2Ratio : 0.34), startTime + attack);
+            harmGain.gain.exponentialRampToValueAtTime(0.0005, startTime + dur * 0.78);
+
+            bellGain.gain.setValueAtTime(0.0005, startTime);
+            bellGain.gain.linearRampToValueAtTime(finalGain * bellMix * 0.45, startTime + attack);
+            bellGain.gain.exponentialRampToValueAtTime(0.0005, startTime + dur * 0.58);
+
+            mainOsc.connect(filter);
+            harmOsc.connect(harmGain);
+            harmGain.connect(filter);
+            bellOsc.connect(bellGain);
+            bellGain.connect(filter);
+            filter.connect(mainGain);
+            mainGain.connect(getOutNode());
+
+            mainOsc.start(startTime);
+            harmOsc.start(startTime);
+            bellOsc.start(startTime);
+            mainOsc.stop(startTime + dur + 0.015);
+            harmOsc.stop(startTime + dur + 0.015);
+            bellOsc.stop(startTime + dur + 0.015);
+        }
+
+        function playSampleUrl(url, rate, gainVal) {
+            ensureAudio();
+            fetch(url)
+                .then(function (r) { return r.arrayBuffer(); })
+                .then(function (ab) { return audioCtx.decodeAudioData(ab); })
+                .then(function (buf) {
+                    var src = audioCtx.createBufferSource();
+                    var g = audioCtx.createGain();
+                    src.buffer = buf;
+                    src.playbackRate.setValueAtTime((rate || 1.0) * getSemiMul(), audioCtx.currentTime);
+                    g.gain.setValueAtTime((gainVal || 0.9) * (currentConfig.masterVolume || 1.15), audioCtx.currentTime);
+                    src.connect(g);
+                    g.connect(getOutNode());
+                    src.start(0);
+                })
+                .catch(function (e) { console.warn(e); });
+        }
+
+        var LEVEL_NOTE_NAMES = ['C5 (Đô 5)', 'D5 (Rê 5)', 'E5 (Mi 5)', 'F5 (Pha 5)', 'G5 (Son 5)', 'A5 (La 5)', 'B5 (Si 5)', 'C5 (Vòng lại Đô 5)', 'D5 (Rê 5)', 'E5 (Mi 5)', 'F5 (Pha 5)', 'G5 (Son 5)'];
+
+        function previewGameSound(type, forceStep) {
+            ensureAudio();
+            var now = audioCtx.currentTime;
+            var stepIdx = (typeof forceStep === 'number') ? Math.max(0, Math.min(11, forceStep)) : (mergePreviewStep++ % 12);
+            var lvNum = stepIdx + 1;
+            document.getElementById('last-played-label').textContent = (type === 'merge')
+                ? ('Đang phát: GHÉP ĐỒ LEVEL ' + lvNum + ' (' + (LEVEL_NOTE_NAMES[stepIdx] || '') + ')')
+                : ('Đang phát: ' + type.toUpperCase());
+
+            var sampleKey = (type === 'merge' && currentConfig.sampleOverrides && currentConfig.sampleOverrides['merge_lv' + lvNum])
+                ? ('merge_lv' + lvNum)
+                : type;
+
+            if (currentConfig.sampleOverrides && currentConfig.sampleOverrides[sampleKey]) {
+                var ov = currentConfig.sampleOverrides[sampleKey];
+                var url = typeof ov === 'string' ? ov : ov.url;
+                var rate = (typeof ov === 'object' && ov.rate) ? ov.rate : 1.0;
+                if (type === 'merge' && sampleKey === 'merge') {
+                    var sNotes = (currentConfig.merge && Array.isArray(currentConfig.merge.baseNotes)) ? currentConfig.merge.baseNotes : MERGE_SCALE_BRIGHT;
+                    rate *= ((sNotes[stepIdx] || 523.25) / (sNotes[0] || 523.25));
+                }
+                playSampleUrl(url, rate, 0.9);
+                return;
+            }
+
+            if (currentConfig.zzfxOverrides && Array.isArray(currentConfig.zzfxOverrides[type])) {
+                var zArr = currentConfig.zzfxOverrides[type].slice();
+                if (type === 'merge') {
+                    var zNotes = (currentConfig.merge && Array.isArray(currentConfig.merge.baseNotes)) ? currentConfig.merge.baseNotes : MERGE_SCALE_BRIGHT;
+                    zArr[2] = zNotes[stepIdx] || 523.25;
+                }
+                playZzfxBuffer(zArr);
+                return;
+            }
+
+            if (type === 'spawn') {
+                var sp = currentConfig.spawn;
+                var jitter = 1 + ((Math.random() * 2 - 1) * (sp.jitter || 0.035));
+                playSweep(sp.fStart * jitter, sp.fEnd * jitter, sp.duration, sp.gain, 'sine', sp.filterCutoff, 0);
+                playPluck((sp.bellFreq || 1046.5) * jitter, now + 0.006, 0.075, (sp.woodGain || 0.08) * 1.35, 0.86, sp.filterCutoff, 0.35);
+            } else if (type === 'merge') {
+                var mg = currentConfig.merge;
+                var notesArr = (Array.isArray(mg.baseNotes) && mg.baseNotes.length >= 12) ? mg.baseNotes : MERGE_SCALE_BRIGHT;
+                var note = notesArr[stepIdx] || 523.25;
+                var lvGainMul = (Array.isArray(mg.levelGains) && typeof mg.levelGains[stepIdx] === 'number') ? mg.levelGains[stepIdx] : 1.0;
+                var bodyDur = (mg.bodyDuration || 0.125) * (1 + stepIdx * 0.025);
+                var bodyGain = (mg.gain || 0.19) * lvGainMul;
+                var spkGain = (mg.sparkleGain !== undefined ? mg.sparkleGain : 0.11) * lvGainMul;
+
+                playSweep(note * mg.popRatioStart, note * 1.35, mg.popDuration || 0.022, bodyGain * 0.78, 'sine', 5600, 0);
+                playPluck(note, now + 0.005, bodyDur, bodyGain, 0.82, mg.filterCutoff, mg.harmonic2Gain);
+                if (spkGain > 0) {
+                    playPluck(note * 1.498, now + 0.028, bodyDur * 0.85, spkGain * (lvNum >= 4 ? 1.15 : 0.75), 0.94, 6200, 0.25);
+                    if (lvNum >= 5) {
+                        playPluck(note * 1.498, now + 0.052, bodyDur * 0.85, spkGain * 0.85, 0.96, 5800, 0.20);
+                    }
+                }
+            } else if (type === 'bubble') {
+                var bb = currentConfig.bubble;
+                playSweep(bb.fStart || 460, bb.fMid || 1120, 0.052, bb.gain, 'sine', 4800, 0);
+                playSweep((bb.fMid || 1120) * 0.78, bb.fEnd || 1680, 0.065, bb.gain * 0.92, 'sine', 5600, 0.044);
+                playPluck(2093.0, now + 0.09, 0.085, bb.gain * 0.55, 0.95, 6200, 0.25);
+            } else if (type === 'full_board') {
+                var fb = currentConfig.full_board;
+                playPluck(fb.f1 || 659.25, now, fb.duration || 0.065, fb.gain || 0.14, 0.95, fb.filterCutoff || 2800, 0.2);
+                playPluck(fb.f2 || 523.25, now + 0.065, (fb.duration || 0.065) * 1.15, (fb.gain || 0.14) * 0.92, 0.95, fb.filterCutoff || 2800, 0.2);
+            } else if (type === 'order_ready') {
+                var or = currentConfig.order_ready;
+                playPluck(or.note1 || 1046.5, now, 0.12, or.gain || 0.16, 0.90, 5800, 0.3);
+                playPluck(or.note2 || 1318.5, now + 0.052, 0.13, or.gain || 0.16, 0.92, 6000, 0.3);
+                playPluck(or.note3 || 1568.0, now + 0.104, 0.16, (or.gain || 0.16) * 1.05, 0.95, 6400, 0.3);
+            } else if (type === 'coin') {
+                var cn = currentConfig.coin;
+                var notes = [1318.51, 1567.98, 1760.00, 1975.53, 2093.00, 2349.32, 2637.02];
+                var cf = notes[(forceStep || 0) % notes.length];
+                playPluck(cf, now, cn.duration, cn.gain, 0.92, cn.filterCutoff, 0.42);
+            }
+        }
+
+        function syncUIFromConfig() {
+            var globals = ['masterVolume', 'bgmVolume', 'pitchSemitoneOffset', 'brightnessHighShelfDb', 'sparkleBellMix'];
+            globals.forEach(function (gKey) {
+                var el = document.getElementById('sl-' + gKey);
+                var vel = document.getElementById('val-' + gKey);
+                if (el && currentConfig[gKey] !== undefined) {
+                    el.value = currentConfig[gKey];
+                    vel.textContent = currentConfig[gKey];
+                }
+            });
+
+            var map = [
+                ['spawn', 'fStart'], ['spawn', 'fEnd'], ['spawn', 'bellFreq'], ['spawn', 'duration'], ['spawn', 'gain'], ['spawn', 'filterCutoff'],
+                ['merge', 'popRatioStart'], ['merge', 'bodyDuration'], ['merge', 'gain'], ['merge', 'harmonic2Gain'], ['merge', 'sparkleGain'], ['merge', 'filterCutoff'],
+                ['bubble', 'fEnd'],
+                ['order_ready', 'note1'], ['order_ready', 'note2'],
+                ['coin', 'duration'], ['coin', 'shimmerRatio'], ['coin', 'gain']
+            ];
+            map.forEach(function (pair) {
+                var sec = pair[0], key = pair[1];
+                var el = document.getElementById('sl-' + sec + '-' + key);
+                var vel = document.getElementById('val-' + sec + '-' + key);
+                if (el && currentConfig[sec] && currentConfig[sec][key] !== undefined) {
+                    el.value = currentConfig[sec][key];
+                    vel.textContent = currentConfig[sec][key];
+                }
+            });
+            document.getElementById('config-json-box').value = 'audioSfx: ' + JSON.stringify(currentConfig, null, 4);
+            renderTwelveLevelsEditor();
+            renderActiveSampleBanner();
+        }
+
+        function renderTwelveLevelsEditor() {
+            var wrap = document.getElementById('twelve-levels-grid');
+            if (!wrap) return;
+            if (!currentConfig.merge) currentConfig.merge = {};
+            if (!Array.isArray(currentConfig.merge.baseNotes) || currentConfig.merge.baseNotes.length < 12) {
+                currentConfig.merge.baseNotes = MERGE_SCALE_BRIGHT.slice();
+            }
+            if (!Array.isArray(currentConfig.merge.levelGains) || currentConfig.merge.levelGains.length < 12) {
+                currentConfig.merge.levelGains = [1.0, 1.0, 1.0, 1.02, 1.05, 1.08, 1.10, 1.12, 1.15, 1.18, 1.20, 1.25];
+            }
+            var html = '';
+            for (var i = 0; i < 12; i++) {
+                var lv = i + 1;
+                var freq = Number(currentConfig.merge.baseNotes[i] || MERGE_SCALE_BRIGHT[i]).toFixed(2);
+                var gMul = Number(currentConfig.merge.levelGains[i] || 1.0).toFixed(2);
+                var customSample = currentConfig.sampleOverrides && currentConfig.sampleOverrides['merge_lv' + lv];
+                html += '<div class="lib-item" style="padding:10px 12px;gap:6px;' + (customSample ? 'border-color:var(--accent-green);' : '') + '">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                        '<strong style="color:#fff;font-size:13.5px;">🎵 Cấp ' + lv + ' (Level ' + lv + ')</strong>' +
+                        '<div style="display:flex;gap:5px;align-items:center;">' +
+                            '<span class="badge" style="font-size:11px;">' + (LEVEL_NOTE_NAMES[i] || ('Lv.' + lv)) + '</span>' +
+                            '<button type="button" class="btn-primary" style="padding:4px 10px;font-size:12px;" onclick="previewGameSound(\'merge\', ' + i + ')">▶ Nghe Lv.' + lv + '</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="slider-row" style="grid-template-columns:92px 1fr 62px;">' +
+                        '<label>Tần số (Hz)</label>' +
+                        '<input type="range" min="220" max="2800" step="1" value="' + freq + '" oninput="onChangeLevelNote(' + i + ', this.value)" onchange="previewGameSound(\'merge\', ' + i + ')">' +
+                        '<span class="slider-val" id="val-lv-freq-' + i + '">' + freq + '</span>' +
+                    '</div>' +
+                    '<div class="slider-row" style="grid-template-columns:92px 1fr 62px;">' +
+                        '<label>Độ lớn riêng</label>' +
+                        '<input type="range" min="0.4" max="1.8" step="0.05" value="' + gMul + '" oninput="onChangeLevelGain(' + i + ', this.value)" onchange="previewGameSound(\'merge\', ' + i + ')">' +
+                        '<span class="slider-val" id="val-lv-gain-' + i + '">' + gMul + 'x</span>' +
+                    '</div>' +
+                '</div>';
+            }
+            wrap.innerHTML = html;
+        }
+
+        function onChangeLevelNote(idx, val) {
+            var v = parseFloat(val) || 523.25;
+            currentConfig.merge.baseNotes[idx] = v;
+            var el = document.getElementById('val-lv-freq-' + idx);
+            if (el) el.textContent = v.toFixed(0) + 'Hz';
+            document.getElementById('config-json-box').value = 'audioSfx: ' + JSON.stringify(currentConfig, null, 4);
+        }
+
+        function onChangeLevelGain(idx, val) {
+            var v = parseFloat(val) || 1.0;
+            if (!Array.isArray(currentConfig.merge.levelGains)) {
+                currentConfig.merge.levelGains = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+            }
+            currentConfig.merge.levelGains[idx] = v;
+            var el = document.getElementById('val-lv-gain-' + idx);
+            if (el) el.textContent = v.toFixed(2) + 'x';
+            document.getElementById('config-json-box').value = 'audioSfx: ' + JSON.stringify(currentConfig, null, 4);
+        }
+
+        function playAll12LevelsSequence() {
+            for (var i = 0; i < 12; i++) {
+                (function (step) {
+                    setTimeout(function () {
+                        previewGameSound('merge', step);
+                    }, step * 240);
+                })(i);
+            }
+        }
+
+        function reset12LevelNotes() {
+            currentConfig.merge.baseNotes = MERGE_SCALE_BRIGHT.slice();
+            currentConfig.merge.levelGains = [1.0, 1.0, 1.0, 1.02, 1.05, 1.08, 1.10, 1.12, 1.15, 1.18, 1.20, 1.25];
+            syncUIFromConfig();
+            playAll12LevelsSequence();
+            showStatus('🔄 Đã đặt lại 12 âm thanh cố định từ Level 1 (C5) -> Level 12 (C7)!');
+        }
+
+        function bindSliders() {
+            document.querySelectorAll('#pane-mixer input[type="range"]').forEach(function (inp) {
+                inp.addEventListener('input', function () {
+                    var id = inp.id.replace('sl-', '');
+                    var val = parseFloat(inp.value);
+                    if (['masterVolume', 'bgmVolume', 'pitchSemitoneOffset', 'brightnessHighShelfDb', 'sparkleBellMix'].indexOf(id) !== -1) {
+                        currentConfig[id] = val;
+                        document.getElementById('val-' + id).textContent = val;
+                        if (id === 'brightnessHighShelfDb' && highShelfNode) {
+                            highShelfNode.gain.setValueAtTime(val, audioCtx.currentTime);
+                        }
+                    } else {
+                        var parts = id.split('-');
+                        var sec = parts[0], key = parts[1];
+                        if (!currentConfig[sec]) currentConfig[sec] = {};
+                        currentConfig[sec][key] = val;
+                        document.getElementById('val-' + sec + '-' + key).textContent = val;
+                    }
+                    document.getElementById('config-json-box').value = 'audioSfx: ' + JSON.stringify(currentConfig, null, 4);
+                });
+                inp.addEventListener('change', function () {
+                    var id = inp.id.replace('sl-', '');
+                    if (['pitchSemitoneOffset', 'brightnessHighShelfDb', 'sparkleBellMix'].indexOf(id) !== -1) {
+                        previewGameSound('merge', 3);
+                        return;
+                    }
+                    var sec = id.split('-')[0];
+                    if (['spawn', 'merge', 'bubble', 'order_ready', 'coin'].indexOf(sec) !== -1) {
+                        previewGameSound(sec);
+                    }
+                });
+            });
+        }
+
+        function applyPreset(name) {
+            if (!PRESETS[name]) return;
+            currentConfig = JSON.parse(JSON.stringify(PRESETS[name]));
+            syncUIFromConfig();
+            previewGameSound('merge', 2);
+            showStatus('✨ Đã nạp mẫu âm sắc sáng: ' + name);
+        }
+
+        // ==================================================================
+        // TAB 2: KHO THƯ VIỆN 28 FILE .WAV MIỄN PHÍ
+        // ==================================================================
+        function loadLibraryManifest() {
+            fetch('assets/sfx_library/manifest.json')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    libraryManifest = data;
+                    renderSfxLibraryGrid();
+                    renderBgmLibraryList();
+                })
+                .catch(function (e) { console.warn('Manifest load error:', e); });
+        }
+
+        function renderActiveSampleBanner() {
+            var banner = document.getElementById('active-samples-banner');
+            if (!banner) return;
+            var ov = currentConfig.sampleOverrides || {};
+            var keys = Object.keys(ov);
+            if (keys.length === 0) {
+                banner.innerHTML = '💡 Hiện đang sử dụng <b>Bộ Tổng Hợp Pha Lê (Tab 1)</b>. Bấm <b>"🎯 Dùng Cho Game"</b> ở bất kỳ mẫu âm thanh nào bên dưới nếu bạn muốn dùng file <code>.WAV</code> đó trong game.';
+            } else {
+                banner.innerHTML = '✅ Đang gán file mẫu <code>.WAV</code> cho: ' + keys.map(function (k) {
+                    return '<span class="active-slot-pill">' + k.toUpperCase() + '</span>';
+                }).join(' ');
+            }
+        }
+
+        function renderSfxLibraryGrid() {
+            var grid = document.getElementById('sfx-library-grid');
+            if (!grid || !libraryManifest.sfx) return;
+            var html = '';
+            libraryManifest.sfx.forEach(function (item, idx) {
+                var isAssigned = currentConfig.sampleOverrides &&
+                    currentConfig.sampleOverrides[item.category] &&
+                    currentConfig.sampleOverrides[item.category].url === item.path;
+
+                html += '<div class="lib-item' + (isAssigned ? ' assigned' : '') + '">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                        '<span class="lib-title">' + item.name + '</span>' +
+                        '<span class="badge">' + item.category.toUpperCase() + '</span>' +
+                    '</div>' +
+                    '<div class="lib-desc">' + item.desc + '</div>' +
+                    '<div class="slider-row" style="grid-template-columns:95px 1fr 48px;">' +
+                        '<label>Cao độ (Pitch)</label>' +
+                        '<input type="range" id="lib-rate-' + idx + '" min="0.6" max="2.0" step="0.05" value="1.0" oninput="document.getElementById(\'lib-rate-v-' + idx + '\').textContent=this.value+\'x\'">' +
+                        '<span class="slider-val" id="lib-rate-v-' + idx + '">1.0x</span>' +
+                    '</div>' +
+                    '<div class="lib-controls">' +
+                        '<button class="btn-primary" onclick="previewLibraryItem(' + idx + ')">▶ Nghe Thử</button>' +
+                        '<button class="btn-green" onclick="assignLibraryItem(' + idx + ')">🎯 Dùng Cho Game (' + item.category + ')</button>' +
+                        '<a class="file-label-btn btn-secondary" href="' + item.path + '" download="' + item.file + '">📥 Tải .WAV</a>' +
+                    '</div>' +
+                '</div>';
+            });
+            grid.innerHTML = html;
+        }
+
+        function previewLibraryItem(idx) {
+            var item = libraryManifest.sfx[idx];
+            if (!item) return;
+            var rate = parseFloat(document.getElementById('lib-rate-' + idx).value) || 1.0;
+            document.getElementById('last-played-label').textContent = 'Mẫu thư viện: ' + item.name;
+            playSampleUrl(item.path, rate, 0.95);
+        }
+
+        function assignLibraryItem(idx) {
+            var item = libraryManifest.sfx[idx];
+            if (!item) return;
+            var rate = parseFloat(document.getElementById('lib-rate-' + idx).value) || 1.0;
+            if (!currentConfig.sampleOverrides) currentConfig.sampleOverrides = {};
+            currentConfig.sampleOverrides[item.category] = { url: item.path, rate: rate, gain: 0.95 };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+            syncUIFromConfig();
+            renderSfxLibraryGrid();
+            playSampleUrl(item.path, rate, 0.95);
+            showStatus('✅ Đã chọn "' + item.name + '" cho sự kiện [' + item.category.toUpperCase() + '] trong Game!');
+        }
+
+        function clearAllSampleOverrides() {
+            currentConfig.sampleOverrides = {};
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+            syncUIFromConfig();
+            renderSfxLibraryGrid();
+            showStatus('🔄 Đã chuyển về Bộ Tổng Hợp Pha Lê Sáng (Tab 1)!');
+        }
+
+        document.getElementById('custom-sfx-upload').addEventListener('change', function (e) {
+            var file = e.target.files && e.target.files[0];
+            if (!file) return;
+            var slot = document.getElementById('upload-target-slot').value;
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+                if (!currentConfig.sampleOverrides) currentConfig.sampleOverrides = {};
+                currentConfig.sampleOverrides[slot] = { url: ev.target.result, rate: 1.0, gain: 0.95 };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+                syncUIFromConfig();
+                playSampleUrl(ev.target.result, 1.0, 0.95);
+                showStatus('✅ Đã nạp file "' + file.name + '" vào sự kiện [' + slot.toUpperCase() + '] của Game!');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // ==================================================================
+        // TAB 3: NHẠC NỀN BGM & TRÌNH SÁNG TÁC NHẠC NỀN TỰ ĐỘNG
+        // ==================================================================
+        function renderBgmLibraryList() {
+            var listEl = document.getElementById('bgm-library-list');
+            if (!listEl || !libraryManifest.bgm) return;
+            var html = '';
+            libraryManifest.bgm.forEach(function (b, idx) {
+                html += '<div class="lib-item" style="flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;">' +
+                    '<div>' +
+                        '<div class="lib-title">' + b.name + '</div>' +
+                        '<div class="lib-desc">Nhịp độ: ' + b.bpm + ' BPM • File: <code>' + b.file + '</code></div>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:6px;">' +
+                        '<button class="btn-primary" onclick="playBgmPreviewUrl(\'' + b.path + '\', \'' + b.name + '\')">▶ Nghe</button>' +
+                        '<button class="btn-green" onclick="selectPreferredBgm(' + idx + ', \'' + b.name + '\')">🎯 Chọn Phát Trong Game</button>' +
+                        '<a class="file-label-btn btn-secondary" href="' + b.path + '" download="' + b.file + '">📥 Tải</a>' +
+                    '</div>' +
+                '</div>';
+            });
+            listEl.innerHTML = html;
+        }
+
+        var bgmPreviewSource = null;
+        var bgmPreviewGain = null;
+
+        function playBgmPreviewUrl(url, title) {
+            stopBgmPreview();
+            ensureAudio();
+            document.getElementById('last-played-label').textContent = 'Đang phát BGM (Vòng lặp liền mạch): ' + (title || url);
+            fetch(url)
+                .then(function (r) { return r.arrayBuffer(); })
+                .then(function (ab) { return audioCtx.decodeAudioData(ab); })
+                .then(function (buf) {
+                    stopBgmPreview();
+                    var src = audioCtx.createBufferSource();
+                    var g = audioCtx.createGain();
+                    src.buffer = buf;
+                    src.loop = true;
+                    src.loopStart = 0;
+                    src.loopEnd = buf.duration;
+                    src.playbackRate.setValueAtTime(currentConfig.bgmPlaybackRate || 1.0, audioCtx.currentTime);
+                    g.gain.setValueAtTime(currentConfig.bgmVolume || 0.14, audioCtx.currentTime);
+                    src.connect(g);
+                    g.connect(getOutNode());
+                    src.start(0);
+                    bgmPreviewSource = src;
+                    bgmPreviewGain = g;
+                })
+                .catch(function () {
+                    bgmPreviewAudio = new Audio(url);
+                    bgmPreviewAudio.loop = true;
+                    bgmPreviewAudio.volume = currentConfig.bgmVolume || 0.14;
+                    bgmPreviewAudio.playbackRate = currentConfig.bgmPlaybackRate || 1.0;
+                    bgmPreviewAudio.play();
+                });
+        }
+
+        function stopBgmPreview() {
+            if (bgmPreviewSource) {
+                try { bgmPreviewSource.stop(); bgmPreviewSource.disconnect(); } catch (e) {}
+                bgmPreviewSource = null;
+            }
+            if (bgmPreviewGain) {
+                try { bgmPreviewGain.disconnect(); } catch (e) {}
+                bgmPreviewGain = null;
+            }
+            if (bgmPreviewAudio) {
+                bgmPreviewAudio.pause();
+                bgmPreviewAudio = null;
+            }
+        }
+
+        function selectPreferredBgm(idx, name) {
+            currentConfig.preferredBgmIndex = idx;
+            delete currentConfig.customBgmDataUrl;
+            document.getElementById('bgm-select-mode').value = String(idx);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+            syncUIFromConfig();
+            showStatus('🎵 Đã đặt bài "' + name + '" làm nhạc nền chính trong Game!');
+        }
+
+        function onChangeBgmMode() {
+            var v = parseInt(document.getElementById('bgm-select-mode').value, 10);
+            if (v < 0) delete currentConfig.preferredBgmIndex;
+            else currentConfig.preferredBgmIndex = v;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+            syncUIFromConfig();
+        }
+
+        function onBgmRateChange(val) {
+            var r = parseFloat(val) || 1.0;
+            currentConfig.bgmPlaybackRate = r;
+            document.getElementById('val-bgmPlaybackRate').textContent = r.toFixed(2) + 'x';
+            if (bgmPreviewAudio) bgmPreviewAudio.playbackRate = r;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+            syncUIFromConfig();
+        }
+
+        document.getElementById('custom-bgm-upload').addEventListener('change', function (e) {
+            var file = e.target.files && e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+                currentConfig.customBgmDataUrl = ev.target.result;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+                playBgmPreviewUrl(ev.target.result, file.name);
+                showStatus('✅ Đã nạp bản nhạc "' + file.name + '" làm nhạc nền Game!');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function clearCustomBgm() {
+            delete currentConfig.customBgmDataUrl;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+            showStatus('Đã xóa nhạc nền tải lên, dùng kho 6 bài nhạc mẫu.');
+        }
+
+        // TRÌNH SÁNG TÁC NHẠC NỀN TỰ ĐỘNG (PROCEDURAL BGM STUDIO)
+        var CHORD_PROGS = [
+            [[261.63, 329.63, 392.00, 523.25], [392.00, 493.88, 587.33, 783.99], [440.00, 523.25, 659.25, 880.00], [349.23, 440.00, 523.25, 698.46]],
+            [[349.23, 440.00, 523.25, 659.25], [392.00, 493.88, 587.33, 783.99], [329.63, 392.00, 493.88, 659.25], [440.00, 523.25, 659.25, 880.00]],
+            [[293.66, 369.99, 440.00, 587.33], [440.00, 554.37, 659.25, 880.00], [493.88, 587.33, 739.99, 987.77], [392.00, 493.88, 587.33, 783.99]],
+            [[261.63, 329.63, 392.00, 523.25], [440.00, 523.25, 659.25, 880.00], [293.66, 349.23, 440.00, 587.33], [392.00, 493.88, 587.33, 783.99]]
+        ];
+
+        function composeBgmBuffer(randomizeSeed) {
+            if (randomizeSeed) compSeed = Math.floor(Math.random() * 999999) + 1;
+            var seed = compSeed;
+            function rng() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+            var style = document.getElementById('comp-style').value;
+            var chordIdx = parseInt(document.getElementById('comp-chords').value, 10) || 0;
+            var bpm = parseInt(document.getElementById('comp-bpm').value, 10) || 116;
+            var octMul = parseFloat(document.getElementById('comp-octave').value) || 1.0;
+            var birdGain = parseFloat(document.getElementById('comp-birds').value) || 0;
+            var bars = parseInt(document.getElementById('comp-bars').value, 10) || 8;
+
+            var sr = 44100;
+            var beatSec = 60 / bpm;
+            var totalSec = bars * 4 * beatSec;
+            var tailSec = 2.0;
+            var numSamples = Math.ceil(totalSec * sr);
+            var tailSamples = Math.ceil(tailSec * sr);
+            var rawLen = numSamples + tailSamples;
+            var rawL = new Float32Array(rawLen);
+            var rawR = new Float32Array(rawLen);
+
+            function putNote(startS, durS, freq, amp, pan, fmIdx) {
+                var sIdx = Math.floor(startS * sr);
+                var len = Math.floor(durS * sr);
+                var panL = Math.cos((pan + 1) * Math.PI / 4);
+                var panR = Math.sin((pan + 1) * Math.PI / 4);
+                var ph = 0;
+                for (var i = 0; i < len; i++) {
+                    var idx = sIdx + i;
+                    if (idx >= rawLen) break;
+                    var t = i / sr;
+                    var env = (t < 0.003 ? t / 0.003 : 1.0) * Math.exp(-t / (durS * 0.34));
+                    ph += (2 * Math.PI * freq) / sr;
+                    var mod = fmIdx * env * Math.sin(ph * 2.0);
+                    var s = (Math.sin(ph + mod) + 0.35 * Math.sin(ph * 2.0) + 0.15 * Math.sin(ph * 3.0)) * amp * env;
+                    rawL[idx] += s * panL;
+                    rawR[idx] += s * panR;
+                }
+            }
+
+            var chords = CHORD_PROGS[chordIdx];
+            var pentatonic = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51];
+
+            for (var b = 0; b < bars; b++) {
+                var ch = chords[b % chords.length];
+                var bStart = b * 4 * beatSec;
+                // Rải hợp âm nền
+                for (var s = 0; s < 8; s++) {
+                    var nf = ch[s % 4] * (style === 'musicbox' ? 2.0 : 1.0);
+                    putNote(bStart + s * beatSec * 0.5, beatSec * 0.90, nf, 0.12, (s % 2 === 0 ? -0.3 : 0.3), style === 'celesta' ? 1.1 : 0.5);
+                }
+                // Giai điệu chính tươi vui
+                for (var m = 0; m < 6; m++) {
+                    if (rng() < 0.18 && m > 0) continue;
+                    var noteF = pentatonic[Math.floor(rng() * pentatonic.length)] * octMul;
+                    var beatPos = (m * 0.66);
+                    putNote(bStart + beatPos * beatSec, beatSec * 0.85, noteF, 0.18, (rng() * 2 - 1) * 0.35, style === 'ukulele' ? 0.3 : 1.0);
+                }
+                // Tiếng chim rừng hót buổi sáng nếu bật
+                if (birdGain > 0 && rng() < 0.65) {
+                    var bt = bStart + rng() * 3 * beatSec;
+                    putNote(bt, 0.08, 2200 + rng() * 800, birdGain * 0.35, -0.4, 1.5);
+                    putNote(bt + 0.09, 0.11, 2600 + rng() * 900, birdGain * 0.40, 0.4, 1.5);
+                }
+            }
+
+            // Cuộn đuôi âm thanh (Circular Loop Tail-Wrapping) vào đầu bài để nối vòng lặp không vết gợn
+            var L = new Float32Array(numSamples);
+            var R = new Float32Array(numSamples);
+            for (var i = 0; i < numSamples; i++) {
+                L[i] = rawL[i];
+                R[i] = rawR[i];
+            }
+            for (var t = 0; t < tailSamples && t < numSamples; t++) {
+                var fade = 1.0 - (t / tailSamples);
+                L[t] += rawL[numSamples + t] * fade;
+                R[t] += rawR[numSamples + t] * fade;
+            }
+
+            // Encode Stereo WAV
+            var buffer = new ArrayBuffer(44 + numSamples * 4);
+            var view = new DataView(buffer);
+            function wstr(off, str) { for (var i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); }
+            wstr(0, 'RIFF');
+            view.setUint32(4, 36 + numSamples * 4, true);
+            wstr(8, 'WAVEfmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 2, true);
+            view.setUint32(24, sr, true);
+            view.setUint32(28, sr * 4, true);
+            view.setUint16(32, 4, true);
+            view.setUint16(34, 16, true);
+            wstr(36, 'data');
+            view.setUint32(40, numSamples * 4, true);
+            for (var i = 0; i < numSamples; i++) {
+                var sl = Math.max(-1, Math.min(1, L[i]));
+                var srR = Math.max(-1, Math.min(1, R[i]));
+                view.setInt16(44 + i * 4, sl < 0 ? sl * 0x8000 : sl * 0x7FFF, true);
+                view.setInt16(44 + i * 4 + 2, srR < 0 ? srR * 0x8000 : srR * 0x7FFF, true);
+            }
+            lastComposedWavBlob = new Blob([buffer], { type: 'audio/wav' });
+            return URL.createObjectURL(lastComposedWavBlob);
+        }
+
+        function composeAndPlayBgm(randomize) {
+            var url = composeBgmBuffer(randomize);
+            playBgmPreviewUrl(url, 'Bản Nhạc Tự Sáng Tác #' + compSeed);
+            showStatus('🎼 Đã phối xong bản nhạc nền mới! Đang phát thử...');
+        }
+
+        function applyComposedBgmToGame() {
+            if (!lastComposedWavBlob) composeBgmBuffer(false);
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                currentConfig.customBgmDataUrl = e.target.result;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+                showStatus('✅ Đã đặt Bản Nhạc Vừa Sáng Tác làm nhạc nền chính thức trong Game!');
+            };
+            reader.readAsDataURL(lastComposedWavBlob);
+        }
+
+        function downloadComposedBgmWav() {
+            if (!lastComposedWavBlob) composeBgmBuffer(false);
+            var url = URL.createObjectURL(lastComposedWavBlob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'bgm_camping_custom_' + compSeed + '.wav';
+            a.click();
+            showStatus('📥 Đã tải bản nhạc nền .WAV về máy!');
+        }
+
+        // ==================================================================
+        // TAB 4: ZZFX & JSFXR
+        // ==================================================================
+        var ZZFX_TEMPLATES = {
+            crystal_pop:   [1.1, 0.03, 620, 0.002, 0.015, 0.055, 0, 1.1, 6.5, 0, 320, 0.02, 0, 0, 0, 0, 0, 1, 0, 0],
+            celesta_merge: [1.1, 0.02, 784, 0.002, 0.025, 0.120, 0, 1.2, 1.2, 0, 392, 0.035, 0, 0, 0, 0, 0, 1, 0, 0],
+            bright_bubble: [1.1, 0.03, 480, 0.004, 0.030, 0.110, 0, 0.9, 7.5, 0, 420, 0.045, 0, 0, 0, 0, 0, 1, 0, 0],
+            bright_coin:   [1.0, 0.01, 1568, 0.002, 0.020, 0.115, 0, 1.3, 0, 0, 525, 0.03, 0, 0, 0, 0, 0, 1, 0, 0]
+        };
+
+        function getZzfxArrayFromSliders() {
+            return [
+                parseFloat(document.getElementById('zz-vol').value),
+                0.03,
+                parseFloat(document.getElementById('zz-freq').value),
+                parseFloat(document.getElementById('zz-atk').value),
+                parseFloat(document.getElementById('zz-sus').value),
+                parseFloat(document.getElementById('zz-rel').value),
+                parseInt(document.getElementById('zz-shape').value, 10),
+                parseFloat(document.getElementById('zz-curve').value),
+                parseFloat(document.getElementById('zz-slide').value),
+                0,
+                parseFloat(document.getElementById('zz-pjump').value),
+                parseFloat(document.getElementById('zz-pjumpt').value),
+                0, 0, 0, 0, 0, 1, 0, 0
+            ];
+        }
+
+        function setSlidersFromZzfxArray(arr) {
+            var map = [
+                ['zz-vol', arr[0]], ['zz-freq', arr[2]], ['zz-atk', arr[3]],
+                ['zz-sus', arr[4]], ['zz-rel', arr[5]], ['zz-shape', arr[6]],
+                ['zz-curve', arr[7]], ['zz-slide', arr[8]],
+                ['zz-pjump', arr[10]], ['zz-pjumpt', arr[11]]
+            ];
+            map.forEach(function (m) {
+                var el = document.getElementById(m[0]);
+                var vel = document.getElementById('v-' + m[0]);
+                if (el) { el.value = m[1]; vel.textContent = m[1]; }
+            });
+            document.getElementById('zzfx-code-box').value = 'zzfx(...' + JSON.stringify(getZzfxArrayFromSliders()) + ');';
+        }
+
+        function buildZzfxSamples(p) {
+            var volume = (p[0] !== undefined ? p[0] : 1) * 0.35;
+            var randomness = p[1] !== undefined ? p[1] : 0.03;
+            var frequency = p[2] !== undefined ? p[2] : 520;
+            var attack = p[3] || 0;
+            var sustain = p[4] || 0;
+            var release = p[5] !== undefined ? p[5] : 0.1;
+            var shape = p[6] || 0;
+            var shapeCurve = p[7] !== undefined ? p[7] : 1;
+            var slide = p[8] || 0;
+            var deltaSlide = p[9] || 0;
+            var pitchJump = p[10] || 0;
+            var pitchJumpTime = p[11] || 0;
+            var sampleRate = 44100;
+            var PI2 = Math.PI * 2;
+            frequency *= (1 + randomness * 2 * (Math.random() - 0.5)) * PI2 / sampleRate;
+            slide *= 500 * PI2 / Math.pow(sampleRate, 2);
+            deltaSlide *= 500 * PI2 / Math.pow(sampleRate, 3);
+            attack = attack * sampleRate | 0;
+            sustain = sustain * sampleRate | 0;
+            release = release * sampleRate | 0;
+            pitchJump *= PI2 / sampleRate;
+            pitchJumpTime = pitchJumpTime * sampleRate | 0;
+            var length = Math.max(1, Math.min(sampleRate * 3, attack + sustain + release | 0));
+            var b = new Float32Array(length);
+            var t = 0, tm = 0, i = 0, j = 1, s = 0, env;
+            for (; i < length; b[i++] = s) {
+                tm = t * frequency;
+                s = shape ? (shape > 1 ? (shape > 2 ? Math.sin(Math.pow(tm % PI2, 3)) : 1 - (2 * tm / PI2 % 2 + 2) % 2) : 1 - 4 * Math.abs(Math.round(tm / PI2) - tm / PI2)) : Math.sin(tm);
+                s = (s > 0 ? 1 : -1) * Math.pow(Math.abs(s), shapeCurve) * volume;
+                env = i < attack ? i / attack : i < attack + sustain ? 1 : (length - i) / release;
+                s *= env;
+                t += (frequency += slide += deltaSlide);
+                if (j && ++j > pitchJumpTime) { frequency += pitchJump; j = 0; }
+            }
+            return b;
+        }
+
+        function playZzfxBuffer(arr) {
+            ensureAudio();
+            var samples = buildZzfxSamples(arr);
+            var buf = audioCtx.createBuffer(1, samples.length, 44100);
+            buf.getChannelData(0).set(samples);
+            var src = audioCtx.createBufferSource();
+            src.buffer = buf;
+            src.connect(getOutNode());
+            src.start();
+        }
+
+        function playCurrentZzfx() {
+            document.getElementById('zzfx-code-box').value = 'zzfx(...' + JSON.stringify(getZzfxArrayFromSliders()) + ');';
+            playZzfxBuffer(getZzfxArrayFromSliders());
+        }
+
+        function loadZzfxTemplate(name) {
+            if (!ZZFX_TEMPLATES[name]) return;
+            setSlidersFromZzfxArray(ZZFX_TEMPLATES[name]);
+            playCurrentZzfx();
+        }
+
+        function generateJsfxrPreset(presetType) {
+            if (typeof sfxr !== 'undefined' && sfxr.generate) {
+                var snd = sfxr.generate(presetType);
+                sfxr.play(snd);
+                showStatus('🎰 Đã tạo âm thanh ngẫu nhiên bằng thư viện mã nguồn mở jsfxr (' + presetType + ')!');
+            } else {
+                mutateZzfx();
+            }
+        }
+
+        function mutateZzfx() {
+            var arr = getZzfxArrayFromSliders();
+            arr[2] = Math.round(Math.max(350, Math.min(2200, arr[2] * (0.9 + Math.random() * 0.25))));
+            arr[5] = Number(Math.max(0.04, Math.min(0.25, arr[5] * (0.85 + Math.random() * 0.3))).toFixed(3));
+            arr[8] = Number((arr[8] + (Math.random() * 2 - 1) * 1.5).toFixed(1));
+            setSlidersFromZzfxArray(arr);
+            playCurrentZzfx();
+        }
+
+        function exportCurrentZzfxWav() {
+            var samples = buildZzfxSamples(getZzfxArrayFromSliders());
+            var buffer = new ArrayBuffer(44 + samples.length * 2);
+            var view = new DataView(buffer);
+            function writeStr(off, s) { for (var i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); }
+            writeStr(0, 'RIFF');
+            view.setUint32(4, 36 + samples.length * 2, true);
+            writeStr(8, 'WAVEfmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, 44100, true);
+            view.setUint32(28, 88200, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeStr(36, 'data');
+            view.setUint32(40, samples.length * 2, true);
+            for (var i = 0; i < samples.length; i++) {
+                var s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            }
+            var blob = new Blob([buffer], { type: 'audio/wav' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'merge_camping_sfx_' + Date.now() + '.wav';
+            a.click();
+            showStatus('📥 Đã xuất file .WAV thành công!');
+        }
+
+        function assignZzfxToSlot(slot) {
+            if (!currentConfig.zzfxOverrides) currentConfig.zzfxOverrides = {};
+            currentConfig.zzfxOverrides[slot] = getZzfxArrayFromSliders();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+            syncUIFromConfig();
+            showStatus('✅ Đã gán âm thanh ZzFX vào sự kiện [' + slot + ']!');
+        }
+
+        function clearZzfxOverrides() {
+            currentConfig.zzfxOverrides = {};
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+            syncUIFromConfig();
+            showStatus('Đã xóa gán ZzFX!');
+        }
+
+        function switchStudioTab(tab) {
+            ['mixer', 'library', 'bgm', 'zzfx'].forEach(function (t) {
+                document.getElementById('pane-' + t).style.display = (t === tab) ? '' : 'none';
+                document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
+            });
+        }
+
+        // Bàn bấm test nhanh
+        document.getElementById('pad-spawn').onclick = function () { previewGameSound('spawn'); };
+        document.getElementById('pad-spawn-burst').onclick = function () {
+            for (var i = 0; i < 6; i++) {
+                setTimeout(function () { previewGameSound('spawn'); }, i * 105);
+            }
+        };
+        document.getElementById('pad-merge-step').onclick = function () { previewGameSound('merge'); };
+        document.getElementById('pad-merge-chain').onclick = function () {
+            playAll12LevelsSequence();
+        };
+        document.getElementById('pad-bubble').onclick = function () { previewGameSound('bubble'); };
+        document.getElementById('pad-full').onclick = function () { previewGameSound('full_board'); };
+        document.getElementById('pad-ready').onclick = function () { previewGameSound('order_ready'); };
+        document.getElementById('pad-coins').onclick = function () {
+            for (var i = 0; i < 6; i++) {
+                (function (step) {
+                    setTimeout(function () { previewGameSound('coin', step); }, step * 70);
+                })(i);
+            }
+        };
+
+        document.getElementById('btn-save-live').onclick = function () {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+            showStatus('✅ Đã lưu & áp dụng trực tiếp vào Game! Mở tab Game để trải nghiệm ngay.');
+        };
+
+        document.getElementById('btn-export-config').onclick = function () {
+            var txt = document.getElementById('config-json-box').value;
+            navigator.clipboard.writeText(txt).then(function () {
+                showStatus('📋 Đã sao chép mã cấu hình audioSfx vào bộ nhớ tạm!');
+            });
+        };
+
+        document.getElementById('btn-reset-default').onclick = function () {
+            localStorage.removeItem(STORAGE_KEY);
+            applyPreset('bright_kalimba');
+            showStatus('🎵 Đã khôi phục phong cách chủ đạo: Kalimba Sáng Trong!');
+        };
+
+        document.querySelectorAll('#pane-zzfx input[type="range"]').forEach(function (inp) {
+            inp.addEventListener('input', function () {
+                document.getElementById('v-' + inp.id).textContent = inp.value;
+            });
+            inp.addEventListener('change', playCurrentZzfx);
+        });
+
+        try {
+            var saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                var parsed = JSON.parse(saved);
+                if (parsed && parsed.presetName && parsed.presetName !== 'merge_cook_tactile' && parsed.presetName !== 'crystal_dopamine_bright') {
+                    if (parsed.merge && Array.isArray(parsed.merge.baseNotes) && parsed.merge.baseNotes[11] > 1500) {
+                        parsed.merge.baseNotes = MERGE_SCALE_BRIGHT.slice();
+                    }
+                    currentConfig = Object.assign({}, PRESETS.bright_kalimba, parsed);
+                } else {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+            }
+        } catch (e) {}
+
+        syncUIFromConfig();
+        bindSliders();
+        loadLibraryManifest();
+
+        // Tự động dừng phát thử khi người dùng chuyển sang tab khác hoặc quay lại tab Game
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                stopBgmPreview();
+                if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+            }
+        });
+        window.addEventListener('blur', function () {
+            stopBgmPreview();
+        });
+        window.addEventListener('pagehide', function () {
+            stopBgmPreview();
+            if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+        });
+    </script>
+</body>
+</html>
