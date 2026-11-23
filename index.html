@@ -5,13 +5,169 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Merge Camping Game</title>
     <link rel="icon" type="image/png" href="assets/images_webp/ui/icon_map.webp">
+    <link rel="preload" as="image" href="assets/images_webp/ui/splash.jpg" fetchpriority="high">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=11.27">
+    <link rel="stylesheet" href="css/style.css?v=11.33">
 </head>
 <body>
     <div id="game-app">
+        <!-- MÀN HÌNH SPLASH VIDEO KHI TẢI GAME -->
+        <div id="splash-screen" class="splash-screen" role="status" aria-live="polite" style="position:absolute;inset:0;z-index:99999;background:#2b3d27;">
+            <img class="splash-bg-img" src="assets/images_webp/ui/splash.jpg" alt="My Camp Trip" fetchpriority="high" decoding="sync">
+            <video id="splash-video" class="splash-bg-video" autoplay muted playsinline preload="auto" poster="assets/images_webp/ui/splash.jpg" aria-hidden="true">
+                <source src="assets/images_webp/ui/splash.mp4" type="video/mp4">
+            </video>
+            <div class="splash-bottom-shade" aria-hidden="true"></div>
+            <div class="splash-loader-wrap">
+                <div class="splash-progress-track">
+                    <div id="splash-progress-fill" class="splash-progress-fill" style="width: 8%;"></div>
+                </div>
+                <div id="splash-progress-label" class="splash-progress-label">Đang tải khu trại... 8%</div>
+            </div>
+        </div>
+        <script>
+            (function () {
+                var splash = document.getElementById('splash-screen');
+                var video = document.getElementById('splash-video');
+                var fill = document.getElementById('splash-progress-fill');
+                var label = document.getElementById('splash-progress-label');
+                if (!splash || !fill || !label) return;
+
+                var startTime = Date.now();
+                var FALLBACK_SHOW_MS = 2500;
+                var HOLD_LAST_FRAME_MS = 1000;
+                var SKIP_AFTER_MS = 1200;
+                var MAX_WAIT_MS = 12000;
+                var progress = 8;
+                var target = 20;
+                var pageLoaded = false;
+                var videoPlaying = false;
+                var videoEnded = false;
+                var videoFailed = !video;
+                var dismissed = false;
+
+                if (video) {
+                    video.addEventListener('playing', function () {
+                        videoPlaying = true;
+                        video.classList.add('is-ready');
+                    }, { once: true });
+                    video.addEventListener('ended', function () {
+                        videoEnded = true;
+                        try { video.pause(); } catch (e) {}
+                    });
+                    video.addEventListener('error', function () {
+                        videoFailed = true;
+                    });
+                    video.addEventListener('canplay', function () {
+                        var p = video.play();
+                        if (p && typeof p.catch === 'function') {
+                            p.catch(function () { videoFailed = true; });
+                        }
+                    }, { once: true });
+                    var initPlay = video.play();
+                    if (initPlay && typeof initPlay.catch === 'function') {
+                        initPlay.catch(function () {});
+                    }
+                }
+
+                function getLoadingPrefix() {
+                    try {
+                        var savedLang = localStorage.getItem('merge_camping_lang');
+                        if (savedLang && savedLang.toLowerCase().indexOf('en') === 0) {
+                            return 'Loading camp...';
+                        }
+                    } catch (e) {}
+                    return 'Đang tải khu trại...';
+                }
+
+                var prefix = getLoadingPrefix();
+
+                function renderProgress(val) {
+                    var pct = Math.max(0, Math.min(100, Math.round(val)));
+                    fill.style.width = pct + '%';
+                    label.textContent = prefix + ' ' + pct + '%';
+                }
+
+                function cleanupVideo() {
+                    if (!video) return;
+                    try {
+                        video.pause();
+                        video.removeAttribute('src');
+                        while (video.firstChild) video.removeChild(video.firstChild);
+                        video.load();
+                    } catch (e) {}
+                }
+
+                function dismissSplash(immediate) {
+                    if (dismissed) return;
+                    dismissed = true;
+                    renderProgress(100);
+                    if (video) {
+                        try { video.pause(); } catch (e) {}
+                    }
+                    var holdMs = immediate ? 120 : HOLD_LAST_FRAME_MS;
+                    setTimeout(function () {
+                        splash.classList.add('is-hiding');
+                        setTimeout(function () {
+                            cleanupVideo();
+                            if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+                        }, 520);
+                    }, holdMs);
+                }
+
+                // Cho phép chạm để bỏ qua nhanh sau khi game đã tải xong & xem tối thiểu 1.2s
+                splash.addEventListener('pointerdown', function () {
+                    if (pageLoaded && (Date.now() - startTime) >= SKIP_AFTER_MS) {
+                        dismissSplash(true);
+                    }
+                });
+
+                function tick() {
+                    if (dismissed) return;
+                    var elapsed = Date.now() - startTime;
+
+                    if (video && videoPlaying && video.duration && isFinite(video.duration) && video.duration > 0) {
+                        var videoRatio = Math.min(1, video.currentTime / video.duration);
+                        target = videoEnded ? 100 : Math.max(12, Math.min(99, 10 + videoRatio * 89));
+                    } else if (videoFailed) {
+                        target = pageLoaded
+                            ? Math.min(100, 15 + (elapsed / FALLBACK_SHOW_MS) * 85)
+                            : Math.min(85, 15 + (elapsed / FALLBACK_SHOW_MS) * 70);
+                    } else {
+                        // Video đang buffer khung đầu tiên
+                        target = Math.min(25, 8 + (elapsed / 1500) * 17);
+                    }
+
+                    progress += (target - progress) * (videoEnded ? 0.35 : 0.16);
+                    renderProgress(progress);
+
+                    var readyToDismiss = (videoEnded && pageLoaded)
+                        || (videoFailed && pageLoaded && elapsed >= FALLBACK_SHOW_MS);
+
+                    if (readyToDismiss && progress >= 98.5) {
+                        dismissSplash(false);
+                        return;
+                    }
+                    if (elapsed >= MAX_WAIT_MS) {
+                        dismissSplash(false);
+                        return;
+                    }
+                    requestAnimationFrame(tick);
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    target = Math.max(target, 62);
+                });
+
+                window.addEventListener('load', function () {
+                    pageLoaded = true;
+                });
+
+                requestAnimationFrame(tick);
+            })();
+        </script>
         <!-- NỀN LIỀN MẠCH TOÀN MÀN HÌNH: ĐÓNG GÓI BG_GAME_ALL (100% COVER) + 4 ĐÁM MÂY BAY + HÒN ĐẢO CẮM TRẠI -->
         <div id="game-backdrop" class="game-backdrop" aria-hidden="true">
             <div class="backdrop-sky"></div>
@@ -200,17 +356,17 @@
     <script src="js/libs/gsap.min.js"></script>
     <script src="js/libs/MotionPathPlugin.min.js"></script>
 
-    <script src="js/i18n.js?v=11.27"></script>
-    <script src="js/config.js?v=11.27"></script>
-    <script src="js/data.js?v=11.27"></script>
-    <script src="js/engine.js?v=11.27"></script>
-    <script src="js/progress.js?v=11.27"></script>
-    <script src="js/firebase-sync.js?v=11.27"></script>
-    <script src="js/mycamp_config.js?v=11.27"></script>
-    <script src="js/visual_fx.js?v=11.27"></script>
-    <script src="js/camp.js?v=11.27"></script>
-    <script src="js/components/board.js?v=11.27"></script>
-    <script src="js/test_tool.js?v=11.27"></script>
+    <script src="js/i18n.js?v=11.31"></script>
+    <script src="js/config.js?v=11.31"></script>
+    <script src="js/data.js?v=11.31"></script>
+    <script src="js/engine.js?v=11.31"></script>
+    <script src="js/progress.js?v=11.31"></script>
+    <script src="js/firebase-sync.js?v=11.31"></script>
+    <script src="js/mycamp_config.js?v=11.31"></script>
+    <script src="js/visual_fx.js?v=11.31"></script>
+    <script src="js/camp.js?v=11.31"></script>
+    <script src="js/components/board.js?v=11.31"></script>
+    <script src="js/test_tool.js?v=11.31"></script>
     <script>
         // Tải 4 đám mây nền sau cùng (sau khi toàn bộ ảnh nền, giao diện & script đã tải xong)
         window.addEventListener('load', function () {
