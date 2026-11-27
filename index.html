@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=11.33">
+    <link rel="stylesheet" href="css/style.css?v=11.65">
 </head>
 <body>
     <div id="game-app">
@@ -168,7 +168,7 @@
                 requestAnimationFrame(tick);
             })();
         </script>
-        <!-- NỀN LIỀN MẠCH TOÀN MÀN HÌNH: ĐÓNG GÓI BG_GAME_ALL (100% COVER) + 4 ĐÁM MÂY BAY + HÒN ĐẢO CẮM TRẠI -->
+        <!-- NỀN LIỀN MẠCH TOÀN MÀN HÌNH: BG_GAME_HOME.JPG + 4 ĐÁM MÂY BAY -->
         <div id="game-backdrop" class="game-backdrop" aria-hidden="true">
             <div class="backdrop-sky"></div>
             <div class="backdrop-clouds" id="backdrop-clouds">
@@ -177,55 +177,58 @@
                 <img data-src="assets/images_webp/ui/bg_all_may3.webp" class="backdrop-cloud cloud-3" alt="">
                 <img data-src="assets/images_webp/ui/bg_all_may4.webp" class="backdrop-cloud cloud-4" alt="">
             </div>
-            <div class="backdrop-island" id="backdrop-island"></div>
         </div>
 
-        <!-- PHẦN TRÊN: CẢNH CẮM TRẠI (CO GIÃN THEO MÀN HÌNH), THANH HUD, NHÂN VẬT & ĐƠN HÀNG -->
+        <!-- HEADER DÙNG CHUNG CHO CẢ BÀN CHƠI & TRẠI CỦA TÔI -->
+        <header id="game-header">
+            <button id="btn-world-map" class="hud-icon-btn map-hud-btn" title="Mở Bản Đồ Hành Trình">
+                <img src="assets/images_webp/ui/icon_map.webp" alt="Bản đồ">
+                <span id="current-lv-badge" class="lv-map-badge"><span class="lv-map-num">1</span></span>
+            </button>
+
+            <div class="hud-stats-group">
+                <div class="hud-stat-banner energy-banner" id="btn-refill-energy" title="Bấm để mở Trạm Tiếp Năng Lượng">
+                    <div class="hud-icon-badge-wrap energy-icon-wrapper">
+                        <img class="hud-stat-icon" src="assets/images_webp/ui/icon_nangluong.webp" alt="Năng lượng">
+                        <div class="sparkle-star star-1"></div>
+                        <div class="sparkle-star star-2"></div>
+                        <div class="sparkle-star star-3"></div>
+                        <img class="hud-add-btn" src="assets/images_webp/ui/icon_add.webp" alt="+">
+                    </div>
+                    <span id="energy-val" class="hud-stat-val">100</span>
+                </div>
+
+                <div class="hud-stat-banner gold-banner" id="btn-coin-shop" title="Vàng tích lũy (Nhận khi ghép đồ, nộp đơn & qua màn)">
+                    <div class="hud-icon-badge-wrap">
+                        <img class="hud-stat-icon" src="assets/images_webp/ui/icon_glod.webp" alt="Vàng">
+                        <img class="hud-add-btn" src="assets/images_webp/ui/icon_add.webp" alt="+">
+                    </div>
+                    <span id="coin-val" class="hud-stat-val">100</span>
+                </div>
+
+                <div class="hud-stat-banner ruby-banner" id="btn-gem-shop" title="Kim cương (Nhận khi qua màn, ghép Lv.8 & Cẩm Nang)">
+                    <div class="hud-icon-badge-wrap">
+                        <img class="hud-stat-icon" src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương">
+                        <img class="hud-add-btn" src="assets/images_webp/ui/icon_add.webp" alt="+">
+                    </div>
+                    <span id="gem-val" class="hud-stat-val">20</span>
+                </div>
+            </div>
+
+            <button id="btn-settings" class="hud-icon-btn setting-hud-btn" title="Cài đặt trò chơi">
+                <img src="assets/images_webp/ui/icon_setting.webp" alt="Cài đặt">
+            </button>
+        </header>
+
+        <!-- PHẦN TRÊN: CẢNH CẮM TRẠI (CO GIÃN THEO MÀN HÌNH), NHÂN VẬT & ĐƠN HÀNG CHUẨN MERGE -->
         <section id="top-scene">
             <!-- MÂY BAY MÀN CHƠI (ẨN ĐỂ ƯU TIÊN MÂY HOÀNG HÔN NỀN TRỜI MỚI) -->
             <div id="top-scene-clouds" class="top-scene-clouds" style="display:none;" aria-hidden="true"></div>
+            <div class="top-header-spacer" aria-hidden="true"></div>
 
-            <!-- HEADER: Bản đồ, Năng lượng, Vàng, Kim cương & Cài đặt -->
-            <header id="game-header">
-                <button id="btn-world-map" class="hud-icon-btn map-hud-btn" title="Mở Bản Đồ Hành Trình">
-                    <img src="assets/images_webp/ui/icon_map.webp" alt="Bản đồ">
-                    <span id="current-lv-badge" class="lv-map-badge"><span class="lv-map-num">1</span></span>
-                </button>
-
-                <div class="hud-stats-group">
-                    <div class="hud-stat-banner energy-banner" id="btn-refill-energy" title="Bấm để mở Trạm Tiếp Năng Lượng">
-                        <div class="energy-icon-wrapper">
-                            <img class="hud-stat-icon" src="assets/images_webp/ui/icon_nangluong.webp" alt="Năng lượng">
-                            <div class="sparkle-star star-1"></div>
-                            <div class="sparkle-star star-2"></div>
-                            <div class="sparkle-star star-3"></div>
-                        </div>
-                        <span id="energy-val" class="hud-stat-val">100</span>
-                        <img class="hud-add-btn" src="assets/images_webp/ui/icon_add.webp" alt="+">
-                    </div>
-
-                    <div class="hud-stat-banner gold-banner" id="btn-coin-shop" title="Vàng tích lũy (Nhận khi ghép đồ, nộp đơn & qua màn)">
-                        <img class="hud-stat-icon" src="assets/images_webp/ui/icon_glod.webp" alt="Vàng">
-                        <span id="coin-val" class="hud-stat-val">100</span>
-                        <img class="hud-add-btn" src="assets/images_webp/ui/icon_add.webp" alt="+">
-                    </div>
-
-                    <div class="hud-stat-banner ruby-banner" id="btn-gem-shop" title="Kim cương (Nhận khi qua màn, ghép Lv.8 & Cẩm Nang)">
-                        <img class="hud-stat-icon" src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương">
-                        <span id="gem-val" class="hud-stat-val">20</span>
-                        <img class="hud-add-btn" src="assets/images_webp/ui/icon_add.webp" alt="+">
-                    </div>
-                </div>
-
-                <button id="btn-settings" class="hud-icon-btn setting-hud-btn" title="Cài đặt trò chơi">
-                    <img src="assets/images_webp/ui/icon_setting.webp" alt="Cài đặt">
-                </button>
-            </header>
-
-            <!-- KHU VỰC NHÂN VẬT ĐỒNG HÀNH, HỘP THOẠI & ĐƠN HÀNG (GẮN SÁT TRÊN KHUNG BÀN CỜ) -->
+            <!-- KHU VỰC HÀNG ĐỢI TRÁI + NÚT NHIỆM VỤ NGÀY + DẢI NPC & ĐƠN HÀNG CUỘN NGANG -->
             <div id="scene-stage">
-                <!-- ĐÁM MÂY BAY CHẬM DƯỚI ẢNH GÒ CỎ (LOAD SAU CÙNG) -->
-                <div id="npc-stage-cloud" class="npc-stage-cloud" aria-hidden="true">
+                <div id="npc-stage-cloud" class="npc-stage-cloud" style="display:none;" aria-hidden="true">
                     <img data-src="assets/images_webp/background/may1.webp" class="npc-stage-cloud-img" alt="">
                 </div>
 
@@ -244,23 +247,30 @@
                         </div>
                         <div id="npc-speech-text" class="npc-speech-text"></div>
                     </div>
-                    <div id="orders-container"></div>
-                </div>
 
-                <!-- RƯƠNG SAO ĐẶT GỌN Ở GÓC PHẢI CẢNH (KHÔNG CHỮ ĐẾM, ĐẦY SAO SẼ RUNG LÊN) -->
-                <div class="scene-right-tools" id="scene-right-tools">
-                    <button id="btn-star-chest" class="scene-tool-btn star-chest-tool-btn" type="button" title="Tích Sao từ đơn hàng để mở Rương Sao">
-                        <img id="star-chest-icon" src="assets/images_webp/ui/icon_ruongdong.webp" class="scene-tool-icon" alt="Rương Sao">
-                    </button>
+                    <!-- DẢI NGANG SÁT MÉP TRÊN BÀN CỜ: [Ô MÁY PHÁT CHỜ] + [NHIỆM VỤ 3d4h] + [CÁC NPC & KHAY ĐƠN CUỘN NGANG] -->
+                    <div id="merge-order-strip" class="merge-order-strip">
+                        <div id="order-strip-left-dock" class="order-strip-left-dock">
+                            <div id="pending-gen-host" class="pending-gen-host"></div>
+                            <button id="btn-daily-pass" class="round-ui-btn order-strip-daily-round-btn" type="button" title="Lịch Điểm Danh 7 Ngày & Nhiệm Vụ Hàng Ngày">
+                                <span class="round-ui-bg" aria-hidden="true"></span>
+                                <img src="assets/images_webp/ui/icon_nhiemvu.webp?v=11.51" class="round-ui-icon daily-task-img" alt="Nhiệm vụ">
+                                <span id="daily-pass-badge" class="ui-count-badge" style="display:none;">0</span>
+                                <span class="ui-number-pill"><span id="daily-pass-timer-label">7d0h</span></span>
+                            </button>
+                        </div>
+
+                        <div id="orders-container" class="merge-orders-scroll"></div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- PHẦN DƯỚI: KHUNG BÀN CỜ 7x9 & 4 NÚT CHỨC NĂNG GỌN GÀNG -->
+        <!-- PHẦN DƯỚI: KHUNG BÀN CỜ 7x9 & THANH FOOTER 3 THÀNH PHẦN -->
         <section id="bottom-play-area">
             <main class="board-container">
                 <div class="board-frame-wrapper">
-                    <!-- DẢI BỤI CỎ TRANG TRÍ 2 BÊN TRÁI & PHẢI BÀN CHƠI (TỰ NHIÊN, XẾP CHÉO NHAU & ĐÈ LÊN MÉP BÀN 8PX) -->
+                    <!-- DẢI BỤI CỎ TRANG TRÍ 2 BÊN TRÁI & PHẢI BÀN CHƠI -->
                     <div class="board-bushes board-bushes-left" aria-hidden="true">
                         <img src="assets/images_webp/board/glass1.webp" class="board-bush bush-top" alt="">
                         <img src="assets/images_webp/board/glass2.webp" class="board-bush bush-mid" alt="">
@@ -275,30 +285,39 @@
                 </div>
             </main>
 
-            <footer id="game-footer">
-                <!-- NÚT BÁN VẬT PHẨM: ĐẶT GIỮA BÀN CHƠI PHÍA TRÊN FOOTER -->
-                <button id="btn-sell" class="btn-3s btn-green board-sell-btn" type="button" style="display: none;" title="Bán vật phẩm đang chọn">
-                    <span class="btn-3s-bg" aria-hidden="true">
-                        <span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span>
-                    </span>
-                    <span class="btn-3s-text" id="sell-btn-text">Bán</span>
+            <footer id="game-footer" class="board-bottom-bar">
+                <!-- 1. KHO ĐỒ TẠM (0/4) -->
+                <button id="btn-storage" class="round-ui-btn footer-round-btn btn-storage-ui" type="button" title="Kho Lưu Trữ Tạm (4 ô): Kéo đồ vào hoặc bấm để cất/lấy đồ">
+                    <span class="round-ui-bg" aria-hidden="true"></span>
+                    <img src="assets/images_webp/ui/icon_box.webp?v=11.50" class="round-ui-icon storage-box-img" alt="Kho đồ">
+                    <span class="ui-number-pill"><span id="storage-count-label">0/4</span></span>
                 </button>
 
-                <button id="btn-camp" class="footer-img-btn btn-camp-ui" type="button" title="Cửa Hàng">
-                    <img src="assets/images_webp/ui/icon_shop.webp" class="footer-btn-icon" alt="Cửa hàng">
-                    <span class="footer-btn-label">Cửa hàng</span>
-                </button>
-                <button id="btn-storage" class="footer-img-btn btn-storage-ui" type="button" title="Kho Lưu Trữ Tạm (4 ô): Kéo đồ vào hoặc bấm để cất/lấy đồ">
-                    <img src="assets/images_webp/ui/icon_box.webp" class="footer-btn-icon" alt="Kho đồ">
-                    <span class="footer-btn-label">Kho đồ <span id="storage-count-label">0/4</span></span>
-                </button>
-                <button id="btn-book" class="footer-img-btn btn-book-ui" type="button" title="Cẩm Nang Trò Chơi">
-                    <img src="assets/images_webp/ui/icon_book.webp" class="footer-btn-icon" alt="Khám phá">
-                    <span class="footer-btn-label">Khám phá</span>
-                </button>
-                <button id="btn-my-camp" class="footer-img-btn btn-mycamp-ui" type="button" title="Xem trại">
-                    <img src="assets/images_webp/ui/icon_trai.webp" class="footer-btn-icon" alt="Xem trại">
-                    <span class="footer-btn-label">Xem trại</span>
+                <!-- 2. KHUNG THÔNG TIN VẬT PHẨM ĐANG CHỌN & NÚT BÁN (bg_item_home.webp) -->
+                <div id="board-item-info-bar" class="board-item-info-bar">
+                    <div class="board-info-left">
+                        <div class="board-info-title-row">
+                            <span id="board-info-title" class="board-info-title">Chạm vào vật phẩm</span>
+                            <button id="btn-item-chain-info" class="board-info-i-btn" type="button" style="display:none;" title="Xem chi tiết chuỗi vật phẩm">i</button>
+                        </div>
+                        <div id="board-info-desc" class="board-info-desc">Chọn ô trên bàn để xem thông tin hoặc bán</div>
+                    </div>
+                    <div id="board-info-right" class="board-info-right" style="display:none;">
+                        <button id="btn-sell" class="board-inline-sell-btn" type="button" title="Bán vật phẩm đang chọn">
+                            <span id="sell-btn-text">Bán</span>
+                        </button>
+                        <div id="board-sell-price-row" class="board-sell-price-row">
+                            <span class="sell-plus-sign">+</span><span id="sell-price">10</span>
+                            <img id="board-sell-currency-icon" src="assets/images_webp/ui/icon_glod.webp" alt="Vàng">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. XEM TRẠI CỦA TÔI -->
+                <button id="btn-my-camp" class="round-ui-btn footer-round-btn btn-mycamp-ui" type="button" title="Xem trại của bạn">
+                    <span class="round-ui-bg" aria-hidden="true"></span>
+                    <img src="assets/images_webp/ui/icon_trai.webp" class="round-ui-icon camp-tent-img" alt="Xem trại">
+                    <span id="mycamp-notify-badge" class="ui-count-badge" style="display:none;">0</span>
                 </button>
             </footer>
         </section>
@@ -311,6 +330,15 @@
                 <img data-src="assets/images_webp/ui/bg_all_may2.webp" class="backdrop-cloud cloud-2" alt="">
                 <img data-src="assets/images_webp/ui/bg_all_may3.webp" class="backdrop-cloud cloud-3" alt="">
                 <img data-src="assets/images_webp/ui/bg_all_may4.webp" class="backdrop-cloud cloud-4" alt="">
+            </div>
+
+            <!-- RƯƠNG SAO ĐẶT DƯỚI NÚT SETTING TRONG TRẠI CỦA BẠN -->
+            <div class="scene-right-tools mycamp-right-tools" id="scene-right-tools">
+                <button id="btn-star-chest" class="round-ui-btn mycamp-star-chest-btn" type="button" title="Tích Sao từ đơn hàng để mở Rương Sao">
+                    <span class="round-ui-bg" aria-hidden="true"></span>
+                    <img id="star-chest-icon" src="assets/images_webp/ui/icon_ruongdong.webp" class="round-ui-icon star-chest-icon-img" alt="Rương Sao">
+                    <span class="ui-number-pill"><span id="star-chest-progress-label">0/10</span></span>
+                </button>
             </div>
 
             <!-- VIEWPORT KÉO (PAN) & ZOOM KHÔNG GIAN BÃI TRẠI -->
@@ -326,19 +354,28 @@
             <!-- LỚP GRADIENT OVERLAY ĐÈ LÊN 20% PHÍA DƯỚI HÒN ĐẢO (POINTER-EVENTS: NONE) -->
             <div id="mycamp-gradient-overlay" class="mycamp-gradient-overlay"></div>
 
-            <div class="mycamp-header">
-                <div class="mycamp-title">Trại của bạn</div>
-            </div>
-
-            <!-- CỤM NÚT ĐÁY MÀN HÌNH "TRẠI CỦA BẠN": CHƠI TIẾP (CAM) & ĐỒ CẮM TRẠI (XANH) -->
+            <!-- CỤM NÚT ĐÁY MÀN HÌNH "TRẠI CỦA BẠN": TRÁI (SHOP, CẨM NANG, ĐỔI ĐỒ TRẠI) — PHẢI (PLAY TIA CHỚP) -->
             <div class="mycamp-bottom-actions">
-                <button id="btn-mycamp-play" class="btn-3s btn-orange size-44 mycamp-bottom-btn mycamp-play-btn" type="button" title="Quay lại bàn chơi">
-                    <span class="btn-3s-bg" aria-hidden="true"><span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span></span>
-                    <span class="btn-3s-text">Chơi tiếp</span>
-                </button>
-                <button id="btn-mycamp-decor" class="btn-3s btn-green size-44 mycamp-bottom-btn mycamp-decor-btn" type="button" title="Đồ cắm trại">
-                    <span class="btn-3s-bg" aria-hidden="true"><span class="b3-left"></span><span class="b3-mid"></span><span class="b3-right"></span></span>
-                    <span class="btn-3s-text">Đồ cắm trại</span>
+                <div class="mycamp-left-btns">
+                    <button id="btn-camp" class="round-ui-btn mycamp-round-btn" type="button" title="Cửa Hàng (Điểm đến & Thú cưng)">
+                        <span class="round-ui-bg" aria-hidden="true"></span>
+                        <img src="assets/images_webp/ui/icon_shop.webp" class="round-ui-icon" alt="Cửa hàng">
+                    </button>
+
+                    <button id="btn-book" class="round-ui-btn mycamp-round-btn" type="button" title="Cẩm Nang Vật Phẩm (Nhận thưởng mở khóa)">
+                        <span class="round-ui-bg" aria-hidden="true"></span>
+                        <img src="assets/images_webp/ui/icon_book.webp" class="round-ui-icon" alt="Khám phá">
+                        <span id="book-badge" class="ui-count-badge" style="display:none;">0</span>
+                    </button>
+
+                    <button id="btn-mycamp-decor" class="round-ui-btn mycamp-round-btn" type="button" title="Đổi đồ trang trí khu cắm trại">
+                        <span class="round-ui-bg" aria-hidden="true"></span>
+                        <img src="assets/images_webp/ui/icon_changeitemcam.webp" class="round-ui-icon" alt="Đổi đồ cắm trại">
+                    </button>
+                </div>
+
+                <button id="btn-mycamp-play" class="mycamp-play-icon-btn" type="button" title="Quay lại bàn chơi ghép đồ">
+                    <img src="assets/images_webp/ui/icon_play.webp" alt="Chơi tiếp">
                 </button>
             </div>
         </div>
@@ -356,17 +393,17 @@
     <script src="js/libs/gsap.min.js"></script>
     <script src="js/libs/MotionPathPlugin.min.js"></script>
 
-    <script src="js/i18n.js?v=11.31"></script>
-    <script src="js/config.js?v=11.31"></script>
-    <script src="js/data.js?v=11.31"></script>
-    <script src="js/engine.js?v=11.31"></script>
-    <script src="js/progress.js?v=11.31"></script>
-    <script src="js/firebase-sync.js?v=11.31"></script>
-    <script src="js/mycamp_config.js?v=11.31"></script>
-    <script src="js/visual_fx.js?v=11.31"></script>
-    <script src="js/camp.js?v=11.31"></script>
-    <script src="js/components/board.js?v=11.31"></script>
-    <script src="js/test_tool.js?v=11.31"></script>
+    <script src="js/i18n.js?v=11.51"></script>
+    <script src="js/config.js?v=11.61"></script>
+    <script src="js/data.js?v=11.51"></script>
+    <script src="js/engine.js?v=11.57"></script>
+    <script src="js/progress.js?v=11.61"></script>
+    <script src="js/firebase-sync.js?v=11.51"></script>
+    <script src="js/mycamp_config.js?v=11.52"></script>
+    <script src="js/visual_fx.js?v=11.51"></script>
+    <script src="js/camp.js?v=11.63"></script>
+    <script src="js/components/board.js?v=11.65"></script>
+    <script src="js/test_tool.js?v=11.51"></script>
     <script>
         // Tải 4 đám mây nền sau cùng (sau khi toàn bộ ảnh nền, giao diện & script đã tải xong)
         window.addEventListener('load', function () {

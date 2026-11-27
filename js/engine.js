@@ -10,12 +10,14 @@ var MAX_ITEM_LV = 12;
 var BONUS_MIN_LV = 5; // ghép ra cấp này trở lên mới có quà (level có cờ bonus)
 var BONUS_CHANCE = 0.55; // xác suất nổ quà tiếp tế khi ghép ra item Lv5+
 
-var MAX_VISIBLE_ORDERS = 4; // Tối đa 4 vật phẩm nhiệm vụ hiển thị đồng thời trên màn chơi
+var MAX_VISIBLE_ORDERS = 12; // Tối đa 12 vật phẩm nhiệm vụ từ các NPC hiển thị đồng thời trên màn chơi
 
 var GENERATORS = {
-    'generator_backpack': ['an_lv1', 'cafe_lv1', 'congcu_lv1'],
     'generator_cooler': ['ban_lv1', 'ghe_lv1', 'trai_lv1'],
-    'generator_crate': ['tham_lv1', 'antoan_lv1', 'bep_lv1']
+    'generator_backpack': ['an_lv1', 'qua_lv1', 'cafe_lv1'],
+    'generator_crate': ['congcu_lv1', 'antoan_lv1', 'tham_lv1'],
+    'generator_wood': ['bep_lv1', 'hoa_lv1'],
+    'generator_animal': ['thucung_lv1', 'cauca_lv1']
 };
 
 // Hệ thống địa hình tự nhiên bất đối xứng (tránh hoàn toàn kiểu khung hình chữ nhật đều 5x5, 5x6, 5x7)
@@ -78,15 +80,19 @@ function getItemMaxLevel(lineOrId) {
 // Dùng chung cho: Bàn chơi (board), Đơn hàng (orders) & Cẩm nang (discovery book)
 // ==========================================
 var ITEM_CELL_BG_MAP = {
-    'an': 'cell-bg-01',     // 1. Ẩm thực dã ngoại
-    'ban': 'cell-bg-02',    // 2. Bàn dã ngoại
-    'cafe': 'cell-bg-03',   // 3. Cà phê sương sớm
-    'trai': 'cell-bg-04',   // 4. Lều trại trú ngụ
-    'tham': 'cell-bg-05',   // 5. Chỗ ngủ êm ái
-    'ghe': 'cell-bg-06',    // 6. Ghế nghỉ ngơi
-    'bep': 'cell-bg-07',    // 7. Lửa & bếp trại
-    'congcu': 'cell-bg-08', // 8. Chiếu sáng dã ngoại
-    'antoan': 'cell-bg-09'  // 9. Nguồn điện & trạm năng lượng
+    'an': 'cell-bg-01',      // 1. Ẩm thực dã ngoại
+    'qua': 'cell-bg-01',     // 2. Trái cây tươi mát
+    'ban': 'cell-bg-02',     // 3. Bàn dã ngoại
+    'cafe': 'cell-bg-03',    // 4. Cà phê sương sớm
+    'trai': 'cell-bg-04',    // 5. Lều trại trú ngụ
+    'tham': 'cell-bg-05',    // 6. Chỗ ngủ êm ái
+    'ghe': 'cell-bg-06',     // 7. Ghế nghỉ ngơi
+    'bep': 'cell-bg-07',     // 8. Lửa & bếp trại
+    'hoa': 'cell-bg-07',     // 9. Hoa rừng & bình hoa
+    'congcu': 'cell-bg-08',  // 10. Chiếu sáng dã ngoại
+    'antoan': 'cell-bg-09',  // 11. Nguồn điện & trạm năng lượng
+    'thucung': 'cell-bg-06', // 12. Đồ chơi thú cưng
+    'cauca': 'cell-bg-08'    // 13. Câu cá & thám hiểm
 };
 
 function getCellBgClass(line) {
@@ -473,8 +479,10 @@ function isGeneratorHighLevelActive(genId, effLv) {
     } else {
         var defaultGenMap = {
             'generator_cooler': ['ban', 'ghe', 'trai'],
-            'generator_backpack': ['an', 'cafe', 'congcu'],
-            'generator_crate': ['bep', 'tham', 'antoan']
+            'generator_backpack': ['an', 'qua', 'cafe'],
+            'generator_crate': ['congcu', 'antoan', 'tham'],
+            'generator_wood': ['bep', 'hoa'],
+            'generator_animal': ['thucung', 'cauca']
         };
         genBranches = defaultGenMap[genId] || [];
     }
@@ -515,8 +523,10 @@ function getGeneratorActiveQuestMaxLevel(genId) {
     } else {
         var defaultGenMap = {
             'generator_cooler': ['ban', 'ghe', 'trai'],
-            'generator_backpack': ['an', 'cafe', 'congcu'],
-            'generator_crate': ['bep', 'tham', 'antoan']
+            'generator_backpack': ['an', 'qua', 'cafe'],
+            'generator_crate': ['congcu', 'antoan', 'tham'],
+            'generator_wood': ['bep', 'hoa'],
+            'generator_animal': ['thucung', 'cauca']
         };
         genBranches = defaultGenMap[genId] || [];
     }
@@ -772,6 +782,10 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
         }
 
         var bag = genSpawnBags[genId];
+        if (Array.isArray(bag)) {
+            bag = bag.filter(function (entry) { return !!entry && !!itemLine(entry); });
+            genSpawnBags[genId] = bag;
+        }
         if (!Array.isArray(bag) || bag.length === 0) {
             bag = [];
             var itemByLine = {};
@@ -779,42 +793,49 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
                 itemByLine[itemLine(baseId)] = baseId;
             });
 
-            if (matchLines.length === 1) {
+            if (matchLines.length >= list.length || matchLines.length === 0) {
+                // Tất cả nhánh của máy phát đều đang cần (VD máy 2 nhánh như generator_wood / generator_animal cần cả 2, hoặc máy 3 nhánh cần cả 3),
+                // HOẶC không có nhánh nào trên bảng nhiệm vụ -> Chia đều cân bằng 100% giữa các nhánh của máy phát
+                for (var bIdx = 0; bIdx < list.length; bIdx++) {
+                    bag.push(list[bIdx]);
+                    bag.push(list[bIdx]);
+                }
+            } else if (matchLines.length === 1) {
                 // 1 item trên bảng nhiệm vụ: 80% cho nhánh đó, các nhánh còn lại chia đều 20%
                 var targetLine = matchLines[0];
                 var targetId = itemByLine[targetLine] || list[0];
                 for (var i = 0; i < 8; i++) {
                     bag.push(targetId);
                 }
-                if (nonMatchLines.length === 2) {
-                    bag.push(itemByLine[nonMatchLines[0]] || list[1]);
-                    bag.push(itemByLine[nonMatchLines[1]] || list[2]);
+                if (nonMatchLines.length >= 2) {
+                    bag.push(itemByLine[nonMatchLines[0]] || list[0]);
+                    bag.push(itemByLine[nonMatchLines[1]] || list[Math.min(1, list.length - 1)]);
                 } else if (nonMatchLines.length === 1) {
-                    bag.push(itemByLine[nonMatchLines[0]]);
-                    bag.push(itemByLine[nonMatchLines[0]]);
+                    var singleNonMatch = itemByLine[nonMatchLines[0]] || list[0];
+                    bag.push(singleNonMatch);
+                    bag.push(singleNonMatch);
                 } else {
                     bag.push(list[0]);
                     bag.push(list[0]);
                 }
-            } else if (matchLines.length === 2) {
-                // 2 item trên bảng nhiệm vụ: mỗi item 40%, nhánh còn lại 20%
+            } else if (matchLines.length === 2 && nonMatchLines.length >= 1) {
+                // Máy 3 nhánh có 2 item trên bảng nhiệm vụ: mỗi item 40%, nhánh thứ 3 còn lại 20%
                 var targetId1 = itemByLine[matchLines[0]] || list[0];
-                var targetId2 = itemByLine[matchLines[1]] || list[1];
-                for (var i = 0; i < 4; i++) {
+                var targetId2 = itemByLine[matchLines[1]] || list[Math.min(1, list.length - 1)];
+                for (var i2 = 0; i2 < 4; i2++) {
                     bag.push(targetId1);
                 }
-                for (var j = 0; j < 4; j++) {
+                for (var j2 = 0; j2 < 4; j2++) {
                     bag.push(targetId2);
                 }
                 var otherLine = nonMatchLines[0];
-                var otherId = (otherLine && itemByLine[otherLine]) ? itemByLine[otherLine] : list[2];
+                var otherId = (otherLine && itemByLine[otherLine]) ? itemByLine[otherLine] : list[0];
                 bag.push(otherId);
                 bag.push(otherId);
             } else {
-                // Có cả 3 item (hoặc không có item nào): chia đều cả 3 (mỗi nhánh 2 món = 6 món, 33.33% mỗi nhánh)
-                for (var bIdx = 0; bIdx < list.length; bIdx++) {
-                    bag.push(list[bIdx]);
-                    bag.push(list[bIdx]);
+                for (var fbIdx = 0; fbIdx < list.length; fbIdx++) {
+                    bag.push(list[fbIdx]);
+                    bag.push(list[fbIdx]);
                 }
             }
 
@@ -874,6 +895,9 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
         genLastSpawnItem[genId] = id;
     }
 
+    if (!id || !itemLine(id)) {
+        id = list[0];
+    }
     var pickedLine = itemLine(id);
     if (typeof matchLines !== 'undefined' && matchLines && matchLines.length > 0) {
         wasUnwanted = (matchLines.indexOf(pickedLine) === -1);
@@ -901,6 +925,7 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
         dropLv = Math.min(MAX_ITEM_LV, dropLv + 1);
     }
 
+    dropLv = Math.max(1, Math.min(getItemMaxLevel(pickedLine), dropLv));
     var finalId = pickedLine + '_lv' + dropLv;
 
     var target = empty[Math.floor(rand() * empty.length)];
@@ -1096,19 +1121,29 @@ var ITEM_STORY_DIALOGUES = {
     'trai_lv11': 'Hoàn thiện lều mái vòm sàn gỗ có dây đèn LED ấm áp tuyệt đẹp!',
     'trai_lv12': 'Kiệt tác! Biệt thự lều Safari sàn gỗ có hiên nghỉ dưỡng hoàng gia!',
 
-    // 4. Chuỗi Ẩm thực dã ngoại (an_lv1 -> an_lv12)
-    'an_lv1':  'Một quả táo đỏ giòn ngọt tráng miệng cho đầu buổi dã ngoại nhé!',
-    'an_lv2':  'Chuẩn bị giỏ trái cây tươi đầy ắp nho, táo và lê ngọt lành nhé!',
-    'an_lv3':  'Kẹp thêm rau thịt làm chiếc bánh sandwich ngon lành tiếp sức nào!',
-    'an_lv4':  'Nướng chiếc đùi gà vàng ruộm thơm phức nạp năng lượng cho cả nhóm!',
-    'an_lv5':  'Nướng nóng một chiếc bánh pizza dã ngoại thơm lừng phô mai nhé!',
-    'an_lv6':  'Bắc nồi lẩu thập cẩm nóng hổi đầy thịt và rau giữa trời se lạnh!',
-    'an_lv7':  'Bày khay sushi cá hồi và cuộn rong biển tươi ngon đổi vị nhé!',
-    'an_lv8':  'Chuẩn bị dẻ sườn nướng BBQ phết sốt đậm đà thơm nức mũi nào!',
-    'an_lv9':  'Làm đĩa hải sản hấp tôm ngao vắt thêm lát chanh tươi ngọt thịt!',
-    'an_lv10': 'Thái lát chiếc đùi heo xông khói thơm lừng đãi tiệc lửa trại nhé!',
-    'an_lv11': 'Chuẩn bị phần thịt bò Wagyu vân cẩm thạch thượng hạng để áp chảo!',
-    'an_lv12': 'Đỉnh cao ẩm thực! Cua hoàng đế đỏ au hấp ướp đá cực sang trọng!',
+    // 4. Chuỗi Ẩm thực dã ngoại (an_lv1 -> an_lv11)
+    'an_lv1':  'Nướng ổ bánh mì bơ tỏi thơm giòn ăn kèm xà lách tươi nhé!',
+    'an_lv2':  'Làm ổ bánh mì kẹp xúc xích rau củ đậm đà nạp năng lượng nào!',
+    'an_lv3':  'Kẹp thêm phô mai và sốt làm bánh sandwich ngon lành tiếp sức!',
+    'an_lv4':  'Nắm những viên cơm nắm rong biển Onigiri gọn nhẹ đi dã ngoại!',
+    'an_lv5':  'Cuộn đĩa cơm Kimbap đầy đặn rau củ và trứng vàng ươm nhé!',
+    'an_lv6':  'Nướng chiếc bánh pizza xúc xích phô mai kéo sợi thơm nức mũi!',
+    'an_lv7':  'Nâng cấp lên bánh pizza hải sản tôm tươi và ớt chuông rực rỡ!',
+    'an_lv8':  'Nướng xiên cá viên vàng ruộm phết sốt bóng bẩy bên bếp lửa!',
+    'an_lv9':  'Xiên tôm tươi nướng sa tế thơm lừng cho bữa tiệc chiều nay!',
+    'an_lv10': 'Mực tươi nguyên con nướng sa tế đỏ au hấp dẫn quá đi mất!',
+    'an_lv11': 'Đỉnh cao tiệc trại! Đùi heo nướng BBQ bóng mật ong thượng hạng!',
+
+    // 4b. Chuỗi Trái cây tươi mát (qua_lv1 -> qua_lv9)
+    'qua_lv1': 'Một quả táo đỏ tươi giòn ngọt tráng miệng đầu buổi dã ngoại!',
+    'qua_lv2': 'Quả cam vàng mọng nước bổ sung vitamin C mát lành giữa rừng!',
+    'qua_lv3': 'Trái đào hồng phớt thơm dịu ngọt ngào cho buổi trà chiều nhé!',
+    'qua_lv4': 'Quả lê vàng giòn tan mát lịm giải khát sau chặng đường dài!',
+    'qua_lv5': 'Nải chuối chín vàng ươm cung cấp năng lượng nhanh cho cả đội!',
+    'qua_lv6': 'Trái dứa vàng thắt nơ đỏ xinh xắn thơm lừng cả góc bàn tiệc!',
+    'qua_lv7': 'Rổ dâu tây đỏ mọng vừa hái trên đồi cao nguyên mát lạnh!',
+    'qua_lv8': 'Đĩa việt quất rừng xanh thẫm đặt trên lá tươi cực kỳ thanh mát!',
+    'qua_lv9': 'Tuyệt phẩm! Giỏ mây đầy ắp đủ loại trái cây tươi ngon nhất trại!',
 
     // 5. Chuỗi Cà phê & Đồ uống (cafe_lv1 -> cafe_lv12)
     'cafe_lv1':  'Những hạt cà phê rang mộc thơm nức mũi cho buổi sáng tỉnh táo!',
@@ -1152,19 +1187,16 @@ var ITEM_STORY_DIALOGUES = {
     'bep_lv11': 'Bếp nướng chân cao gọn gàng đã đỏ lửa sẵn sàng nướng thịt thơm lừng!',
     'bep_lv12': 'Đỉnh cao! Đại bếp nướng BBQ inox rộng rãi phục vụ mọi đại tiệc!',
 
-    // 8. Chuỗi Chỗ ngủ êm ái (tham_lv1 -> tham_lv12)
-    'tham_lv1':  'Mang tấm chăn cuộn màu xám mềm mại giữ ấm khi ngồi ngoài trời nhé!',
-    'tham_lv2':  'Thổi chiếc gối hơi màu xanh nhỏ gọn để tựa lưng nghỉ ngơi êm ái!',
-    'tham_lv3':  'Trải tấm thảm picnic kẻ ca-rô đỏ trắng ra bãi cỏ cùng dã ngoại nào!',
-    'tham_lv4':  'Chuẩn bị tấm thảm cuộn cách nhiệt xanh rêu chống ẩm mặt đất nhé!',
-    'tham_lv5':  'Mang bộ túi ngủ cuộn màu cam đen gọn gàng sẵn sàng ngủ qua đêm!',
-    'tham_lv6':  'Chui vào chiếc túi ngủ con nhộng xanh rêu lót lông cực ấm áp nhé!',
-    'tham_lv7':  'Bơm chiếc đệm hơi đơn màu xanh kèm ống bơm tay thật nhanh gọn nào!',
-    'tham_lv8':  'Gấp gọn bộ chăn đệm dã ngoại kèm gối trắng êm như ở nhà nhé!',
-    'tham_lv9':  'Nâng cấp lên đệm hơi đôi cỡ lớn có hai gối liền cực kỳ êm ái!',
-    'tham_lv10': 'Dựng chiếc giường xếp khung nhôm cách ly hoàn toàn hơi lạnh mặt đất!',
-    'tham_lv11': 'Phủ thêm chăn bông chần màu cam ấm áp lên giường xếp Glamping nhé!',
-    'tham_lv12': 'Đỉnh cao Glamping! Giường gỗ hoàng gia cùng thảm thổ cẩm 5 sao!',
+    // 8. Chuỗi Chỗ ngủ êm ái (tham_lv1 -> tham_lv9)
+    'tham_lv1': 'Thổi chiếc gối hơi màu xanh nhỏ gọn để tựa lưng nghỉ ngơi êm ái!',
+    'tham_lv2': 'Trải tấm thảm picnic kẻ ca-rô đỏ trắng ra bãi cỏ cùng dã ngoại nào!',
+    'tham_lv3': 'Chuẩn bị tấm thảm cuộn cách nhiệt xanh rêu chống ẩm mặt đất nhé!',
+    'tham_lv4': 'Mang bộ túi ngủ cuộn màu cam đen gọn gàng sẵn sàng ngủ qua đêm!',
+    'tham_lv5': 'Chui vào chiếc túi ngủ con nhộng xanh rêu lót lông cực ấm áp nhé!',
+    'tham_lv6': 'Bơm chiếc đệm hơi đơn màu xanh kèm ống bơm tay thật nhanh gọn nào!',
+    'tham_lv7': 'Nâng cấp lên đệm hơi đôi cỡ lớn có hai gối liền cực kỳ êm ái!',
+    'tham_lv8': 'Dựng chiếc giường xếp khung nhôm cách ly hoàn toàn hơi lạnh mặt đất!',
+    'tham_lv9': 'Đỉnh cao nghỉ dưỡng! Giường xếp phủ chăn bông chần màu cam ấm áp!',
 
     // 9. Chuỗi An toàn & Năng lượng (antoan_lv1 -> antoan_lv12)
     'antoan_lv1':  'Xịt chút chai chống muỗi màu cam để thoải mái vui chơi giữa rừng nhé!',
@@ -1178,7 +1210,40 @@ var ITEM_STORY_DIALOGUES = {
     'antoan_lv9':  'Dựng tấm pin năng lượng mặt trời đón nắng tự tạo nguồn điện sạch!',
     'antoan_lv10': 'Bật loa Bluetooth xanh rêu lên chill vài bản nhạc bên bờ suối nhé!',
     'antoan_lv11': 'Ghép trạm sạc dự phòng mini màu đen cấp nguồn cho đèn và quạt!',
-    'antoan_lv12': 'Đỉnh cao công nghệ! Trạm năng lượng Glamping cấp điện cả khu trại!'
+    'antoan_lv12': 'Đỉnh cao công nghệ! Trạm năng lượng Glamping cấp điện cả khu trại!',
+
+    // 10. Chuỗi Hoa rừng & Bình hoa (hoa_lv1 -> hoa_lv8)
+    'hoa_lv1': 'Hái bông hoa cúc trắng tinh khôi vừa nở bên vệ cỏ sương sớm!',
+    'hoa_lv2': 'Nhánh hoa oải hương tím biếc tỏa hương thơm dịu khắp góc lều!',
+    'hoa_lv3': 'Bông hoa mao lương vàng tươi rực rỡ như ánh nắng ban mai!',
+    'hoa_lv4': 'Kết khóm hoa đồng nội đủ sắc trắng, tím, vàng thật tươi tắn!',
+    'hoa_lv5': 'Cắm bông cúc trắng vào lọ thủy tinh trong veo đặt trên bàn trà!',
+    'hoa_lv6': 'Bình thủy tinh cắm những nhánh oải hương tím thơm ngát cả lều!',
+    'hoa_lv7': 'Bình hoa mao lương vàng rực làm bừng sáng góc bàn gỗ dã ngoại!',
+    'hoa_lv8': 'Tuyệt tác thiên nhiên! Bình hoa thảo nguyên thắt nơ dây thừng mộc mạc!',
+
+    // 11. Chuỗi Đồ chơi thú cưng (thucung_lv1 -> thucung_lv11)
+    'thucung_lv1':  'Thưởng cho bé thú cưng chiếc bánh quy hình khúc xương giòn rụm!',
+    'thucung_lv2':  'Quả bóng tennis xanh lá để ném bắt bóng trên bãi cỏ rộng nào!',
+    'thucung_lv3':  'Cuộn len màu cam mềm mại cho các bé mèo vờn chơi thích mê!',
+    'thucung_lv4':  'Chiếc đĩa bay cầu vồng sẵn sàng cho màn tung bắt siêu đẳng!',
+    'thucung_lv5':  'Chú chuột vải xám đuôi dây thừng khơi dậy bản năng săn bắt!',
+    'thucung_lv6':  'Chày gai cao su hai màu giúp thú cưng gặm nướu cực kỳ thích thú!',
+    'thucung_lv7':  'Chiếc đệm tròn in hình dấu chân viền dây thừng êm ái cho bé nằm!',
+    'thucung_lv8':  'Chú cua đỏ bóp kêu chít chít vui nhộn làm thú cưng vẫy đuôi tít mù!',
+    'thucung_lv9':  'Bé bạch tuộc nhồi bông màu tím mắt tròn xoe đáng yêu hết nấc!',
+    'thucung_lv10': 'Quả bóng thông minh giấu hạt thưởng bên trong cho bé lăn tìm!',
+    'thucung_lv11': 'Đỉnh cao cưng chiều! Lều thổ cẩm nhỏ ngập tràn đồ chơi cho thú cưng!',
+
+    // 12. Chuỗi Câu cá & Thám hiểm (cauca_lv1 -> cauca_lv8)
+    'cauca_lv1': 'Đào hộp giun đất tươi làm mồi câu cá bên dòng suối mát nhé!',
+    'cauca_lv2': 'Chuẩn bị phao câu đỏ trắng và cuộn dây lưỡi câu thật chắc chắn!',
+    'cauca_lv3': 'Oa! Câu được xô cá suối tươi rói bơi tung tăng rồi nè!',
+    'cauca_lv4': 'Ghép chiếc cần câu trúc cổ điển có máy quay tay đi câu chiều nay!',
+    'cauca_lv5': 'Nâng cấp lên cần câu máy chuyên nghiệp vừa giật được chú cá vàng!',
+    'cauca_lv6': 'Bật bộ đàm cam liên lạc với đồng đội khi đi câu xa bờ suối nhé!',
+    'cauca_lv7': 'Dùng ống nhòm xanh rêu quan sát đàn cá và cảnh rừng từ xa nào!',
+    'cauca_lv8': 'Đỉnh cao khám phá! Hạ thủy thuyền Kayak cam kèm mái chèo gỗ vượt suối!'
 };
 
 var PET_ORDER_DIALOGUES = {
@@ -1226,6 +1291,26 @@ var PET_ORDER_DIALOGUES = {
         'Chuẩn bị nguồn điện dự phòng cho chuyến dã ngoại dài ngày nhé!',
         'Nạp đầy năng lượng để quạt và đèn trại luôn hoạt động!',
         'Trạm điện thông minh giúp khu trại tiện nghi như ở nhà!'
+    ],
+    'qua': [
+        'Thêm chút trái cây tươi mát tráng miệng bên bàn tiệc nhé!',
+        'Trái cây mọng nước ngọt lành giải nhiệt giữa rừng thông!',
+        'Giỏ quả tươi đầy sắc màu cho buổi picnic thêm rực rỡ!'
+    ],
+    'hoa': [
+        'Hái vài bông hoa rừng cắm bình trang trí bàn trại nhé!',
+        'Hương hoa đồng nội thơm dịu làm khu trại thơ mộng quá!',
+        'Thêm bình hoa xinh xắn cho góc lều tràn ngập sức sống!'
+    ],
+    'thucung': [
+        'Tìm giúp mình món đồ chơi để nô đùa trên bãi cỏ nhé!',
+        'Có thêm đồ chơi mới là tụi mình chạy nhảy cả ngày luôn!',
+        'Chuẩn bị góc đồ chơi xinh xắn cho các bạn thú cưng nào!'
+    ],
+    'cauca': [
+        'Chuẩn bị cần câu ra bờ suối câu cá cùng mình nhé!',
+        'Hôm nay nước suối trong vắt, đi câu cá và chèo kayak thôi!',
+        'Sắm thêm đồ nghề câu cá và ống nhòm thám hiểm rừng nào!'
     ]
 };
 
@@ -1327,8 +1412,10 @@ function pickPetForOrder(orderItemLine, existingPetIds) {
 
 var GENERATOR_BRANCH_MAP = {
     'generator_cooler': ['ban', 'ghe', 'trai'],
-    'generator_backpack': ['an', 'cafe', 'congcu'],
-    'generator_crate': ['bep', 'tham', 'antoan']
+    'generator_backpack': ['an', 'qua', 'cafe'],
+    'generator_crate': ['congcu', 'antoan', 'tham'],
+    'generator_wood': ['bep', 'hoa'],
+    'generator_animal': ['thucung', 'cauca']
 };
 
 var ALL_PERMUTATIONS = [
@@ -1376,7 +1463,7 @@ function getPendingDockGenerators(board, playerLv) {
 
     var unlockLevels = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.initialBoard && GAME_CONFIG.initialBoard.generatorUnlockLevels)
         ? GAME_CONFIG.initialBoard.generatorUnlockLevels
-        : { generator_cooler: 1, generator_backpack: 4, generator_crate: 7 };
+        : { generator_cooler: 1, generator_backpack: 4, generator_crate: 7, generator_wood: 10, generator_animal: 13 };
 
     var onBoard = new Set(['generator_cooler']);
     var b = board || (typeof boardData !== 'undefined' ? boardData : (typeof SAVE !== 'undefined' && SAVE ? SAVE.persistentBoard : null));
@@ -1389,12 +1476,14 @@ function getPendingDockGenerators(board, playerLv) {
     }
 
     var pending = [];
-    if (pLv >= (unlockLevels.generator_backpack || 4) && !onBoard.has('generator_backpack')) {
-        pending.push('generator_backpack');
-    }
-    if (pLv >= (unlockLevels.generator_crate || 7) && !onBoard.has('generator_crate')) {
-        pending.push('generator_crate');
-    }
+    var orderedGens = ['generator_backpack', 'generator_crate', 'generator_wood', 'generator_animal'];
+    var defaultUnlockMap = { generator_backpack: 4, generator_crate: 7, generator_wood: 10, generator_animal: 13 };
+    orderedGens.forEach(function (gId) {
+        var reqLv = unlockLevels[gId] || defaultUnlockMap[gId] || 99;
+        if (pLv >= reqLv && !onBoard.has(gId)) {
+            pending.push(gId);
+        }
+    });
     return pending;
 }
 
@@ -2154,7 +2243,7 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
         SAVE.slot1CompletedIds = [];
     }
 
-    var allBranches = ['ban', 'ghe', 'trai', 'an', 'cafe', 'congcu', 'bep', 'tham', 'antoan'];
+    var allBranches = ['ban', 'ghe', 'trai', 'an', 'qua', 'cafe', 'congcu', 'antoan', 'tham', 'bep', 'hoa', 'thucung', 'cauca'];
     allBranches.forEach(function (ln) {
         if (typeof SAVE.slot1BranchLevelMap[ln] !== 'number' || SAVE.slot1BranchLevelMap[ln] < 1) {
             SAVE.slot1BranchLevelMap[ln] = 1;
@@ -2260,7 +2349,9 @@ function pickScriptedSlot1MainQuestItem(board, orderNum, activeLines, activeGens
             var leadOffset = 0;
             if (entry.line === 'ban') leadOffset = 1.6;
             else if (genId === 'generator_cooler') leadOffset = 1.1;
-            else if (genId === 'generator_backpack') leadOffset = 0.45;
+            else if (genId === 'generator_backpack') leadOffset = 0.65;
+            else if (genId === 'generator_crate') leadOffset = 0.35;
+            else if (genId === 'generator_wood') leadOffset = 0.15;
             return entry.nextLv - leadOffset;
         }
 
@@ -3234,7 +3325,13 @@ function buildCleanupOrderGroupForOldGens(newGenId, cleanupStep, orderNum, petId
         chosenIds.push(s3);
     }
 
-    var newGenLabel = (newGenId === 'generator_backpack') ? 'Ba Lô Dã Ngoại' : 'Thùng Bếp & Sinh Tồn';
+    var genLabelMap = {
+        'generator_backpack': 'Giỏ Picnic Dã Ngoại',
+        'generator_crate': 'Ba Lô Sinh Tồn',
+        'generator_wood': 'Gốc Cây Thảo Mộc',
+        'generator_animal': 'Giỏ Đồ Chơi Thú Cưng'
+    };
+    var newGenLabel = genLabelMap[newGenId] || 'Máy Phát Mới';
     var cleanupDialogue = (cleanupStep === 1)
         ? ('Dọn gọn các món trên bàn trước khi khui ' + newGenLabel + ' mới toanh nhé!')
         : ('Thêm 1 nhịp dọn bàn nữa thôi là mình mở ' + newGenLabel + ' ngay!');
@@ -3287,9 +3384,13 @@ function buildNewGenIntroOrderGroup(newGenId, orderNum, petId, board, existingId
         recordItemInRecentOrdersHistory(it);
     });
 
-    var introDialogue = (newGenId === 'generator_backpack')
-        ? '🎒 Ba Lô mới mở rồi! Chạm lấy đồ ăn, cà phê và đèn sáng cho trại nhé!'
-        : '🧰 Thùng Bếp mới mở rồi! Chạm lấy củi lửa, chăn đệm và đồ sinh tồn nào!';
+    var introDialogueMap = {
+        'generator_backpack': '🧺 Giỏ Picnic mở rồi! Chạm lấy bánh mì, trái cây tươi và cà phê nóng nhé!',
+        'generator_crate': '🎒 Ba Lô Sinh Tồn mở rồi! Chạm lấy đèn trại, đồ an toàn và đệm ngủ nào!',
+        'generator_wood': '🪵 Gốc Cây Thảo Mộc mở rồi! Chạm lấy củi nhóm lửa và hoa rừng tươi thắm nhé!',
+        'generator_animal': '🐾 Giỏ Đồ Chơi Thú Cưng mở rồi! Chạm lấy đồ chơi thú cưng và đồ nghề câu cá suối nào!'
+    };
+    var introDialogue = introDialogueMap[newGenId] || '🎉 Máy phát mới đã sẵn sàng! Chạm để khám phá chuỗi vật phẩm mới nhé!';
 
     var orders = introIds.map(function (itemId, sIdx) {
         var slotName = (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy');
@@ -3333,19 +3434,116 @@ var REST_ORDER_DIALOGUES = [
     'Trời chiều êm ả quá, mình chuẩn bị vài món đơn giản chill cùng nhau nào!'
 ];
 
-function getDynamicOrderContextDialogue(finalIds, orderNum, board, petId) {
-    var primaryId = (Array.isArray(finalIds) && finalIds[0]) ? finalIds[0] : 'ban_lv2';
-    return getPetOrderDialogue(primaryId, petId);
+// =============================================================================
+// HỆ THỐNG NHIỆM VỤ ĐA NPC & KỊCH BẢN CỐT TRUYỆN 6 CHƯƠNG (MULTI-NPC QUEST SYSTEM)
+// - Mỗi NPC (Golden, Poodle, Bulldog, Ba Tư, Mèo Anh, Xiêm) có hồ sơ tính cách,
+//   phong cách thoại và danh sách nhiệm vụ riêng (1 đến 3 item mỗi nhiệm vụ).
+// - Các nhiệm vụ của các NPC xuất hiện cùng lúc và nối liền nhau trên bàn chơi.
+// =============================================================================
+
+var ALL_NPC_ORDER_ROSTER = ['character01', 'character04', 'character03', 'character10', 'character07', 'character06'];
+
+function getNpcProfileConfig(petId) {
+    var profiles = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.npcProfiles) ? GAME_CONFIG.npcProfiles : null;
+    if (profiles && profiles[petId]) return profiles[petId];
+    if (profiles && profiles['character01']) return profiles['character01'];
+    return {
+        id: petId || 'character01',
+        name: 'Golden',
+        chapter: 'Chương 1',
+        title: 'Golden — Trưởng Trại Hướng Đạo Ấm Áp',
+        campZone: 'Lều Chính & Bãi Cỏ Ven Suối',
+        preferredLines: ['trai', 'ghe', 'ban'],
+        questList: []
+    };
 }
 
-// Tạo nhóm đơn hàng Linh Động Toàn Phần ( cả 3 Slot đều linh động 100% ):
-// - Kết hợp lời thoại ngữ cảnh của chú chó và các vật phẩm thực tế đang nằm trên bàn chơi.
-// - Khi người chơi kéo 1 túi đồ mới ra bàn chơi: tự động phát 2 nhiệm vụ liên tiếp quét dọn đồ của túi đang có,
-//   sau đó chú chó hướng dẫn công dụng túi đồ mới và giao nhiệm vụ cần vật phẩm từ túi đồ mới đó.
+// Xác định danh sách các NPC đủ điều kiện xuất hiện đặt nhiệm vụ trên bàn chơi
+function getUnlockedNpcIdsForOrders(playerLevel, board) {
+    var pLv = Math.max(1, parseInt(playerLevel, 10) || ((typeof SAVE !== 'undefined' && SAVE && SAVE.playerLevel) ? SAVE.playerLevel : 1));
+    var delivered = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.totalOrdersDelivered === 'number') ? SAVE.totalOrdersDelivered : 0;
+    var owned = (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.ownedPets)) ? SAVE.ownedPets : ['character01'];
+    var b = board || (typeof boardData !== 'undefined' ? boardData : null);
+    var activeGens = getActiveGeneratorsForOrders(b);
+
+    var schedule = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.multiNpcOrders && GAME_CONFIG.multiNpcOrders.unlockScheduleByLevel)
+        ? GAME_CONFIG.multiNpcOrders.unlockScheduleByLevel
+        : {
+            'character01': 1,
+            'character04': 2,
+            'character03': 4,
+            'character10': 7,
+            'character07': 10,
+            'character06': 13
+        };
+
+    var unlocked = ['character01'];
+
+    // Poodle (Chương 2) đồng hành cùng Golden ngay từ đầu (hoặc Level 1+) để luôn có 2 NPC nối liền nhau
+    if (pLv >= 1 || owned.indexOf('character04') !== -1) {
+        if (unlocked.indexOf('character04') === -1) unlocked.push('character04');
+    }
+    // Bulldog (Chương 3) xuất hiện từ Level 4+ (khi mở Giỏ Picnic) hoặc khi đã kéo Giỏ Picnic vào bàn / sở hữu Bulldog
+    if (pLv >= (schedule['character03'] || 4) || activeGens.indexOf('generator_backpack') !== -1 || owned.indexOf('character03') !== -1) {
+        if (unlocked.indexOf('character03') === -1) unlocked.push('character03');
+    }
+    // Ba Tư (Chương 4) xuất hiện từ Level 7+ (khi mở Ba Lô Sinh Tồn) hoặc khi đã kéo Ba Lô vào bàn / sở hữu Ba Tư
+    if (pLv >= (schedule['character10'] || 7) || activeGens.indexOf('generator_crate') !== -1 || owned.indexOf('character10') !== -1) {
+        if (unlocked.indexOf('character10') === -1) unlocked.push('character10');
+    }
+    // Mèo Anh (Chương 5) xuất hiện từ Level 10+ (khi mở Gốc Cây Thảo Mộc) hoặc khi đã kéo Gốc Cây vào bàn / sở hữu Mèo Anh
+    if (pLv >= (schedule['character07'] || 10) || activeGens.indexOf('generator_wood') !== -1 || owned.indexOf('character07') !== -1) {
+        if (unlocked.indexOf('character07') === -1) unlocked.push('character07');
+    }
+    // Xiêm (Chương 6) xuất hiện từ Level 13+ (khi mở Giỏ Thú Cưng & Câu Cá) hoặc khi đã kéo Giỏ Thú Cưng vào bàn / sở hữu Xiêm
+    if (pLv >= (schedule['character06'] || 13) || activeGens.indexOf('generator_animal') !== -1 || owned.indexOf('character06') !== -1) {
+        if (unlocked.indexOf('character06') === -1) unlocked.push('character06');
+    }
+
+    return unlocked;
+}
+
+// Chuyển đổi an toàn một mã vật phẩm trong kịch bản của NPC sang nhánh thuộc máy phát ĐANG ĐẶT TRÊN BÀN CHƠI
+// để người chơi không bao giờ bị kẹt bởi vật phẩm của máy phát chưa kéo ra bàn, đồng thời không bao giờ trùng nhánh trong 1 đơn!
+function adaptItemToActiveBranches(itemId, activeLines, preferredLines, usedLinesInQuest, progressCap) {
+    var ln = (typeof itemLine === 'function') ? itemLine(itemId) : String(itemId).split('_lv')[0];
+    var lv = (typeof itemLevel === 'function') ? itemLevel(itemId) : (parseInt(String(itemId).split('_lv')[1], 10) || 2);
+    var validActive = (Array.isArray(activeLines) && activeLines.length > 0) ? activeLines : ['ban', 'ghe', 'trai'];
+    var used = Array.isArray(usedLinesInQuest) ? usedLinesInQuest : [];
+
+    var targetLine = ln;
+    if (validActive.indexOf(targetLine) === -1 || used.indexOf(targetLine) !== -1) {
+        // Ưu tiên nhánh sở trường của NPC mà đang mở trên bàn chơi và chưa dùng trong nhiệm vụ này
+        var prefActive = (Array.isArray(preferredLines) ? preferredLines : []).filter(function (pLn) {
+            return validActive.indexOf(pLn) !== -1 && used.indexOf(pLn) === -1;
+        });
+        if (prefActive.length === 0) {
+            prefActive = validActive.filter(function (aLn) { return used.indexOf(aLn) === -1; });
+        }
+        if (prefActive.length === 0) {
+            prefActive = validActive;
+        }
+        targetLine = prefActive[lv % prefActive.length] || validActive[0];
+    }
+
+    var maxLineCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(targetLine) : 12;
+    var safeCap = (typeof progressCap === 'number' && progressCap >= 2) ? Math.min(maxLineCap, progressCap) : maxLineCap;
+    var finalLv = Math.max(2, Math.min(lv, safeCap));
+    return targetLine + '_lv' + finalLv;
+}
+
+// Lấy nhiệm vụ tiếp theo từ danh sách kịch bản riêng của NPC (hoặc sinh nhiệm vụ động đúng sở trường NPC sau khi hoàn thành chuỗi cốt truyện)
 function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
     var pId = petId || 'character01';
     var b = board || (typeof boardData !== 'undefined' ? boardData : null);
     var activeGens = getActiveGeneratorsForOrders(b);
+    var activeLines = [];
+    activeGens.forEach(function (gId) {
+        (GENERATOR_BRANCH_MAP[gId] || []).forEach(function (ln) {
+            if (activeLines.indexOf(ln) === -1) activeLines.push(ln);
+        });
+    });
+    if (!activeLines.length) activeLines = ['ban', 'ghe', 'trai'];
 
     // Kiểm tra tiến trình chuyển tiếp khi người chơi vừa kéo 1 túi đồ mới ra bàn chơi:
     if (typeof SAVE !== 'undefined' && SAVE && SAVE.newGenTransition && SAVE.newGenTransition.newGenId) {
@@ -3365,15 +3563,118 @@ function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
         }
     }
 
-    // Sinh các Slot hoàn toàn linh động theo nhịp điệu (1, 2 hoặc 3 món): 100% không trùng nhánh
+    var profile = getNpcProfileConfig(pId);
+    var questList = Array.isArray(profile.questList) ? profile.questList : [];
+    if (typeof SAVE !== 'undefined' && SAVE) {
+        if (!SAVE.npcQuestCursor || typeof SAVE.npcQuestCursor !== 'object') {
+            SAVE.npcQuestCursor = {};
+        }
+    }
+    var cursor = (typeof SAVE !== 'undefined' && SAVE && SAVE.npcQuestCursor && typeof SAVE.npcQuestCursor[pId] === 'number')
+        ? SAVE.npcQuestCursor[pId]
+        : 0;
+
+    var pLv = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.playerLevel === 'number') ? SAVE.playerLevel : 1;
+    var progCap = Math.max(4, getProgressCapForOrder(orderNum, pLv) + 1);
+
+    // 1. Nếu NPC vẫn còn nhiệm vụ trong danh sách kịch bản riêng (questList)
+    if (cursor < questList.length) {
+        var qEntry = questList[cursor];
+        if (typeof SAVE !== 'undefined' && SAVE && SAVE.npcQuestCursor) {
+            SAVE.npcQuestCursor[pId] = cursor + 1;
+        }
+
+        var rawItems = (qEntry && Array.isArray(qEntry.items) && qEntry.items.length > 0)
+            ? qEntry.items.slice(0, 3)
+            : ['trai_lv2', 'ban_lv2'];
+        var usedLines = [];
+        var adaptedItems = rawItems.map(function (rawId) {
+            var adapted = adaptItemToActiveBranches(rawId, activeLines, profile.preferredLines, usedLines, progCap);
+            var aLn = (typeof itemLine === 'function') ? itemLine(adapted) : String(adapted).split('_lv')[0];
+            if (usedLines.indexOf(aLn) === -1) usedLines.push(aLn);
+            recordItemInRecentOrdersHistory(adapted);
+            if (typeof recordHistoricalOrderedItem === 'function') {
+                recordHistoricalOrderedItem(adapted);
+            }
+            return adapted;
+        });
+
+        var isHappy = !!(qEntry && qEntry.isHappyOrder) || !!(profile.isMerchantBonusNpc && (cursor % 2 === 0));
+        var orders = adaptedItems.map(function (itemId, sIdx) {
+            var slotName = (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy');
+            var goldRw = (typeof orderReward === 'function') ? orderReward(itemId) : 50;
+            var expRw = (typeof orderExp === 'function')
+                ? orderExp(itemId)
+                : ((typeof window !== 'undefined' && typeof window.orderExp === 'function')
+                    ? window.orderExp(itemId)
+                    : ((typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.itemExpByLevel)
+                        ? (GAME_CONFIG.itemExpByLevel[parseInt(String(itemId).split('_lv')[1], 10) || 1] || 25)
+                        : 25));
+            if (isHappy) {
+                goldRw = Math.round(goldRw * 1.25);
+            }
+            return {
+                id: itemId,
+                done: false,
+                gold: goldRw,
+                exp: expRw,
+                petId: pId,
+                stashed: false,
+                slotType: slotName,
+                isDynamic: true,
+                isStoryQuest: true,
+                isHappyOrder: isHappy
+            };
+        });
+
+        return {
+            petId: pId,
+            orderNum: orderNum,
+            questId: qEntry ? qEntry.id : (pId + '_q_' + (cursor + 1)),
+            questTitle: (qEntry && qEntry.title) ? qEntry.title : (profile.chapter + ' · Nhiệm vụ ' + (cursor + 1)),
+            questIndex: cursor + 1,
+            questTotal: questList.length,
+            isStoryQuest: true,
+            isHappyOrder: isHappy,
+            isHybrid: true,
+            contextDialogue: (qEntry && qEntry.dialogue) ? qEntry.dialogue : getDynamicOrderContextDialogue(adaptedItems, orderNum, b, pId),
+            orders: orders
+        };
+    }
+
+    // 2. Sau khi hoàn thành toàn bộ 15 nhiệm vụ cốt truyện của NPC:
+    // Sinh nhiệm vụ động từ 1 đến 3 item ưu tiên đúng nhánh sở trường của NPC đó!
+    var npcPrefLines = (Array.isArray(profile.preferredLines) ? profile.preferredLines : []).filter(function (ln) {
+        return activeLines.indexOf(ln) !== -1;
+    });
     var genResult = generateDynamicOrderItems(b, orderNum, existingIds, activeGens);
-    var finalIds = genResult.items;
+    var finalIds = genResult.items.slice(0, 3);
+
+    // Ưu tiên chuyển Slot 1 về đúng nhánh sở trường của NPC nếu có thể
+    if (npcPrefLines.length > 0 && finalIds.length > 0) {
+        var curSlot1Ln = (typeof itemLine === 'function') ? itemLine(finalIds[0]) : String(finalIds[0]).split('_lv')[0];
+        if (npcPrefLines.indexOf(curSlot1Ln) === -1) {
+            var slot1Lv = (typeof itemLevel === 'function') ? itemLevel(finalIds[0]) : (parseInt(String(finalIds[0]).split('_lv')[1], 10) || 3);
+            var targetPrefLn = npcPrefLines[orderNum % npcPrefLines.length];
+            var maxPrefLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(targetPrefLn) : 12;
+            var newSlot1Id = targetPrefLn + '_lv' + Math.min(maxPrefLv, slot1Lv);
+            if (!Array.isArray(existingIds) || existingIds.indexOf(newSlot1Id) === -1) {
+                finalIds[0] = newSlot1Id;
+            }
+        }
+    }
+
     var isRest = !!genResult.isRestOrder;
+    var isDynamicHappy = !!(profile.isMerchantBonusNpc || ((orderNum + cursor) % 4 === 0));
+    if (typeof SAVE !== 'undefined' && SAVE && SAVE.npcQuestCursor) {
+        SAVE.npcQuestCursor[pId] = cursor + 1;
+    }
+
     var contextDialogue = isRest
         ? REST_ORDER_DIALOGUES[orderNum % REST_ORDER_DIALOGUES.length]
         : getDynamicOrderContextDialogue(finalIds, orderNum, b, pId);
 
-    var orders = finalIds.map(function (itemId, sIdx) {
+    var dynOrders = finalIds.map(function (itemId, sIdx) {
         var slotName = isRest
             ? ((sIdx === 0) ? 'medium' : 'easy')
             : ((sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy'));
@@ -3383,8 +3684,11 @@ function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
             : ((typeof window !== 'undefined' && typeof window.orderExp === 'function')
                 ? window.orderExp(itemId)
                 : ((typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.itemExpByLevel)
-                    ? (GAME_CONFIG.itemExpByLevel[parseInt(String(itemId).split('_lv')[1]) || 1] || 25)
+                    ? (GAME_CONFIG.itemExpByLevel[parseInt(String(itemId).split('_lv')[1], 10) || 1] || 25)
                     : 25));
+        if (isDynamicHappy) {
+            goldRw = Math.round(goldRw * 1.25);
+        }
         return {
             id: itemId,
             done: false,
@@ -3393,17 +3697,22 @@ function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
             petId: pId,
             stashed: false,
             slotType: slotName,
-            isDynamic: true
+            isDynamic: true,
+            isHappyOrder: isDynamicHappy
         };
     });
 
     return {
         petId: pId,
         orderNum: orderNum,
+        questTitle: isDynamicHappy ? ('Đơn Hào Phóng · ' + profile.name) : (profile.campZone || ('Nhiệm vụ ' + profile.name)),
+        questIndex: cursor + 1,
+        questTotal: questList.length,
         isHybrid: true,
         isRestOrder: isRest,
+        isHappyOrder: isDynamicHappy,
         contextDialogue: contextDialogue,
-        orders: orders
+        orders: dynOrders
     };
 }
 
@@ -3432,7 +3741,6 @@ function startNewGeneratorTransitionOrders(newGenId, board) {
 }
 
 // Nhiệm vụ khi đã xuất hiện thì cố định 100%, người chơi nộp đơn xong mới chuyển sang nhiệm vụ mới.
-// Không tự động đổi món giữa chừng khi người chơi thay đổi hoặc ghép đồ trên bàn chơi.
 function applyLiveHybridAdaptations(group, orderNum, board) {
     return group;
 }
@@ -3450,145 +3758,149 @@ function generateStartingOrders(playerLevel) {
     return (grp && grp.orders) ? grp.orders : [];
 }
 
-// Đảm bảo luôn có đúng 1 thú cưng đồng hành đặt đơn hàng trên màn hình (đơn giản, thay thế NPC khi mua mới)
+// Điều phối NHIỀU NPC đặt nhiệm vụ cùng lúc và nối liền nhau trên bàn chơi:
+// - Số lượng nhóm nhiệm vụ đồng thời: 2 đến 3 NPC tùy theo số NPC đã mở khóa (tối đa maxSimultaneousNpcs = 3).
+// - Mỗi nhóm nhiệm vụ thuộc về 1 NPC riêng biệt (không trùng NPC trên cùng thanh nhiệm vụ) và chứa từ 1 đến 3 item.
 function ensurePetOrderGroups(playerLevel, customBoard) {
     if (typeof SAVE === 'undefined' || !SAVE) return [];
     if (!Array.isArray(SAVE.petOrderGroups)) SAVE.petOrderGroups = [];
+    if (!SAVE.npcQuestCursor || typeof SAVE.npcQuestCursor !== 'object') SAVE.npcQuestCursor = {};
 
-    var owned = (Array.isArray(SAVE.ownedPets) && SAVE.ownedPets.length > 0)
-        ? SAVE.ownedPets.slice()
-        : ['character01'];
+    var pLv = Math.max(1, parseInt(playerLevel, 10) || SAVE.playerLevel || 1);
+    var b = (customBoard && customBoard.length) ? customBoard : ((typeof boardData !== 'undefined' && boardData && boardData.length) ? boardData : null);
+    var activeGens = (typeof getActiveGeneratorsForOrders === 'function') ? getActiveGeneratorsForOrders(b) : ['generator_cooler'];
+    var activeLines = [];
+    activeGens.forEach(function (gId) {
+        (GENERATOR_BRANCH_MAP[gId] || []).forEach(function (ln) {
+            if (activeLines.indexOf(ln) === -1) activeLines.push(ln);
+        });
+    });
+    if (!activeLines.length) activeLines = ['ban', 'ghe', 'trai'];
 
-    var activePet = (SAVE.activePet && owned.indexOf(SAVE.activePet) !== -1)
-        ? SAVE.activePet
-        : (owned[0] || 'character01');
-    SAVE.activePet = activePet;
+    var unlockedNpcs = getUnlockedNpcIdsForOrders(pLv, b);
+    var cfgMaxSimultaneous = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.multiNpcOrders && typeof GAME_CONFIG.multiNpcOrders.maxSimultaneousNpcs === 'number')
+        ? GAME_CONFIG.multiNpcOrders.maxSimultaneousNpcs
+        : 3;
+    var targetSimultaneous = Math.max(1, Math.min(cfgMaxSimultaneous, unlockedNpcs.length));
 
-    // Giữ đúng 1 NPC duy nhất trên màn hình cho đơn giản
-    var maxPets = 1;
-    if (SAVE.petOrderGroups.length > maxPets) {
-        SAVE.petOrderGroups = SAVE.petOrderGroups.slice(0, maxPets);
+    if (!SAVE.activePet || ALL_NPC_ORDER_ROSTER.indexOf(SAVE.activePet) === -1) {
+        SAVE.activePet = unlockedNpcs[0] || 'character01';
+    }
+
+    if (SAVE.petOrderGroups.length > targetSimultaneous) {
+        SAVE.petOrderGroups = SAVE.petOrderGroups.slice(0, targetSimultaneous);
     }
 
     var existingIds = [];
-    var hist15 = Array.isArray(SAVE.recentOrdersHistory) ? SAVE.recentOrdersHistory.slice(-15) : [];
-    var b = (customBoard && customBoard.length) ? customBoard : ((typeof boardData !== 'undefined' && boardData && boardData.length) ? boardData : null);
-    var activeGens = (typeof getActiveGeneratorsForOrders === 'function') ? getActiveGeneratorsForOrders(b) : ['generator_cooler'];
-
-    // Số thứ tự đơn hàng hiện tại của người chơi (bắt đầu từ 1)
+    var usedNpcIds = [];
     var currentOrderNum = (SAVE.totalOrdersDelivered || 0) + 1;
 
-    // 1. Giữ CỐ ĐỊNH 100% các nhóm đơn hiện có đã xuất hiện, đồng bộ thú cưng theo activePet
+    // 1. Giữ CỐ ĐỊNH 100% các nhóm đơn của từng NPC đang hiển thị trên khay (loại bỏ đơn cũ trước khi nâng cấp lên kịch bản 6 NPC)
     SAVE.petOrderGroups = SAVE.petOrderGroups.map(function (g, gIdx) {
         if (!g || !Array.isArray(g.orders) || g.orders.length === 0) return null;
-        // Cập nhật thú cưng của khay theo NPC đang chọn
-        g.petId = activePet;
+        if (!g.questId && !g.isCleanupGroup && !g.isNewGenIntroGroup) return null;
+
+        // Giới hạn mỗi nhiệm vụ của NPC từ 1 đến 3 item
+        if (g.orders.length > 3) {
+            g.orders = g.orders.slice(0, 3);
+        }
+
+        var gPetId = (g.petId && ALL_NPC_ORDER_ROSTER.indexOf(g.petId) !== -1) ? g.petId : (unlockedNpcs[gIdx % unlockedNpcs.length] || 'character01');
+        // Nếu bị trùng NPC với khay phía trước, chuyển sang NPC chưa có khay
+        if (usedNpcIds.indexOf(gPetId) !== -1) {
+            var altNpc = unlockedNpcs.find(function (id) { return usedNpcIds.indexOf(id) === -1; });
+            if (altNpc) gPetId = altNpc;
+        }
+        usedNpcIds.push(gPetId);
+        g.petId = gPetId;
+
+        var profile = getNpcProfileConfig(gPetId);
+        if (!g.questTitle) {
+            g.questTitle = profile.campZone || (profile.chapter + ' · ' + profile.name);
+        }
+
         g.orders.forEach(function (o) {
             if (o) {
-                o.petId = activePet;
+                o.petId = gPetId;
                 o.isDynamic = true;
                 if (o.stashed && !o.stashedVerified) {
                     o.stashed = false;
                 }
             }
         });
-        var targetOrderNum = currentOrderNum + gIdx;
 
-        // Đơn hàng khi đã xuất hiện trên khay thì CỐ ĐỊNH 100%, người chơi nộp xong mới chuyển sang nhóm mới.
-        // Giữ nguyên vẹn item đã sinh (Slot 1 cốt truyện, Slot 2 hồi cứu, Slot 3 van xả dọn bàn), không đè lại cấp độ!
-        // Đồng bộ lời thoại khớp 100% với vật phẩm trụ cột ở Slot 1:
+        var targetOrderNum = currentOrderNum + gIdx;
         var curIds = g.orders.map(function (o) { return o && o.id; }).filter(Boolean);
-        if (curIds.length > 0) {
-            g.contextDialogue = getDynamicOrderContextDialogue(curIds, targetOrderNum, b);
+        if (curIds.length > 0 && !g.contextDialogue) {
+            g.contextDialogue = getDynamicOrderContextDialogue(curIds, targetOrderNum, b, gPetId);
         }
 
         g.orders.forEach(function (o) { if (o && o.id) existingIds.push(o.id); });
         return g;
     }).filter(Boolean);
 
-    // 2. Nếu chưa có nhóm thú cưng (mới vào game hoặc vừa nộp xong), sinh 1 đơn mới cho activePet:
+    // 2. Bổ sung thêm các NPC còn thiếu để các nhiệm vụ của các NPC xuất hiện cùng lúc và nối liền nhau trên bàn chơi
     var hasNewGroupGenerated = false;
-    while (SAVE.petOrderGroups.length < maxPets) {
-        var chosenPet = activePet;
+    while (SAVE.petOrderGroups.length < targetSimultaneous) {
+        // Chọn NPC tiếp theo chưa có đơn trên bàn chơi (ưu tiên NPC có tiến trình nhiệm vụ cốt truyện thấp hơn hoặc theo thứ tự Chương)
+        var availableNpcs = unlockedNpcs.filter(function (npcId) {
+            return usedNpcIds.indexOf(npcId) === -1;
+        });
+        if (availableNpcs.length === 0) {
+            availableNpcs = unlockedNpcs.slice();
+        }
+
+        availableNpcs.sort(function (npcA, npcB) {
+            var curA = (SAVE.npcQuestCursor && typeof SAVE.npcQuestCursor[npcA] === 'number') ? SAVE.npcQuestCursor[npcA] : 0;
+            var curB = (SAVE.npcQuestCursor && typeof SAVE.npcQuestCursor[npcB] === 'number') ? SAVE.npcQuestCursor[npcB] : 0;
+            if (curA !== curB) return curA - curB;
+            return unlockedNpcs.indexOf(npcA) - unlockedNpcs.indexOf(npcB);
+        });
+
+        var chosenPet = availableNpcs[0] || 'character01';
+        usedNpcIds.push(chosenPet);
+
         var nextOrderNum = currentOrderNum + SAVE.petOrderGroups.length;
         var nextGroup = getCuratedOrderGroup(nextOrderNum, chosenPet, b, existingIds);
+
         if (!nextGroup || !Array.isArray(nextGroup.orders) || nextGroup.orders.length === 0) {
-            // Sau khi hết 63 đơn tính trước hoặc fallback:
-            var autoGrp = (typeof generatePetOrderGroup === 'function')
-                ? generatePetOrderGroup(chosenPet, playerLevel, existingIds, hist15)
-                : null;
-            if (autoGrp && Array.isArray(autoGrp.orders) && autoGrp.orders.length >= 3) {
-                var s1 = autoGrp.orders[0].id;
-                var s2 = pickDynamicSlot2Item(b, s1, nextOrderNum, autoGrp.orders[1].id, existingIds, activeGens);
-                var s3 = pickDynamicSlot3Item(b, s1, s2, nextOrderNum, autoGrp.orders[2].id, existingIds, activeGens);
-                autoGrp.orders[1].id = s2;
-                autoGrp.orders[1].gold = (typeof orderReward === 'function') ? orderReward(s2) : autoGrp.orders[1].gold;
-                autoGrp.orders[1].exp = (typeof orderExp === 'function') ? orderExp(s2) : autoGrp.orders[1].exp;
-                autoGrp.orders[2].id = s3;
-                autoGrp.orders[2].gold = (typeof orderReward === 'function') ? orderReward(s3) : autoGrp.orders[2].gold;
-                autoGrp.orders[2].exp = (typeof orderExp === 'function') ? orderExp(s3) : autoGrp.orders[2].exp;
-                nextGroup = autoGrp;
-            } else {
-                var fbLines = (activeLines && activeLines.length >= 3) ? activeLines.slice(0, 3) : ['ban', 'ghe', 'trai'];
-                var fbOrders = fbLines.map(function (ln, sIdx) {
-                    var it = computeDynamicOrderItemForBranch(ln, null, null, sIdx, nextOrderNum);
-                    return {
-                        id: it,
-                        done: false,
-                        gold: (typeof orderReward === 'function') ? orderReward(it) : 50,
-                        exp: (typeof orderExp === 'function') ? orderExp(it) : 15,
-                        petId: chosenPet,
-                        stashed: false,
-                        slotType: (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy'),
-                        isDynamic: true
-                    };
-                });
-                nextGroup = {
+            var fbProfile = getNpcProfileConfig(chosenPet);
+            var fbLines = (activeLines && activeLines.length >= 2) ? activeLines.slice(0, 2) : ['ban', 'trai'];
+            var fbOrders = fbLines.map(function (ln, sIdx) {
+                var it = computeDynamicOrderItemForBranch(ln, null, null, sIdx, nextOrderNum);
+                return {
+                    id: it,
+                    done: false,
+                    gold: (typeof orderReward === 'function') ? orderReward(it) : 50,
+                    exp: (typeof orderExp === 'function') ? orderExp(it) : 15,
                     petId: chosenPet,
-                    orderNum: nextOrderNum,
-                    isHybrid: true,
-                    contextDialogue: getDynamicOrderContextDialogue(fbOrders.map(function (o) { return o.id; }), nextOrderNum, b),
-                    orders: fbOrders
+                    stashed: false,
+                    slotType: (sIdx === 0) ? 'hard' : 'medium',
+                    isDynamic: true
                 };
-            }
+            });
+            nextGroup = {
+                petId: chosenPet,
+                orderNum: nextOrderNum,
+                questTitle: fbProfile.campZone || ('Nhiệm vụ ' + fbProfile.name),
+                isHybrid: true,
+                contextDialogue: getDynamicOrderContextDialogue(fbOrders.map(function (o) { return o.id; }), nextOrderNum, b, chosenPet),
+                orders: fbOrders
+            };
         }
 
         if (nextGroup && Array.isArray(nextGroup.orders) && nextGroup.orders.length > 0) {
+            if (nextGroup.orders.length > 3) {
+                nextGroup.orders = nextGroup.orders.slice(0, 3);
+            }
             SAVE.petOrderGroups.push(nextGroup);
             nextGroup.orders.forEach(function (o) { if (o && o.id) existingIds.push(o.id); });
             hasNewGroupGenerated = true;
+        } else {
+            break;
         }
     }
 
-    // Bảo đảm an toàn tuyệt đối: không bao giờ để petOrderGroups rỗng nếu người chơi đang trong game
-    if (SAVE.petOrderGroups.length === 0) {
-        var emergencyPet = activePet || ((owned && owned[0]) ? owned[0] : 'character01');
-        var emgLines = (activeLines && activeLines.length >= 3) ? activeLines.slice(0, 3) : ['ban', 'ghe', 'trai'];
-        var emgOrders = emgLines.map(function (ln, sIdx) {
-            var it = computeDynamicOrderItemForBranch(ln, null, null, sIdx, currentOrderNum);
-            return {
-                id: it,
-                done: false,
-                gold: (typeof orderReward === 'function') ? orderReward(it) : 50,
-                exp: (typeof orderExp === 'function') ? orderExp(it) : 15,
-                petId: emergencyPet,
-                stashed: false,
-                slotType: (sIdx === 0) ? 'hard' : ((sIdx === 1) ? 'medium' : 'easy'),
-                isDynamic: true
-            };
-        });
-        SAVE.petOrderGroups.push({
-            petId: emergencyPet,
-            orderNum: currentOrderNum,
-            isHybrid: true,
-            contextDialogue: getDynamicOrderContextDialogue(emgOrders.map(function (o) { return o.id; }), currentOrderNum, b),
-            orders: emgOrders
-        });
-        hasNewGroupGenerated = true;
-    }
-
-    // Lưu ngay lập tức vào bộ nhớ thiết bị (localStorage) để khi reload trình duyệt
-    // bộ nhiệm vụ vừa sinh KHÔNG bao giờ bị thay đổi hay tái tạo lại!
     if (hasNewGroupGenerated && typeof saveGame === 'function') {
         saveGame(true);
     }
@@ -3797,8 +4109,8 @@ function populateRockHiddenItems(board, forceReassign) {
     });
     if (!activeLines.length) activeLines = ['ban', 'ghe', 'trai'];
 
-    // Danh sách đầy đủ 9 nhánh của cả 3 máy phát (dùng cho Tầng đá 3 và Tầng đá 4)
-    var allNineLines = ['an', 'cafe', 'congcu', 'tham', 'antoan', 'bep', 'ban', 'ghe', 'trai'];
+    // Danh sách đầy đủ 13 nhánh của cả 5 máy phát (dùng cho Tầng đá 3 và Tầng đá 4)
+    var allNineLines = ['ban', 'ghe', 'trai', 'an', 'qua', 'cafe', 'congcu', 'antoan', 'tham', 'bep', 'hoa', 'thucung', 'cauca'];
 
     var dist = computeRockLayers(board);
 
@@ -3991,4 +4303,6 @@ if (typeof window !== 'undefined') {
     window.getCuratedOrderGroup = getCuratedOrderGroup;
     window.generatePetOrderGroup = generatePetOrderGroup;
     window.ensurePetOrderGroups = ensurePetOrderGroups;
+    window.getNpcProfileConfig = getNpcProfileConfig;
+    window.getUnlockedNpcIdsForOrders = getUnlockedNpcIdsForOrders;
 }

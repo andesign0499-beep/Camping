@@ -70,32 +70,9 @@ function updateActiveLocationBackground() {
         topSceneEl.style.backgroundImage = 'none';
     }
     var backdropEl = document.getElementById('game-backdrop');
-    var islandEl = document.getElementById('backdrop-island');
-    var targetEl = islandEl || backdropEl || document.getElementById('game-app');
-    var customBg = getActiveLocationBackground();
-    var bgUrl = customBg || (typeof currentLevel !== 'undefined' ? getLevelBackground(currentLevel) : 'assets/images_webp/background/bg_hodongdo.webp');
-    if (bgUrl && targetEl) {
-        var gradientOverlay = 'linear-gradient(180deg, ' +
-            'rgba(53, 76, 48, 0) 0%, ' +
-            'rgba(53, 76, 48, 0) 22%, ' +
-            'rgba(53, 76, 48, 0.25) 34%, ' +
-            'rgba(47, 68, 43, 0.60) 48%, ' +
-            'rgba(41, 59, 37, 0.82) 64%, ' +
-            'rgba(38, 54, 34, 0.90) 80%, ' +
-            '#263622 100%)';
-        
-        if (islandEl) {
-            islandEl.style.backgroundImage = gradientOverlay + ", url('" + bgUrl + "')";
-            islandEl.style.backgroundPosition = "center top, center -20px";
-            islandEl.style.backgroundRepeat = "no-repeat, no-repeat";
-            islandEl.style.backgroundSize = "100% 100%, 80% auto";
-        } else {
-            targetEl.style.backgroundImage = gradientOverlay + ", url('" + bgUrl + "'), url('assets/images_webp/ui/bg_game_all.jpg')";
-            targetEl.style.backgroundPosition = "center top, center -20px, center top";
-            targetEl.style.backgroundRepeat = "no-repeat, no-repeat, no-repeat";
-            targetEl.style.backgroundSize = "100% 100%, 80% auto, cover";
-            targetEl.style.backgroundColor = '#263622';
-        }
+    if (backdropEl) {
+        backdropEl.style.backgroundImage = 'none';
+        backdropEl.style.backgroundColor = 'transparent';
     }
 
     // Ưu tiên 4 đám mây hoàng hôn trong nền trời game-backdrop
@@ -104,7 +81,7 @@ function updateActiveLocationBackground() {
         cloudsEl.style.display = 'none';
     }
 
-    // Cập nhật tỷ lệ co giãn cho mây theo đúng tỷ lệ ảnh nền bg_game_all.jpg (1100x1971 cover)
+    // Cập nhật tỷ lệ co giãn cho mây
     updateBackdropScale();
 
     // Cập nhật đồng bộ ảnh nền Trại của bạn nếu đang mở hoặc sau khi đổi điểm đến
@@ -336,15 +313,16 @@ var LEVEL_STORY_DIALOGUES = {
     1: { npc: 'gau', texts: ['Chào mừng đến Cao nguyên Lâm Viên! Cùng mình lấy đồ từ Xe Kéo dựng góc trại đầu tiên nhé!'] },
     2: { npc: 'gau', texts: ['Sương chiều bắt đầu xuống rồi, ghép đồ sát các ô mạng nhện để mở rộng bãi cỏ nào!'] },
     3: { npc: 'gau', texts: ['Tuyệt lắm! Đá khóa tầng 1 đã nứt, khu trại của chúng mình thoáng đãng hơn hẳn!'] },
-    4: { npc: 'cao', texts: ['🎒 Ba Lô Dã Ngoại đã mở! Kéo Ba Lô vào bàn để pha cà phê nóng và làm đồ ăn nhé!'] },
-    5: { npc: 'cao', texts: ['Hương cà phê thơm lừng cả đồi thông! Tiếp tục ghép đồ tích Sao mở Rương Quà nào!'] },
+    4: { npc: 'cao', texts: ['🧺 Giỏ Picnic Dã Ngoại đã mở! Kéo vào bàn để lấy bánh mì, trái cây tươi và pha cà phê nóng nhé!'] },
+    5: { npc: 'cao', texts: ['Hương cà phê và trái cây tươi thơm lừng cả đồi thông! Tiếp tục tích Sao mở Rương Quà nào!'] },
     6: { npc: 'cao', texts: ['Đường mòn ven suối lộ diện rồi! Máy phát giờ rớt nhiều đồ cấp cao hơn đó!'] },
-    7: { npc: 'de', texts: ['🧰 Thùng Bếp & Sinh Tồn đã sẵn sàng! Kéo vào bàn để nhóm lửa trại và trải đệm êm nhé!'] },
-    8: { npc: 'de', texts: ['Đêm rừng ấm áp nhờ ánh lửa trại! Bạn có thể bật ⚡×2 để ghép đồ nhanh gấp đôi!'] },
-    9: { npc: 'gau', texts: ['Bữa tối hải sản bên lửa trại đang chờ! Nếu chật bàn, nhớ cất bớt vào Kho Tạm nhé!'] },
-    10: { npc: 'gau', texts: ['🎉 Cột mốc Cấp 10! Khu trại sơ khai giờ đã thành điểm dừng chân mơ ước rồi!'] },
-    11: { npc: 'cao', texts: ['Đất trại tầng 2 vừa mở rộng! Chuẩn bị đón những thử thách Glamping cao cấp hơn nào!'] },
+    7: { npc: 'de', texts: ['🎒 Ba Lô Sinh Tồn đã sẵn sàng! Kéo vào bàn để lấy đèn trại, đồ an toàn và đệm ngủ êm nhé!'] },
+    8: { npc: 'de', texts: ['Đêm rừng ấm áp nhờ ánh đèn trại! Bạn có thể bật ⚡×2 để ghép đồ nhanh gấp đôi!'] },
+    9: { npc: 'gau', texts: ['Bữa tối bên khu trại đang chờ! Nếu chật bàn, nhớ cất bớt vào Kho Tạm nhé!'] },
+    10: { npc: 'gau', texts: ['🪵 Đạt Cấp 10! Gốc Cây Thảo Mộc đã mở — kéo vào bàn để lấy củi nhóm lửa và hoa rừng nhé!'] },
+    11: { npc: 'cao', texts: ['Đất trại tầng 2 vừa mở rộng! Bình hoa thảo nguyên làm góc bàn gỗ đẹp mê hồn!'] },
     12: { npc: 'de', texts: ['Tấm pin mặt trời đã sẵn sàng cấp điện cho cả khu trại lung linh suốt đêm!'] },
+    13: { npc: 'cao', texts: ['🐾 Đạt Cấp 13! Giỏ Đồ Chơi Thú Cưng đã mở — kéo vào bàn để chiều chuộng các bé thú cưng nào!'] },
     15: { npc: 'gau', texts: ['⭐ Bậc thầy cắm trại! Khu lều vòm sàn gỗ đèn LED đã hiện lên đẹp như cổ tích!'] },
     18: { npc: 'cao', texts: ['🏆 Toàn bộ đá khóa trên bàn cờ đã được giải phóng! Không gian ghép đồ rộng tối đa!'] },
     20: { npc: 'gau', texts: ['👑 Đỉnh cao Thủ Lĩnh Dã Ngoại! Hãy chinh phục trọn bộ siêu phẩm Glamping Cấp 12 nhé!'] }

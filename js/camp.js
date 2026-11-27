@@ -264,30 +264,20 @@ function reconcileMyCampEquipped() {
     var uneq = SAVE.myCampUnequipped;
     var rawItems = Array.isArray(SAVE.campItems) ? SAVE.campItems : [];
 
-    // Tự động dọn sạch các cụm vật phẩm bị trùng lặp liên tiếp (1 món, 2 món hoặc 3 món lặp sát nhau) trong kho đồ
+    // Tự động dọn sạch các vật phẩm bị double-click trùng lặp tức thời (< 1.2s), nhưng GIỮ NGUYÊN cặp 2 chiếc ghế cùng loại
     if (rawItems.length > 1) {
         var cleaned = [];
         for (var idx = 0; idx < rawItems.length; idx++) {
             var cur = rawItems[idx];
             if (!cur || !cur.id) continue;
             var cLen = cleaned.length;
-            // Chặn lặp 1 món sát nhau (A, A)
             if (cLen >= 1 && cleaned[cLen - 1].id === cur.id) {
-                continue;
-            }
-            // Chặn lặp cụm 2 món sát nhau (A, B, A, B)
-            if (cLen >= 2 && idx + 1 < rawItems.length && rawItems[idx + 1] &&
-                cleaned[cLen - 2].id === cur.id && cleaned[cLen - 1].id === rawItems[idx + 1].id) {
-                idx += 1;
-                continue;
-            }
-            // Chặn lặp cụm 3 món sát nhau (A, B, C, A, B, C)
-            if (cLen >= 3 && idx + 2 < rawItems.length && rawItems[idx + 1] && rawItems[idx + 2] &&
-                cleaned[cLen - 3].id === cur.id &&
-                cleaned[cLen - 2].id === rawItems[idx + 1].id &&
-                cleaned[cLen - 1].id === rawItems[idx + 2].id) {
-                idx += 2;
-                continue;
+                var prevTime = cleaned[cLen - 1].addedAt || 0;
+                var curTime = cur.addedAt || 0;
+                var isSameTickDup = (prevTime > 0 && curTime > 0 && Math.abs(curTime - prevTime) < 1200) || (cleaned[cLen - 1].uid && cur.uid && cleaned[cLen - 1].uid === cur.uid);
+                if (isSameTickDup) {
+                    continue;
+                }
             }
             cleaned.push(cur);
         }
@@ -297,7 +287,7 @@ function reconcileMyCampEquipped() {
     }
 
     var items = Array.isArray(SAVE.campItems) ? SAVE.campItems : [];
-    var slots = ['tent', 'chair1', 'chair2', 'table', 'stove', 'lamp'];
+    var nonChairSlots = ['tent', 'table', 'stove', 'lamp'];
     var usedUids = {};
 
     // Đảm bảo toàn bộ vật phẩm trong kho đều có uid duy nhất
@@ -307,9 +297,8 @@ function reconcileMyCampEquipped() {
         }
     });
 
-    // 1. Kiểm tra các slot đang có vật phẩm gắn -> BẮT BUỘC phải thực sự tồn tại trong kho SAVE.campItems
-    // NẾU ĐANG TỒN TẠI HỢP LỆ THÌ GIỮ NGUYÊN SỰ LỰA CHỌN CỦA NGƯỜI CHƠI (KHÔNG TỰ Ý ĐỔI SANG MÓN KHÁC!)
-    slots.forEach(function (slot) {
+    // 1A. Kiểm tra các slot đơn (tent, table, stove, lamp)
+    nonChairSlots.forEach(function (slot) {
         var val = eq[slot];
         if (!val) {
             eq[slot] = null;
@@ -319,14 +308,12 @@ function reconcileMyCampEquipped() {
         var itemId = (typeof val === 'object' && val) ? val.id : val;
         var itemUid = (typeof val === 'object' && val) ? val.uid : null;
 
-        // Nếu itemUid đang tồn tại trong kho campItems và chưa bị slot nào chiếm:
         if (itemUid && items.some(function (it) { return it.uid === itemUid; }) && !usedUids[itemUid]) {
             usedUids[itemUid] = true;
             eq[slot] = { id: itemId, uid: itemUid };
             return;
         }
 
-        // Nếu chưa gắn uid hợp lệ, tìm ĐÚNG 1 instance chưa dùng trong kho campItems có cùng itemId:
         var match = items.find(function (it) {
             return it.id === itemId && !usedUids[it.uid];
         });
@@ -335,25 +322,38 @@ function reconcileMyCampEquipped() {
             usedUids[match.uid] = true;
             eq[slot] = { id: itemId, uid: match.uid };
         } else {
-            // TUYỆT ĐỐI BỎ ĐỒ MẶC ĐỊNH: Nếu không có trong kho đồ cắm trại -> Gỡ bỏ khỏi slot hoàn toàn!
             eq[slot] = null;
         }
     });
 
-    // 2. Với các slot ĐANG TRỐNG và người chơi KHÔNG chủ động tháo (uneq[slot] !== true):
-    // Tự động tìm vật phẩm phù hợp cấp cao nhất chưa sử dụng trong kho để gắn vào, giúp bãi trại sinh động
+    // 1B. ĐỒNG BỘ 2 CHIẾC GHẾ (chair1 & chair2): BẮT BUỘC LUÔN GIỐNG HỆT NHAU VÀ PHẢI CÓ ĐỦ 2 CHIẾC CÙNG LOẠI TRONG KHO
+    var preferredChairId = (eq.chair1 && (eq.chair1.id || eq.chair1)) || (eq.chair2 && (eq.chair2.id || eq.chair2)) || null;
+    var matchingPreferredChairs = preferredChairId
+        ? items.filter(function (it) { return it && it.id === preferredChairId; })
+        : [];
+
+    if (matchingPreferredChairs.length >= 2) {
+        eq.chair1 = { id: preferredChairId, uid: matchingPreferredChairs[0].uid };
+        eq.chair2 = { id: preferredChairId, uid: matchingPreferredChairs[1].uid };
+        usedUids[matchingPreferredChairs[0].uid] = true;
+        usedUids[matchingPreferredChairs[1].uid] = true;
+    } else {
+        eq.chair1 = null;
+        eq.chair2 = null;
+    }
+
+    // 2. Với các slot ĐANG TRỐNG và người chơi KHÔNG chủ động tháo:
     function getSlotType(slot) {
         if (slot === 'tent') return 'tent';
         if (slot === 'table') return 'table';
         if (slot === 'stove') return 'stove';
         if (slot === 'lamp') return 'lamp';
-        if (slot.indexOf('chair') === 0) return 'chair';
         return null;
     }
 
-    slots.forEach(function (slot) {
-        if (eq[slot]) return; // ĐÃ CÓ ĐỒ ĐANG DÙNG -> GIỮ NGUYÊN, TUYỆT ĐỐI KHÔNG TỰ ĐỔI!
-        if (uneq[slot]) return; // Người chơi đã chủ động tháo ra -> GIỮ NGUYÊN TRỐNG!
+    nonChairSlots.forEach(function (slot) {
+        if (eq[slot]) return;
+        if (uneq[slot]) return;
 
         var targetType = getSlotType(slot);
         if (!targetType) return;
@@ -368,7 +368,6 @@ function reconcileMyCampEquipped() {
                 if (prefix === 'trai' && lv >= 4) itType = 'tent';
                 else if (prefix === 'ban') itType = 'table';
                 else if (prefix === 'bep') itType = 'stove';
-                else if (prefix === 'ghe') itType = 'chair';
                 else if (prefix === 'congcu' && lv >= 6) itType = 'lamp';
             }
             return itType === targetType;
@@ -378,13 +377,44 @@ function reconcileMyCampEquipped() {
             candidates.sort(function (a, b) {
                 var lvA = a.level || (parseInt(String(a.id).split('_lv')[1], 10) || 1);
                 var lvB = b.level || (parseInt(String(b.id).split('_lv')[1], 10) || 1);
-                return lvB - lvA; // Cấp cao nhất lên đầu
+                return lvB - lvA;
             });
             var best = candidates[0];
             usedUids[best.uid] = true;
             eq[slot] = { id: best.id, uid: best.uid };
         }
     });
+
+    // 2B. Tự động gắn cặp 2 ghế giống nhau có cấp cao nhất nếu slot ghế đang trống và người chơi không chủ động tháo
+    if (!eq.chair1 && !eq.chair2 && !uneq.chair1 && !uneq.chair2) {
+        var chairGroups = {};
+        items.forEach(function (it) {
+            if (!it || !it.id) return;
+            var cfg = (typeof KHUTRAI_ITEMS !== 'undefined') ? KHUTRAI_ITEMS[it.id] : null;
+            var isChair = (cfg && cfg.type === 'chair') || String(it.id).indexOf('ghe_lv') === 0;
+            if (!isChair) return;
+            if (!chairGroups[it.id]) chairGroups[it.id] = [];
+            chairGroups[it.id].push(it);
+        });
+
+        var validPairIds = Object.keys(chairGroups).filter(function (cid) {
+            return chairGroups[cid].length >= 2;
+        });
+
+        if (validPairIds.length > 0) {
+            validPairIds.sort(function (a, b) {
+                var lvA = parseInt(String(a).split('_lv')[1], 10) || 1;
+                var lvB = parseInt(String(b).split('_lv')[1], 10) || 1;
+                return lvB - lvA;
+            });
+            var bestChairId = validPairIds[0];
+            var pair = chairGroups[bestChairId];
+            eq.chair1 = { id: bestChairId, uid: pair[0].uid };
+            eq.chair2 = { id: bestChairId, uid: pair[1].uid };
+            usedUids[pair[0].uid] = true;
+            usedUids[pair[1].uid] = true;
+        }
+    }
 }
 
 // Tự động gắn hoặc nâng cấp vật phẩm trong Trại của bạn:
@@ -475,31 +505,24 @@ function autoEquipIfSlotEmpty(itemObj, forceUpgrade) {
             return true;
         }
     } else if (type === 'chair') {
-        if (!eq.chair1 && !uneq.chair1) {
-            eq.chair1 = entry;
+        // Chỉ tự động trang bị khi trong kho ĐÃ ĐỦ 2 CHIẾC GHẾ CÙNG LOẠI (để 2 ghế trên bãi trại luôn giống hệt nhau)
+        var sameChairs = Array.isArray(SAVE.campItems)
+            ? SAVE.campItems.filter(function (it) { return it && it.id === itemId; })
+            : [];
+        if (sameChairs.length < 2) {
+            return false;
+        }
+        var curChairLv = Math.max(getItemLv(eq.chair1), getItemLv(eq.chair2));
+        if ((!eq.chair1 || !eq.chair2) && !uneq.chair1 && !uneq.chair2) {
+            eq.chair1 = { id: itemId, uid: sameChairs[0].uid };
+            eq.chair2 = { id: itemId, uid: sameChairs[1].uid };
             if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair1';
             return true;
-        } else if (!eq.chair2 && !uneq.chair2) {
-            if (!eq.chair1 || eq.chair1.uid !== itemObj.uid) {
-                eq.chair2 = entry;
-                if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair2';
-                return true;
-            }
-        } else if (forceUpgrade || !isManual) {
-            var lv1 = getItemLv(eq.chair1);
-            var lv2 = getItemLv(eq.chair2);
-            var minChairLv = Math.min(lv1, lv2);
-            if (newLv > minChairLv) {
-                if (lv1 <= lv2 && !uneq.chair1) {
-                    eq.chair1 = entry;
-                    if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair1';
-                    return true;
-                } else if (!uneq.chair2) {
-                    eq.chair2 = entry;
-                    if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair2';
-                    return true;
-                }
-            }
+        } else if ((forceUpgrade || (!isManual && !uneq.chair1 && !uneq.chair2)) && newLv > curChairLv) {
+            eq.chair1 = { id: itemId, uid: sameChairs[0].uid };
+            eq.chair2 = { id: itemId, uid: sameChairs[1].uid };
+            if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair2';
+            return true;
         }
     }
     return false;
@@ -594,38 +617,18 @@ function equipItemInMyCamp(item) {
         SAVE.myCampUnequipped.lamp = false;
         if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'lamp';
     } else if (type === 'chair') {
-        if (!eq.chair1) {
-            eq.chair1 = entry;
-            SAVE.myCampUnequipped.chair1 = false;
-            if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair1';
-        } else if (!eq.chair2) {
-            if (eq.chair1.uid !== itemUid) {
-                eq.chair2 = entry;
-                SAVE.myCampUnequipped.chair2 = false;
-                if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair2';
-            } else {
-                eq.chair1 = entry;
-                SAVE.myCampUnequipped.chair1 = false;
-                if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair1';
-            }
-        } else {
-            // Đã có 2 ghế -> nếu đang là ghế 1 thì cập nhật ghế 1, nếu là ghế 2 cập nhật ghế 2, còn lại dồn ghế 2 sang ghế 1 và thay ghế 2
-            if (eq.chair1.uid === itemUid) {
-                eq.chair1 = entry;
-                SAVE.myCampUnequipped.chair1 = false;
-                if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair1';
-            } else if (eq.chair2.uid === itemUid) {
-                eq.chair2 = entry;
-                SAVE.myCampUnequipped.chair2 = false;
-                if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair2';
-            } else {
-                eq.chair1 = eq.chair2;
-                eq.chair2 = entry;
-                SAVE.myCampUnequipped.chair1 = false;
-                SAVE.myCampUnequipped.chair2 = false;
-                if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair2';
-            }
+        // Bắt buộc phải có đủ 2 chiếc ghế cùng loại trong kho mới cho phép trang bị cả cặp đồng bộ
+        var sameChairList = Array.isArray(SAVE.campItems)
+            ? SAVE.campItems.filter(function (it) { return it && it.id === itemId; })
+            : [];
+        if (sameChairList.length < 2) {
+            return false;
         }
+        eq.chair1 = { id: itemId, uid: sameChairList[0].uid };
+        eq.chair2 = { id: itemId, uid: sameChairList[1].uid };
+        SAVE.myCampUnequipped.chair1 = false;
+        SAVE.myCampUnequipped.chair2 = false;
+        if (typeof window !== 'undefined') window._pendingCampDropSlotKey = 'chair2';
     }
 
     if (typeof saveGame === 'function') saveGame();
@@ -655,8 +658,16 @@ function unequipItemInMyCamp(itemOrUid) {
             else if (id && val === id) isMatch = true;
         }
         if (isMatch) {
-            eq[slot] = null;
-            SAVE.myCampUnequipped[slot] = true;
+            if (slot === 'chair1' || slot === 'chair2') {
+                // Tháo 1 ghế sẽ tháo đồng bộ cả cặp 2 ghế để không bao giờ lẻ 1 ghế trên bãi trại
+                eq.chair1 = null;
+                eq.chair2 = null;
+                SAVE.myCampUnequipped.chair1 = true;
+                SAVE.myCampUnequipped.chair2 = true;
+            } else {
+                eq[slot] = null;
+                SAVE.myCampUnequipped[slot] = true;
+            }
             changed = true;
         }
     });
@@ -897,11 +908,8 @@ function openCamp(highlightLevel, onBack, initialTab) {
                     SAVE.ownedPets.push(petId);
                 }
                 SAVE.activePet = petId;
-                if (Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[0]) {
-                    SAVE.petOrderGroups[0].petId = petId;
-                    if (Array.isArray(SAVE.petOrderGroups[0].orders)) {
-                        SAVE.petOrderGroups[0].orders.forEach(function (o) { if (o) o.petId = petId; });
-                    }
+                if (typeof ensurePetOrderGroups === 'function') {
+                    ensurePetOrderGroups(SAVE.playerLevel || 1);
                 }
                 saveGame();
 
@@ -921,11 +929,8 @@ function openCamp(highlightLevel, onBack, initialTab) {
                 var pet = petsList.find(function (p) { return p.id === petId; });
                 if (!pet) return;
                 SAVE.activePet = petId;
-                if (Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[0]) {
-                    SAVE.petOrderGroups[0].petId = petId;
-                    if (Array.isArray(SAVE.petOrderGroups[0].orders)) {
-                        SAVE.petOrderGroups[0].orders.forEach(function (o) { if (o) o.petId = petId; });
-                    }
+                if (typeof ensurePetOrderGroups === 'function') {
+                    ensurePetOrderGroups(SAVE.playerLevel || 1);
                 }
                 saveGame();
 
@@ -1159,6 +1164,11 @@ function openCampItemsModal(onClose) {
             var displayName = (typeof getItemCleanName === 'function') ? getItemCleanName(selectedItem.id) : selectedItem.name;
             var isKhutrai = !!KHUTRAI_ITEMS[selectedItem.id];
             var isEquipped = isItemEquippedInMyCamp(selectedItem);
+            var isChairItem = (KHUTRAI_ITEMS[selectedItem.id] && KHUTRAI_ITEMS[selectedItem.id].type === 'chair') || String(selectedItem.id).indexOf('ghe_lv') === 0;
+            var sameChairCount = isChairItem
+                ? SAVE.campItems.filter(function (it) { return it && it.id === selectedItem.id; }).length
+                : 1;
+            var canEquipChairPair = !isChairItem || sameChairCount >= 2;
 
             if (infoBar) {
                 var actionBtnsHtml = '';
@@ -1167,7 +1177,7 @@ function openCampItemsModal(onClose) {
                         actionBtnsHtml += '<button class="btn-3s btn-gray size-32 camp-inline-equip-btn" id="camp-inline-equip-btn">' +
                             'Tháo ra' +
                         '</button>';
-                    } else {
+                    } else if (canEquipChairPair) {
                         actionBtnsHtml += '<button class="btn-3s btn-green size-32 camp-inline-equip-btn" id="camp-inline-equip-btn">' +
                             'Sử dụng' +
                         '</button>';
@@ -1177,9 +1187,15 @@ function openCampItemsModal(onClose) {
                     'Bán (+' + price.toLocaleString('vi-VN') + ' Vàng)' +
                 '</button>';
 
+                var statusBadgeHtml = isEquipped
+                    ? ' <span style="color:#27ae60;font-size:11px;font-weight:700;">(Đang dùng ở Trại)</span>'
+                    : (isChairItem && !canEquipChairPair
+                        ? ' <span style="color:#d35400;font-size:11px;font-weight:700;">(Đã có ' + sameChairCount + '/2 — Cần đủ 2 ghế cùng loại để bày)</span>'
+                        : '');
+
                 infoBar.innerHTML = '<div class="camp-info-content">' +
                     '<div class="camp-info-name"><b>' + displayName + '</b>' +
-                        (isEquipped ? ' <span style="color:#27ae60;font-size:11px;font-weight:700;">(Đang dùng ở Trại)</span>' : '') +
+                        statusBadgeHtml +
                     '</div>' +
                     '<div class="camp-info-actions">' + actionBtnsHtml + '</div>' +
                 '</div>';
@@ -1714,10 +1730,69 @@ function showLuckyDropModal(onReward) {
     };
 }
 
-// ---------- 5. CẨM NANG SƯU TẬP VẬT PHẨM DÃ NGOẠI ----------
+// ---------- 5. CẨM NANG SƯU TẬP VẬT PHẨM DÃ NGOẠI (1.1 - NHẬN THƯỞNG MỞ KHÓA & ĐỦ BỘ) ----------
+function grantBookSingleReward(id, sourceEl) {
+    if (!id || !SAVE || !SAVE.discovered || !SAVE.discovered[id]) return null;
+    if (!SAVE.claimedBook) SAVE.claimedBook = {};
+    if (SAVE.claimedBook[id]) return null;
+
+    var rw = (typeof getBookReward === 'function') ? getBookReward(id) : { coins: 25, gems: 0 };
+    SAVE.claimedBook[id] = true;
+
+    if (rw.coins > 0) {
+        if (typeof playerCoins !== 'undefined') playerCoins += rw.coins;
+        SAVE.coins = (typeof playerCoins !== 'undefined') ? playerCoins : ((SAVE.coins || 0) + rw.coins);
+    }
+    if (rw.gems > 0) {
+        if (typeof playerGems !== 'undefined') playerGems += rw.gems;
+        SAVE.gems = (typeof playerGems !== 'undefined') ? playerGems : ((SAVE.gems || 0) + rw.gems);
+    }
+
+    if (sourceEl && typeof spawnFlyingCurrency === 'function') {
+        if (rw.gems > 0) spawnFlyingCurrency(sourceEl, 'ruby', rw.gems);
+        if (rw.coins > 0) spawnFlyingCurrency(sourceEl, 'gold', Math.min(80, rw.coins));
+    }
+    return rw;
+}
+
+function grantBookChainReward(line, sourceEl) {
+    if (!line || typeof isChainFullyDiscovered !== 'function' || !isChainFullyDiscovered(line)) return null;
+    if (!SAVE.claimedBookChains) SAVE.claimedBookChains = {};
+    if (SAVE.claimedBookChains[line]) return null;
+
+    var rw = (typeof getChainBookReward === 'function') ? getChainBookReward(line) : { energy: 30, gems: 5, coins: 300 };
+    SAVE.claimedBookChains[line] = true;
+
+    if (rw.energy > 0) {
+        var cap = (typeof getEnergyOverflowCap === 'function') ? getEnergyOverflowCap() : 999;
+        if (typeof playerEnergy !== 'undefined') playerEnergy = Math.min(cap, playerEnergy + rw.energy);
+        SAVE.energy = (typeof playerEnergy !== 'undefined') ? playerEnergy : Math.min(cap, (SAVE.energy || 0) + rw.energy);
+    }
+    if (rw.coins > 0) {
+        if (typeof playerCoins !== 'undefined') playerCoins += rw.coins;
+        SAVE.coins = (typeof playerCoins !== 'undefined') ? playerCoins : ((SAVE.coins || 0) + rw.coins);
+    }
+    if (rw.gems > 0) {
+        if (typeof playerGems !== 'undefined') playerGems += rw.gems;
+        SAVE.gems = (typeof playerGems !== 'undefined') ? playerGems : ((SAVE.gems || 0) + rw.gems);
+    }
+
+    if (sourceEl && typeof spawnFlyingCurrency === 'function') {
+        if (rw.energy > 0) spawnFlyingCurrency(sourceEl, 'energy', rw.energy);
+        if (rw.gems > 0) spawnFlyingCurrency(sourceEl, 'ruby', rw.gems);
+        if (rw.coins > 0) spawnFlyingCurrency(sourceEl, 'gold', Math.min(80, rw.coins));
+    }
+    return rw;
+}
+
 function openDiscoveryBook() {
+    if (!SAVE.discovered) SAVE.discovered = {};
+    if (!SAVE.claimedBook) SAVE.claimedBook = {};
+    if (!SAVE.claimedBookChains) SAVE.claimedBookChains = {};
+
     var totalItems = ITEM_CHAINS.reduce(function (sum, ch) { return sum + (ch.names ? ch.names.length : 12); }, 0);
     var discCount = countDiscoveredItems();
+    var unclaimedTotal = (typeof countUnclaimedBookRewards === 'function') ? countUnclaimedBookRewards() : 0;
 
     var chainsHtml = '';
     ITEM_CHAINS.forEach(function (ch) {
@@ -1729,30 +1804,64 @@ function openDiscoveryBook() {
             var id = ch.line + '_lv' + lv;
             var imgPath = 'assets/images_webp/items/' + id + '.webp';
             var isDisc = !!SAVE.discovered[id];
+            var isClaimable = isDisc && !SAVE.claimedBook[id];
             if (isDisc) chainDisc++;
 
-            var cls = 'book-slot ' + bgClass + (isDisc ? ' discovered' : ' locked');
+            var rwTagHtml = '';
+            if (isClaimable) {
+                var rw = (typeof getBookReward === 'function') ? getBookReward(id) : { coins: lv * 25, gems: 0 };
+                if (rw.gems > 0) {
+                    rwTagHtml = '<span class="book-slot-rw-tag">+' + rw.gems + '<img src="assets/images_webp/ui/icon_ruby.webp" alt="💎"></span>';
+                } else {
+                    rwTagHtml = '<span class="book-slot-rw-tag">+' + rw.coins + '<img src="assets/images_webp/ui/icon_glod.webp" alt="🪙"></span>';
+                }
+            }
+
+            var cls = 'book-slot ' + bgClass + (isDisc ? ' discovered' : ' locked') + (isClaimable ? ' claimable' : '');
             slotsHtml += '<div class="' + cls + '" data-id="' + id + '" data-name="' + (ch.names[lv - 1] || id) + '" data-lv="' + lv + '">' +
+                rwTagHtml +
                 '<img src="' + imgPath + '" alt="' + id + '">' +
                 '<span class="book-lv">Lv.' + lv + '</span>' +
             '</div>';
         }
+
         var gen = getChainGenerator(ch.line);
-        chainsHtml += '<div class="book-chain">' +
+        var isFullChain = (chainDisc >= maxChainLv);
+        var isChainClaimed = !!SAVE.claimedBookChains[ch.line];
+        var chainRw = (typeof getChainBookReward === 'function') ? getChainBookReward(ch.line) : { energy: 30, gems: 5, coins: 300 };
+        var chainBonusHtml = '';
+        if (isFullChain && !isChainClaimed) {
+            chainBonusHtml = '<button type="button" class="book-chain-claim-btn" data-claim-chain="' + ch.line + '">🎁 Đủ bộ +' + chainRw.energy + '⚡ +' + chainRw.gems + '💎</button>';
+        } else if (isFullChain && isChainClaimed) {
+            chainBonusHtml = '<span class="book-chain-claimed-tag">✓ Đủ bộ</span>';
+        }
+
+        chainsHtml += '<div class="book-chain" data-chain-line="' + ch.line + '">' +
             '<div class="book-chain-header">' +
                 '<div class="book-chain-title-wrap">' +
-                    '<img src="' + gen.icon + '" class="book-chest-icon" alt="' + gen.name + '" title="Rương: ' + gen.name + '">' +
+                    '<img src="' + gen.icon + '" class="book-chest-icon" alt="' + gen.name + '" title="Nguồn: ' + gen.name + '">' +
                     '<span class="book-chain-title">' + ch.title + '</span>' +
                     '<span class="book-chest-tag">' + gen.name + '</span>' +
                 '</div>' +
-                '<small class="book-chain-count">' + chainDisc + '/' + maxChainLv + '</small>' +
+                '<div class="book-chain-right-meta">' +
+                    chainBonusHtml +
+                    '<small class="book-chain-count">' + chainDisc + '/' + maxChainLv + '</small>' +
+                '</div>' +
             '</div>' +
             '<div class="book-grid">' + slotsHtml + '</div>' +
         '</div>';
     });
 
+    var claimAllBarHtml = unclaimedTotal > 0
+        ? '<div class="book-top-claim-bar" id="book-top-claim-bar">' +
+              '<span class="book-top-claim-text" id="book-top-claim-text">🎁 Có <b>' + unclaimedTotal + '</b> phần thưởng mở khóa chờ nhận!</span>' +
+              '<button type="button" class="book-claim-all-btn" id="btn-book-claim-all">Nhận tất cả</button>' +
+          '</div>'
+        : '';
+
     var overlay = createModal(
         '<div class="modal-sub">' + (typeof I18N !== 'undefined' ? I18N.t('handbook.sub', { count: discCount, total: totalItems }) : ('Đã khám phá: <b>' + discCount + '/' + totalItems + '</b> vật phẩm cắm trại')) + '</div>' +
+        claimAllBarHtml +
         '<div class="book-scroll">' + chainsHtml + '</div>' +
         '<div class="modal-buttons book-buttons">' +
             '<button class="modal-btn primary" id="mb-close">' + (typeof I18N !== 'undefined' ? I18N.t('handbook.btn_close') : 'Đóng') + '</button>' +
@@ -1760,6 +1869,22 @@ function openDiscoveryBook() {
         'book-box',
         (typeof I18N !== 'undefined' ? I18N.t('handbook.title') : 'CẨM NANG')
     );
+
+    function syncAfterBookClaim() {
+        if (typeof saveGame === 'function') saveGame();
+        if (typeof updateUIStats === 'function') updateUIStats();
+        if (typeof updateBookBadge === 'function') updateBookBadge();
+        var rem = (typeof countUnclaimedBookRewards === 'function') ? countUnclaimedBookRewards() : 0;
+        var barEl = overlay.querySelector('#book-top-claim-bar');
+        var txtEl = overlay.querySelector('#book-top-claim-text');
+        if (barEl) {
+            if (rem <= 0) {
+                barEl.style.display = 'none';
+            } else if (txtEl) {
+                txtEl.innerHTML = '🎁 Có <b>' + rem + '</b> phần thưởng mở khóa chờ nhận!';
+            }
+        }
+    }
 
     // Kích hoạt bí mật: Chạm 5 lần liên tục vào tiêu đề Cẩm Nang để bật / tắt công cụ Test
     var bookHeaderTitle = overlay.querySelector('.modal-title');
@@ -1793,23 +1918,97 @@ function openDiscoveryBook() {
         };
     }
 
+    var btnClaimAll = overlay.querySelector('#btn-book-claim-all');
+    if (btnClaimAll) {
+        btnClaimAll.onclick = function (e) {
+            e.stopPropagation();
+            var totalCoins = 0, totalGems = 0, totalEnergy = 0;
+            overlay.querySelectorAll('.book-slot.claimable').forEach(function (slot) {
+                var r = grantBookSingleReward(slot.dataset.id, null);
+                if (r) {
+                    totalCoins += r.coins || 0;
+                    totalGems += r.gems || 0;
+                    slot.classList.remove('claimable');
+                    var tag = slot.querySelector('.book-slot-rw-tag');
+                    if (tag) tag.remove();
+                }
+            });
+            overlay.querySelectorAll('.book-chain-claim-btn').forEach(function (cBtn) {
+                var ln = cBtn.getAttribute('data-claim-chain');
+                var cr = grantBookChainReward(ln, null);
+                if (cr) {
+                    totalEnergy += cr.energy || 0;
+                    totalCoins += cr.coins || 0;
+                    totalGems += cr.gems || 0;
+                    var doneSpan = document.createElement('span');
+                    doneSpan.className = 'book-chain-claimed-tag';
+                    doneSpan.textContent = '✓ Đủ bộ';
+                    cBtn.replaceWith(doneSpan);
+                }
+            });
+            if (totalCoins > 0 || totalGems > 0 || totalEnergy > 0) {
+                if (typeof playSound === 'function') playSound('win');
+                if (typeof spawnFlyingCurrency === 'function') {
+                    if (totalEnergy > 0) spawnFlyingCurrency(btnClaimAll, 'energy', totalEnergy);
+                    if (totalGems > 0) spawnFlyingCurrency(btnClaimAll, 'ruby', totalGems);
+                    if (totalCoins > 0) spawnFlyingCurrency(btnClaimAll, 'gold', Math.min(100, totalCoins));
+                }
+                var parts = [];
+                if (totalCoins > 0) parts.push('+' + totalCoins.toLocaleString('vi-VN') + ' Vàng');
+                if (totalGems > 0) parts.push('+' + totalGems + ' Kim cương');
+                if (totalEnergy > 0) parts.push('+' + totalEnergy + ' Năng lượng');
+                showToast('🎉 Đã nhận: ' + parts.join(' · ') + '!', '#2e7d32');
+            }
+            syncAfterBookClaim();
+        };
+    }
+
+    overlay.querySelectorAll('.book-chain-claim-btn').forEach(function (cBtn) {
+        cBtn.onclick = function (e) {
+            e.stopPropagation();
+            var ln = cBtn.getAttribute('data-claim-chain');
+            var cr = grantBookChainReward(ln, cBtn);
+            if (!cr) return;
+            if (typeof playSound === 'function') playSound('win');
+            var doneSpan = document.createElement('span');
+            doneSpan.className = 'book-chain-claimed-tag';
+            doneSpan.textContent = '✓ Đủ bộ';
+            cBtn.replaceWith(doneSpan);
+            showToast('🎁 Thưởng đủ bộ: +' + cr.energy + '⚡ · +' + cr.gems + '💎 · +' + cr.coins + ' Vàng!', '#2e7d32');
+            syncAfterBookClaim();
+        };
+    });
+
     overlay.querySelectorAll('.book-slot').forEach(function (slot) {
         slot.onclick = function () {
             var id = slot.dataset.id;
             var name = slot.dataset.name;
-            var lv = parseInt(slot.dataset.lv);
+            var lv = parseInt(slot.dataset.lv, 10);
             var isDisc = !!SAVE.discovered[id];
             var img = slot.querySelector('img');
-            if (img) {
+            if (img && img.animate) {
                 img.animate([
                     { transform: 'scale(0.8)' },
                     { transform: 'scale(1.18)' },
                     { transform: 'scale(1)' }
                 ], { duration: 240, easing: 'ease-out' });
             }
+            if (isDisc && !SAVE.claimedBook[id]) {
+                var rw = grantBookSingleReward(id, slot);
+                slot.classList.remove('claimable');
+                var tag = slot.querySelector('.book-slot-rw-tag');
+                if (tag) tag.remove();
+                if (typeof playSound === 'function') playSound(rw && rw.gems > 0 ? 'bonus' : 'coin');
+                var rwTxt = [];
+                if (rw && rw.coins > 0) rwTxt.push('+' + rw.coins + ' Vàng');
+                if (rw && rw.gems > 0) rwTxt.push('+' + rw.gems + ' 💎');
+                showToast(name + ' (Lv.' + lv + '): Nhận ' + rwTxt.join(' & ') + '!', '#2e7d32');
+                syncAfterBookClaim();
+                return;
+            }
             if (isDisc) {
                 if (typeof playSound === 'function') playSound('tap');
-                showToast(name + ' (Lv.' + lv + ')', '#4e342e');
+                showToast(name + ' (Lv.' + lv + ') — Đã nhận thưởng', '#4e342e');
             } else {
                 var gen = getChainGenerator(id.split('_lv')[0]);
                 if (typeof playSound === 'function') playSound('tap');
@@ -1820,6 +2019,443 @@ function openDiscoveryBook() {
 
     overlay.querySelector('#mb-close').onclick = closeModal;
 }
+
+// ---------- 5B. POPUP THƯỞNG ĐIỂM DANH MỖI NGÀY (ĐƠN GIẢN CHUẨN MERGE) ----------
+function openDailyPassModal() {
+    if (typeof ensureDailyPassState !== 'function') return;
+    var dp = ensureDailyPassState();
+    var cfg = (typeof getDailyPassConfig === 'function') ? getDailyPassConfig() : null;
+    if (!dp || !cfg) return;
+
+    var isEn = (typeof I18N !== 'undefined' && I18N.currentLang && String(I18N.currentLang).toLowerCase().indexOf('en') === 0);
+    var dayWord = isEn ? 'Day' : 'Ngày';
+    var daysPlaqueWord = isEn ? 'Days' : 'Ngày';
+    var modalTitle = isEn ? 'DAILY REWARDS' : 'THƯỞNG MỖI NGÀY';
+
+    function getSmallBoxSvg() {
+        return '<svg class="dp-ms-gift-svg" viewBox="0 0 64 60" aria-hidden="true">' +
+            '<rect x="10" y="24" width="44" height="30" rx="6" fill="#ffad1f" stroke="#c86d08" stroke-width="2.5"/>' +
+            '<rect x="10" y="24" width="44" height="9" rx="3" fill="#8e3b00" opacity="0.18"/>' +
+            '<rect x="27" y="24" width="10" height="30" fill="#d52bf7"/>' +
+            '<rect x="6" y="16" width="52" height="12" rx="5" fill="#ffd23f" stroke="#c86d08" stroke-width="2.5"/>' +
+            '<rect x="26" y="16" width="12" height="12" fill="#eb52ff"/>' +
+            '<path d="M32 17 C22 4, 8 7, 13 17 C17 21, 27 19, 32 17 Z" fill="#f257ff" stroke="#9e14c2" stroke-width="2.2"/>' +
+            '<path d="M32 17 C42 4, 56 7, 51 17 C47 21, 37 19, 32 17 Z" fill="#f257ff" stroke="#9e14c2" stroke-width="2.2"/>' +
+            '<circle cx="32" cy="16.5" r="4.5" fill="#ff8aff" stroke="#9e14c2" stroke-width="2"/>' +
+        '</svg>';
+    }
+
+    function getGrandBoxSvg() {
+        return '<svg class="dp-ms-gift-svg is-grand" viewBox="0 0 74 68" aria-hidden="true">' +
+            '<rect x="11" y="28" width="52" height="34" rx="12" fill="#e53924" stroke="#96190c" stroke-width="2.6"/>' +
+            '<rect x="11" y="28" width="52" height="10" fill="#6b0d04" opacity="0.22"/>' +
+            '<rect x="31" y="28" width="12" height="34" fill="#64dd17"/>' +
+            '<rect x="7" y="18" width="60" height="14" rx="7" fill="#ff5733" stroke="#96190c" stroke-width="2.6"/>' +
+            '<rect x="30" y="18" width="14" height="14" fill="#76ff03"/>' +
+            '<path d="M37 19 C24 3, 7 6, 13 19 C18 24, 30 21, 37 19 Z" fill="#69f0ae" stroke="#257a09" stroke-width="2.4"/>' +
+            '<path d="M37 19 C50 3, 67 6, 61 19 C56 24, 44 21, 37 19 Z" fill="#76ff03" stroke="#257a09" stroke-width="2.4"/>' +
+            '<circle cx="37" cy="18.5" r="5.5" fill="#b2ff59" stroke="#257a09" stroke-width="2.2"/>' +
+        '</svg>';
+    }
+
+    function getRewardEntries(item) {
+        var list = [];
+        if (item.coins > 0) {
+            var coinImg = item.coins >= 500
+                ? 'assets/images_webp/items/icon_coin_lv3.webp'
+                : 'assets/images_webp/items/icon_coin_lv2.webp';
+            list.push({
+                type: 'coins',
+                val: item.coins,
+                text: item.coins.toLocaleString('vi-VN'),
+                img: coinImg,
+                label: item.coins.toLocaleString('vi-VN') + ' Vàng'
+            });
+        }
+        if (item.energy > 0) {
+            list.push({
+                type: 'energy',
+                val: item.energy,
+                text: String(item.energy),
+                img: 'assets/images_webp/ui/icon_nangluong.webp',
+                label: item.energy + '⚡'
+            });
+        }
+        if (item.gems > 0) {
+            list.push({
+                type: 'gems',
+                val: item.gems,
+                text: String(item.gems),
+                img: 'assets/images_webp/ui/icon_ruby.webp',
+                label: item.gems + '💎'
+            });
+        }
+        return list;
+    }
+
+    function calcMilestoneBarPercent(totalDays) {
+        var d = Math.max(1, Math.min(30, totalDays || 1));
+        if (d <= 1) return 4;
+        if (d <= 8) return 4 + ((d - 1) / 7) * 14;         // 1..8  -> 4%..18%
+        if (d <= 15) return 18 + ((d - 8) / 7) * 25;       // 8..15 -> 18%..43%
+        if (d <= 22) return 43 + ((d - 15) / 7) * 25;      // 15..22 -> 43%..68%
+        return 68 + ((d - 22) / 8) * 32;                   // 22..30 -> 68%..100%
+    }
+
+    function grantBundleReward(rw, srcEl) {
+        if (!rw) return;
+        if (rw.energy > 0) {
+            var cap = (typeof getEnergyOverflowCap === 'function') ? getEnergyOverflowCap() : 999;
+            if (typeof playerEnergy !== 'undefined') playerEnergy = Math.min(cap, playerEnergy + rw.energy);
+            SAVE.energy = (typeof playerEnergy !== 'undefined') ? playerEnergy : Math.min(cap, (SAVE.energy || 0) + rw.energy);
+            if (srcEl && typeof spawnFlyingCurrency === 'function') spawnFlyingCurrency(srcEl, 'energy', rw.energy);
+        }
+        if (rw.coins > 0) {
+            if (typeof playerCoins !== 'undefined') playerCoins += rw.coins;
+            SAVE.coins = (typeof playerCoins !== 'undefined') ? playerCoins : ((SAVE.coins || 0) + rw.coins);
+            if (srcEl && typeof spawnFlyingCurrency === 'function') spawnFlyingCurrency(srcEl, 'gold', Math.min(90, rw.coins));
+        }
+        if (rw.gems > 0) {
+            if (typeof playerGems !== 'undefined') playerGems += rw.gems;
+            SAVE.gems = (typeof playerGems !== 'undefined') ? playerGems : ((SAVE.gems || 0) + rw.gems);
+            if (srcEl && typeof spawnFlyingCurrency === 'function') spawnFlyingCurrency(srcEl, 'ruby', rw.gems);
+        }
+        if (typeof saveGame === 'function') saveGame();
+        if (typeof updateUIStats === 'function') updateUIStats();
+        if (typeof window.updateDailyPassUI === 'function') window.updateDailyPassUI();
+    }
+
+    function formatInlineRewards(item) {
+        var html = '';
+        if (item.energy > 0) {
+            html += '<span class="dp-dt-rw-pair">+' + item.energy + '<img src="assets/images_webp/ui/icon_nangluong.webp" alt="⚡"></span>';
+        }
+        if (item.coins > 0) {
+            html += '<span class="dp-dt-rw-pair">+' + item.coins.toLocaleString('vi-VN') + '<img src="assets/images_webp/ui/icon_glod.webp" alt="🪙"></span>';
+        }
+        if (item.gems > 0) {
+            html += '<span class="dp-dt-rw-pair">+' + item.gems + '<img src="assets/images_webp/ui/icon_ruby.webp" alt="💎"></span>';
+        }
+        return html;
+    }
+
+    var overlay = createModal(
+        '<div class="daily-pass-scroll" id="daily-pass-scroll">' +
+            '<div class="daily-pass-simple-wrap" id="daily-pass-body"></div>' +
+        '</div>' +
+        '<div class="modal-buttons dp-bottom-btn-row">' +
+            '<button class="modal-btn primary" id="dp-close-btn">' + (isEn ? 'Close' : 'Đóng') + '</button>' +
+        '</div>',
+        'daily-pass-box',
+        modalTitle
+    );
+
+    var scrollEl = overlay.querySelector('#daily-pass-scroll');
+    var bodyEl = overlay.querySelector('#daily-pass-body');
+    var closeBtn = overlay.querySelector('#dp-close-btn');
+    if (closeBtn) closeBtn.onclick = closeModal;
+
+    function renderPassContent() {
+        var prevScroll = scrollEl ? scrollEl.scrollTop : 0;
+        dp = ensureDailyPassState();
+        var unlockedDays = dp.loginDaysUnlocked || 1;
+
+        // 1. Lưới 7 ngày (Ngày 1..6 ô vuông 3x2, Ngày 7 băng ngang thưởng đủ 3 loại) — Tông nâu chủ đạo #b58451
+        var daysHtml = '';
+        (cfg.sevenDayRewards || []).forEach(function (dItem) {
+            var d = dItem.day;
+            var isClaimed = !!dp.claimedDays[d];
+            var isClaimable = (d <= unlockedDays) && !isClaimed;
+            var entries = getRewardEntries(dItem);
+
+            var tileCls = 'dp-gift-tile' +
+                (dItem.isGrand ? ' day-grand' : '') +
+                (isClaimed ? ' is-claimed' : '') +
+                (isClaimable ? ' is-claimable' : '');
+
+            var innerHtml = '';
+            if (isClaimed) {
+                var rwItemsHtml = '';
+                entries.forEach(function (ent) {
+                    rwItemsHtml +=
+                        '<div class="dp-open-rw-item">' +
+                            '<img src="' + ent.img + '" class="dp-open-rw-img" alt="">' +
+                            '<span class="dp-open-rw-qty">' + ent.text + '</span>' +
+                        '</div>';
+                });
+                innerHtml =
+                    '<div class="dp-open-rw-group' + (entries.length > 1 ? ' is-multi' : '') + '">' +
+                        rwItemsHtml +
+                    '</div>' +
+                    '<img src="assets/images_webp/ui/icon_check.webp" class="dp-tile-check-icon" alt="✓">';
+            } else {
+                innerHtml =
+                    '<div class="dp-tile-lid" aria-hidden="true"><span class="dp-lid-notch"></span></div>' +
+                    (isClaimable ? '<div class="dp-claim-halo" aria-hidden="true"></div>' : '') +
+                    '<div class="dp-tile-label-stack">' +
+                        '<span class="dp-tile-word">' + dayWord + '</span>' +
+                        '<span class="dp-tile-num">' + d + '</span>' +
+                    '</div>';
+            }
+
+            daysHtml +=
+                '<button type="button" class="' + tileCls + '" data-day-tile="' + d + '">' +
+                    innerHtml +
+                '</button>';
+        });
+
+        // 2. Khung Nhiệm Vụ Hàng Ngày bên dưới (cuộn xuống để xem & nhận quà)
+        var tasks = cfg.dailyTasks || [];
+        var doneTaskCount = 0;
+        var tasksHtml = '';
+        tasks.forEach(function (t) {
+            var cur = Math.min(t.target, (dp.progress && dp.progress[t.type]) || 0);
+            var pct = Math.min(100, Math.round((cur / Math.max(1, t.target)) * 100));
+            var isDone = cur >= t.target;
+            var isClaimed = !!(dp.claimedTasks && dp.claimedTasks[t.id]);
+            if (isDone) doneTaskCount++;
+
+            var tBtnHtml = '';
+            if (isClaimed) {
+                tBtnHtml = '<button type="button" class="dp-dt-btn is-done" disabled>✓ Xong</button>';
+            } else if (isDone) {
+                tBtnHtml = '<button type="button" class="dp-dt-btn is-claim" data-claim-task="' + t.id + '">Nhận</button>';
+            } else {
+                tBtnHtml = '<button type="button" class="dp-dt-btn is-locked" disabled>' + cur + '/' + t.target + '</button>';
+            }
+
+            tasksHtml +=
+                '<div class="dp-dt-row">' +
+                    '<div class="dp-dt-left">' +
+                        '<div class="dp-dt-title">' + t.title + '</div>' +
+                        '<div class="dp-dt-bar' + (isDone ? ' is-full' : '') + '">' +
+                            '<div class="dp-dt-bar-fill" style="width:' + pct + '%;"></div>' +
+                            '<span class="dp-dt-bar-txt">' + cur + ' / ' + t.target + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="dp-dt-right">' +
+                        '<div class="dp-dt-inline-rws">' + formatInlineRewards(t) + '</div>' +
+                        tBtnHtml +
+                    '</div>' +
+                '</div>';
+        });
+
+        var allClear = cfg.dailyAllClearChest || { energy: 40, coins: 600, gems: 5 };
+        var canClaimAllClear = (tasks.length > 0 && doneTaskCount >= tasks.length && !dp.claimedDailyChest);
+        var chestImg = dp.claimedDailyChest
+            ? 'assets/images_webp/ui/icon_ruongmo.webp'
+            : 'assets/images_webp/ui/icon_ruongdong.webp';
+        var allClearBtn = dp.claimedDailyChest
+            ? '<button type="button" class="dp-dt-btn is-done" disabled>✓ Xong</button>'
+            : (canClaimAllClear
+                ? '<button type="button" class="dp-dt-btn is-claim" id="btn-claim-daily-chest">Nhận</button>'
+                : '<button type="button" class="dp-dt-btn is-locked" disabled>' + doneTaskCount + '/' + tasks.length + '</button>');
+
+        var dailyTasksSectionHtml = tasks.length > 0 ? (
+            '<div class="dp-daily-tasks-card">' +
+                '<div class="dp-dt-head">' +
+                    '<div class="dp-dt-head-left">' +
+                        '<img src="assets/images_webp/ui/icon_nhiemvu.webp" class="dp-dt-head-icon" alt="">' +
+                        '<span class="dp-dt-head-title">' + (isEn ? 'Daily Tasks' : 'Nhiệm Vụ Hàng Ngày') + '</span>' +
+                    '</div>' +
+                    '<span class="dp-dt-reset-pill">' + (isEn ? 'Reset 00:00' : 'Làm mới 00:00') + '</span>' +
+                '</div>' +
+                '<div class="dp-dt-list">' + tasksHtml + '</div>' +
+                '<div class="dp-dt-chest-bar">' +
+                    '<div class="dp-dt-chest-info">' +
+                        '<div class="dp-dt-chest-title">🎁 ' + (isEn ? 'Daily Clear Chest' : 'Rương Hoàn Thành Ngày') + ' (' + doneTaskCount + '/' + tasks.length + ')</div>' +
+                        '<div class="dp-dt-inline-rws">' + formatInlineRewards(allClear) + '</div>' +
+                    '</div>' +
+                    '<img src="' + chestImg + '" class="dp-dt-chest-img" alt="Rương">' +
+                    allClearBtn +
+                '</div>' +
+            '</div>'
+        ) : '';
+
+        bodyEl.innerHTML =
+            '<div class="dp-7day-simple-grid">' + daysHtml + '</div>' +
+            dailyTasksSectionHtml;
+
+        if (scrollEl && prevScroll > 0) {
+            scrollEl.scrollTop = prevScroll;
+        }
+
+        // Gắn sự kiện mở hộp quà 7 ngày
+        bodyEl.querySelectorAll('[data-day-tile]').forEach(function (tile) {
+            tile.onclick = function (e) {
+                e.stopPropagation();
+                var dayNum = parseInt(tile.getAttribute('data-day-tile'), 10);
+                var dObj = (cfg.sevenDayRewards || []).find(function (x) { return x.day === dayNum; });
+                if (!dObj) return;
+
+                if (dp.claimedDays[dayNum]) {
+                    if (typeof playSound === 'function') playSound('tap');
+                    return;
+                }
+                if (dayNum > (dp.loginDaysUnlocked || 1)) {
+                    if (typeof playSound === 'function') playSound('tap');
+                    showToast('Hãy quay lại vào ' + dayWord + ' ' + dayNum + ' để mở hộp quà này nhé!');
+                    return;
+                }
+
+                dp.claimedDays[dayNum] = true;
+                if (typeof playSound === 'function') playSound('win');
+                grantBundleReward(dObj, tile);
+
+                var rwParts = getRewardEntries(dObj).map(function (x) { return '+' + x.label; });
+                showToast('🎉 Quà ' + dayWord + ' ' + dayNum + ': ' + rwParts.join(', ') + '!');
+                renderPassContent();
+            };
+        });
+
+        // Gắn sự kiện nhận quà từng Nhiệm Vụ Hàng Ngày
+        bodyEl.querySelectorAll('[data-claim-task]').forEach(function (tBtn) {
+            tBtn.onclick = function (e) {
+                e.stopPropagation();
+                var tid = tBtn.getAttribute('data-claim-task');
+                var tObj = (cfg.dailyTasks || []).find(function (x) { return x.id === tid; });
+                if (!tObj || (dp.claimedTasks && dp.claimedTasks[tid]) || ((dp.progress && dp.progress[tObj.type]) || 0) < tObj.target) return;
+                if (!dp.claimedTasks) dp.claimedTasks = {};
+                dp.claimedTasks[tid] = true;
+                if (typeof playSound === 'function') playSound('bonus');
+                grantBundleReward(tObj, tBtn);
+                showToast('🎉 Hoàn thành: ' + tObj.title + '!');
+                renderPassContent();
+            };
+        });
+
+        // Gắn sự kiện mở Rương Hoàn Thành Ngày (3/3)
+        var chestBtn = bodyEl.querySelector('#btn-claim-daily-chest');
+        if (chestBtn) {
+            chestBtn.onclick = function (e) {
+                e.stopPropagation();
+                if (dp.claimedDailyChest) return;
+                dp.claimedDailyChest = true;
+                if (typeof playSound === 'function') playSound('win');
+                grantBundleReward(allClear, chestBtn);
+                showToast('🎁 Đã mở Rương Hoàn Thành Ngày!');
+                renderPassContent();
+            };
+        }
+    }
+
+    renderPassContent();
+}
+window.openDailyPassModal = openDailyPassModal;
+
+// ---------- 5C. POPUP CHI TIẾT CHUỖI VẬT PHẨM KHI BẤM NÚT [i] ----------
+function openItemChainInfoModal(itemId) {
+    if (!itemId) return;
+
+    // Trường hợp bấm [i] khi đang chọn Máy phát (Generator)
+    if (typeof GENERATORS !== 'undefined' && GENERATORS[itemId]) {
+        var genCleanName = (typeof getItemCleanName === 'function') ? getItemCleanName(itemId) : itemId;
+        var genImg = (typeof getItemImagePath === 'function') ? getItemImagePath(itemId) : ('assets/images_webp/items/' + itemId + '.webp');
+        var branchList = [];
+        (GENERATORS[itemId] || []).forEach(function (dropId) {
+            var ln = String(dropId).split('_lv')[0];
+            if (branchList.indexOf(ln) === -1) branchList.push(ln);
+        });
+
+        var branchesHtml = '';
+        branchList.forEach(function (ln) {
+            var ch = (typeof ITEM_CHAINS !== 'undefined') ? ITEM_CHAINS.find(function (c) { return c.line === ln; }) : null;
+            if (!ch) return;
+            var bgCls = (typeof getCellBgClass === 'function') ? getCellBgClass(ln) : 'cell-bg-01';
+            branchesHtml += '<div class="ici-source-banner" style="margin-bottom:8px;">' +
+                '<div class="ici-chain-slot ' + bgCls + '" style="width:46px;height:46px;flex-shrink:0;">' +
+                    '<img src="assets/images_webp/items/' + ln + '_lv1.webp" alt="">' +
+                '</div>' +
+                '<div>' +
+                    '<div style="font-weight:800;font-size:13px;color:#3e2723;">' + ch.title + ' (Lv.1 – Lv.' + ch.names.length + ')</div>' +
+                    '<div style="font-size:11px;color:#6d4c41;">Bấm vào máy phát tốn 1⚡ để sinh vật phẩm thuộc nhánh này</div>' +
+                '</div>' +
+            '</div>';
+        });
+
+        var genOverlay = createModal(
+            '<div class="ici-source-banner">' +
+                '<img src="' + genImg + '" alt="">' +
+                '<div>' +
+                    '<div style="font-weight:900;font-size:14px;color:#2e7d32;">' + genCleanName + '</div>' +
+                    '<div style="font-size:11.5px;color:#5d4037;">Nguồn phát vật phẩm cắm trại trên bàn chơi</div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="font-size:12px;font-weight:800;color:#5d4037;text-align:left;margin:4px 0 6px;">Các chuỗi vật phẩm rơi ra:</div>' +
+            '<div>' + branchesHtml + '</div>' +
+            '<div class="modal-buttons" style="margin-top:10px;">' +
+                '<button class="modal-btn primary" id="ici-close-btn">Đóng</button>' +
+            '</div>',
+            'item-info-popup-box',
+            'THÔNG TIN NGUỒN PHÁT'
+        );
+        var gClose = genOverlay.querySelector('#ici-close-btn');
+        if (gClose) gClose.onclick = closeModal;
+        return;
+    }
+
+    var parts = String(itemId).split('_lv');
+    var line = parts[0];
+    var curLv = parseInt(parts[1], 10) || 1;
+    var chain = (typeof ITEM_CHAINS !== 'undefined') ? ITEM_CHAINS.find(function (c) { return c.line === line; }) : null;
+    if (!chain) return;
+
+    var gen = getChainGenerator(line);
+    var maxLv = chain.names ? chain.names.length : 12;
+    var bgClass = (typeof getCellBgClass === 'function') ? getCellBgClass(line) : 'cell-bg-01';
+
+    var gridHtml = '';
+    for (var lv = 1; lv <= maxLv; lv++) {
+        var cid = line + '_lv' + lv;
+        var isDisc = !!(SAVE && SAVE.discovered && SAVE.discovered[cid]) || (lv === curLv);
+        var slotCls = 'ici-chain-slot ' + bgClass +
+            (lv === curLv ? ' is-current' : '') +
+            (!isDisc ? ' is-locked' : '');
+        var cName = chain.names[lv - 1] || cid;
+        gridHtml += '<div class="' + slotCls + '" data-lv="' + lv + '" data-name="' + cName + '" data-disc="' + (isDisc ? '1' : '0') + '">' +
+            '<img src="assets/images_webp/items/' + cid + '.webp" alt="">' +
+            '<span class="ici-slot-lv">Lv.' + lv + '</span>' +
+        '</div>';
+    }
+
+    var overlay = createModal(
+        '<div class="ici-source-banner">' +
+            '<img src="' + gen.icon + '" alt="">' +
+            '<div>' +
+                '<div style="font-size:11px;font-weight:700;color:#795548;">Nguồn tạo ra chuỗi này:</div>' +
+                '<div style="font-size:13.5px;font-weight:900;color:#3e2723;">' + gen.name + '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="ici-chain-grid">' + gridHtml + '</div>' +
+        '<div id="ici-selected-caption" style="margin-top:8px;font-size:12px;font-weight:800;color:#4e342e;">' +
+            (chain.names[curLv - 1] || itemId) + ' (Lv.' + curLv + '/' + maxLv + ')' +
+        '</div>' +
+        '<div class="modal-buttons" style="margin-top:10px;">' +
+            '<button class="modal-btn primary" id="ici-close-btn">Đóng</button>' +
+        '</div>',
+        'item-info-popup-box',
+        chain.title.toUpperCase()
+    );
+
+    var capEl = overlay.querySelector('#ici-selected-caption');
+    overlay.querySelectorAll('.ici-chain-slot').forEach(function (slot) {
+        slot.onclick = function () {
+            if (typeof playSound === 'function') playSound('tap');
+            var slv = slot.getAttribute('data-lv');
+            var sname = slot.getAttribute('data-name');
+            var sdisc = slot.getAttribute('data-disc') === '1';
+            if (capEl) {
+                capEl.textContent = sdisc
+                    ? (sname + ' (Lv.' + slv + '/' + maxLv + ')')
+                    : ('Chưa mở khóa Lv.' + slv + ' — Ghép 2 món Lv.' + (parseInt(slv, 10) - 1) + ' để khám phá!');
+            }
+        };
+    });
+
+    var closeBtn = overlay.querySelector('#ici-close-btn');
+    if (closeBtn) closeBtn.onclick = closeModal;
+}
+window.openItemChainInfoModal = openItemChainInfoModal;
 
 // ---------- 7. MÀN HÌNH CÀI ĐẶT & CHỌN MÀN NHANH ----------
 // opts: { currentLevel, onSelectLevel, isAuto, onToggleAuto, onUnlockChanged, onRestartLevel, onResetAll, onCloudRestore }
@@ -3003,7 +3639,19 @@ function openMyCamp() {
     }
 
     screen.style.display = 'block';
+    screen.querySelectorAll('.backdrop-cloud[data-src]').forEach(function (el) {
+        var s = el.getAttribute('data-src');
+        if (s) {
+            el.setAttribute('src', s);
+            el.removeAttribute('data-src');
+        }
+    });
     renderMyCampScene();
+    if (typeof recordDailyTaskProgress === 'function') {
+        recordDailyTaskProgress('camp', 1);
+    }
+    if (typeof updateBookBadge === 'function') updateBookBadge();
+    if (typeof updateStarChestUI === 'function') updateStarChestUI();
     if (window.VISUAL_FX && typeof window.VISUAL_FX.resumeCampPixiFx === 'function') {
         window.VISUAL_FX.resumeCampPixiFx();
     }
@@ -3017,6 +3665,9 @@ function closeMyCamp() {
     screen.style.display = 'none';
 
     stopCampAnimators();
+    if (typeof window.updateMyCampNotifyBadge === 'function') {
+        window.updateMyCampNotifyBadge();
+    }
     if (window.VISUAL_FX && typeof window.VISUAL_FX.pauseCampPixiFx === 'function') {
         window.VISUAL_FX.pauseCampPixiFx();
     }
@@ -3368,6 +4019,8 @@ function startCampAnimators() {
 
                             // Cập nhật ẩn đồng xu trên đầu thú cưng
                             updatePetReadyBadge();
+                            if (typeof recordDailyTaskProgress === 'function') recordDailyTaskProgress('camp', 1);
+                            if (typeof window.updateMyCampNotifyBadge === 'function') window.updateMyCampNotifyBadge();
                         } else {
                             // Thả tay quá nhanh (< 1s): Không trừ lượt 10 phút, nhắc người chơi giữ lâu hơn
                             showPetFloatingToast(container, 'Giữ từ 1s - 3s để nhận tới 2.000 Vàng!', false);

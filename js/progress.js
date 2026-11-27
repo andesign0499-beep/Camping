@@ -76,6 +76,8 @@ function defaultSave() {
         stars: {},
         discovered: {},
         claimedBook: {},
+        claimedBookChains: {},
+        dailyPass: null,
         ownedPets: ['character01'],
         activePet: 'character01',
         ownedLocations: ['loc_dongdo'],
@@ -111,7 +113,8 @@ function defaultSave() {
         slot1ChairRepeat: null,
         slot1RestCooldown: 0,
         itemCompletedCounts: {},
-        allHistoricalOrderedItems: []
+        allHistoricalOrderedItems: [],
+        npcQuestCursor: {}
     };
 }
 
@@ -159,6 +162,8 @@ function loadSave() {
             if (!s.stars || typeof s.stars !== 'object') s.stars = {};
             if (!s.discovered || typeof s.discovered !== 'object') s.discovered = {};
             if (!s.claimedBook || typeof s.claimedBook !== 'object') s.claimedBook = {};
+            if (!s.claimedBookChains || typeof s.claimedBookChains !== 'object') s.claimedBookChains = {};
+            if (s.dailyPass && typeof s.dailyPass !== 'object') s.dailyPass = null;
             if (!s.ads || typeof s.ads !== 'object') s.ads = defaultSave().ads;
             var validPetIds = (typeof PET_CHARACTERS !== 'undefined' && Array.isArray(PET_CHARACTERS))
                 ? PET_CHARACTERS.map(function (p) { return p.id; })
@@ -179,6 +184,7 @@ function loadSave() {
             if (s.slot1ChairRepeat && (typeof s.slot1ChairRepeat !== 'object' || !s.slot1ChairRepeat.itemId)) s.slot1ChairRepeat = null;
             if (typeof s.slot1RestCooldown !== 'number' || s.slot1RestCooldown < 0) s.slot1RestCooldown = 0;
             if (!s.itemCompletedCounts || typeof s.itemCompletedCounts !== 'object') s.itemCompletedCounts = {};
+            if (!s.npcQuestCursor || typeof s.npcQuestCursor !== 'object') s.npcQuestCursor = {};
             if (!Array.isArray(s.allHistoricalOrderedItems)) s.allHistoricalOrderedItems = [];
             if (Array.isArray(s.slot1CompletedIds)) {
                 s.slot1CompletedIds.forEach(function (id) {
@@ -913,14 +919,22 @@ function calcStars(energyLeft, budget) {
     return r >= 0.30 ? 3 : (r >= 0.15 ? 2 : 1);
 }
 
-// ---------- SỔ TAY SƯU TẬP VẬT PHẨM (9 DÒNG x 12 CẤP) ----------
+// ---------- SỔ TAY SƯU TẬP VẬT PHẨM (12 DÒNG = 132 VẬT PHẨM) ----------
 var ITEM_CHAINS = [
     {
         line: 'an', icon: '', title: 'Ẩm Thực Dã Ngoại',
         names: [
-            'Quả Táo Đỏ', 'Giỏ Trái Cây Tươi', 'Bánh Sandwich Kẹp', 'Đùi Gà Nướng',
-            'Bánh Pizza Dã Ngoại', 'Nồi Lẩu Thập Cẩm Nóng', 'Khay Sushi Cá Hồi', 'Sườn Nướng BBQ Sốt Đậm',
-            'Đĩa Hải Sản Hấp Tôm Ngao', 'Đùi Heo Xông Khói', 'Thịt Bò Wagyu Thượng Hạng', 'Cua Hoàng Đế Thượng Hạng'
+            'Bánh Mì Bơ Tỏi', 'Bánh Mì Kẹp Xúc Xích', 'Bánh Sandwich Phô Mai', 'Cơm Nắm Rong Biển',
+            'Cơm Cuộn Kimbap', 'Pizza Xúc Xích Phô Mai', 'Pizza Hải Sản Tôm', 'Xiên Cá Viên Nướng',
+            'Xiên Tôm Nướng Sa Tế', 'Mực Nướng Nguyên Con', 'Đùi Heo Nướng BBQ'
+        ]
+    },
+    {
+        line: 'qua', icon: '', title: 'Trái Cây Tươi Mát',
+        names: [
+            'Quả Táo Đỏ Tươi', 'Cam Vàng Mọng Nước', 'Đào Hồng Thơm Ngọt', 'Lê Vàng Giòn Ngọt',
+            'Nải Chuối Chín Vàng', 'Dứa Vàng Thắt Nơ', 'Rổ Dâu Tây Đỏ', 'Đĩa Việt Quất Rừng',
+            'Giỏ Trái Cây Dã Ngoại'
         ]
     },
     {
@@ -950,9 +964,9 @@ var ITEM_CHAINS = [
     {
         line: 'tham', icon: '', title: 'Chỗ Ngủ Êm Ái',
         names: [
-            'Tấm Chăn Cuộn Xám', 'Gối Hơi Dã Ngoại Xanh', 'Thảm Picnic Kẻ Ca-rô Đỏ', 'Thảm Cuộn Cách Nhiệt Xanh',
-            'Bộ Túi Ngủ Cuộn Cam', 'Túi Ngủ Xanh Rêu Ấm Áp', 'Đệm Hơi Đơn Kèm Bơm Tay', 'Bộ Chăn Đệm Gấp Dã Ngoại',
-            'Đệm Hơi Đôi Cao Cấp', 'Giường Xếp Khung Nhôm', 'Giường Xếp Chăn Bông Ấm', 'Giường Ngủ Glamping Hoàng Gia'
+            'Gối Hơi Dã Ngoại Xanh', 'Thảm Picnic Kẻ Ca-rô Đỏ', 'Thảm Cuộn Cách Nhiệt Xanh',
+            'Bộ Túi Ngủ Cuộn Cam', 'Túi Ngủ Xanh Rêu Ấm Áp', 'Đệm Hơi Đơn Kèm Bơm Tay',
+            'Đệm Hơi Đôi Cao Cấp', 'Giường Xếp Khung Nhôm', 'Giường Xếp Chăn Bông Ấm'
         ]
     },
     {
@@ -972,6 +986,13 @@ var ITEM_CHAINS = [
         ]
     },
     {
+        line: 'hoa', icon: '', title: 'Hoa Rừng & Bình Hoa',
+        names: [
+            'Hoa Cúc Trắng Đồng Nội', 'Nhánh Hoa Oải Hương', 'Hoa Mao Lương Vàng', 'Khóm Hoa Đồng Nội',
+            'Lọ Thủy Tinh Hoa Cúc', 'Bình Thủy Tinh Oải Hương', 'Bình Hoa Mao Lương Vàng', 'Bình Hoa Thảo Nguyên Thắt Nơ'
+        ]
+    },
+    {
         line: 'congcu', icon: '', title: 'Chiếu Sáng Dã Ngoại',
         names: [
             'Bóng Đèn Treo Lều', 'Đèn Pin Cầm Tay', 'Dây Đèn LED Đom Đóm', 'Đèn Lồng Sạc Dã Ngoại',
@@ -986,10 +1007,25 @@ var ITEM_CHAINS = [
             'Pin Sạc Dự Phòng', 'Túi Y Tế Sơ Cứu', 'Đèn Khò Gas Mini', 'Quạt Tích Điện Dã Ngoại',
             'Tấm Pin Năng Lượng Mặt Trời', 'Loa Bluetooth Dã Ngoại', 'Trạm Sạc Dự Phòng Mini', 'Trạm Năng Lượng Glamping'
         ]
+    },
+    {
+        line: 'thucung', icon: '', title: 'Đồ Chơi Thú Cưng',
+        names: [
+            'Bánh Quy Xương Thưởng', 'Bóng Tennis Xanh', 'Cuộn Len Cam Mềm', 'Đĩa Bay Cầu Vồng',
+            'Chuột Vải Đuôi Thừng', 'Chày Gai Gặm Nướu', 'Đệm Nằm Dấu Chân', 'Cua Đỏ Bóp Kêu',
+            'Bạch Tuộc Nhồi Bông Tím', 'Bóng Giấu Hạt Thưởng', 'Lều Đồ Chơi Thú Cưng'
+        ]
+    },
+    {
+        line: 'cauca', icon: '', title: 'Câu Cá & Thám Hiểm',
+        names: [
+            'Hộp Giun Mồi Câu', 'Phao Câu & Lưỡi Câu', 'Xô Đựng Cá Suối', 'Cần Câu Tre Cổ Điển',
+            'Cần Câu Máy Chuyên Nghiệp', 'Bộ Đàm Liên Lạc Rừng', 'Ống Nhòm Thám Hiểm', 'Thuyền Kayak Chèo Suối'
+        ]
     }
 ];
 
-// Đồng bộ danh mục 108 vật phẩm với bộ từ điển đa ngôn ngữ
+// Đồng bộ danh mục 132 vật phẩm với bộ từ điển đa ngôn ngữ
 if (typeof I18N !== 'undefined' && typeof I18N.syncItemChainsLanguage === 'function') {
     I18N.syncItemChainsLanguage();
 }
@@ -1002,9 +1038,11 @@ function getItemDisplayName(id) {
         var lv = parts.length === 2 ? parseInt(parts[1]) || 1 : null;
         return lv ? base + ' (Lv.' + lv + ')' : base;
     }
-    if (id === 'generator_backpack') return 'Ba Lô Dã Ngoại';
+    if (id === 'generator_backpack') return 'Giỏ Picnic Dã Ngoại';
     if (id === 'generator_cooler') return 'Xe Kéo Dã Ngoại';
-    if (id === 'generator_crate') return 'Thùng Dụng Cụ';
+    if (id === 'generator_crate') return 'Ba Lô Sinh Tồn';
+    if (id === 'generator_wood') return 'Gốc Cây Thảo Mộc';
+    if (id === 'generator_animal') return 'Giỏ Đồ Chơi Thú Cưng';
     var parts = String(id).split('_lv');
     var line = parts[0], lv = parseInt(parts[1]) || 1;
     var chain = ITEM_CHAINS.find(function (c) { return c.line === line; });
@@ -1017,9 +1055,11 @@ function getItemCleanName(id) {
     if (typeof I18N !== 'undefined' && typeof I18N.getItemName === 'function') {
         return I18N.getItemName(id);
     }
-    if (id === 'generator_backpack') return 'Ba Lô Dã Ngoại';
+    if (id === 'generator_backpack') return 'Giỏ Picnic Dã Ngoại';
     if (id === 'generator_cooler') return 'Xe Kéo Dã Ngoại';
-    if (id === 'generator_crate') return 'Thùng Dụng Cụ';
+    if (id === 'generator_crate') return 'Ba Lô Sinh Tồn';
+    if (id === 'generator_wood') return 'Gốc Cây Thảo Mộc';
+    if (id === 'generator_animal') return 'Giỏ Đồ Chơi Thú Cưng';
     var parts = String(id).split('_lv');
     var line = parts[0], lv = parseInt(parts[1]) || 1;
     var chain = (typeof ITEM_CHAINS !== 'undefined') ? ITEM_CHAINS.find(function (c) { return c.line === line; }) : null;
@@ -1057,9 +1097,12 @@ function getItemImagePath(id) {
 function addCampItem(itemId, fromLevel) {
     if (!itemId) return null;
     if (!SAVE.campItems || !Array.isArray(SAVE.campItems)) SAVE.campItems = [];
-    // Chặn tuyệt đối việc thêm trùng lặp liên tiếp cùng 1 vật phẩm sát nhau
-    if (SAVE.campItems.length > 0 && SAVE.campItems[SAVE.campItems.length - 1] && SAVE.campItems[SAVE.campItems.length - 1].id === itemId) {
-        return SAVE.campItems[SAVE.campItems.length - 1];
+    // Chặn double-click trùng lặp trong vòng 1.2 giây (nhưng vẫn cho phép thu thập chiếc ghế thứ 2 ở đơn hàng sau)
+    if (SAVE.campItems.length > 0) {
+        var lastIt = SAVE.campItems[SAVE.campItems.length - 1];
+        if (lastIt && lastIt.id === itemId && Math.abs(Date.now() - (lastIt.addedAt || 0)) < 1200) {
+            return lastIt;
+        }
     }
     var parts = String(itemId).split('_lv');
     var lv = parts.length === 2 ? parseInt(parts[1]) || 1 : 1;
@@ -1096,13 +1139,19 @@ function removeCampItem(uid) {
 
 function getChainGenerator(line) {
     var genId = 'generator_backpack';
-    var fallbackName = 'Ba Lô Dã Ngoại';
+    var fallbackName = 'Giỏ Picnic Dã Ngoại';
     if (line === 'ban' || line === 'ghe' || line === 'trai') {
         genId = 'generator_cooler';
         fallbackName = 'Xe Kéo Dã Ngoại';
-    } else if (line === 'tham' || line === 'antoan' || line === 'bep') {
+    } else if (line === 'congcu' || line === 'antoan' || line === 'tham') {
         genId = 'generator_crate';
-        fallbackName = 'Thùng Dụng Cụ';
+        fallbackName = 'Ba Lô Sinh Tồn';
+    } else if (line === 'bep' || line === 'hoa') {
+        genId = 'generator_wood';
+        fallbackName = 'Gốc Cây Thảo Mộc';
+    } else if (line === 'thucung' || line === 'cauca') {
+        genId = 'generator_animal';
+        fallbackName = 'Giỏ Đồ Chơi Thú Cưng';
     }
     var resolvedName = (typeof I18N !== 'undefined' && typeof I18N.getItemName === 'function')
         ? I18N.getItemName(genId)
@@ -1117,13 +1166,42 @@ function getChainGenerator(line) {
 // Thưởng khi mở khóa lần đầu trong Cẩm Nang: trả về { coins, gems } (đọc từ GAME_CONFIG.discoveryBook)
 function getBookReward(id) {
     var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.discoveryBook) ? GAME_CONFIG.discoveryBook : null;
-    var lv = parseInt(String(id).split('_lv')[1]) || 1;
-    var mul = cfg ? cfg.coinsMultiplier : 3;
-    var gemMin = cfg ? cfg.gemUnlockMinLevel : 7;
-    var gemAmt = cfg ? cfg.gemsReward : 1;
+    var lv = parseInt(String(id).split('_lv')[1], 10) || 1;
+    var mul = (cfg && typeof cfg.coinsMultiplier === 'number') ? cfg.coinsMultiplier : 25;
+    var gemMin = (cfg && typeof cfg.gemUnlockMinLevel === 'number') ? cfg.gemUnlockMinLevel : 5;
+    var gemAmt = (cfg && typeof cfg.gemsReward === 'number') ? cfg.gemsReward : 1;
+    var gemHighMin = (cfg && typeof cfg.gemsHighMinLevel === 'number') ? cfg.gemsHighMinLevel : 8;
+    var gemHighAmt = (cfg && typeof cfg.gemsHighReward === 'number') ? cfg.gemsHighReward : 2;
+    var gemCapMin = (cfg && typeof cfg.gemsCapstoneMinLevel === 'number') ? cfg.gemsCapstoneMinLevel : 10;
+    var gemCapAmt = (cfg && typeof cfg.gemsCapstoneReward === 'number') ? cfg.gemsCapstoneReward : 3;
+
     var coins = lv * mul;
-    var gems = lv >= gemMin ? gemAmt : 0;
+    var gems = 0;
+    if (lv >= gemCapMin) gems = gemCapAmt;
+    else if (lv >= gemHighMin) gems = gemHighAmt;
+    else if (lv >= gemMin) gems = gemAmt;
     return { coins: coins, gems: gems };
+}
+
+function getChainBookReward(line) {
+    var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.discoveryBook && GAME_CONFIG.discoveryBook.chainCompletionReward)
+        ? GAME_CONFIG.discoveryBook.chainCompletionReward
+        : null;
+    return {
+        energy: (cfg && typeof cfg.energy === 'number') ? cfg.energy : 30,
+        gems: (cfg && typeof cfg.gems === 'number') ? cfg.gems : 5,
+        coins: (cfg && typeof cfg.coins === 'number') ? cfg.coins : 300
+    };
+}
+
+function isChainFullyDiscovered(line) {
+    if (!line || typeof ITEM_CHAINS === 'undefined' || !SAVE || !SAVE.discovered) return false;
+    var ch = ITEM_CHAINS.find(function (c) { return c.line === line; });
+    if (!ch || !ch.names || !ch.names.length) return false;
+    for (var lv = 1; lv <= ch.names.length; lv++) {
+        if (!SAVE.discovered[line + '_lv' + lv]) return false;
+    }
+    return true;
 }
 
 // Quét bàn cờ để ghi nhận vật phẩm mới được mở khóa (không bị nhện khóa)
@@ -1143,13 +1221,196 @@ function scanBoardForDiscoveries(board) {
 }
 
 function countDiscoveredItems() {
-    return Object.keys(SAVE.discovered).length;
+    return Object.keys(SAVE.discovered || {}).length;
 }
 
 function countUnclaimedBookRewards() {
+    if (typeof SAVE === 'undefined' || !SAVE) return 0;
+    if (!SAVE.discovered) SAVE.discovered = {};
+    if (!SAVE.claimedBook) SAVE.claimedBook = {};
+    if (!SAVE.claimedBookChains) SAVE.claimedBookChains = {};
+
     var count = 0;
     Object.keys(SAVE.discovered).forEach(function (id) {
-        if (!SAVE.claimedBook[id]) count++;
+        if (SAVE.discovered[id] && !SAVE.claimedBook[id]) count++;
     });
+
+    if (typeof ITEM_CHAINS !== 'undefined' && Array.isArray(ITEM_CHAINS)) {
+        ITEM_CHAINS.forEach(function (ch) {
+            if (isChainFullyDiscovered(ch.line) && !SAVE.claimedBookChains[ch.line]) {
+                count++;
+            }
+        });
+    }
     return count;
+}
+
+// ==========================================
+// HỆ THỐNG THƯỞNG ĐIỂM DANH MỖI NGÀY (7 NGÀY + MỐC 8/15/22/30 NGÀY)
+// ==========================================
+function getDailyPassConfig() {
+    if (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.dailyPass) return GAME_CONFIG.dailyPass;
+    return {
+        cycleDurationDays: 7,
+        sevenDayRewards: [
+            { day: 1, title: 'Ngày 1', energy: 0,   coins: 300,  gems: 0 },
+            { day: 2, title: 'Ngày 2', energy: 40,  coins: 0,    gems: 0 },
+            { day: 3, title: 'Ngày 3', energy: 0,   coins: 0,    gems: 8 },
+            { day: 4, title: 'Ngày 4', energy: 0,   coins: 600,  gems: 0 },
+            { day: 5, title: 'Ngày 5', energy: 60,  coins: 0,    gems: 0 },
+            { day: 6, title: 'Ngày 6', energy: 0,   coins: 0,    gems: 15 },
+            { day: 7, title: 'Ngày 7', energy: 100, coins: 1500, gems: 25, isGrand: true }
+        ],
+        dailyTasks: [
+            { id: 'merge_25', type: 'merge', target: 25, title: 'Ghép vật phẩm 25 lần', energy: 20, coins: 250, gems: 0 },
+            { id: 'order_3',  type: 'order', target: 3,  title: 'Hoàn thành 3 đơn hàng NPC', energy: 15, coins: 400, gems: 2 },
+            { id: 'camp_1',   type: 'camp',  target: 1,  title: 'Ghé thăm hoặc vuốt ve thú ở Trại', energy: 20, coins: 200, gems: 2 }
+        ],
+        dailyAllClearChest: { energy: 40, coins: 600, gems: 5 }
+    };
+}
+
+function ensureDailyPassState() {
+    if (typeof SAVE === 'undefined' || !SAVE) return null;
+    var cfg = getDailyPassConfig();
+    var cycleMs = (cfg.cycleDurationDays || 7) * 24 * 60 * 60 * 1000;
+    var now = Date.now();
+    var tKey = todayKey();
+    var changed = false;
+
+    if (!SAVE.dailyPass || typeof SAVE.dailyPass !== 'object') {
+        SAVE.dailyPass = {
+            cycleStartTs: now,
+            loginDaysUnlocked: 1,
+            totalLoginDays: 1,
+            lastLoginDateKey: tKey,
+            claimedDays: {},
+            claimedMilestones: {},
+            dailyDateKey: tKey,
+            progress: { merge: 0, order: 0, camp: 0 },
+            claimedTasks: {},
+            claimedDailyChest: false
+        };
+        saveGame();
+        return SAVE.dailyPass;
+    }
+
+    var dp = SAVE.dailyPass;
+    if (typeof dp.cycleStartTs !== 'number' || dp.cycleStartTs <= 0) {
+        dp.cycleStartTs = now;
+        changed = true;
+    }
+    if (!dp.claimedDays || typeof dp.claimedDays !== 'object') {
+        dp.claimedDays = {};
+        changed = true;
+    }
+    if (!dp.claimedMilestones || typeof dp.claimedMilestones !== 'object') {
+        dp.claimedMilestones = {};
+        changed = true;
+    }
+    if (typeof dp.totalLoginDays !== 'number' || dp.totalLoginDays < 1) {
+        dp.totalLoginDays = Math.max(1, dp.loginDaysUnlocked || 1);
+        changed = true;
+    }
+    if (!dp.progress || typeof dp.progress !== 'object') {
+        dp.progress = { merge: 0, order: 0, camp: 0 };
+        changed = true;
+    }
+    if (!dp.claimedTasks || typeof dp.claimedTasks !== 'object') {
+        dp.claimedTasks = {};
+        changed = true;
+    }
+
+    // Sang ngày mới: tăng tổng ngày tích lũy (mốc 8-15-22-30) và mở tiếp ô trong chu kỳ 7 ngày
+    if (dp.lastLoginDateKey !== tKey) {
+        dp.lastLoginDateKey = tKey;
+
+        var milestones = cfg.milestoneRewards || [];
+        var allMilestonesClaimed = milestones.length > 0 && milestones.every(function (m) {
+            return !!dp.claimedMilestones[m.days];
+        });
+        if (dp.totalLoginDays >= 30 && allMilestonesClaimed) {
+            dp.totalLoginDays = 1;
+            dp.claimedMilestones = {};
+        } else {
+            dp.totalLoginDays = (dp.totalLoginDays || 1) + 1;
+        }
+
+        var all7Claimed = [1, 2, 3, 4, 5, 6, 7].every(function (d) { return !!dp.claimedDays[d]; });
+        if ((now - dp.cycleStartTs >= cycleMs) || all7Claimed) {
+            dp.cycleStartTs = now;
+            dp.loginDaysUnlocked = 1;
+            dp.claimedDays = {};
+        } else {
+            dp.loginDaysUnlocked = Math.min(7, (dp.loginDaysUnlocked || 1) + 1);
+        }
+        changed = true;
+    }
+
+    if (dp.dailyDateKey !== tKey) {
+        dp.dailyDateKey = tKey;
+        dp.progress = { merge: 0, order: 0, camp: 0 };
+        dp.claimedTasks = {};
+        dp.claimedDailyChest = false;
+        changed = true;
+    }
+
+    if (changed) saveGame();
+    return dp;
+}
+
+function recordDailyTaskProgress(type, amount) {
+    var dp = ensureDailyPassState();
+    if (!dp || !type) return;
+    var add = (typeof amount === 'number' && amount > 0) ? amount : 1;
+    dp.progress[type] = (dp.progress[type] || 0) + add;
+    saveGame();
+    if (typeof window !== 'undefined' && typeof window.updateDailyPassUI === 'function') {
+        window.updateDailyPassUI();
+    }
+}
+
+function countUnclaimedDailyPassRewards() {
+    var dp = ensureDailyPassState();
+    if (!dp) return 0;
+    var cfg = getDailyPassConfig();
+    var count = 0;
+
+    var unlockedDays = dp.loginDaysUnlocked || 1;
+    for (var d = 1; d <= unlockedDays; d++) {
+        if (!dp.claimedDays[d]) count++;
+    }
+
+    var tasks = cfg.dailyTasks || [];
+    var allTasksDone = tasks.length > 0;
+    tasks.forEach(function (t) {
+        var cur = dp.progress[t.type] || 0;
+        if (cur >= t.target) {
+            if (!dp.claimedTasks[t.id]) count++;
+        } else {
+            allTasksDone = false;
+        }
+    });
+
+    if (allTasksDone && !dp.claimedDailyChest) {
+        count++;
+    }
+
+    return count;
+}
+
+function formatDailyPassRemainingTime() {
+    var dp = ensureDailyPassState();
+    var cfg = getDailyPassConfig();
+    var cycleMs = (cfg.cycleDurationDays || 7) * 24 * 60 * 60 * 1000;
+    var startTs = (dp && dp.cycleStartTs) ? dp.cycleStartTs : Date.now();
+    var remMs = Math.max(0, (startTs + cycleMs) - Date.now());
+    var totalHours = Math.floor(remMs / (60 * 60 * 1000));
+    var days = Math.floor(totalHours / 24);
+    var hours = totalHours % 24;
+    if (days > 0) {
+        return days + 'd' + hours + 'h';
+    }
+    var mins = Math.max(1, Math.floor((remMs % (60 * 60 * 1000)) / 60000));
+    return hours + 'h' + mins + 'p';
 }

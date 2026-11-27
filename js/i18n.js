@@ -28,34 +28,48 @@ var I18N_DATA = {
     },
 
     // -------------------------------------------------------------------------
-    // MỤC 2: TÊN 9 DÒNG SẢN PHẨM & 108 VẬT PHẨM (HANDBOOK & BOARD ITEMS)
+    // MỤC 2: TÊN 13 DÒNG SẢN PHẨM & 140 VẬT PHẨM (HANDBOOK & BOARD ITEMS)
     // -------------------------------------------------------------------------
     lines: {
         an: { vi: 'Ẩm Thực Dã Ngoại', en: 'Camp Cuisine' },
+        qua: { vi: 'Trái Cây Tươi Mát', en: 'Fresh Fruits' },
         ban: { vi: 'Bàn Dã Ngoại', en: 'Camp Tables' },
         cafe: { vi: 'Cà Phê & Đồ Uống', en: 'Coffee & Drinks' },
         trai: { vi: 'Lều Trại Trú Ngụ', en: 'Shelter & Tents' },
         tham: { vi: 'Chỗ Ngủ Êm Ái', en: 'Cozy Sleep' },
         ghe: { vi: 'Ghế Nghỉ Ngơi', en: 'Camp Chairs' },
         bep: { vi: 'Lửa & Bếp Trại', en: 'Campfire & Cooking' },
+        hoa: { vi: 'Hoa Rừng & Bình Hoa', en: 'Wildflowers & Vases' },
         congcu: { vi: 'Chiếu Sáng Dã Ngoại', en: 'Camp Lighting' },
-        antoan: { vi: 'An Toàn & Năng Lượng', en: 'Safety & Power Gear' }
+        antoan: { vi: 'An Toàn & Năng Lượng', en: 'Safety & Power Gear' },
+        thucung: { vi: 'Đồ Chơi Thú Cưng', en: 'Pet Toys & Gear' },
+        cauca: { vi: 'Câu Cá & Thám Hiểm', en: 'Fishing & Adventure' }
     },
 
     items: {
-        // Dòng 1: Ẩm thực (an)
-        an_lv1: { vi: 'Quả Táo Đỏ', en: 'Red Apple' },
-        an_lv2: { vi: 'Giỏ Trái Cây Tươi', en: 'Fresh Fruit Basket' },
-        an_lv3: { vi: 'Bánh Sandwich Kẹp', en: 'Club Sandwich' },
-        an_lv4: { vi: 'Đùi Gà Nướng', en: 'Roasted Chicken Drumstick' },
-        an_lv5: { vi: 'Bánh Pizza Dã Ngoại', en: 'Camp Pizza' },
-        an_lv6: { vi: 'Nồi Lẩu Thập Cẩm Nóng', en: 'Hot Camping Stew Pot' },
-        an_lv7: { vi: 'Khay Sushi Cá Hồi', en: 'Salmon Sushi Platter' },
-        an_lv8: { vi: 'Sườn Nướng BBQ Sốt Đậm', en: 'Glazed BBQ Pork Ribs' },
-        an_lv9: { vi: 'Đĩa Hải Sản Hấp Tôm Ngao', en: 'Steamed Seafood Platter' },
-        an_lv10: { vi: 'Đùi Heo Xông Khói', en: 'Smoked Ham Hock' },
-        an_lv11: { vi: 'Thịt Bò Wagyu Thượng Hạng', en: 'Premium Wagyu Steak' },
-        an_lv12: { vi: 'Cua Hoàng Đế Thượng Hạng', en: 'Royal Steamed King Crab' },
+        // Dòng 1: Ẩm thực (an_lv1 -> an_lv11)
+        an_lv1: { vi: 'Bánh Mì Bơ Tỏi', en: 'Garlic Bread' },
+        an_lv2: { vi: 'Bánh Mì Kẹp Xúc Xích', en: 'Hotdog Sub Sandwich' },
+        an_lv3: { vi: 'Bánh Sandwich Phô Mai', en: 'Cheese Club Sandwich' },
+        an_lv4: { vi: 'Cơm Nắm Rong Biển', en: 'Seaweed Onigiri' },
+        an_lv5: { vi: 'Cơm Cuộn Kimbap', en: 'Kimbap Rice Rolls' },
+        an_lv6: { vi: 'Pizza Xúc Xích Phô Mai', en: 'Pepperoni Camp Pizza' },
+        an_lv7: { vi: 'Pizza Hải Sản Tôm', en: 'Seafood Shrimp Pizza' },
+        an_lv8: { vi: 'Xiên Cá Viên Nướng', en: 'Grilled Fishball Skewer' },
+        an_lv9: { vi: 'Xiên Tôm Nướng Sa Tế', en: 'Grilled Shrimp Skewer' },
+        an_lv10: { vi: 'Mực Nướng Nguyên Con', en: 'Grilled Whole Squid' },
+        an_lv11: { vi: 'Đùi Heo Nướng BBQ', en: 'Roasted BBQ Ham Leg' },
+
+        // Dòng 2: Trái cây tươi mát (qua_lv1 -> qua_lv9)
+        qua_lv1: { vi: 'Quả Táo Đỏ Tươi', en: 'Fresh Red Apple' },
+        qua_lv2: { vi: 'Cam Vàng Mọng Nước', en: 'Juicy Orange' },
+        qua_lv3: { vi: 'Đào Hồng Thơm Ngọt', en: 'Sweet Pink Peach' },
+        qua_lv4: { vi: 'Lê Vàng Giòn Ngọt', en: 'Crisp Yellow Pear' },
+        qua_lv5: { vi: 'Nải Chuối Chín Vàng', en: 'Ripe Banana Bunch' },
+        qua_lv6: { vi: 'Dứa Vàng Thắt Nơ', en: 'Ribbon Pineapple' },
+        qua_lv7: { vi: 'Rổ Dâu Tây Đỏ', en: 'Strawberry Basket' },
+        qua_lv8: { vi: 'Đĩa Việt Quất Rừng', en: 'Wild Blueberry Plate' },
+        qua_lv9: { vi: 'Giỏ Trái Cây Dã Ngoại', en: 'Picnic Fruit Basket' },
 
         // Dòng 2: Bàn (ban)
         ban_lv1: { vi: 'Bàn Nhôm Vuông Mini', en: 'Mini Aluminum Table' },
@@ -99,19 +113,16 @@ var I18N_DATA = {
         trai_lv11: { vi: 'Lều Mái Vòm Sàn Gỗ Đèn LED', en: 'Lit Cabin Glamping Tent' },
         trai_lv12: { vi: 'Biệt Thự Lều Safari Hoàng Gia', en: 'Royal Safari Lodge Villa' },
 
-        // Dòng 5: Chỗ ngủ (tham)
-        tham_lv1: { vi: 'Tấm Chăn Cuộn Xám', en: 'Rolled Grey Camp Blanket' },
-        tham_lv2: { vi: 'Gối Hơi Dã Ngoại Xanh', en: 'Blue Inflatable Pillow' },
-        tham_lv3: { vi: 'Thảm Picnic Kẻ Ca-rô Đỏ', en: 'Red Gingham Picnic Mat' },
-        tham_lv4: { vi: 'Thảm Cuộn Cách Nhiệt Xanh', en: 'Rolled Olive Foam Mat' },
-        tham_lv5: { vi: 'Bộ Túi Ngủ Cuộn Cam', en: 'Rolled Orange Sleeping Gear' },
-        tham_lv6: { vi: 'Túi Ngủ Xanh Rêu Ấm Áp', en: 'Olive Mummy Sleeping Bag' },
-        tham_lv7: { vi: 'Đệm Hơi Đơn Kèm Bơm Tay', en: 'Air Mattress & Hand Pump' },
-        tham_lv8: { vi: 'Bộ Chăn Đệm Gấp Dã Ngoại', en: 'Folded Camp Quilt & Pillow' },
-        tham_lv9: { vi: 'Đệm Hơi Đôi Cao Cấp', en: 'Double Inflatable Air Bed' },
-        tham_lv10: { vi: 'Giường Xếp Khung Nhôm', en: 'Aluminum Folding Camp Cot' },
-        tham_lv11: { vi: 'Giường Xếp Chăn Bông Ấm', en: 'Quilted Glamping Camp Cot' },
-        tham_lv12: { vi: 'Giường Ngủ Glamping Hoàng Gia', en: 'Royal Boho Glamping Bed' },
+        // Dòng 5: Chỗ ngủ (tham_lv1 -> tham_lv9)
+        tham_lv1: { vi: 'Gối Hơi Dã Ngoại Xanh', en: 'Blue Inflatable Pillow' },
+        tham_lv2: { vi: 'Thảm Picnic Kẻ Ca-rô Đỏ', en: 'Red Gingham Picnic Mat' },
+        tham_lv3: { vi: 'Thảm Cuộn Cách Nhiệt Xanh', en: 'Rolled Olive Foam Mat' },
+        tham_lv4: { vi: 'Bộ Túi Ngủ Cuộn Cam', en: 'Rolled Orange Sleeping Gear' },
+        tham_lv5: { vi: 'Túi Ngủ Xanh Rêu Ấm Áp', en: 'Olive Mummy Sleeping Bag' },
+        tham_lv6: { vi: 'Đệm Hơi Đơn Kèm Bơm Tay', en: 'Air Mattress & Hand Pump' },
+        tham_lv7: { vi: 'Đệm Hơi Đôi Cao Cấp', en: 'Double Inflatable Air Bed' },
+        tham_lv8: { vi: 'Giường Xếp Khung Nhôm', en: 'Aluminum Folding Camp Cot' },
+        tham_lv9: { vi: 'Giường Xếp Chăn Bông Ấm', en: 'Quilted Glamping Camp Cot' },
 
         // Dòng 6: Ghế (ghe)
         ghe_lv1: { vi: 'Ghế Đôn Xếp Cầu Vồng', en: 'Telescoping Folding Stool' },
@@ -167,16 +178,51 @@ var I18N_DATA = {
         antoan_lv9: { vi: 'Tấm Pin Năng Lượng Mặt Trời', en: 'Solar Charging Panel' },
         antoan_lv10: { vi: 'Loa Bluetooth Dã Ngoại', en: 'Outdoor Bluetooth Speaker' },
         antoan_lv11: { vi: 'Trạm Sạc Dự Phòng Mini', en: 'Compact Power Station' },
-        antoan_lv12: { vi: 'Trạm Năng Lượng Glamping', en: 'Glamping Power Station' }
+        antoan_lv12: { vi: 'Trạm Năng Lượng Glamping', en: 'Glamping Power Station' },
+
+        // Dòng 10: Hoa rừng & Bình hoa (hoa_lv1 -> hoa_lv8)
+        hoa_lv1: { vi: 'Hoa Cúc Trắng Đồng Nội', en: 'White Meadow Daisy' },
+        hoa_lv2: { vi: 'Nhánh Hoa Oải Hương', en: 'Lavender Sprig' },
+        hoa_lv3: { vi: 'Hoa Mao Lương Vàng', en: 'Golden Buttercup' },
+        hoa_lv4: { vi: 'Khóm Hoa Đồng Nội', en: 'Wildflower Bunch' },
+        hoa_lv5: { vi: 'Lọ Thủy Tinh Hoa Cúc', en: 'Daisy Glass Jar' },
+        hoa_lv6: { vi: 'Bình Thủy Tinh Oải Hương', en: 'Lavender Glass Vase' },
+        hoa_lv7: { vi: 'Bình Hoa Mao Lương Vàng', en: 'Buttercup Glass Vase' },
+        hoa_lv8: { vi: 'Bình Hoa Thảo Nguyên Thắt Nơ', en: 'Ribbon Meadow Bouquet Vase' },
+
+        // Dòng 11: Đồ chơi thú cưng (thucung_lv1 -> thucung_lv11)
+        thucung_lv1: { vi: 'Bánh Quy Xương Thưởng', en: 'Crunchy Bone Biscuit' },
+        thucung_lv2: { vi: 'Bóng Tennis Xanh', en: 'Green Tennis Ball' },
+        thucung_lv3: { vi: 'Cuộn Len Cam Mềm', en: 'Orange Yarn Ball' },
+        thucung_lv4: { vi: 'Đĩa Bay Cầu Vồng', en: 'Rainbow Frisbee' },
+        thucung_lv5: { vi: 'Chuột Vải Đuôi Thừng', en: 'Plush Rope-Tail Mouse' },
+        thucung_lv6: { vi: 'Chày Gai Gặm Nướu', en: 'Spiky Chew Dumbbell' },
+        thucung_lv7: { vi: 'Đệm Nằm Dấu Chân', en: 'Paw Print Pet Bed' },
+        thucung_lv8: { vi: 'Cua Đỏ Bóp Kêu', en: 'Squeaky Red Crab' },
+        thucung_lv9: { vi: 'Bạch Tuộc Nhồi Bông Tím', en: 'Plush Purple Octopus' },
+        thucung_lv10: { vi: 'Bóng Giấu Hạt Thưởng', en: 'Treat Dispenser Ball' },
+        thucung_lv11: { vi: 'Lều Đồ Chơi Thú Cưng', en: 'Pet Toy Teepee Tent' },
+
+        // Dòng 12: Câu cá & Thám hiểm (cauca_lv1 -> cauca_lv8)
+        cauca_lv1: { vi: 'Hộp Giun Mồi Câu', en: 'Earthworm Bait Can' },
+        cauca_lv2: { vi: 'Phao Câu & Lưỡi Câu', en: 'Bobber & Fishing Hook' },
+        cauca_lv3: { vi: 'Xô Đựng Cá Suối', en: 'River Fish Bucket' },
+        cauca_lv4: { vi: 'Cần Câu Tre Cổ Điển', en: 'Bamboo Fishing Rod' },
+        cauca_lv5: { vi: 'Cần Câu Máy Chuyên Nghiệp', en: 'Pro Spinning Fishing Rod' },
+        cauca_lv6: { vi: 'Bộ Đàm Liên Lạc Rừng', en: 'Camp Walkie-Talkie' },
+        cauca_lv7: { vi: 'Ống Nhòm Thám Hiểm', en: 'Forest Binoculars' },
+        cauca_lv8: { vi: 'Thuyền Kayak Chèo Suối', en: 'River Kayak & Paddle' }
     },
 
     // -------------------------------------------------------------------------
-    // MỤC 3: THÙNG CHỨA NGUỒN PHÁT (GENERATORS)
+    // MỤC 3: THÙNG CHỨA NGUỒN PHÁT (5 GENERATORS)
     // -------------------------------------------------------------------------
     generators: {
         generator_cooler: { vi: 'Xe Kéo Dã Ngoại', en: 'Camping Wagon' },
-        generator_backpack: { vi: 'Ba Lô Dã Ngoại', en: 'Camping Backpack' },
-        generator_crate: { vi: 'Thùng Dụng Cụ', en: 'Tool Crate' }
+        generator_backpack: { vi: 'Giỏ Picnic Dã Ngoại', en: 'Picnic Basket' },
+        generator_crate: { vi: 'Ba Lô Sinh Tồn', en: 'Survival Pack' },
+        generator_wood: { vi: 'Gốc Cây Thảo Mộc', en: 'Forest Stump' },
+        generator_animal: { vi: 'Giỏ Đồ Chơi Thú Cưng', en: 'Pet Toy Basket' }
     },
 
     // -------------------------------------------------------------------------

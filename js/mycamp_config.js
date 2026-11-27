@@ -160,11 +160,96 @@ var MYCAMP_CONFIG = {
     },
 
     // -------------------------------------------------------------------------
-    // IV. CẤU HÌNH THÚ CƯNG TRÊN BÃI CỎ (THEO CON VẬT NGƯỜI CHƠI CHỌN MUA)
+    // IV. CẤU HÌNH KÍCH THƯỚC & VỊ TRÍ TỪNG NPC TRÊN BÀN CHƠI VÀ TRONG TRẠI CỦA TÔI
     // -------------------------------------------------------------------------
-    // Khu trại tự động hiển thị thú cưng theo con vật người chơi đang chọn (SAVE.activePet).
-    // NẾU CON VẬT NÀO CHƯA CÓ CHUYỂN ĐỘNG THÌ KHU TRẠI SẼ TỰ ĐỘNG ĐỂ TRỐNG BÃI CỎ!
-    // Bạn có thể chủ động sửa tọa độ (left, top), độ rộng, thời gian, frame cho từng con dưới đây:
+    // 1. TRÊN BÀN CHƠI CHÍNH (boardNpcDisplay):
+    //    Bạn có thể tự do chỉnh chiều cao (height), chiều rộng (width: 'auto' hoặc số px),
+    //    độ lệch dọc (bottom), độ lệch ngang (offsetX), và kích thước/vị trí hòn đảo (islandWidth, islandBottom, islandOffsetX)
+    //    của từng chú chó / chú mèo khi đứng cạnh khay nhiệm vụ trên bàn chơi:
+    boardNpcDisplay: {
+        showIsland: false,      // Ẩn hòn đảo cỏ cũ vì NPC nay đứng bán thân (half-body) ngay phía sau mép trên khay đơn hàng chuẩn Merge
+        defaultIsland: {
+            width: 56,
+            bottom: -16,
+            offsetX: 2
+        },
+
+        // Kích thước & vị trí từng NPC đứng sau khay đơn hàng (chỉnh trực tiếp tại đây):
+        // - height: Độ to/cao tổng thể của nhân vật (px)
+        // - bottom: Độ cao nhô lên trên khay (tăng lên như -18, -10, 0 để đẩy NPC cao lên; giảm xuống -35, -42 để hạ thấp xuống)
+        // - offsetX: Dịch sang phải (+) hoặc sang trái (-) tính bằng px
+        'character01': {        // 1. Chó Golden
+            name: 'Golden',
+            bustHeight: 74,
+            height: 114,
+            width: 'auto',
+            bottom: -40,
+            offsetX: 2,
+            initialRestSec: 0,
+            loopRestSec: 8
+        },
+        'character04': {        // 2. Chó Poodle
+            name: 'Poodle',
+            bustHeight: 70,
+            height: 108,
+            width: 'auto',
+            bottom: -36,
+            offsetX: 2,
+            initialRestSec: 1,
+            loopRestSec: 8
+        },
+        'character03': {        // 3. Chó Bulldog
+            name: 'Bulldog',
+            bustHeight: 68,
+            height: 104,
+            width: 'auto',
+            bottom: -34,
+            offsetX: 2,
+            initialRestSec: 2,
+            loopRestSec: 8
+        },
+        'character10': {        // 4. Mèo Ba Tư (chân ngắn nên nâng bottom lên -18 để lộ rõ tay & thân trên)
+            name: 'Mèo Ba Tư',
+            bustHeight: 70,
+            height: 102,
+            width: 'auto',
+            bottom: -18,
+            offsetX: 2,
+            initialRestSec: 3,
+            loopRestSec: 8
+        },
+        'character07': {        // 5. Mèo Anh
+            name: 'Mèo Anh',
+            bustHeight: 68,
+            height: 98,
+            width: 'auto',
+            bottom: -20,
+            offsetX: 2,
+            initialRestSec: 4,
+            loopRestSec: 8
+        },
+        'character06': {        // 6. Mèo Xiêm
+            name: 'Mèo Xiêm',
+            bustHeight: 72,
+            height: 110,
+            width: 'auto',
+            bottom: -36,
+            offsetX: 2,
+            initialRestSec: 5,
+            loopRestSec: 8
+        }
+    },
+
+    // 2. VỊ TRÍ RƯƠNG SAO NHẬN QUÀ TRÊN MÀN CHƠI CHÍNH (starChestPosition):
+    //    Đẩy cao lên gần nút Setting để không bị vướng các NPC đứng ở hàng nhiệm vụ bên dưới
+    starChestPosition: {
+        top: 64,                // Khoảng cách từ mép trên màn hình xuống (px) -> nằm ngay dưới nút Setting
+        right: 12               // Khoảng cách từ mép phải màn hình vào (px)
+    },
+
+    // 3. TRONG MÀN HÌNH "TRẠI CỦA TÔI" (pets):
+    //    Khu trại tự động hiển thị thú cưng theo con vật người chơi đang chọn (SAVE.activePet).
+    //    Bạn có thể chủ động sửa tọa độ (left, top), kích thước khung (width, height) và độ rộng nhân vật (state1Width, state2Width, state3Width) cho từng chú chó / chú mèo dưới đây:
     pets: {
         // 1. CHÚ CHÓ GOLDEN (character01) - Mặc định sở hữu
         'character01': {

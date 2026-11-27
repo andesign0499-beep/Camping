@@ -42,14 +42,18 @@
             }
 
             // Đảm bảo máy phát tương ứng có mặt trên bàn
-            if (lv >= 4 && !boardData.some(function (c) { return c && c.id === 'generator_backpack'; })) {
-                var empties = (typeof getEmptyIndexes === 'function') ? getEmptyIndexes(boardData) : [];
-                if (empties.length) boardData[empties[0]] = { id: 'generator_backpack', isRock: false, isLocked: false };
-            }
-            if (lv >= 7 && !boardData.some(function (c) { return c && c.id === 'generator_crate'; })) {
-                var empties2 = (typeof getEmptyIndexes === 'function') ? getEmptyIndexes(boardData) : [];
-                if (empties2.length) boardData[empties2[0]] = { id: 'generator_crate', isRock: false, isLocked: false };
-            }
+            var genMilestones = [
+                { lv: 4, id: 'generator_backpack' },
+                { lv: 7, id: 'generator_crate' },
+                { lv: 10, id: 'generator_wood' },
+                { lv: 13, id: 'generator_animal' }
+            ];
+            genMilestones.forEach(function (gm) {
+                if (lv >= gm.lv && !boardData.some(function (c) { return c && c.id === gm.id; })) {
+                    var emps = (typeof getEmptyIndexes === 'function') ? getEmptyIndexes(boardData) : [];
+                    if (emps.length) boardData[emps[0]] = { id: gm.id, isRock: false, isLocked: false };
+                }
+            });
         }
 
         // Tái tạo đơn hàng chuẩn cho cấp độ đích
@@ -366,7 +370,7 @@
             var ok = placePendingGeneratorOnBoard(nextGen, -1);
             if (ok) {
                 autoBotStats.generatorsPlaced++;
-                var gName = (nextGen === 'generator_backpack') ? 'Ba Lô Dã Ngoại' : 'Thùng Bếp & Sinh Tồn';
+                var gName = (typeof getItemCleanName === 'function') ? getItemCleanName(nextGen) : nextGen;
                 if (typeof showToast === 'function') {
                     showToast('🤖 Bot đã tự động lôi ' + gName + ' vào bàn cờ!', '#2e7d32');
                 }
