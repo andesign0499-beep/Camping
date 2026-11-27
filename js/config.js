@@ -663,7 +663,8 @@ var GAME_CONFIG = {
         // Tỷ lệ rơi vật phẩm từ 3 nguồn phát (Thùng chứa / Xe kéo / Ba lô)
         // Tăng tỷ lệ rơi thẳng Lv.2 và Lv.3 ngay từ đầu game để giảm 55% số lượng đồ Lv.1 gây chật bàn cờ!
         generatorDrops: {
-            // Chia đều tuyệt đối tỷ lệ sinh đồ giữa 3 nhánh vật phẩm trong mỗi thùng chứa (1/3 : 1/3 : 1/3 = 33.33% mỗi món)
+            // Ưu tiên sinh đúng các nhánh đang cần trên thanh nhiệm vụ (1 nhánh: 100%; >=2 nhánh: chia đều 50/50 hoặc 33/33/33; 0 nhánh cần: chia đều toàn bộ nhánh máy phát)
+            prioritizeQuestBranches: true,
             equalBranchDistribution: true,
             // Ưu tiên chọn món trong túi cân bằng khớp với món lẻ đang nằm chờ ghép trên bàn cờ khi bàn sắp đầy
             smartPairAssist: true,
@@ -824,6 +825,26 @@ var GAME_CONFIG = {
         dailyGift: { amount: 5, doubleAmount: 10 },
         mysteryChest: { minGems: 12, maxGems: 25, dailyLimit: 3 },
         luckyDrop: { energy: 40, coin: 2500, gem: 4, dailyLimit: 3 }
+    },
+
+    // -------------------------------------------------------------------------
+    // 10B. KHO LƯU TRỮ TẠM MỞ RỘNG (4 -> 12 Ô) & CỨU TRỢ NĂNG LƯỢNG
+    // Ô 1..4: Miễn phí | Ô 5..6: Vàng | Ô 7..8: Xem Ads tích lũy | Ô 9..12: Kim Cương
+    // -------------------------------------------------------------------------
+    storage: {
+        defaultCap: 4,
+        maxCap: 12,
+        allowStashSecondaryGenerators: true,
+        slotUnlocks: {
+            5:  { type: 'coin', cost: 3000 },
+            6:  { type: 'coin', cost: 6000 },
+            7:  { type: 'ad',   adsRequired: 2 },
+            8:  { type: 'ad',   adsRequired: 3 },
+            9:  { type: 'gem',  cost: 15 },
+            10: { type: 'gem',  cost: 25 },
+            11: { type: 'gem',  cost: 35 },
+            12: { type: 'gem',  cost: 50 }
+        }
     },
 
     // -------------------------------------------------------------------------

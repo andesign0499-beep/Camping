@@ -1447,16 +1447,18 @@ body {
 .cell.bg-rock-lock.bg-rock-lock-5, .cell.bg-rock-lock-5 { background-image: url('../assets/images_webp/board/board_cell_rock_lock_co5.webp'); }
 .cell.bg-rock-lock.bg-rock-lock-6, .cell.bg-rock-lock-6 { background-image: url('../assets/images_webp/board/board_cell_rock_lock_co6.webp'); }
 
-/* 9 màu nền tương ứng 9 nhóm vật phẩm giúp người chơi dễ nhận diện họ hàng (Bàn cờ, Nhiệm vụ, Cẩm nang) */
-.cell.cell-bg-01, .order-card.cell-bg-01, .book-slot.cell-bg-01, .tray-item-slot.cell-bg-01 { background-image: url('../assets/images_webp/board/board_cell_01.webp'); }
-.cell.cell-bg-02, .order-card.cell-bg-02, .book-slot.cell-bg-02, .tray-item-slot.cell-bg-02 { background-image: url('../assets/images_webp/board/board_cell_02.webp'); }
-.cell.cell-bg-03, .order-card.cell-bg-03, .book-slot.cell-bg-03, .tray-item-slot.cell-bg-03 { background-image: url('../assets/images_webp/board/board_cell_03.webp'); }
-.cell.cell-bg-04, .order-card.cell-bg-04, .book-slot.cell-bg-04, .tray-item-slot.cell-bg-04 { background-image: url('../assets/images_webp/board/board_cell_04.webp'); }
-.cell.cell-bg-05, .order-card.cell-bg-05, .book-slot.cell-bg-05, .tray-item-slot.cell-bg-05 { background-image: url('../assets/images_webp/board/board_cell_05.webp'); }
-.cell.cell-bg-06, .order-card.cell-bg-06, .book-slot.cell-bg-06, .tray-item-slot.cell-bg-06 { background-image: url('../assets/images_webp/board/board_cell_06.webp'); }
-.cell.cell-bg-07, .order-card.cell-bg-07, .book-slot.cell-bg-07, .tray-item-slot.cell-bg-07 { background-image: url('../assets/images_webp/board/board_cell_07.webp'); }
-.cell.cell-bg-08, .order-card.cell-bg-08, .book-slot.cell-bg-08, .tray-item-slot.cell-bg-08 { background-image: url('../assets/images_webp/board/board_cell_08.webp'); }
-.cell.cell-bg-09, .order-card.cell-bg-09, .book-slot.cell-bg-09, .tray-item-slot.cell-bg-09 { background-image: url('../assets/images_webp/board/board_cell_09.webp'); }
+/* Nền ô tiêu chuẩn đồng bộ (loại bỏ 404 tới board_cell_01..09 cũ không còn dùng) */
+.cell.cell-bg-01, .order-card.cell-bg-01, .book-slot.cell-bg-01, .tray-item-slot.cell-bg-01, .ici-chain-slot.cell-bg-01,
+.cell.cell-bg-02, .order-card.cell-bg-02, .book-slot.cell-bg-02, .tray-item-slot.cell-bg-02, .ici-chain-slot.cell-bg-02,
+.cell.cell-bg-03, .order-card.cell-bg-03, .book-slot.cell-bg-03, .tray-item-slot.cell-bg-03, .ici-chain-slot.cell-bg-03,
+.cell.cell-bg-04, .order-card.cell-bg-04, .book-slot.cell-bg-04, .tray-item-slot.cell-bg-04, .ici-chain-slot.cell-bg-04,
+.cell.cell-bg-05, .order-card.cell-bg-05, .book-slot.cell-bg-05, .tray-item-slot.cell-bg-05, .ici-chain-slot.cell-bg-05,
+.cell.cell-bg-06, .order-card.cell-bg-06, .book-slot.cell-bg-06, .tray-item-slot.cell-bg-06, .ici-chain-slot.cell-bg-06,
+.cell.cell-bg-07, .order-card.cell-bg-07, .book-slot.cell-bg-07, .tray-item-slot.cell-bg-07, .ici-chain-slot.cell-bg-07,
+.cell.cell-bg-08, .order-card.cell-bg-08, .book-slot.cell-bg-08, .tray-item-slot.cell-bg-08, .ici-chain-slot.cell-bg-08,
+.cell.cell-bg-09, .order-card.cell-bg-09, .book-slot.cell-bg-09, .tray-item-slot.cell-bg-09, .ici-chain-slot.cell-bg-09 {
+    background-image: url('../assets/images_webp/board/board_cell_empty.webp');
+}
 
 /* Nền riêng cho các thùng chứa (máy sinh đồ) theo 3 màu dòng sản phẩm nó sinh ra */
 .cell.bg-generator_backpack { background-image: url('../assets/images_webp/board/generator_backpack_bg.webp'); }
@@ -9789,6 +9791,1380 @@ button.hint-pulse {
     padding: 0 4px;
     line-height: 1.2;
 }
+
+/* =============================================================================
+   8. HỆ THỐNG ĐỒNG BỘ GIAO DIỆN KEM – GỖ ẤM (#f9efdf / #f3e6d3 / #b58451)
+      ÁP DỤNG CHO TOÀN BỘ 8 POPUP CÒN LẠI (KHO ĐỒ, TRẠM NĂNG LƯỢNG / KIM CƯƠNG / VÀNG,
+      BONG BÓNG, CẨM NANG, THÔNG TIN [i], CỬA HÀNG TRẠI, ĐỒ CẮM TRẠI & CÀI ĐẶT)
+   ============================================================================= */
+.modal-box.kem-wood-modal {
+    position: relative;
+    max-width: 392px;
+    max-height: 89dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-box.kem-wood-modal.book-box,
+.modal-box.kem-wood-modal.camp-box,
+.modal-box.kem-wood-modal.settings-popup-box {
+    height: min(718px, 88dvh) !important;
+}
+
+.modal-box.kem-wood-modal.shop-box,
+.modal-box.kem-wood-modal.storage-modal-box,
+.modal-box.kem-wood-modal.bubble-modal-box,
+.modal-box.kem-wood-modal.item-info-popup-box,
+.modal-box.kem-wood-modal.lucky-box {
+    height: auto !important;
+    max-height: min(710px, 88dvh) !important;
+}
+
+.modal-box.kem-wood-modal .modal-content-wrap {
+    padding: calc(var(--modal-w) * 74 / 800 + 8px) 13px calc(var(--modal-w) * 62 / 800 + 4px) 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+}
+
+.kw-modal-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.kw-summary-banner {
+    background: #f9efdf;
+    border: 1.5px solid #dcc09b;
+    border-radius: 15px;
+    padding: 9px 12px;
+    box-shadow: 0 2px 6px rgba(72, 42, 14, 0.08);
+    color: #3e2211;
+    flex-shrink: 0;
+}
+
+.kw-card-panel {
+    background: #f9efdf;
+    border: 1.5px solid #dcc09b;
+    border-radius: 16px;
+    padding: 11px 10px;
+    box-shadow: 0 2px 6px rgba(72, 42, 14, 0.08);
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.kw-scroll-area {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 3px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin !important;
+    scrollbar-color: #cda97e rgba(226, 204, 174, 0.35) !important;
+}
+
+.kw-scroll-area::-webkit-scrollbar {
+    display: block !important;
+    width: 5px !important;
+}
+
+.kw-scroll-area::-webkit-scrollbar-track {
+    background: rgba(226, 204, 174, 0.35);
+    border-radius: 999px;
+}
+
+.kw-scroll-area::-webkit-scrollbar-thumb {
+    background: #cda97e;
+    border-radius: 999px;
+}
+
+/* Hàng nút đáy khi có 2 nút cạnh nhau (Cất vào kho + Đóng, Đóng + Xóa dữ liệu...) */
+.dp-bottom-btn-row.is-dual-btns {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+}
+
+.dp-bottom-btn-row.is-dual-btns > .modal-btn {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 118px !important;
+    max-width: 156px !important;
+    height: 44px !important;
+}
+
+/* --- A. KHO LƯU TRỮ TẠM MỞ RỘNG (4 -> 12 Ô) --- */
+.storage-head-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+}
+
+.storage-head-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 4px rgba(72, 38, 10, 0.22));
+}
+
+.storage-head-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.storage-head-title {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #3e2211;
+    line-height: 1.2;
+}
+
+.storage-max-note {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #8a5e32;
+}
+
+.storage-head-desc {
+    font-family: 'Nunito', sans-serif;
+    font-size: 11.2px;
+    font-weight: 700;
+    color: #6d4c33;
+    line-height: 1.28;
+    margin-top: 2px;
+}
+
+.storage-grid-panel {
+    padding: 10px;
+}
+
+.storage-grid.storage-grid-12 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 0;
+}
+
+.storage-grid-12 .storage-slot-card {
+    aspect-ratio: 1 / 1.02;
+    border-radius: 13px;
+    padding: 5px;
+    box-sizing: border-box;
+    outline: none;
+    transition: transform 0.14s ease, filter 0.16s ease;
+}
+
+.storage-grid-12 .storage-slot-card:active {
+    transform: scale(0.94);
+}
+
+.storage-grid-12 .storage-slot-card.is-filled {
+    background: #f3e6d3 url('../assets/images_webp/board/board_cell_empty.webp') center / cover no-repeat;
+    border: 1.8px solid #c59b6d;
+    box-shadow: 0 2.5px 0 rgba(146, 104, 58, 0.35), 0 3px 6px rgba(62, 32, 12, 0.14);
+    cursor: pointer;
+}
+
+.storage-grid-12 .storage-slot-card.is-filled.is-gen-slot {
+    border-color: #d9822b;
+    box-shadow: 0 2.5px 0 rgba(168, 96, 24, 0.4), 0 0 0 1.5px rgba(255, 213, 79, 0.45);
+}
+
+.storage-slot-item-img {
+    width: 80% !important;
+    height: 80% !important;
+    object-fit: contain;
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.28));
+    pointer-events: none;
+}
+
+.storage-gen-badge {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 17px !important;
+    height: 17px !important;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+    pointer-events: none;
+}
+
+.storage-grid-12 .storage-slot-card.is-empty {
+    background: #efe2ce;
+    border: 1.5px dashed #cbb08c;
+    box-shadow: inset 0 1.5px 3px rgba(92, 58, 25, 0.08);
+    cursor: default;
+}
+
+.storage-empty-txt {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #9b7a56;
+}
+
+/* Ô mở khóa kế tiếp: Hộp gỗ nâu ấm #b58451 đồng bộ Thưởng Mỗi Ngày */
+.storage-grid-12 .storage-slot-card.is-next-unlock {
+    background: linear-gradient(180deg, #bd8d5a 0%, #b58451 55%, #a87744 100%);
+    border: none;
+    padding-top: 16px;
+    box-shadow:
+        0 3px 0 #8a5e32,
+        0 4px 7px rgba(62, 32, 12, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+    cursor: pointer;
+    gap: 3px;
+}
+
+.storage-tile-lid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 14px;
+    border-radius: 13px 13px 4px 4px;
+    background: linear-gradient(180deg, #c99c6b 0%, #bb8a57 100%);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.14), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+}
+
+.storage-lid-notch {
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 11px;
+    height: 6px;
+    border-radius: 0 0 7px 7px;
+    background: rgba(252, 243, 227, 0.92);
+}
+
+.storage-unlock-label {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.05;
+    color: #ffffff;
+    text-shadow: 0 1.5px 0 #5c3a19, -1px -1px 0 #5c3a19, 1px -1px 0 #5c3a19, -1px 1px 0 #5c3a19, 1px 1px 0 #5c3a19;
+    white-space: nowrap;
+}
+
+.storage-unlock-cost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: rgba(62, 34, 17, 0.34);
+    border-radius: 999px;
+    padding: 1.5px 6px;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 10.5px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fffef5;
+    white-space: nowrap;
+}
+
+.storage-unlock-cost img {
+    width: 12px !important;
+    height: 12px !important;
+    object-fit: contain;
+}
+
+.storage-grid-12 .storage-slot-card.is-locked-slot {
+    background: #e6d7c3;
+    border: 1.5px solid #cbb193;
+    box-shadow: inset 0 1px 2px rgba(72, 42, 14, 0.08);
+    gap: 4px;
+    opacity: 0.88;
+}
+
+.storage-lock-icon {
+    width: 20px !important;
+    height: 20px !important;
+    object-fit: contain;
+    opacity: 0.78;
+}
+
+.storage-grid-12 .storage-slot-card.is-locked-slot .storage-unlock-cost {
+    background: rgba(109, 76, 51, 0.16);
+    color: #5d3a1a;
+}
+
+/* --- B. POPUP BONG BÓNG MAY MẮN --- */
+.bubble-kem-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12px 14px 14px;
+}
+
+.bubble-timer-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ead2b2;
+    border: 1px solid #cfb089;
+    color: #7c3f14;
+    font-family: 'Nunito', sans-serif;
+    font-size: 11.5px;
+    font-weight: 800;
+    border-radius: 999px;
+    padding: 3px 12px;
+    margin-bottom: 8px;
+}
+
+.bubble-kem-card .bubble-modal-preview-wrap {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    margin: 2px auto 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bubble-kem-card .bubble-modal-inner-item {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.28));
+}
+
+.bubble-kem-card .bubble-modal-outer-shell {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.bubble-item-title {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #3e2211;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.bubble-lv-chip {
+    display: inline-block;
+    font-size: 11.5px;
+    background: #ead2b2;
+    color: #6d4520;
+    border-radius: 8px;
+    padding: 1px 7px;
+    margin-left: 3px;
+    vertical-align: 1px;
+}
+
+.bubble-item-sub {
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6d4c33;
+    line-height: 1.32;
+    margin-bottom: 12px;
+}
+
+.bubble-action-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.kw-wide-action-btn {
+    width: 100% !important;
+    max-width: 248px !important;
+    min-width: 200px !important;
+    height: 44px !important;
+}
+
+.kw-subtle-link-btn {
+    margin-top: 2px;
+    background: #ead9c3;
+    border: 1.5px solid #cbb08c;
+    border-radius: 999px;
+    padding: 5px 16px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: #6d4c33;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.kw-subtle-link-btn:active {
+    transform: scale(0.95);
+    background: #dfcbb0;
+}
+
+/* --- C. TRẠM NĂNG LƯỢNG, TRẠM KIM CƯƠNG, NGÂN HÀNG VÀNG & TIẾP TẾ --- */
+.kw-currency-status {
+    text-align: center;
+    padding: 8px 10px;
+}
+
+.kw-status-balances {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #5d3a1a;
+}
+
+.kw-status-balances b {
+    color: #3e2211;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.kw-sep {
+    color: #b58451;
+    opacity: 0.7;
+}
+
+.kw-status-note {
+    font-family: 'Nunito', sans-serif;
+    font-size: 11.2px;
+    font-weight: 700;
+    color: #7a5436;
+    margin-top: 2px;
+}
+
+.kw-shop-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 11px 10px;
+}
+
+.kem-wood-modal .shop-scroll {
+    margin: 0 !important;
+    padding: 0 3px 2px 0 !important;
+    max-height: min(465px, 58dvh);
+}
+
+.kem-wood-modal .shop-card {
+    background: #f3e6d3 !important;
+    border: 1.5px solid #cfb38e !important;
+    border-radius: 13px !important;
+    padding: 10px 11px !important;
+    box-shadow: 0 2px 0 rgba(164, 124, 78, 0.24) !important;
+    margin-top: 0 !important;
+}
+
+.kem-wood-modal .shop-card.has-badge {
+    margin-top: 6px !important;
+    padding-top: 13px !important;
+}
+
+.kem-wood-modal .shop-card.starter-card,
+.kem-wood-modal .shop-card.popular-card,
+.kem-wood-modal .shop-card.rescue-card {
+    background: linear-gradient(180deg, #fff4d4 0%, #fce19f 100%) !important;
+    border-color: #dfa94e !important;
+    box-shadow: 0 2px 0 rgba(186, 132, 42, 0.25) !important;
+}
+
+.kem-wood-modal .shop-badge,
+.kem-wood-modal .shop-badge.kw-badge-wood {
+    background: #b58451 !important;
+    border: 1px solid #8a5e32 !important;
+    color: #fffef5 !important;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 10.5px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    box-shadow: 0 1.5px 3px rgba(62, 32, 12, 0.22);
+}
+
+.kem-wood-modal .shop-card-title {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    color: #3b2110 !important;
+    font-size: 14.5px;
+}
+
+.kem-wood-modal .shop-card-desc {
+    font-family: 'Nunito', sans-serif;
+    color: #6a4a31 !important;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.kem-wood-modal .kw-tip-card {
+    background: #efe1cc !important;
+    border: 1.5px dashed #c5a47c !important;
+    box-shadow: none !important;
+}
+
+.kw-tip-title {
+    font-size: 13px !important;
+    color: #6d4520 !important;
+    margin-bottom: 2px;
+}
+
+.kw-tip-desc {
+    font-size: 11.3px !important;
+    line-height: 1.42 !important;
+}
+
+.kem-wood-modal .lucky-reward-pill {
+    background: #f3e6d3;
+    border: 1.5px solid #cfb38e;
+    color: #3b2110;
+}
+
+/* --- D. CẨM NANG KHÁM PHÁ & THÔNG TIN CHUỖI VẬT PHẨM [i] --- */
+.book-head-banner {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 13.5px;
+    font-weight: 800;
+    text-align: center;
+    padding: 8px 12px;
+}
+
+.kem-wood-modal .book-top-claim-bar {
+    background: linear-gradient(180deg, #fff4d4 0%, #fce19f 100%) !important;
+    border: 1.5px solid #dfa94e !important;
+    border-radius: 13px !important;
+    color: #3b2110 !important;
+    margin: 0 !important;
+    padding: 7px 10px !important;
+}
+
+.kem-wood-modal .book-chain {
+    background: #f9efdf !important;
+    border: 1.5px solid #dcc09b !important;
+    border-radius: 15px !important;
+    padding: 9px 10px !important;
+    box-shadow: 0 2px 5px rgba(72, 42, 14, 0.07);
+}
+
+.kem-wood-modal .book-chain-title {
+    color: #3e2211 !important;
+}
+
+.kem-wood-modal .book-chest-tag,
+.kem-wood-modal .book-chain-count {
+    background: #ead9c3 !important;
+    border-color: #cfb38e !important;
+    color: #5d3a1a !important;
+}
+
+.kem-wood-modal .book-chain-claim-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: linear-gradient(180deg, #8fe64b 0%, #4da820 100%);
+    border: 1.5px solid #2e7018;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.kem-wood-modal .book-chain-claim-btn .inline-ui-icon {
+    width: 13px;
+    height: 13px;
+    margin: 0 1px;
+}
+
+.kem-wood-modal .ici-source-banner {
+    background: #f9efdf;
+    border: 1.5px solid #dcc09b;
+}
+
+.ici-gen-branches-list .ici-source-banner {
+    background: #f3e6d3 !important;
+    border-color: #cfb38e !important;
+    margin-bottom: 7px !important;
+}
+
+.ici-gen-branches-list .ici-source-banner:last-child {
+    margin-bottom: 0 !important;
+}
+
+.ici-selected-pill {
+    margin-top: 9px;
+    background: #ead9c3;
+    border: 1px solid #cfb38e;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #3e2211;
+}
+
+/* --- E. CỬA HÀNG TRẠI (ĐIỂM ĐẾN & THÚ CƯNG), ĐỒ CẮM TRẠI & CÀI ĐẶT --- */
+.kem-wood-modal.camp-box .modal-sub {
+    background: #f9efdf;
+    border: 1.5px solid #dcc09b;
+    border-radius: 13px;
+    padding: 6px 10px;
+    margin: 2px 0 8px 0;
+    color: #5d3a1a;
+}
+
+.kem-wood-modal .pet-card,
+.kem-wood-modal .location-card {
+    background: #f9efdf !important;
+    border: 1.5px solid #cfb38e !important;
+    box-shadow: 0 2px 5px rgba(72, 42, 14, 0.1) !important;
+}
+
+.kem-wood-modal .location-card .loc-card-footer {
+    background: #f3e6d3 !important;
+    border-top: 1px solid #dcc09b;
+}
+
+.kem-wood-modal .pet-card.is-active,
+.kem-wood-modal .location-card.is-active,
+.kem-wood-modal .location-card.is-active .loc-card-footer {
+    background: linear-gradient(180deg, #fff6dc 0%, #fce5ab 100%) !important;
+    border-color: #dfa94e !important;
+}
+
+.kem-wood-modal .pet-avatar-wrap {
+    background: #f3e6d3 !important;
+    border-color: #cfb38e !important;
+}
+
+.kem-wood-modal .camp-items-modal-pane {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+}
+
+.kem-wood-modal .camp-items-wrap {
+    background: #f9efdf;
+    border: 1.5px solid #dcc09b;
+    border-radius: 15px;
+    padding: 9px !important;
+}
+
+.kem-wood-modal .camp-info-bar {
+    background: #f3e6d3 !important;
+    border: 1.5px solid #cfb38e !important;
+    border-radius: 13px !important;
+    margin: 8px 0 2px 0 !important;
+}
+
+.kem-wood-modal .st-rows {
+    padding: 0 3px 4px 0 !important;
+    gap: 10px !important;
+}
+
+.kem-wood-modal .st-account-card {
+    background: #f9efdf !important;
+    border: 1.5px solid #dcc09b !important;
+    border-radius: 16px !important;
+    box-shadow: 0 2px 6px rgba(72, 42, 14, 0.08) !important;
+}
+
+.kem-wood-modal .st-kem-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+}
+
+.kem-wood-modal .st-row,
+.kem-wood-modal .lang-dropdown-container {
+    background: #f3e6d3 !important;
+    border: 1.5px solid #cfb38e !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 0 rgba(164, 124, 78, 0.2) !important;
+}
+
+.kem-wood-modal .lang-dropdown-menu {
+    background: #f9efdf !important;
+    border-top: 1px solid #dcc09b !important;
+}
+
+.kem-wood-modal .lang-option-item {
+    background: #f3e6d3 !important;
+    border-color: #d6bc99 !important;
+}
+
+.kem-wood-modal .lang-option-item.active {
+    background: linear-gradient(180deg, #fff4d4 0%, #fce19f 100%) !important;
+    border-color: #dfa94e !important;
+}
+
+/* =============================================================================
+   9. HIỆU ỨNG ÁNH SÁNG DẪN ĐƯỜNG TỪ ITEM NHIỆM VỤ VỀ NGUỒN PHÁT (1 CLICK)
+      & NỔI BẬT VỊ TRÍ ITEM TRONG BẢNG KHÁM PHÁ (2 CLICKS)
+   ============================================================================= */
+.tray-item-slot {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.guiding-light-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 195000;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Đốm sáng sao chổi dẫn đường (nhân trắng kim + quầng vàng ấm + đuôi sáng kéo dài) */
+.guiding-light-orb {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    margin-left: -13px;
+    margin-top: -13px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, #fff9c4 40%, #ffd54f 74%, rgba(255, 160, 0, 0) 100%);
+    box-shadow:
+        0 0 14px 5px rgba(255, 238, 88, 0.96),
+        0 0 28px 10px rgba(255, 179, 0, 0.7);
+    will-change: transform;
+    pointer-events: none;
+}
+
+.guiding-light-orb::after {
+    content: '';
+    position: absolute;
+    right: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 58px;
+    height: 11px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0) 0%, rgba(255, 224, 130, 0.62) 55%, rgba(255, 255, 255, 0.96) 100%);
+    filter: blur(1px);
+    pointer-events: none;
+}
+
+/* Hạt bụi sao rơi dọc theo đường bay */
+.guiding-light-spark {
+    position: fixed;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    background: radial-gradient(circle, #ffffff 0%, #ffe082 55%, rgba(255, 179, 0, 0) 100%);
+    box-shadow: 0 0 8px rgba(255, 213, 79, 0.9);
+    pointer-events: none;
+    animation: guidingSparkFade 0.32s ease-out forwards;
+}
+
+@keyframes guidingSparkFade {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2);
+    }
+}
+
+/* Vòng sóng ánh sáng bung tỏa khi chạm vào Máy phát */
+.guiding-light-impact-ring {
+    position: fixed;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 3px solid #fff59d;
+    box-shadow: 0 0 16px rgba(255, 213, 79, 0.95), inset 0 0 10px rgba(255, 235, 59, 0.8);
+    transform: translate(-50%, -50%) scale(0.4);
+    pointer-events: none;
+    animation: guidingImpactBurst 0.55s cubic-bezier(0.16, 0.84, 0.32, 1) forwards;
+}
+
+@keyframes guidingImpactBurst {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.45);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2.85);
+    }
+}
+
+/* Hào quang nổi bật quanh Máy phát khi tia sáng đáp xuống */
+.gen-guiding-spotlight {
+    z-index: 35 !important;
+    animation: genGuidingPulse 0.55s ease-in-out 3 !important;
+    box-shadow:
+        inset 0 0 0 3px #fff59d,
+        0 0 18px 5px rgba(255, 213, 79, 0.92) !important;
+    border-radius: 11px;
+}
+
+@keyframes genGuidingPulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1.05);
+    }
+    50% {
+        transform: scale(1.1);
+        filter: brightness(1.26) drop-shadow(0 0 12px rgba(255, 235, 59, 0.95));
+    }
+}
+
+/* Nổi bật khung chuỗi & đúng ô vị trí item khi mở Bảng Khám Phá bằng click đúp */
+.kem-wood-modal .book-chain.is-focused-chain {
+    border-color: #dfa94e !important;
+    background: linear-gradient(180deg, #fff8e6 0%, #f9efdf 100%) !important;
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.32), 0 4px 12px rgba(140, 82, 18, 0.16) !important;
+}
+
+.book-slot.is-focused-target {
+    z-index: 6;
+    opacity: 1 !important;
+    box-shadow:
+        0 0 0 3px #ff9800,
+        0 0 16px 4px rgba(255, 193, 7, 0.85) !important;
+    animation: bookTargetFocusBounce 0.85s ease-in-out infinite alternate !important;
+}
+
+.book-focus-badge {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, #ffab00 0%, #e65100 100%);
+    color: #ffffff;
+    border: 1.5px solid #fff8e1;
+    border-radius: 999px;
+    padding: 1px 7px;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 9.5px;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+    z-index: 8;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.28);
+    pointer-events: none;
+}
+
+@keyframes bookTargetFocusBounce {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.07);
+    }
+}
+
+/* =============================================================================
+   10. HỆ THỐNG VÉ MẬT ONG (1/5) TRÊN BÀN CHƠI & MINI-GAME LẤY MẬT ONG 60FPS
+   ============================================================================= */
+.order-strip-left-dock {
+    position: relative;
+}
+
+/* Cụm 2 huy hiệu xếp chồng [1 Tổ Ong] + [200 Vàng] bên phải NPC giống ảnh mẫu */
+.pet-group-reward-stack {
+    position: relative;
+    z-index: 4;
+    margin-left: auto;
+    margin-bottom: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
+.pet-group-reward-stack .pet-group-reward-pill {
+    margin: 0 !important;
+    min-width: 44px;
+    height: 19px;
+    padding: 0 5px;
+    justify-content: space-between;
+}
+
+.pet-group-ticket-pill img {
+    width: 13px !important;
+    height: 14px !important;
+    object-fit: contain;
+}
+
+/* Nút Mini-game Lấy Mật Ong (1/5) bám sát mép trái phía trên hàng Nhiệm vụ / Máy phát chờ */
+.minigame-entry-btn {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 14px);
+    width: 50px;
+    height: 56px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    cursor: pointer;
+    z-index: 25;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.14s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.minigame-entry-btn:active {
+    transform: scale(0.91);
+}
+
+.minigame-entry-thumb-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    padding: 2px;
+    box-sizing: border-box;
+    background: linear-gradient(180deg, #fffdf7 0%, #e7d4b5 100%);
+    border: 2px solid #c69c6d;
+    box-shadow: 0 3px 7px rgba(42, 24, 8, 0.28);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.minigame-entry-thumb {
+    width: 100%;
+    height: 100%;
+    border-radius: 9px;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+.minigame-entry-btn .minigame-ticket-pill {
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 44px;
+    height: 18px;
+    background: linear-gradient(180deg, #fff9ec 0%, #f3e2c7 100%);
+    border: 1.5px solid #c59b6d;
+    border-radius: 999px;
+    box-shadow: 0 2px 4px rgba(46, 24, 8, 0.24);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+}
+
+.minigame-entry-btn #minigame-ticket-label {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #4a2810;
+    line-height: 1;
+}
+
+.minigame-entry-btn.is-ready .minigame-entry-thumb-wrap {
+    border-color: #ffb300;
+    box-shadow: 0 0 0 2px #fff59d, 0 0 14px rgba(255, 193, 7, 0.9);
+    animation: minigameReadyPulse 1.2s ease-in-out infinite alternate;
+}
+
+.minigame-entry-btn.is-ready .minigame-ticket-pill {
+    background: linear-gradient(180deg, #8fe64b 0%, #46a51b 100%);
+    border-color: #2b6e12;
+}
+
+.minigame-entry-btn.is-ready #minigame-ticket-label {
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(20, 60, 8, 0.65);
+}
+
+.minigame-ready-dot {
+    top: -4px !important;
+    right: -4px !important;
+}
+
+@keyframes minigameReadyPulse {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-2px) scale(1.06); }
+}
+
+.ticket-hit-bounce {
+    animation: ticketHitPop 0.34s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes ticketHitPop {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+}
+
+.flying-honey-ticket {
+    position: fixed;
+    width: 30px;
+    height: 33px;
+    object-fit: contain;
+    z-index: 196000;
+    pointer-events: none;
+    filter: drop-shadow(0 0 8px rgba(255, 213, 79, 0.95)) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+    will-change: transform, opacity;
+}
+
+/* Popup Giới Thiệu Mini-game Lấy Mật Ong (Kem - Gỗ) */
+.honey-intro-banner {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    text-align: left;
+}
+
+.honey-intro-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    border: 2px solid #c59b6d;
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(62, 32, 12, 0.2);
+}
+
+.honey-intro-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.honey-intro-title {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #3e2211;
+    line-height: 1.15;
+}
+
+.honey-intro-sub {
+    font-family: 'Nunito', sans-serif;
+    font-size: 11.3px;
+    font-weight: 700;
+    color: #6d4c33;
+    line-height: 1.28;
+}
+
+.honey-ticket-bar {
+    margin-top: 2px;
+}
+
+.honey-intro-rules-card {
+    text-align: left;
+    padding: 11px 12px;
+}
+
+.honey-intro-rule-head {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: #5d3a1a;
+    margin-bottom: 6px;
+}
+
+.honey-intro-rewards-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 9px;
+}
+
+.honey-intro-rule-tip {
+    font-family: 'Nunito', sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #5f422b;
+    line-height: 1.42;
+    background: #f3e6d3;
+    border: 1px solid #cfb38e;
+    border-radius: 11px;
+    padding: 8px 10px;
+}
+
+/* MÀN HÌNH CHƠI MINI-GAME LẤY MẬT ONG TOÀN MÀN HÌNH */
+.honey-mg-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 199000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    animation: modalFade 0.22s ease-out;
+}
+
+.honey-mg-backdrop {
+    position: absolute;
+    inset: -24px;
+    background: #2f4f22 url('../assets/Minigame/matong/bg_matong.jpg') center / cover no-repeat;
+    filter: blur(20px) brightness(0.62);
+    z-index: 0;
+}
+
+.honey-mg-frame {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    max-width: min(100vw, calc(100dvh * 1000 / 1792));
+    max-height: 100dvh;
+    aspect-ratio: 1000 / 1792;
+    overflow: hidden;
+    box-shadow: 0 12px 38px rgba(0, 0, 0, 0.55);
+    background: #689f38;
+}
+
+@media (max-width: 600px) {
+    .honey-mg-frame {
+        max-width: 100vw;
+        width: 100vw;
+        height: 100dvh;
+        aspect-ratio: auto;
+    }
+}
+
+.honey-mg-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    cursor: grab;
+}
+
+.honey-mg-canvas:active {
+    cursor: grabbing;
+}
+
+.honey-mg-topbar {
+    position: absolute;
+    top: max(10px, env(safe-area-inset-top, 10px));
+    left: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.honey-mg-exit-btn {
+    pointer-events: auto;
+    height: 34px;
+    padding: 0 13px;
+    border-radius: 999px;
+    border: 1.5px solid #8a5e32;
+    background: rgba(62, 34, 17, 0.78);
+    backdrop-filter: blur(4px);
+    color: #fffef5;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+    transition: transform 0.12s ease;
+}
+
+.honey-mg-exit-btn:active {
+    transform: scale(0.93);
+}
+
+.honey-mg-hud-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(249, 239, 223, 0.92);
+    border: 1.5px solid #c59b6d;
+    box-shadow: 0 2px 6px rgba(42, 24, 8, 0.22);
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #3e2211;
+}
+
+.honey-mg-hud-pill img {
+    width: 18px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.honey-mg-hud-sep {
+    color: #b58451;
+}
+
+.honey-mg-guide-banner {
+    position: absolute;
+    bottom: 136px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(88%, 330px);
+    background: rgba(61, 34, 27, 0.84);
+    border: 1px solid rgba(255, 238, 178, 0.42);
+    color: #fffef5;
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 11.8px;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.3;
+    pointer-events: none;
+    z-index: 8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.honey-mg-guide-banner.is-faded {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+}
+
+/* Màn hình Thắng / Bị Phát Hiện ngay trên sân khấu Mini-game (Chuẩn Kem-Gỗ) */
+.honey-mg-result-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background: rgba(28, 18, 10, 0.56);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    box-sizing: border-box;
+    animation: modalFade 0.2s ease-out;
+}
+
+.honey-result-card {
+    width: 100%;
+    max-width: 332px;
+    background: #f9efdf;
+    border: 2.5px solid #c59b6d;
+    border-radius: 20px;
+    padding: 18px 16px 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42), inset 0 1.5px 0 rgba(255, 255, 255, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: modalPop 0.28s cubic-bezier(0.2, 1.35, 0.4, 1);
+}
+
+.honey-result-ribbon {
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fffef5;
+    padding: 4px 16px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    text-shadow: 0 1.5px 2px rgba(0, 0, 0, 0.38);
+}
+
+.honey-result-ribbon.is-danger {
+    background: linear-gradient(180deg, #ef5350 0%, #c62828 100%);
+    border: 1.5px solid #8e0000;
+}
+
+.honey-result-ribbon.is-win {
+    background: linear-gradient(180deg, #ffb300 0%, #e65100 100%);
+    border: 1.5px solid #9e3600;
+}
+
+.honey-win-hive-img {
+    width: 68px;
+    height: 100px;
+    object-fit: contain;
+    margin: 2px 0 6px;
+    filter: drop-shadow(0 4px 8px rgba(140, 72, 10, 0.32));
+}
+
+.honey-result-sub {
+    font-family: 'Nunito', sans-serif;
+    font-size: 12.2px;
+    font-weight: 700;
+    color: #5d3a1a;
+    line-height: 1.36;
+    margin-bottom: 12px;
+}
+
+.honey-win-rewards {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.honey-win-rw-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f3e6d3;
+    border: 1.5px solid #cfb38e;
+    border-radius: 11px;
+    padding: 5px 10px;
+    font-family: 'Baloo 2', 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #3e2211;
+}
+
+.honey-win-rw-chip img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+.honey-result-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+
+
 
 
 

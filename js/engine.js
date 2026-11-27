@@ -664,10 +664,56 @@ function getGeneratorDropExpectedValue(levelNum, genId) {
     return Math.max(1.0, (p1 * 1) + (p2 * 2) + (p3 * 4) + (p4 * 8));
 }
 
+// Lấy danh sách các đơn hàng ĐANG HIỂN THỊ trên thanh nhiệm vụ (tối đa maxSimultaneousNpcs khay NPC)
+function getVisibleQuestBarOrders(explicitOrders) {
+    if (Array.isArray(explicitOrders) && explicitOrders.length > 0) {
+        // NếuSAVE.petOrderGroups đang hoạt động và explicitOrders chính là mảng phẳng currentOrders,
+        // chỉ lấy các khay NPC đang hiển thị thực tế trên thanh nhiệm vụ
+        if (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups.length > 0 &&
+            typeof currentOrders !== 'undefined' && explicitOrders === currentOrders) {
+            var maxVis = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.multiNpcOrders && typeof GAME_CONFIG.multiNpcOrders.maxSimultaneousNpcs === 'number')
+                ? GAME_CONFIG.multiNpcOrders.maxSimultaneousNpcs
+                : 3;
+            var visOrders = [];
+            SAVE.petOrderGroups.slice(0, maxVis).forEach(function (grp) {
+                if (grp && Array.isArray(grp.orders)) {
+                    grp.orders.forEach(function (o) {
+                        if (o && !o.done && o.id) visOrders.push(o);
+                    });
+                }
+            });
+            return visOrders;
+        }
+        return explicitOrders;
+    }
+
+    if (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups.length > 0) {
+        var maxVisible = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.multiNpcOrders && typeof GAME_CONFIG.multiNpcOrders.maxSimultaneousNpcs === 'number')
+            ? GAME_CONFIG.multiNpcOrders.maxSimultaneousNpcs
+            : 3;
+        var collected = [];
+        SAVE.petOrderGroups.slice(0, maxVisible).forEach(function (grp) {
+            if (grp && Array.isArray(grp.orders)) {
+                grp.orders.forEach(function (o) {
+                    if (o && !o.done && o.id) collected.push(o);
+                });
+            }
+        });
+        if (collected.length > 0) return collected;
+    }
+
+    if (typeof currentOrders !== 'undefined' && Array.isArray(currentOrders)) {
+        return currentOrders;
+    }
+    return [];
+}
+
 // Sinh 1 item từ nguồn phát vào ô trống ngẫu nhiên. Trả về index ô mới, hoặc -1 nếu bàn đầy
-// Thuật toán chia đều 100% tỷ lệ giữa 3 nhánh vật phẩm của mỗi thùng chứa (1/3 : 1/3 : 1/3)
-// thông qua cơ chế Túi Xáo Trộn Cân Bằng (Balanced Shuffle Bag: mỗi 6 lượt bấm ra đúng 2 món của mỗi nhánh),
-// kết hợp hỗ trợ bắt cặp thông minh (smartPairAssist) khi bàn cờ còn ít ô trống để tránh kẹt màn.
+// Cơ chế ưu tiên thông minh chống rác bàn chơi:
+// 1. Trước khi phát item, kiểm tra trên thanh nhiệm vụ đang cần nhánh nào của máy phát này (trừ các món đã đủ dấu tick ✓ trên bàn).
+// 2. Nếu chỉ cần 1 nhánh -> phát 100% nhánh đó.
+// 3. Nếu cần từ 2 nhánh trở lên -> chia đều tỷ lệ rơi tuyệt đối giữa các nhánh đang cần (50%:50% hoặc 33.3%:33.3%:33.3%), không rơi nhánh thừa.
+// 4. Nếu thanh nhiệm vụ hiện không cần nhánh nào của máy phát này -> chia đều tất cả nhánh của máy phát.
 function spawnItem(board, genId, activeOrders, levelCfg, opts) {
     var empty = getEmptyIndexes(board);
     if (!empty.length) {
@@ -725,17 +771,12 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
         });
     }
 
-    if (isAllEqual) {
-        // Ưu tiên chia tỷ lệ theo các item có trên bảng nhiệm vụ:
-        // - Nếu trên bảng nhiệm vụ có 1 item thuộc máy phát: tỷ lệ sinh ra nhánh đó là 80% (8/10 món trong túi).
-        // - Nếu có 2 item thuộc máy phát: mỗi item 40% (4/10 món trong túi, tổng 8 món), nhánh còn lại 20% (2/10 món).
-        // - Nếu có cả 3 item (hoặc không có item nào): chia đều cả 3 (2 món mỗi nhánh = 6 món, 33.33% mỗi nhánh).
-        var ordersToCheck = (Array.isArray(activeOrders) && activeOrders.length)
-            ? activeOrders
-            : ((typeof currentOrders !== 'undefined' && Array.isArray(currentOrders)) ? currentOrders : []);
-        if (!ordersToCheck.length && typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups.length) {
-            ordersToCheck = (SAVE.petOrderGroups[0] && Array.isArray(SAVE.petOrderGroups[0].orders)) ? SAVE.petOrderGroups[0].orders : [];
-        }
+    if (isAllEqual || !dropCfg || dropCfg.prioritizeQuestBranches !== false) {
+        // Kiểm tra trực tiếp các món đang cần trên thanh nhiệm vụ trước khi phát item:
+        // - Nếu có 1 nhánh thuộc máy phát đang cần: phát 100% nhánh đó (0% nhánh rác).
+        // - Nếu có >= 2 nhánh thuộc máy phát đang cần: chia đều tỷ lệ rơi tuyệt đối giữa các nhánh đó (2 món/nhánh trong túi xáo trộn, 0% nhánh rác).
+        // - Nếu không có nhánh nào đang cần (hoặc các món thuộc máy phát đều đã đủ dấu tick ✓): chia đều tất cả nhánh của máy phát.
+        var ordersToCheck = getVisibleQuestBarOrders(activeOrders);
 
         // Đếm các vật phẩm khả dụng đang có sẵn trên bàn cờ (không bị khóa nhện, không phải đá, không nằm trong bong bóng, không phải máy phát)
         var availableBoardItems = {};
@@ -751,7 +792,7 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
         ordersToCheck.forEach(function (o) {
             if (!o || o.done || !o.id) return;
 
-            // Kiểm tra xem món này đã có dấu tick (đã thực thi xong / đã có sẵn trên bàn cờ hoặc stashed) chưa
+            // Kiểm tra xem món này đã có dấu tick (đã có sẵn trên bàn cờ hoặc stashed) chưa
             var hasTick = false;
             if (o.stashed) {
                 hasTick = true;
@@ -760,8 +801,7 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
                 availableBoardItems[o.id]--; // Trừ đi để nếu có 2 nhiệm vụ cùng món thì tính chuẩn xác
             }
 
-            // Nếu món ĐÃ CÓ DẤU TICK: máy phát trừ món đó ra không đếm vì lúc này người chơi không cần phát ra món đó nữa!
-            // Nếu người chơi ghép thêm làm mất dấu tick đi: hasTick thành false và món đó lại được cộng lại vào danh sách cần!
+            // Chỉ ưu tiên những món người chơi thực sự CHƯA ĐỦ trên bàn chơi
             if (!hasTick) {
                 var ln = itemLine(o.id);
                 if (ln && neededLines.indexOf(ln) === -1) {
@@ -772,9 +812,8 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
 
         var genLines = list.map(function (baseId) { return itemLine(baseId); });
         var matchLines = genLines.filter(function (ln) { return neededLines.indexOf(ln) !== -1; });
-        var nonMatchLines = genLines.filter(function (ln) { return neededLines.indexOf(ln) === -1; });
 
-        // Tự động làm mới túi xáo trộn ngay khi danh sách nhánh nhiệm vụ của máy phát này thay đổi
+        // Tự động làm mới túi xáo trộn ngay khi danh sách nhánh nhiệm vụ cần thiết của máy phát này thay đổi
         var matchKey = matchLines.slice().sort().join(',');
         if (genBagMatchKey[genId] !== matchKey) {
             genBagMatchKey[genId] = matchKey;
@@ -793,49 +832,23 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
                 itemByLine[itemLine(baseId)] = baseId;
             });
 
-            if (matchLines.length >= list.length || matchLines.length === 0) {
-                // Tất cả nhánh của máy phát đều đang cần (VD máy 2 nhánh như generator_wood / generator_animal cần cả 2, hoặc máy 3 nhánh cần cả 3),
-                // HOẶC không có nhánh nào trên bảng nhiệm vụ -> Chia đều cân bằng 100% giữa các nhánh của máy phát
+            if (matchLines.length === 1) {
+                // Chỉ cần 1 nhánh -> Tập trung 100% vào đúng nhánh đó để không sinh đồ thừa
+                var onlyTargetId = itemByLine[matchLines[0]] || list[0];
+                bag.push(onlyTargetId);
+                bag.push(onlyTargetId);
+            } else if (matchLines.length > 1) {
+                // Cần nhiều hơn 1 nhánh -> Chia đều tuyệt đối tỷ lệ rơi giữa các nhánh đang cần (mỗi nhánh 2 món trong túi cân bằng)
+                for (var mIdx = 0; mIdx < matchLines.length; mIdx++) {
+                    var matchedBaseId = itemByLine[matchLines[mIdx]] || list[0];
+                    bag.push(matchedBaseId);
+                    bag.push(matchedBaseId);
+                }
+            } else {
+                // Không có nhánh nào của máy phát này đang thiếu trên thanh nhiệm vụ -> Chia đều toàn bộ các nhánh của máy phát
                 for (var bIdx = 0; bIdx < list.length; bIdx++) {
                     bag.push(list[bIdx]);
                     bag.push(list[bIdx]);
-                }
-            } else if (matchLines.length === 1) {
-                // 1 item trên bảng nhiệm vụ: 80% cho nhánh đó, các nhánh còn lại chia đều 20%
-                var targetLine = matchLines[0];
-                var targetId = itemByLine[targetLine] || list[0];
-                for (var i = 0; i < 8; i++) {
-                    bag.push(targetId);
-                }
-                if (nonMatchLines.length >= 2) {
-                    bag.push(itemByLine[nonMatchLines[0]] || list[0]);
-                    bag.push(itemByLine[nonMatchLines[1]] || list[Math.min(1, list.length - 1)]);
-                } else if (nonMatchLines.length === 1) {
-                    var singleNonMatch = itemByLine[nonMatchLines[0]] || list[0];
-                    bag.push(singleNonMatch);
-                    bag.push(singleNonMatch);
-                } else {
-                    bag.push(list[0]);
-                    bag.push(list[0]);
-                }
-            } else if (matchLines.length === 2 && nonMatchLines.length >= 1) {
-                // Máy 3 nhánh có 2 item trên bảng nhiệm vụ: mỗi item 40%, nhánh thứ 3 còn lại 20%
-                var targetId1 = itemByLine[matchLines[0]] || list[0];
-                var targetId2 = itemByLine[matchLines[1]] || list[Math.min(1, list.length - 1)];
-                for (var i2 = 0; i2 < 4; i2++) {
-                    bag.push(targetId1);
-                }
-                for (var j2 = 0; j2 < 4; j2++) {
-                    bag.push(targetId2);
-                }
-                var otherLine = nonMatchLines[0];
-                var otherId = (otherLine && itemByLine[otherLine]) ? itemByLine[otherLine] : list[0];
-                bag.push(otherId);
-                bag.push(otherId);
-            } else {
-                for (var fbIdx = 0; fbIdx < list.length; fbIdx++) {
-                    bag.push(list[fbIdx]);
-                    bag.push(list[fbIdx]);
                 }
             }
 
@@ -847,7 +860,7 @@ function spawnItem(board, genId, activeOrders, levelCfg, opts) {
                 bag[rIdx] = tmp;
             }
 
-            // Tránh lặp quá 2 lần liên tiếp cùng 1 món ở điểm nối giữa 2 túi (chỉ áp dụng khi không phải túi tập trung 80% 1 món)
+            // Tránh lặp quá nhiều lần cùng 1 món ở điểm nối giữa 2 túi khi đang chia đều nhiều nhánh
             var lastItem = genLastSpawnItem[genId];
             if (lastItem && bag.length > 1 && bag[0] === lastItem && matchLines.length !== 1) {
                 for (var k = 1; k < bag.length; k++) {
@@ -1451,6 +1464,13 @@ function getActiveGeneratorsForOrders(board) {
             }
         });
     }
+    if (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.campStorage)) {
+        SAVE.campStorage.forEach(function (stashedId) {
+            if (stashedId && GENERATORS[stashedId] && active.indexOf(stashedId) === -1) {
+                active.push(stashedId);
+            }
+        });
+    }
     return active;
 }
 
@@ -1471,6 +1491,13 @@ function getPendingDockGenerators(board, playerLv) {
         b.forEach(function (c) {
             if (c && c.id && GENERATORS[c.id] && !c.isRock && !c.isLocked) {
                 onBoard.add(c.id);
+            }
+        });
+    }
+    if (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.campStorage)) {
+        SAVE.campStorage.forEach(function (stashedId) {
+            if (stashedId && GENERATORS[stashedId]) {
+                onBoard.add(stashedId);
             }
         });
     }

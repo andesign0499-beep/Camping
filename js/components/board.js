@@ -1991,32 +1991,214 @@ function buildOrderItemGuideSpeech(itemId) {
     return 'Món này là ' + cleanName + ' (Level ' + lv + '), nằm trong ' + genName + ' nhé!';
 }
 
-function highlightGeneratorForOrderItem(itemId) {
-    if (!isBoardHintsEnabled()) return;
-    if (!itemId) return;
+var activeGuidingLightCleanupFns = [];
+
+function cleanupActiveGuidingLights() {
+    while (activeGuidingLightCleanupFns.length > 0) {
+        var fn = activeGuidingLightCleanupFns.pop();
+        try { if (typeof fn === 'function') fn(); } catch (e) {}
+    }
+    document.querySelectorAll('.guiding-light-fx-node').forEach(function (el) {
+        el.remove();
+    });
+    document.querySelectorAll('.gen-guiding-spotlight').forEach(function (el) {
+        el.classList.remove('gen-guiding-spotlight');
+    });
+}
+
+function findGeneratorTargetElementForItem(itemId) {
+    if (!itemId) return null;
     var ln = (typeof itemLine === 'function') ? itemLine(itemId) : String(itemId).split('_lv')[0];
     var genId = (typeof getGeneratorForLine === 'function')
         ? getGeneratorForLine(ln)
         : ((typeof getChainGenerator === 'function') ? getChainGenerator(ln).id : null);
-    if (!genId) return;
+    if (!genId) return null;
 
-    clearHintVisuals();
-    document.querySelectorAll('.pending-gen-slot.hint-pulse').forEach(function (el) {
-        el.classList.remove('hint-pulse');
-    });
+    // 1. Ưu tiên tìm ô Máy phát đang nằm trên bàn chơi 7x9
     if (Array.isArray(boardData) && boardElement) {
         var genIdx = boardData.findIndex(function (c) {
             return c && c.id === genId && !c.isRock && !c.isLocked;
         });
         if (genIdx !== -1 && boardElement.children[genIdx]) {
-            boardElement.children[genIdx].classList.add('hint-pulse');
-            return;
+            return { el: boardElement.children[genIdx], genId: genId, location: 'board' };
         }
     }
+
+    // 2. Nếu Máy phát mới mở khóa đang nằm ở khay chờ bên trái NPC
     var pendingDockSlot = document.querySelector('.pending-gen-slot[data-gen-id="' + genId + '"]');
     if (pendingDockSlot) {
-        pendingDockSlot.classList.add('hint-pulse');
+        return { el: pendingDockSlot, genId: genId, location: 'dock' };
     }
+
+    // 3. Nếu Máy phát phụ đang được người chơi cất tạm trong Kho Đồ Tạm
+    if (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.campStorage) && SAVE.campStorage.indexOf(genId) !== -1) {
+        var storageBtn = document.getElementById('btn-storage');
+        if (storageBtn) {
+            return { el: storageBtn, genId: genId, location: 'storage' };
+        }
+    }
+
+    return { el: null, genId: genId, location: 'locked' };
+}
+
+function flyGuidingLightToGenerator(sourceEl, itemId) {
+    if (!sourceEl || !itemId) return;
+    cleanupActiveGuidingLights();
+
+    var found = findGeneratorTargetElementForItem(itemId);
+    if (!found || !found.el) {
+        if (found && found.genId && typeof showToast === 'function') {
+            var genNameLocked = (typeof getItemCleanName === 'function') ? getItemCleanName(found.genId) : 'Máy phát mới';
+            showToast('Nguồn phát: ' + genNameLocked + ' (chưa đặt trên bàn)');
+        }
+        return;
+    }
+
+    var targetEl = found.el;
+    var srcRect = sourceEl.getBoundingClientRect();
+    var tgtRect = targetEl.getBoundingClientRect();
+    if (!srcRect.width || !tgtRect.width) return;
+
+    // Nhún nhẹ ô nhiệm vụ khi phát tia sáng
+    if (sourceEl.animate) {
+        sourceEl.animate([
+            { transform: 'scale(0.9)' },
+            { transform: 'scale(1.12)' },
+            { transform: 'scale(1)' }
+        ], { duration: 240, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1.2)' });
+    }
+
+    var x0 = srcRect.left + srcRect.width / 2;
+    var y0 = srcRect.top + srcRect.height / 2;
+    var x2 = tgtRect.left + tgtRect.width / 2;
+    var y2 = tgtRect.top + tgtRect.height / 2;
+
+    // Điểm uốn đường cong Bezier tạo quỹ đạo bay mềm mại tự nhiên
+    var dx = x2 - x0;
+    var dy = y2 - y0;
+    var dist = Math.hypot(dx, dy) || 1;
+    var curveSign = (dx >= 0) ? 1 : -1;
+    var perpOffset = Math.min(68, Math.max(26, dist * 0.22)) * curveSign;
+    var cx = (x0 + x2) * 0.5 + (-dy / dist) * perpOffset * 0.55;
+    var cy = (y0 + y2) * 0.5 - Math.min(48, Math.max(18, dist * 0.14));
+
+    var layer = document.createElement('div');
+    layer.className = 'guiding-light-fx-node guiding-light-layer';
+    document.body.appendChild(layer);
+
+    // Đốm sáng dẫn đường chính (nhân trắng vàng rực + đuôi sao chổi)
+    var orb = document.createElement('div');
+    orb.className = 'guiding-light-orb';
+    layer.appendChild(orb);
+
+    var cancelled = false;
+    var rafId = null;
+    var spotlightTimer = null;
+
+    var cleanupThisFlight = function () {
+        cancelled = true;
+        if (rafId) cancelAnimationFrame(rafId);
+        if (spotlightTimer) clearTimeout(spotlightTimer);
+        if (layer && layer.parentNode) layer.remove();
+        targetEl.classList.remove('gen-guiding-spotlight');
+    };
+    activeGuidingLightCleanupFns.push(cleanupThisFlight);
+
+    var duration = Math.min(720, Math.max(520, Math.round(dist * 1.65)));
+    var startTs = null;
+    var lastSparkTs = 0;
+
+    function spawnTrailSpark(px, py, scaleMul) {
+        var sp = document.createElement('span');
+        sp.className = 'guiding-light-spark';
+        var sz = (7 + Math.random() * 6.5) * (scaleMul || 1);
+        var jx = (Math.random() - 0.5) * 9;
+        var jy = (Math.random() - 0.5) * 9;
+        sp.style.width = sz + 'px';
+        sp.style.height = sz + 'px';
+        sp.style.left = (px + jx) + 'px';
+        sp.style.top = (py + jy) + 'px';
+        layer.appendChild(sp);
+        setTimeout(function () {
+            if (sp.parentNode) sp.remove();
+        }, 420);
+    }
+
+    function step(now) {
+        if (cancelled) return;
+        if (startTs === null) startTs = now;
+        var rawT = Math.min(1, Math.max(0, (now - startTs) / duration));
+        // Ease-in-out mượt mà, tăng tốc nhẹ về phía máy phát
+        var t = rawT < 0.5
+            ? 2 * rawT * rawT
+            : 1 - Math.pow(-2 * rawT + 2, 2) / 2;
+
+        var inv = 1 - t;
+        var bx = inv * inv * x0 + 2 * inv * t * cx + t * t * x2;
+        var by = inv * inv * y0 + 2 * inv * t * cy + t * t * y2;
+
+        // Góc tiếp tuyến để kéo đuôi sáng hướng đúng chiều bay
+        var tx = 2 * inv * (cx - x0) + 2 * t * (x2 - cx);
+        var ty = 2 * inv * (cy - y0) + 2 * t * (y2 - cy);
+        var angleDeg = Math.atan2(ty, tx) * (180 / Math.PI);
+        var orbScale = 0.85 + Math.sin(rawT * Math.PI) * 0.32;
+
+        orb.style.transform = 'translate3d(' + bx + 'px,' + by + 'px,0) rotate(' + angleDeg + 'deg) scale(' + orbScale.toFixed(3) + ')';
+
+        if (now - lastSparkTs >= 24) {
+            lastSparkTs = now;
+            spawnTrailSpark(bx, by, 1);
+        }
+
+        if (rawT < 1) {
+            rafId = requestAnimationFrame(step);
+        } else {
+            if (orb.parentNode) orb.remove();
+
+            // Hiệu ứng vòng sóng ánh sáng bung ra đúng tâm Máy phát khi chạm đích
+            var ring = document.createElement('div');
+            ring.className = 'guiding-light-impact-ring';
+            ring.style.left = x2 + 'px';
+            ring.style.top = y2 + 'px';
+            layer.appendChild(ring);
+
+            for (var k = 0; k < 7; k++) {
+                spawnTrailSpark(x2 + (Math.random() - 0.5) * 26, y2 + (Math.random() - 0.5) * 26, 1.25);
+            }
+
+            targetEl.classList.remove('gen-guiding-spotlight');
+            void targetEl.offsetWidth;
+            targetEl.classList.add('gen-guiding-spotlight');
+
+            if (found.location === 'storage' && typeof showToast === 'function') {
+                var stGenName = (typeof getItemCleanName === 'function') ? getItemCleanName(found.genId) : 'Máy phát';
+                showToast(stGenName + ' đang cất trong Kho Đồ Tạm!');
+            } else if (found.location === 'dock' && typeof showToast === 'function') {
+                var dkGenName = (typeof getItemCleanName === 'function') ? getItemCleanName(found.genId) : 'Máy phát mới';
+                showToast('Hãy kéo ' + dkGenName + ' vào bàn chơi nhé!');
+            }
+
+            spotlightTimer = setTimeout(function () {
+                targetEl.classList.remove('gen-guiding-spotlight');
+                if (layer && layer.parentNode) layer.remove();
+            }, 1650);
+        }
+    }
+
+    rafId = requestAnimationFrame(step);
+}
+
+function highlightGeneratorForOrderItem(itemId, sourceEl) {
+    if (sourceEl) {
+        flyGuidingLightToGenerator(sourceEl, itemId);
+        return;
+    }
+    if (!isBoardHintsEnabled()) return;
+    if (!itemId) return;
+    var found = findGeneratorTargetElementForItem(itemId);
+    if (!found || !found.el) return;
+    clearHintVisuals();
+    found.el.classList.add('hint-pulse');
 }
 
 function clearHintVisuals() {
@@ -3505,8 +3687,13 @@ function deliverPetOrderGroup(groupIdx) {
 
         if (trayEl) {
             spawnFlyingCurrency(trayEl, 'gold', totalGold);
+            if (typeof window.HONEY_MINIGAME !== 'undefined' && typeof window.HONEY_MINIGAME.awardTicketFromOrder === 'function') {
+                window.HONEY_MINIGAME.awardTicketFromOrder(trayEl, 1);
+            }
             triggerParticleBurst(trayEl, ['#2ecc71', '#a8e6cf', '#ffd54f', '#ffffff']);
             showFloatingBadge(trayEl, 'Trọn bộ! +' + totalGold + ' 🪙 | +' + totalExp + ' XP | +' + earnedStars + ' ⭐' + happyBonusLabel, '#2e7d32');
+        } else if (typeof window.HONEY_MINIGAME !== 'undefined' && typeof window.HONEY_MINIGAME.awardTicketFromOrder === 'function') {
+            window.HONEY_MINIGAME.awardTicketFromOrder(null, 1);
         }
 
         if (typeof addPlayerExp === 'function') {
@@ -3828,13 +4015,17 @@ function renderOrders() {
                 }
             });
 
-            // Cập nhật huy hiệu thưởng Vàng & nút GIAO góc trên phải khay
+            // Cập nhật cụm huy hiệu thưởng [1 Tổ Ong + Vàng] & nút GIAO góc trên phải khay
             var topRow = groupEl.querySelector('.pet-group-top-row');
+            var rwStack = groupEl.querySelector('.pet-group-reward-stack');
             var rwPill = groupEl.querySelector('.pet-group-reward-pill');
             if (rwPill) {
                 var rwNumEl = rwPill.querySelector('.reward-pill-val');
                 if (rwNumEl) rwNumEl.textContent = computePetOrderGroupTotalGold(group).toLocaleString('vi-VN');
-                rwPill.style.display = (allReady && group.orders.length > 0) ? 'none' : 'inline-flex';
+                if (!rwStack) rwPill.style.display = (allReady && group.orders.length > 0) ? 'none' : 'inline-flex';
+            }
+            if (rwStack) {
+                rwStack.style.display = (allReady && group.orders.length > 0) ? 'none' : 'flex';
             }
             if (topRow || trayWrap) {
                 var btnHost = topRow || trayWrap;
@@ -3959,12 +4150,23 @@ function renderOrders() {
         topRow.appendChild(avatarWrap);
 
         var totalGroupGold = computePetOrderGroupTotalGold(group);
+        var rewardStack = document.createElement('div');
+        rewardStack.className = 'pet-group-reward-stack';
+        rewardStack.style.display = (allReady && group.orders.length > 0) ? 'none' : 'flex';
+
+        var ticketPill = document.createElement('div');
+        ticketPill.className = 'pet-group-reward-pill pet-group-ticket-pill';
+        ticketPill.innerHTML = '<span class="reward-pill-val">1</span>' +
+            '<img src="assets/Minigame/matong/icon_nhiemvu.png" alt="Vé Mật Ong">';
+        rewardStack.appendChild(ticketPill);
+
         var rewardPill = document.createElement('div');
         rewardPill.className = 'pet-group-reward-pill';
-        rewardPill.style.display = (allReady && group.orders.length > 0) ? 'none' : 'inline-flex';
         rewardPill.innerHTML = '<span class="reward-pill-val">' + totalGroupGold.toLocaleString('vi-VN') + '</span>' +
             '<img src="assets/images_webp/ui/icon_glod.webp" alt="Vàng">';
-        topRow.appendChild(rewardPill);
+        rewardStack.appendChild(rewardPill);
+
+        topRow.appendChild(rewardStack);
 
         if (allReady && group.orders.length > 0) {
             var deliverBtn = document.createElement('button');
@@ -4026,33 +4228,30 @@ function renderOrders() {
                 slot.appendChild(chk);
             }
 
-            // Chạm vào ô đơn hàng trên khay: NPC hướng dẫn tên item, Level và Thùng sinh đồ
+            // Click 1 lần vào item nhiệm vụ: Tia sáng dẫn đường bay về phía Máy phát sinh ra item đó
+            // Click 2 lần liên tiếp vào item nhiệm vụ: Mở thẳng đúng vị trí item trong Bảng Khám Phá (Cẩm Nang)
             slot.addEventListener('click', function (e) {
                 e.stopPropagation();
                 var liveGroup = (SAVE && Array.isArray(SAVE.petOrderGroups) && SAVE.petOrderGroups[gIdx]) ? SAVE.petOrderGroups[gIdx] : group;
                 var liveOrder = (liveGroup && Array.isArray(liveGroup.orders) && liveGroup.orders[oIdx]) ? liveGroup.orders[oIdx] : o;
-                var guideSpeech = buildOrderItemGuideSpeech(liveOrder.id);
+                var targetItemId = slot.dataset.orderId || (liveOrder && liveOrder.id);
+                if (!targetItemId) return;
 
-                if (typeof playSound === 'function') playSound('tap');
-
-                if (!liveOrder.stashed) {
-                    var matchIdx = findOrderMatch(boardData, liveOrder.id);
-                    if (matchIdx !== -1) {
-                        setPetSpeech(liveGroup.petId, guideSpeech, 4500, { noTruncate: true, isGuide: true });
-                        liveOrder.stashed = true;
-                        liveOrder.stashedVerified = true;
-                        flyItemToTraySlot(matchIdx, slot, function () {
-                            persistCurrentBoardState();
-                            renderOrders();
-                            renderBoard();
-                        });
-                    } else {
-                        highlightGeneratorForOrderItem(liveOrder.id);
-                        setPetSpeech(liveGroup.petId, guideSpeech, 5000, { noTruncate: true, isGuide: true });
+                var now = Date.now();
+                var lastTs = parseInt(slot.dataset.lastTapTs || '0', 10);
+                if (now - lastTs < 380) {
+                    slot.dataset.lastTapTs = '0';
+                    cleanupActiveGuidingLights();
+                    if (typeof playSound === 'function') playSound('click');
+                    if (typeof openDiscoveryBook === 'function') {
+                        openDiscoveryBook(targetItemId);
                     }
-                } else {
-                    setPetSpeech(liveGroup.petId, guideSpeech, 4500, { noTruncate: true, isGuide: true });
+                    return;
                 }
+
+                slot.dataset.lastTapTs = String(now);
+                if (typeof playSound === 'function') playSound('tap');
+                flyGuidingLightToGenerator(slot, targetItemId);
             });
 
             itemsEl.appendChild(slot);
@@ -4128,11 +4327,12 @@ function syncPendingGeneratorDock() {
 
 function placePendingGeneratorOnBoard(genId, preferredCellIdx) {
     if (!boardData || !boardData.length || !genId) return false;
-    // Kiểm tra xem đã có trên bàn cờ chưa
+    // Kiểm tra xem đã có trên bàn cờ hoặc đang cất trong Kho tạm chưa
     var alreadyIdx = boardData.findIndex(function (c) {
         return c && c.id === genId && !c.isRock && !c.isLocked;
     });
-    if (alreadyIdx !== -1) {
+    var inStorage = (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.campStorage) && SAVE.campStorage.indexOf(genId) !== -1);
+    if (alreadyIdx !== -1 || inStorage) {
         syncPendingGeneratorDock();
         return true;
     }
@@ -5099,14 +5299,21 @@ function handleCellClick(e, cellElement) {
     }
 
     if (clickedItem && clickedItem.id && !clickedItem.isLocked && !clickedItem.isRock && GENERATORS[clickedItem.id] && !isAutoEnabled) {
-        selectedIndex = null;
-        updateSellButton(null);
+        selectedIndex = index;
+        updateSellButton(clickedItem.id);
         if (isLevelCompleted()) {
+            renderBoard();
             notifyLevelDoneOnGenerator(cellElement);
             return;
         }
         handleGeneratorClick(clickedItem, cellElement);
         return;
+    }
+
+    // Nếu ô đang chọn trước đó là Máy phát và người chơi chạm sang ô vật phẩm khác: chuyển chọn sang vật phẩm đó thay vì hoán đổi vị trí máy phát ngoài ý muốn
+    if (selectedIndex !== null && selectedIndex !== index && boardData[selectedIndex] && boardData[selectedIndex].id && GENERATORS[boardData[selectedIndex].id]) {
+        selectedIndex = null;
+        updateSellButton(null);
     }
 
     if (selectedIndex === null) {
@@ -5429,7 +5636,9 @@ function updateBoardSelectionInfoBar(idx) {
     var id = cell.id;
     if (GENERATORS[id]) {
         titleEl.textContent = (typeof getItemCleanName === 'function') ? getItemCleanName(id) : id;
-        descEl.textContent = 'Chạm tiếp để tạo vật phẩm (-1 ⚡)';
+        descEl.textContent = (id === 'generator_cooler')
+            ? 'Chạm tiếp để tạo vật phẩm (-1 ⚡)'
+            : 'Chạm tạo đồ (-1 ⚡) • Kéo vào Kho để cất tạm';
         if (infoBtn) {
             infoBtn.style.display = 'inline-block';
             infoBtn.dataset.itemId = id;
@@ -5991,6 +6200,18 @@ function initGame() {
                 playerEnergy = SAVE.energy;
                 refreshLevelSelect();
                 loadLevel(1, { forceReset: true });
+                updateStorageUI();
+                updateBookBadge();
+                updateDailyPassUI();
+                updateStarChestUI();
+                if (typeof window.HONEY_MINIGAME !== 'undefined' && typeof window.HONEY_MINIGAME.updateHUD === 'function') {
+                    window.HONEY_MINIGAME.updateHUD();
+                }
+                if (typeof setDevToolEnabled === 'function') {
+                    setDevToolEnabled(false);
+                } else if (typeof updateDevToolVisibility === 'function') {
+                    updateDevToolVisibility();
+                }
                 showToast('Đã đặt lại dữ liệu ban đầu!');
             }
         });
@@ -6655,26 +6876,57 @@ function openBubbleModal(idx) {
     var secLeft = Math.max(1, Math.ceil(((cell.bubbleExpiresAt || Date.now()) - Date.now()) / 1000));
 
     var adBtnHtml = (lv <= 7 && typeof simulateWatchAd === 'function')
-        ? '<button class="modal-btn ' + (canWatchAd ? 'primary' : 'disabled-btn') + '" id="btn-bubble-ad"' + (canWatchAd ? '' : ' disabled') + '>XEM ADS MỞ NGAY (' + bubbleAdsLeft + ' lượt)</button>'
+        ? '<button class="modal-btn ' + (canWatchAd ? 'primary' : 'disabled-btn') + ' kw-wide-action-btn" id="btn-bubble-ad"' + (canWatchAd ? '' : ' disabled') + '>Xem Ads Mở Ngay (' + bubbleAdsLeft + ' lượt)</button>'
         : '';
 
-    var html = '<div class="level-up-popup">' +
-        '<div class="bubble-modal-preview-wrap" style="position:relative;width:86px;height:86px;margin:0 auto 8px;">' +
-            '<img src="' + imgPath + '" class="bubble-modal-inner-item" style="width:64px;height:64px;object-fit:contain;margin:11px;" alt="">' +
-            '<img src="assets/images_webp/items/icon_bongbong.webp" class="bubble-modal-outer-shell" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;" alt="">' +
+    var rubyIconHtml = '<img class="inline-ui-icon" src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương">';
+
+    var html = '<div class="kw-modal-shell">' +
+        '<div class="kw-card-panel bubble-kem-card">' +
+            '<div class="bubble-timer-pill" id="bubble-live-timer">Tự tan sau: <b>' + secLeft + 's</b></div>' +
+            '<div class="bubble-modal-preview-wrap">' +
+                '<img src="' + imgPath + '" class="bubble-modal-inner-item" alt="">' +
+                '<img src="assets/images_webp/items/icon_bongbong.webp" class="bubble-modal-outer-shell" alt="">' +
+            '</div>' +
+            '<div class="bubble-item-title">' + name + ' <span class="bubble-lv-chip">Lv.' + lv + '</span></div>' +
+            '<div class="bubble-item-sub">Mở bong bóng ngay để nhận vật phẩm trên bàn trước khi bong bóng tự tan biến!</div>' +
+            '<div class="bubble-action-stack">' +
+                adBtnHtml +
+                '<button class="modal-btn gem-btn kw-wide-action-btn" id="btn-bubble-gem">Mở Bằng ' + gemCost + ' ' + rubyIconHtml + '</button>' +
+                '<button class="kw-subtle-link-btn" id="btn-bubble-pop" type="button">Chọc vỡ để giải phóng ô đất</button>' +
+            '</div>' +
         '</div>' +
-        '<div class="level-up-title">🫧 BONG BÓNG MAY MẮN</div>' +
-        '<div class="level-up-sub"><b>' + name + '</b> (Lv.' + lv + ')<br>Hãy mở ngay trước khi bong bóng tự tan biến nhé!</div>' +
-        '<div class="modal-buttons" style="flex-direction:column;gap:8px;margin-top:12px;">' +
-            adBtnHtml +
-            '<button class="modal-btn gem-btn" id="btn-bubble-gem">MỞ BẰNG ' + gemCost + ' KIM CƯƠNG</button>' +
-            '<button class="modal-btn" id="btn-bubble-pop" style="background:#eceff1;color:#37474f;">Chọc vỡ (Giải phóng ô)</button>' +
+        '<div class="modal-buttons dp-bottom-btn-row">' +
+            '<button class="modal-btn primary" id="btn-bubble-close">Đóng</button>' +
         '</div>' +
     '</div>';
 
-    var overlay = createModal(html, 'level-up-modal-card', 'BONG BÓNG VẬT PHẨM');
+    var overlay = createModal(html, 'bubble-modal-box kem-wood-modal', 'BONG BÓNG MAY MẮN');
+
+    var bubbleTimerId = setInterval(function () {
+        if (!document.body.contains(overlay)) {
+            clearInterval(bubbleTimerId);
+            return;
+        }
+        var curCell = boardData[idx];
+        if (!curCell || !curCell.isBubble) {
+            clearInterval(bubbleTimerId);
+            closeModal();
+            return;
+        }
+        var rem = Math.max(0, Math.ceil(((curCell.bubbleExpiresAt || Date.now()) - Date.now()) / 1000));
+        var tEl = overlay.querySelector('#bubble-live-timer');
+        if (tEl) {
+            tEl.innerHTML = 'Tự tan sau: <b>' + rem + 's</b>';
+        }
+        if (rem <= 0) {
+            clearInterval(bubbleTimerId);
+            closeModal();
+        }
+    }, 500);
 
     var unlockBubble = function () {
+        clearInterval(bubbleTimerId);
         if (!boardData[idx] || !boardData[idx].isBubble) return;
         boardData[idx].isBubble = false;
         delete boardData[idx].bubbleExpiresAt;
@@ -6689,6 +6941,7 @@ function openBubbleModal(idx) {
     var adBtn = overlay.querySelector('#btn-bubble-ad');
     if (adBtn && canWatchAd) {
         adBtn.onclick = function () {
+            clearInterval(bubbleTimerId);
             closeModal();
             simulateWatchAd('Mở Bong Bóng: ' + name, function () {
                 if (typeof consumeAd === 'function') consumeAd('bubble');
@@ -6701,11 +6954,12 @@ function openBubbleModal(idx) {
     if (gemBtn) {
         gemBtn.onclick = function () {
             if (playerGems < gemCost) {
-                if (typeof showToast === 'function') showToast('Chưa đủ ' + gemCost + ' 💎!', '#c62828');
+                if (typeof showToast === 'function') showToast('Chưa đủ ' + gemCost + ' Kim Cương!');
                 return;
             }
             playerGems -= gemCost;
             SAVE.gems = playerGems;
+            clearInterval(bubbleTimerId);
             closeModal();
             unlockBubble();
             updateUIStats();
@@ -6716,121 +6970,342 @@ function openBubbleModal(idx) {
     var popBtn = overlay.querySelector('#btn-bubble-pop');
     if (popBtn) {
         popBtn.onclick = function () {
+            clearInterval(bubbleTimerId);
             closeModal();
             if (!boardData[idx] || !boardData[idx].isBubble) return;
             boardData[idx] = makeEmptyCell();
             playSound('bubble');
             if (boardElement && boardElement.children[idx]) {
                 triggerParticleBurst(boardElement.children[idx], ['#b3e5fc', '#81d4fa', '#ffffff']);
-                showFloatingBadge(boardElement.children[idx], '🫧 Đã chọc vỡ!', '#0288d1');
+                showFloatingBadge(boardElement.children[idx], 'Đã chọc vỡ!', '#0288d1');
             }
             persistCurrentBoardState();
             renderBoard();
         };
     }
+
+    var closeBubbleBtn = overlay.querySelector('#btn-bubble-close');
+    if (closeBubbleBtn) {
+        closeBubbleBtn.onclick = function () {
+            clearInterval(bubbleTimerId);
+            closeModal();
+        };
+    }
 }
 
-var CAMP_STORAGE_CAP = 4;
+var CAMP_STORAGE_MAX_CAP = 12;
+
+function getCampStorageCap() {
+    var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.storage) ? GAME_CONFIG.storage : null;
+    var defCap = (cfg && cfg.defaultCap) ? cfg.defaultCap : 4;
+    var maxCap = (cfg && cfg.maxCap) ? cfg.maxCap : CAMP_STORAGE_MAX_CAP;
+    var savedCap = (typeof SAVE !== 'undefined' && SAVE && typeof SAVE.campStorageCap === 'number')
+        ? SAVE.campStorageCap
+        : defCap;
+    var usedLen = (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.campStorage))
+        ? SAVE.campStorage.length
+        : 0;
+    return Math.min(maxCap, Math.max(defCap, savedCap, usedLen));
+}
+
+function getStorageSlotUnlockSpec(slotNum) {
+    var cfg = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.storage && GAME_CONFIG.storage.slotUnlocks)
+        ? GAME_CONFIG.storage.slotUnlocks
+        : null;
+    if (cfg && cfg[slotNum]) return cfg[slotNum];
+    var fallback = {
+        5:  { type: 'coin', cost: 3000 },
+        6:  { type: 'coin', cost: 6000 },
+        7:  { type: 'ad',   adsRequired: 2 },
+        8:  { type: 'ad',   adsRequired: 3 },
+        9:  { type: 'gem',  cost: 15 },
+        10: { type: 'gem',  cost: 25 },
+        11: { type: 'gem',  cost: 35 },
+        12: { type: 'gem',  cost: 50 }
+    };
+    return fallback[slotNum] || { type: 'gem', cost: 50 };
+}
+
+function canItemBeStashedToStorage(item) {
+    if (!item || !item.id || item.isRock || item.isLocked || item.isBubble) {
+        return { ok: false, reason: 'Không thể cất ô này vào Kho tạm!' };
+    }
+    if (typeof isBoardCurrencyItem === 'function' && isBoardCurrencyItem(item.id)) {
+        return { ok: false, reason: 'Hãy bấm Thu để nhận vật phẩm tiền tệ này nhé!' };
+    }
+    if (GENERATORS[item.id]) {
+        if (item.id === 'generator_cooler') {
+            return { ok: false, reason: 'Xe Kéo Cắm Trại là máy phát chính trên bàn!' };
+        }
+        var activeGensOnBoard = 0;
+        if (Array.isArray(boardData)) {
+            boardData.forEach(function (c) {
+                if (c && c.id && GENERATORS[c.id] && !c.isRock && !c.isLocked) {
+                    activeGensOnBoard++;
+                }
+            });
+        }
+        if (activeGensOnBoard <= 1) {
+            return { ok: false, reason: 'Cần giữ ít nhất 1 Máy phát trên bàn chơi!' };
+        }
+    }
+    return { ok: true };
+}
 
 function updateStorageUI() {
     var lbl = document.getElementById('storage-count-label');
     if (!lbl) return;
     var cnt = (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.campStorage)) ? SAVE.campStorage.length : 0;
-    lbl.textContent = cnt + '/' + CAMP_STORAGE_CAP;
+    var cap = getCampStorageCap();
+    lbl.textContent = cnt + '/' + cap;
+    var stBtn = document.getElementById('btn-storage');
+    if (stBtn) {
+        stBtn.title = 'Kho Lưu Trữ Tạm (' + cnt + '/' + cap + ' ô): Kéo vật phẩm hoặc Máy phát phụ vào để cất tạm';
+    }
 }
 
 function stashBoardItemToStorage(idx) {
     if (typeof SAVE === 'undefined' || !SAVE) return;
     if (!Array.isArray(SAVE.campStorage)) SAVE.campStorage = [];
+    if (idx === null || idx === undefined || idx < 0 || idx >= TOTAL_CELLS) return;
     var item = boardData[idx];
-    if (!item || !item.id || item.isRock || item.isLocked || item.isBubble || GENERATORS[item.id]) {
-        if (typeof showToast === 'function') showToast('Không thể cất ô này vào Kho tạm!', '#c62828');
+    var check = canItemBeStashedToStorage(item);
+    if (!check.ok) {
+        if (typeof showToast === 'function') showToast(check.reason);
         return;
     }
-    if (SAVE.campStorage.length >= CAMP_STORAGE_CAP) {
-        if (typeof showToast === 'function') showToast('Kho tạm đã đầy (' + CAMP_STORAGE_CAP + '/' + CAMP_STORAGE_CAP + ')!', '#e65100');
+    var cap = getCampStorageCap();
+    if (SAVE.campStorage.length >= cap) {
+        if (typeof showToast === 'function') {
+            showToast(cap < CAMP_STORAGE_MAX_CAP
+                ? ('Kho tạm đã đầy (' + cap + '/' + cap + ')! Mở Kho để mở thêm ô nhé!')
+                : ('Kho tạm đã đầy tối đa (' + cap + '/' + cap + ')!'));
+        }
         return;
     }
+    var isGenItem = !!GENERATORS[item.id];
+    var itemName = (typeof getItemCleanName === 'function') ? getItemCleanName(item.id) : item.id;
     SAVE.campStorage.push(item.id);
     boardData[idx] = makeEmptyCell();
     selectedIndex = null;
     updateSellButton(null);
     playSound('spawn');
+    syncPendingGeneratorDock();
     persistCurrentBoardState();
     updateStorageUI();
     renderBoard();
-    if (typeof showToast === 'function') showToast('📦 Đã cất vào Kho tạm!', '#2e7d32');
+    if (typeof showToast === 'function') {
+        showToast(isGenItem ? ('Đã cất ' + itemName + ' vào Kho tạm!') : ('Đã cất ' + itemName + ' vào Kho tạm!'));
+    }
 }
 
 function openStorageModal() {
     if (typeof SAVE === 'undefined' || !SAVE) return;
     if (!Array.isArray(SAVE.campStorage)) SAVE.campStorage = [];
-
-    var slotsHtml = '';
-    for (var i = 0; i < CAMP_STORAGE_CAP; i++) {
-        var itId = SAVE.campStorage[i] || null;
-        if (itId) {
-            var itName = (typeof getItemDisplayName === 'function') ? getItemDisplayName(itId) : itId;
-            slotsHtml += '<div class="storage-slot-card filled" data-sidx="' + i + '" title="Chạm để lấy ' + itName + ' ra bàn">' +
-                '<img src="' + getItemImagePath(itId) + '" alt="">' +
-            '</div>';
-        } else {
-            slotsHtml += '<div class="storage-slot-card"><span style="opacity:0.45;font-size:11px;">Trống</span></div>';
-        }
+    if (!SAVE.campStorageAdProgress || typeof SAVE.campStorageAdProgress !== 'object') {
+        SAVE.campStorageAdProgress = {};
     }
 
-    var canStashSelected = (selectedIndex !== null && boardData[selectedIndex] && boardData[selectedIndex].id &&
-        !boardData[selectedIndex].isRock && !boardData[selectedIndex].isLocked && !boardData[selectedIndex].isBubble &&
-        !GENERATORS[boardData[selectedIndex].id] && SAVE.campStorage.length < CAMP_STORAGE_CAP);
+    var overlay = createModal(
+        '<div class="kw-modal-shell" id="storage-modal-shell"></div>',
+        'storage-modal-box kem-wood-modal',
+        'KHO ĐỒ TẠM'
+    );
+    var shellEl = overlay.querySelector('#storage-modal-shell');
 
-    var stashBtnHtml = canStashSelected
-        ? '<button class="modal-btn primary" id="btn-stash-selected">Cất món đang chọn</button>'
-        : '';
+    function renderStorageModalBody() {
+        if (!shellEl) return;
+        var cap = getCampStorageCap();
+        var maxCap = (typeof GAME_CONFIG !== 'undefined' && GAME_CONFIG.storage && GAME_CONFIG.storage.maxCap)
+            ? GAME_CONFIG.storage.maxCap
+            : CAMP_STORAGE_MAX_CAP;
 
-    var html = '<div class="level-up-popup">' +
-        '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;">' +
-            '<img src="assets/images_webp/ui/icon_box.webp" style="width:36px;height:36px;object-fit:contain;" alt="">' +
-            '<div class="level-up-title" style="margin:0;">KHO LƯU TRỮ TẠM (' + SAVE.campStorage.length + '/' + CAMP_STORAGE_CAP + ')</div>' +
-        '</div>' +
-        '<div class="level-up-sub">Kéo đồ trên bàn thả vào biểu tượng Kho, hoặc chạm món trong Kho để đặt lại ra bàn!</div>' +
-        '<div class="storage-grid">' + slotsHtml + '</div>' +
-        '<div class="modal-buttons">' +
-            stashBtnHtml +
-            '<button class="modal-btn" id="btn-storage-close" style="background:#eceff1;color:#37474f;">Đóng</button>' +
-        '</div>' +
-    '</div>';
+        var slotsHtml = '';
+        for (var i = 0; i < maxCap; i++) {
+            var slotNum = i + 1;
+            if (i < cap) {
+                var itId = SAVE.campStorage[i] || null;
+                if (itId) {
+                    var itName = (typeof getItemCleanName === 'function') ? getItemCleanName(itId) : itId;
+                    var isGen = !!GENERATORS[itId];
+                    var genBadgeHtml = isGen
+                        ? '<img src="assets/images_webp/ui/icon_nangluong.webp" class="storage-gen-badge" alt="Máy phát">'
+                        : '';
+                    slotsHtml += '<button type="button" class="storage-slot-card is-filled' + (isGen ? ' is-gen-slot' : '') + '" data-sidx="' + i + '" title="Chạm để lấy ' + itName + ' ra bàn chơi">' +
+                        '<img src="' + getItemImagePath(itId) + '" class="storage-slot-item-img" alt="' + itName + '">' +
+                        genBadgeHtml +
+                    '</button>';
+                } else {
+                    slotsHtml += '<div class="storage-slot-card is-empty">' +
+                        '<span class="storage-empty-txt">Trống</span>' +
+                    '</div>';
+                }
+            } else {
+                var spec = getStorageSlotUnlockSpec(slotNum);
+                var isNext = (i === cap);
+                var costHtml = '';
+                if (spec.type === 'coin') {
+                    costHtml = '<span class="storage-unlock-cost">' + spec.cost.toLocaleString('vi-VN') + '<img src="assets/images_webp/ui/icon_glod.webp" alt="Vàng"></span>';
+                } else if (spec.type === 'gem') {
+                    costHtml = '<span class="storage-unlock-cost">' + spec.cost + '<img src="assets/images_webp/ui/icon_ruby.webp" alt="Kim cương"></span>';
+                } else {
+                    var watched = SAVE.campStorageAdProgress[slotNum] || 0;
+                    costHtml = '<span class="storage-unlock-cost is-ad-cost">Ads ' + watched + '/' + spec.adsRequired + '</span>';
+                }
 
-    var overlay = createModal(html, 'level-up-modal-card', 'KHO ĐỒ TẠM');
-    overlay.querySelectorAll('.storage-slot-card.filled').forEach(function (card) {
-        card.onclick = function () {
-            var sIdx = parseInt(card.dataset.sidx, 10);
-            var itId = SAVE.campStorage[sIdx];
-            if (!itId) return;
-            var empties = (typeof getEmptyIndexes === 'function') ? getEmptyIndexes(boardData) : [];
-            if (!empties.length) {
-                if (typeof showToast === 'function') showToast('Bàn cờ đang đầy, hãy ghép hoặc dọn 1 ô trống!', '#c62828');
-                return;
+                if (isNext) {
+                    slotsHtml += '<button type="button" class="storage-slot-card is-next-unlock" data-unlock-slot="' + slotNum + '" title="Bấm để mở khóa Ô số ' + slotNum + '">' +
+                        '<div class="storage-tile-lid"><span class="storage-lid-notch"></span></div>' +
+                        '<span class="storage-unlock-label">+ Mở ô ' + slotNum + '</span>' +
+                        costHtml +
+                    '</button>';
+                } else {
+                    slotsHtml += '<button type="button" class="storage-slot-card is-locked-slot" data-locked-slot="' + slotNum + '" title="Mở Ô số ' + (cap + 1) + ' trước">' +
+                        '<img src="assets/images_webp/ui/icon_lock.webp" class="storage-lock-icon" alt="Khóa">' +
+                        costHtml +
+                    '</button>';
+                }
             }
-            var targetIdx = empties[0];
-            boardData[targetIdx] = { id: itId, isRock: false, isLocked: false };
-            SAVE.campStorage.splice(sIdx, 1);
-            playSound('spawn');
-            closeModal();
-            persistCurrentBoardState();
-            updateStorageUI();
-            renderBoard();
-        };
-    });
+        }
 
-    var stashBtn = overlay.querySelector('#btn-stash-selected');
-    if (stashBtn) {
-        stashBtn.onclick = function () {
-            closeModal();
-            stashBoardItemToStorage(selectedIndex);
-        };
+        var selCheck = (selectedIndex !== null && boardData[selectedIndex])
+            ? canItemBeStashedToStorage(boardData[selectedIndex])
+            : { ok: false };
+        var canStashSelected = selCheck.ok && SAVE.campStorage.length < cap;
+        var stashBtnHtml = canStashSelected
+            ? '<button class="modal-btn gem-btn" id="btn-stash-selected">Cất vào kho</button>'
+            : '';
+
+        shellEl.innerHTML =
+            '<div class="kw-summary-banner storage-head-banner">' +
+                '<img src="assets/images_webp/ui/icon_box.webp?v=11.50" class="storage-head-icon" alt="Kho đồ">' +
+                '<div class="storage-head-meta">' +
+                    '<div class="storage-head-title">Đã dùng: <b>' + SAVE.campStorage.length + '/' + cap + '</b> ô <span class="storage-max-note">(Tối đa ' + maxCap + ' ô)</span></div>' +
+                    '<div class="storage-head-desc">Kéo vật phẩm hoặc <b>Máy phát phụ</b> vào Kho để dọn bàn. Chạm món trong Kho để lấy lại ra bàn.</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="kw-scroll-area storage-scroll-wrap">' +
+                '<div class="kw-card-panel storage-grid-panel">' +
+                    '<div class="storage-grid storage-grid-12">' + slotsHtml + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="modal-buttons dp-bottom-btn-row' + (canStashSelected ? ' is-dual-btns' : '') + '">' +
+                stashBtnHtml +
+                '<button class="modal-btn primary" id="btn-storage-close">Đóng</button>' +
+            '</div>';
+
+        enhanceAll3sButtons(shellEl);
+
+        // 1. Lấy vật phẩm / máy phát từ Kho ra lại bàn chơi
+        shellEl.querySelectorAll('.storage-slot-card.is-filled').forEach(function (card) {
+            card.onclick = function () {
+                var sIdx = parseInt(card.dataset.sidx, 10);
+                var itId = SAVE.campStorage[sIdx];
+                if (!itId) return;
+                var empties = (typeof getEmptyIndexes === 'function') ? getEmptyIndexes(boardData) : [];
+                if (!empties.length) {
+                    if (typeof showToast === 'function') showToast('Bàn cờ đang đầy, hãy dọn 1 ô trống trước nhé!');
+                    return;
+                }
+                var targetIdx = empties[0];
+                var cleanName = (typeof getItemCleanName === 'function') ? getItemCleanName(itId) : itId;
+                boardData[targetIdx] = { id: itId, isRock: false, isLocked: false };
+                SAVE.campStorage.splice(sIdx, 1);
+                playSound('spawn');
+                closeModal();
+                syncPendingGeneratorDock();
+                persistCurrentBoardState();
+                updateStorageUI();
+                renderBoard();
+                renderOrders();
+                if (typeof showToast === 'function') showToast('Đã lấy ' + cleanName + ' ra bàn chơi!');
+            };
+        });
+
+        // 2. Mở khóa ô tiếp theo (bằng Vàng / Ads tích lũy / Kim cương)
+        var nextBtn = shellEl.querySelector('[data-unlock-slot]');
+        if (nextBtn) {
+            nextBtn.onclick = function () {
+                var slotNum = parseInt(nextBtn.getAttribute('data-unlock-slot'), 10);
+                var spec = getStorageSlotUnlockSpec(slotNum);
+                if (!spec) return;
+
+                if (spec.type === 'coin') {
+                    if (playerCoins < spec.cost) {
+                        playSound('error');
+                        showToast('Chưa đủ ' + spec.cost.toLocaleString('vi-VN') + ' Vàng để mở Ô ' + slotNum + '!');
+                        return;
+                    }
+                    playerCoins -= spec.cost;
+                    SAVE.coins = playerCoins;
+                    SAVE.campStorageCap = slotNum;
+                    playSound('win');
+                    updateUIStats();
+                    updateStorageUI();
+                    saveGame();
+                    showToast('Đã mở vĩnh viễn Ô Kho số ' + slotNum + '!');
+                    renderStorageModalBody();
+                } else if (spec.type === 'gem') {
+                    if (playerGems < spec.cost) {
+                        playSound('error');
+                        showToast('Chưa đủ ' + spec.cost + ' Kim Cương để mở Ô ' + slotNum + '!');
+                        return;
+                    }
+                    playerGems -= spec.cost;
+                    SAVE.gems = playerGems;
+                    SAVE.campStorageCap = slotNum;
+                    playSound('win');
+                    updateUIStats();
+                    updateStorageUI();
+                    saveGame();
+                    showToast('Đã mở vĩnh viễn Ô Kho số ' + slotNum + '!');
+                    renderStorageModalBody();
+                } else if (spec.type === 'ad') {
+                    if (typeof simulateWatchAd !== 'function') return;
+                    closeModal();
+                    simulateWatchAd('Mở Rộng Kho Đồ Tạm (Ô số ' + slotNum + ')', function () {
+                        if (!SAVE.campStorageAdProgress || typeof SAVE.campStorageAdProgress !== 'object') {
+                            SAVE.campStorageAdProgress = {};
+                        }
+                        var cur = (SAVE.campStorageAdProgress[slotNum] || 0) + 1;
+                        SAVE.campStorageAdProgress[slotNum] = cur;
+                        if (cur >= spec.adsRequired) {
+                            SAVE.campStorageCap = slotNum;
+                            playSound('win');
+                            updateStorageUI();
+                            saveGame();
+                            showToast('Đã mở vĩnh viễn Ô Kho số ' + slotNum + '!');
+                        } else {
+                            playSound('bonus');
+                            saveGame();
+                            showToast('Tiến độ mở Ô ' + slotNum + ': ' + cur + '/' + spec.adsRequired + ' video!');
+                        }
+                        openStorageModal();
+                    });
+                }
+            };
+        }
+
+        // 3. Ô khóa phía sau: nhắc mở theo thứ tự
+        shellEl.querySelectorAll('[data-locked-slot]').forEach(function (lBtn) {
+            lBtn.onclick = function () {
+                playSound('tap');
+                showToast('Hãy mở khóa Ô số ' + (cap + 1) + ' trước nhé!');
+            };
+        });
+
+        var stashBtn = shellEl.querySelector('#btn-stash-selected');
+        if (stashBtn) {
+            stashBtn.onclick = function () {
+                closeModal();
+                stashBoardItemToStorage(selectedIndex);
+            };
+        }
+        var closeBtn = shellEl.querySelector('#btn-storage-close');
+        if (closeBtn) closeBtn.onclick = closeModal;
     }
-    var closeBtn = overlay.querySelector('#btn-storage-close');
-    if (closeBtn) closeBtn.onclick = closeModal;
+
+    renderStorageModalBody();
 }
 
 initGame();

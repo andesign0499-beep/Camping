@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=11.65">
+    <link rel="stylesheet" href="css/style.css?v=11.71">
 </head>
 <body>
     <div id="game-app">
@@ -251,6 +251,14 @@
                     <!-- DẢI NGANG SÁT MÉP TRÊN BÀN CỜ: [Ô MÁY PHÁT CHỜ] + [NHIỆM VỤ 3d4h] + [CÁC NPC & KHAY ĐƠN CUỘN NGANG] -->
                     <div id="merge-order-strip" class="merge-order-strip">
                         <div id="order-strip-left-dock" class="order-strip-left-dock">
+                            <!-- NÚT MINI-GAME LẤY MẬT ONG (1/5 VÉ) BÁM MÉP TRÁI PHÍA TRÊN DOCK -->
+                            <button id="btn-minigame-entry" class="minigame-entry-btn" type="button" title="Mini-game Lấy Mật Ong (1/5 vé)">
+                                <span class="minigame-entry-thumb-wrap">
+                                    <img src="assets/Minigame/matong/img_ve.png" class="minigame-entry-thumb" alt="Lấy Mật Ong">
+                                </span>
+                                <span id="minigame-ready-dot" class="ui-count-badge minigame-ready-dot" style="display:none;">!</span>
+                                <span class="ui-number-pill minigame-ticket-pill"><span id="minigame-ticket-label">1/5</span></span>
+                            </button>
                             <div id="pending-gen-host" class="pending-gen-host"></div>
                             <button id="btn-daily-pass" class="round-ui-btn order-strip-daily-round-btn" type="button" title="Lịch Điểm Danh 7 Ngày & Nhiệm Vụ Hàng Ngày">
                                 <span class="round-ui-bg" aria-hidden="true"></span>
@@ -394,15 +402,16 @@
     <script src="js/libs/MotionPathPlugin.min.js"></script>
 
     <script src="js/i18n.js?v=11.51"></script>
-    <script src="js/config.js?v=11.61"></script>
+    <script src="js/config.js?v=11.70"></script>
     <script src="js/data.js?v=11.51"></script>
-    <script src="js/engine.js?v=11.57"></script>
-    <script src="js/progress.js?v=11.61"></script>
+    <script src="js/engine.js?v=11.70"></script>
+    <script src="js/progress.js?v=11.71"></script>
     <script src="js/firebase-sync.js?v=11.51"></script>
     <script src="js/mycamp_config.js?v=11.52"></script>
     <script src="js/visual_fx.js?v=11.51"></script>
-    <script src="js/camp.js?v=11.63"></script>
-    <script src="js/components/board.js?v=11.65"></script>
+    <script src="js/camp.js?v=11.69"></script>
+    <script src="js/minigame_honey.js?v=11.73"></script>
+    <script src="js/components/board.js?v=11.71"></script>
     <script src="js/test_tool.js?v=11.51"></script>
     <script>
         // Tải 4 đám mây nền sau cùng (sau khi toàn bộ ảnh nền, giao diện & script đã tải xong)

@@ -91,6 +91,9 @@ function defaultSave() {
         questStars: 0,
         powerBoost: 1,
         campStorage: [],
+        campStorageCap: 4,
+        campStorageAdProgress: {},
+        minigameTickets: { honey: 1, honeyStage: 1 },
         starterPackBought: false,
         ads: { day: todayKey(), energy: 0, gem: 0, coin: 0, mystery: 0, bubble: 0, rescue: 0, dailyGemClaimed: false },
         settings: {
@@ -237,6 +240,22 @@ function loadSave() {
             if (typeof s.questStars !== 'number' || s.questStars < 0) s.questStars = 0;
             if (s.powerBoost !== 2) s.powerBoost = 1;
             if (!Array.isArray(s.campStorage)) s.campStorage = [];
+            if (typeof s.campStorageCap !== 'number' || s.campStorageCap < 4) {
+                s.campStorageCap = Math.max(4, Array.isArray(s.campStorage) ? s.campStorage.length : 4);
+            }
+            if (s.campStorageCap > 12) s.campStorageCap = 12;
+            if (!s.campStorageAdProgress || typeof s.campStorageAdProgress !== 'object') {
+                s.campStorageAdProgress = {};
+            }
+            if (!s.minigameTickets || typeof s.minigameTickets !== 'object') {
+                s.minigameTickets = { honey: 1, honeyStage: 1 };
+            }
+            if (typeof s.minigameTickets.honey !== 'number' || s.minigameTickets.honey < 0) {
+                s.minigameTickets.honey = 1;
+            }
+            if (typeof s.minigameTickets.honeyStage !== 'number' || s.minigameTickets.honeyStage < 1) {
+                s.minigameTickets.honeyStage = 1;
+            }
             if (!s.campItemsMigrated) {
                 s.campItemsMigrated = true;
                 var hasOrdersTable = (typeof PROCEDURAL_LEVEL_ORDERS !== 'undefined' && PROCEDURAL_LEVEL_ORDERS);
