@@ -9201,7 +9201,7 @@ button.hint-pulse {
     margin: 2px 0;
 }
 
-/* Lưới 7 ngày thu gọn 2 hàng x 4 cột (Ngày 1..6 bên trái, Ngày 7 cao 2 hàng bên phải) — Tông nâu chủ đạo #b58451 */
+/* Lưới 7 ngày thu gọn 2 hàng x 4 cột (Ngày 1..6 bên trái, Ngày 7 cao 2 hàng bên phải) — Tông cam gỗ chủ đạo #cf8755 */
 .dp-7day-simple-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr) 1.34fr;
@@ -9225,10 +9225,10 @@ button.hint-pulse {
     justify-content: center;
     overflow: visible;
     box-sizing: border-box;
-    --tile-bg: linear-gradient(180deg, #bd8d5a 0%, #b58451 55%, #a87744 100%);
-    --tile-lid: linear-gradient(180deg, #c99c6b 0%, #bb8a57 100%);
-    --tile-lip: #8a5e32;
-    --tile-stroke: #5c3a19;
+    --tile-bg: linear-gradient(180deg, #d89262 0%, #cf8755 55%, #c17947 100%);
+    --tile-lid: linear-gradient(180deg, #e19f70 0%, #d48c5a 100%);
+    --tile-lip: #9e5d30;
+    --tile-stroke: #683816;
     transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1), filter 0.18s ease;
 }
 
@@ -9244,10 +9244,10 @@ button.hint-pulse {
     height: 100%;
     min-height: 100%;
     border-radius: 14px;
-    --tile-bg: linear-gradient(180deg, #bf8f5d 0%, #b58451 55%, #a57340 100%);
-    --tile-lid: linear-gradient(180deg, #cca070 0%, #bc8b58 100%);
-    --tile-lip: #865a2e;
-    --tile-stroke: #5c3a19;
+    --tile-bg: linear-gradient(180deg, #da9565 0%, #cf8755 55%, #be7644 100%);
+    --tile-lid: linear-gradient(180deg, #e3a274 0%, #d58e5c 100%);
+    --tile-lip: #9a592c;
+    --tile-stroke: #683816;
 }
 
 .dp-gift-tile:not(.is-claimed) {
@@ -9313,9 +9313,14 @@ button.hint-pulse {
     animation: dpHaloPulse 1.35s ease-in-out infinite alternate;
 }
 
-.dp-gift-tile.is-claimable {
+.dp-gift-tile.is-claimable,
+.dp-gift-tile.day-grand.is-claimable {
+    --tile-bg: linear-gradient(180deg, #8ccf34 0%, #7dc026 55%, #6ead1b 100%);
+    --tile-lid: linear-gradient(180deg, #9ad943 0%, #84c72d 100%);
+    --tile-lip: #528710;
+    --tile-stroke: #345808;
     animation: dpTileReadyBounce 1.35s ease-in-out infinite alternate;
-    filter: brightness(1.04) drop-shadow(0 0 7px rgba(255, 213, 79, 0.6));
+    filter: drop-shadow(0 0 7px rgba(125, 192, 38, 0.55));
 }
 
 @keyframes dpHaloPulse {

@@ -647,6 +647,63 @@ function getCampItemCompletedCount(itemId) {
 }
 window.getCampItemCompletedCount = getCampItemCompletedCount;
 
+// Đếm tổng số lần một vật phẩm đã hoàn thành CỘNG VỚI số lượng đang nằm trên thanh nhiệm vụ hiện tại
+function getTotalItemOrderedAndActiveCount(itemId, extraPendingIds) {
+    if (!itemId) return 0;
+    var total = getCampItemCompletedCount(itemId);
+    if (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.petOrderGroups)) {
+        for (var gi = 0; gi < SAVE.petOrderGroups.length; gi++) {
+            var grp = SAVE.petOrderGroups[gi];
+            if (grp && Array.isArray(grp.orders)) {
+                for (var oi = 0; oi < grp.orders.length; oi++) {
+                    if (grp.orders[oi] && grp.orders[oi].id === itemId) {
+                        total++;
+                    }
+                }
+            }
+        }
+    }
+    if (Array.isArray(extraPendingIds)) {
+        for (var ei = 0; ei < extraPendingIds.length; ei++) {
+            if (extraPendingIds[ei] === itemId) total++;
+        }
+    }
+    return total;
+}
+window.getTotalItemOrderedAndActiveCount = getTotalItemOrderedAndActiveCount;
+
+// Kiểm tra xem một vật phẩm có đang nằm trên thanh nhiệm vụ HOẶC vừa xuất hiện trong các nhiệm vụ gần đây không
+// (đảm bảo các lần thực hiện không nằm cùng nhau hoặc gần nhau liên tục)
+function isItemRecentlyOrCurrentlyOrdered(itemId, extraPendingIds, recentWindow) {
+    if (!itemId) return false;
+    if (Array.isArray(extraPendingIds) && extraPendingIds.indexOf(itemId) !== -1) {
+        return true;
+    }
+    if (typeof SAVE !== 'undefined' && SAVE) {
+        if (Array.isArray(SAVE.petOrderGroups)) {
+            for (var gi = 0; gi < SAVE.petOrderGroups.length; gi++) {
+                var grp = SAVE.petOrderGroups[gi];
+                if (grp && Array.isArray(grp.orders)) {
+                    for (var oi = 0; oi < grp.orders.length; oi++) {
+                        if (grp.orders[oi] && grp.orders[oi].id === itemId) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        if (Array.isArray(SAVE.recentOrdersHistory) && SAVE.recentOrdersHistory.length > 0) {
+            var win = (typeof recentWindow === 'number' && recentWindow > 0) ? recentWindow : 6;
+            var recentSlice = SAVE.recentOrdersHistory.slice(-win);
+            if (recentSlice.indexOf(itemId) !== -1) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+window.isItemRecentlyOrCurrentlyOrdered = isItemRecentlyOrCurrentlyOrdered;
+
 // Kiểm tra giới hạn số lần tối đa được phép hoàn thành của một item:
 // - Từ cấp 10 trở lên: Chỉ thực hiện 1 lần duy nhất và không thực hiện lại (trừ Ghế được 2 lần)
 // - Dưới cấp 10: Tối đa 3 lần (quá 3 lần thì không thực hiện lại)
@@ -669,10 +726,10 @@ function getMaxAllowedCompletions(itemId) {
 }
 window.getMaxAllowedCompletions = getMaxAllowedCompletions;
 
-// Kiểm tra xem một vật phẩm đã hoàn thành tối đa số lần cho phép hay chưa
-function isItemCompletedMaxTimes(itemId) {
+// Kiểm tra xem một vật phẩm đã hoàn thành (hoặc cộng cả đang giao trên thanh nhiệm vụ) tối đa số lần cho phép hay chưa
+function isItemCompletedMaxTimes(itemId, extraPendingIds) {
     if (!itemId) return false;
-    var currentCount = getCampItemCompletedCount(itemId);
+    var currentCount = getTotalItemOrderedAndActiveCount(itemId, extraPendingIds);
     var maxAllowed = getMaxAllowedCompletions(itemId);
     return currentCount >= maxAllowed;
 }

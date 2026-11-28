@@ -2922,7 +2922,8 @@ function findSideSlotCandidate(candidateLines, excludedLines, existingItems, min
         for (var lv = minLv; lv <= lineMax; lv++) {
             var id = ln + '_lv' + lv;
             if (existingItems.indexOf(id) !== -1) continue;
-            if (!allowExhausted && typeof isItemCompletedMaxTimes === 'function' && isItemCompletedMaxTimes(id)) continue;
+            if (!allowExhausted && typeof isItemCompletedMaxTimes === 'function' && isItemCompletedMaxTimes(id, existingItems)) continue;
+            if (!allowExhausted && typeof isItemRecentlyOrCurrentlyOrdered === 'function' && isItemRecentlyOrCurrentlyOrdered(id, existingItems, 5)) continue;
             var est = estimateSingleItemEnergy(id, playerLv, existingItems.concat([id]));
             cands.push({ id: id, line: ln, level: lv, est: est });
         }
@@ -3531,16 +3532,18 @@ function getUnlockedNpcIdsForOrders(playerLevel, board) {
 }
 
 // Chuyển đổi an toàn một mã vật phẩm trong kịch bản của NPC sang nhánh thuộc máy phát ĐANG ĐẶT TRÊN BÀN CHƠI
-// để người chơi không bao giờ bị kẹt bởi vật phẩm của máy phát chưa kéo ra bàn, đồng thời không bao giờ trùng nhánh trong 1 đơn!
-function adaptItemToActiveBranches(itemId, activeLines, preferredLines, usedLinesInQuest, progressCap) {
+// đồng thời đảm bảo NGHIÊM NGẶT:
+// 1. Mỗi item chỉ thực hiện tối đa 3 lần (<= getMaxAllowedCompletions, tính cả kho Đồ Cắm Trại + đang nằm trên thanh nhiệm vụ)
+// 2. Không bao giờ trùng với item đang hiển thị trên thanh nhiệm vụ hoặc vừa xuất hiện trong 6 món gần nhất (không thực hiện cùng nhau hoặc gần nhau liên tục)
+function adaptItemToActiveBranches(itemId, activeLines, preferredLines, usedLinesInQuest, progressCap, forbiddenIds) {
     var ln = (typeof itemLine === 'function') ? itemLine(itemId) : String(itemId).split('_lv')[0];
     var lv = (typeof itemLevel === 'function') ? itemLevel(itemId) : (parseInt(String(itemId).split('_lv')[1], 10) || 2);
     var validActive = (Array.isArray(activeLines) && activeLines.length > 0) ? activeLines : ['ban', 'ghe', 'trai'];
     var used = Array.isArray(usedLinesInQuest) ? usedLinesInQuest : [];
+    var extraPending = Array.isArray(forbiddenIds) ? forbiddenIds : [];
 
     var targetLine = ln;
     if (validActive.indexOf(targetLine) === -1 || used.indexOf(targetLine) !== -1) {
-        // Ưu tiên nhánh sở trường của NPC mà đang mở trên bàn chơi và chưa dùng trong nhiệm vụ này
         var prefActive = (Array.isArray(preferredLines) ? preferredLines : []).filter(function (pLn) {
             return validActive.indexOf(pLn) !== -1 && used.indexOf(pLn) === -1;
         });
@@ -3556,7 +3559,89 @@ function adaptItemToActiveBranches(itemId, activeLines, preferredLines, usedLine
     var maxLineCap = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(targetLine) : 12;
     var safeCap = (typeof progressCap === 'number' && progressCap >= 2) ? Math.min(maxLineCap, progressCap) : maxLineCap;
     var finalLv = Math.max(2, Math.min(lv, safeCap));
-    return targetLine + '_lv' + finalLv;
+    var directId = targetLine + '_lv' + finalLv;
+
+    function checkMaxed(cid) {
+        return (typeof isItemCompletedMaxTimes === 'function') && isItemCompletedMaxTimes(cid, extraPending);
+    }
+    function checkRecentOrActive(cid, winSize) {
+        if (extraPending.indexOf(cid) !== -1) return true;
+        return (typeof isItemRecentlyOrCurrentlyOrdered === 'function') && isItemRecentlyOrCurrentlyOrdered(cid, extraPending, winSize);
+    }
+
+    // Nếu item gốc/chuyển nhánh chưa chạm trần 3 lần và không bị trùng gần nhau/cùng nhau -> dùng ngay!
+    if (!checkMaxed(directId) && !checkRecentOrActive(directId, 6)) {
+        return directId;
+    }
+
+    // Xây dựng danh sách ứng viên từ các nhánh đang hoạt động (ưu tiên nhánh chưa dùng trong đơn này & nhánh sở trường NPC)
+    var candidateBranches = [];
+    var prefUnused = (Array.isArray(preferredLines) ? preferredLines : []).filter(function (pLn) {
+        return validActive.indexOf(pLn) !== -1 && used.indexOf(pLn) === -1;
+    });
+    var otherUnused = validActive.filter(function (aLn) {
+        return used.indexOf(aLn) === -1 && prefUnused.indexOf(aLn) === -1;
+    });
+    if (validActive.indexOf(targetLine) !== -1 && used.indexOf(targetLine) === -1) {
+        candidateBranches.push(targetLine);
+    }
+    prefUnused.forEach(function (bLn) { if (candidateBranches.indexOf(bLn) === -1) candidateBranches.push(bLn); });
+    otherUnused.forEach(function (bLn) { if (candidateBranches.indexOf(bLn) === -1) candidateBranches.push(bLn); });
+    validActive.forEach(function (bLn) { if (candidateBranches.indexOf(bLn) === -1) candidateBranches.push(bLn); });
+
+    // Mở rộng trần tìm kiếm thêm +2 cấp (tối đa Lv.7 ở đầu game) để khi các món Lv.2-4 đã đủ 3 lần thì tự động đẩy lên cấp cao hơn thay vì lặp lại!
+    var searchMaxCap = Math.min(12, Math.max(safeCap + 2, 6));
+    var allCands = [];
+    var recentHist = (typeof SAVE !== 'undefined' && SAVE && Array.isArray(SAVE.recentOrdersHistory)) ? SAVE.recentOrdersHistory : [];
+
+    candidateBranches.forEach(function (bLn, bRank) {
+        var bMax = Math.min(searchMaxCap, (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(bLn) : 12);
+        for (var cLv = 2; cLv <= bMax; cLv++) {
+            var cid = bLn + '_lv' + cLv;
+            if (extraPending.indexOf(cid) !== -1) continue;
+            var totalCnt = (typeof getTotalItemOrderedAndActiveCount === 'function')
+                ? getTotalItemOrderedAndActiveCount(cid, extraPending)
+                : ((typeof getCampItemCompletedCount === 'function') ? getCampItemCompletedCount(cid) : 0);
+            var maxAllow = (typeof getMaxAllowedCompletions === 'function') ? getMaxAllowedCompletions(cid) : 3;
+            var isMax = totalCnt >= maxAllow;
+            var isRec6 = checkRecentOrActive(cid, 6);
+            var isRec3 = checkRecentOrActive(cid, 3);
+            var lastPos = recentHist.lastIndexOf(cid);
+            var lvDiff = Math.abs(cLv - finalLv) + (cLv > safeCap ? (cLv - safeCap) * 0.6 : 0);
+            allCands.push({
+                id: cid,
+                line: bLn,
+                level: cLv,
+                isMax: isMax,
+                isRec6: isRec6,
+                isRec3: isRec3,
+                totalCnt: totalCnt,
+                lastPos: lastPos,
+                lvDiff: lvDiff,
+                bRank: bRank
+            });
+        }
+    });
+
+    // Ưu tiên 1: Chưa chạm trần 3 lần (!isMax) VÀ không xuất hiện trong 6 món gần nhất / trên thanh nhiệm vụ (!isRec6)
+    var tier1 = allCands.filter(function (c) { return !c.isMax && !c.isRec6; });
+    // Ưu tiên 2: Chưa chạm trần 3 lần (!isMax) VÀ không xuất hiện trong 3 món gần nhất (!isRec3)
+    var tier2 = allCands.filter(function (c) { return !c.isMax && !c.isRec3; });
+    // Ưu tiên 3: Chưa chạm trần 3 lần (!isMax)
+    var tier3 = allCands.filter(function (c) { return !c.isMax; });
+    var pool = tier1.length ? tier1 : (tier2.length ? tier2 : (tier3.length ? tier3 : allCands));
+
+    if (pool.length > 0) {
+        pool.sort(function (a, b) {
+            if (a.totalCnt !== b.totalCnt) return a.totalCnt - b.totalCnt; // Ưu tiên món ít xuất hiện hơn (0 -> 1 -> 2)
+            if (Math.abs(a.lvDiff - b.lvDiff) > 0.4) return a.lvDiff - b.lvDiff;
+            if (a.lastPos !== b.lastPos) return a.lastPos - b.lastPos; // Ưu tiên món đã cách xa lâu nhất
+            return a.bRank - b.bRank;
+        });
+        return pool[0].id;
+    }
+
+    return directId;
 }
 
 // Lấy nhiệm vụ tiếp theo từ danh sách kịch bản riêng của NPC (hoặc sinh nhiệm vụ động đúng sở trường NPC sau khi hoàn thành chuỗi cốt truyện)
@@ -3615,10 +3700,12 @@ function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
             ? qEntry.items.slice(0, 3)
             : ['trai_lv2', 'ban_lv2'];
         var usedLines = [];
+        var forbiddenInGroup = Array.isArray(existingIds) ? existingIds.slice() : [];
         var adaptedItems = rawItems.map(function (rawId) {
-            var adapted = adaptItemToActiveBranches(rawId, activeLines, profile.preferredLines, usedLines, progCap);
+            var adapted = adaptItemToActiveBranches(rawId, activeLines, profile.preferredLines, usedLines, progCap, forbiddenInGroup);
             var aLn = (typeof itemLine === 'function') ? itemLine(adapted) : String(adapted).split('_lv')[0];
             if (usedLines.indexOf(aLn) === -1) usedLines.push(aLn);
+            forbiddenInGroup.push(adapted);
             recordItemInRecentOrdersHistory(adapted);
             if (typeof recordHistoricalOrderedItem === 'function') {
                 recordHistoricalOrderedItem(adapted);
@@ -3685,7 +3772,10 @@ function getCuratedOrderGroup(orderNum, petId, board, existingIds) {
             var targetPrefLn = npcPrefLines[orderNum % npcPrefLines.length];
             var maxPrefLv = (typeof getItemMaxLevel === 'function') ? getItemMaxLevel(targetPrefLn) : 12;
             var newSlot1Id = targetPrefLn + '_lv' + Math.min(maxPrefLv, slot1Lv);
-            if (!Array.isArray(existingIds) || existingIds.indexOf(newSlot1Id) === -1) {
+            var canUsePref = (!Array.isArray(existingIds) || existingIds.indexOf(newSlot1Id) === -1) &&
+                (typeof isItemCompletedMaxTimes !== 'function' || !isItemCompletedMaxTimes(newSlot1Id, existingIds)) &&
+                (typeof isItemRecentlyOrCurrentlyOrdered !== 'function' || !isItemRecentlyOrCurrentlyOrdered(newSlot1Id, existingIds, 6));
+            if (canUsePref) {
                 finalIds[0] = newSlot1Id;
             }
         }
@@ -3793,6 +3883,53 @@ function ensurePetOrderGroups(playerLevel, customBoard) {
     if (!Array.isArray(SAVE.petOrderGroups)) SAVE.petOrderGroups = [];
     if (!SAVE.npcQuestCursor || typeof SAVE.npcQuestCursor !== 'object') SAVE.npcQuestCursor = {};
 
+    // Dọn dẹp các vật phẩm bị lặp quá 3 lần từ dữ liệu lưu cũ trong kho Đồ Cắm Trại (giữ nguyên các món đang trang bị)
+    if (Array.isArray(SAVE.campItems) && SAVE.campItems.length > 0) {
+        var equippedUids = {};
+        if (SAVE.myCampEquipped && typeof SAVE.myCampEquipped === 'object') {
+            Object.keys(SAVE.myCampEquipped).forEach(function (k) {
+                var eqVal = SAVE.myCampEquipped[k];
+                if (eqVal && typeof eqVal === 'object' && eqVal.uid) {
+                    equippedUids[eqVal.uid] = true;
+                }
+            });
+        }
+        var seenCounts = {};
+        // Ưu tiên giữ lại bản đang trang bị trước
+        var sortedCamp = SAVE.campItems.slice().sort(function (a, bIt) {
+            var eqA = (a && a.uid && equippedUids[a.uid]) ? 1 : 0;
+            var eqB = (bIt && bIt.uid && equippedUids[bIt.uid]) ? 1 : 0;
+            return eqB - eqA;
+        });
+        var allowedUids = {};
+        sortedCamp.forEach(function (it) {
+            if (!it || !it.id) return;
+            var maxAllow = (typeof getMaxAllowedCompletions === 'function') ? getMaxAllowedCompletions(it.id) : 3;
+            var curC = seenCounts[it.id] || 0;
+            if (curC < maxAllow) {
+                seenCounts[it.id] = curC + 1;
+                if (it.uid) allowedUids[it.uid] = true;
+                else it._keepCamp = true;
+            }
+        });
+        var filteredCamp = SAVE.campItems.filter(function (it) {
+            if (!it || !it.id) return false;
+            return (it.uid && allowedUids[it.uid]) || it._keepCamp;
+        });
+        filteredCamp.forEach(function (it) { delete it._keepCamp; });
+        if (filteredCamp.length !== SAVE.campItems.length) {
+            SAVE.campItems = filteredCamp;
+        }
+        if (SAVE.itemCompletedCounts && typeof SAVE.itemCompletedCounts === 'object') {
+            Object.keys(SAVE.itemCompletedCounts).forEach(function (cid) {
+                var maxA = (typeof getMaxAllowedCompletions === 'function') ? getMaxAllowedCompletions(cid) : 3;
+                if (SAVE.itemCompletedCounts[cid] > maxA) {
+                    SAVE.itemCompletedCounts[cid] = maxA;
+                }
+            });
+        }
+    }
+
     var pLv = Math.max(1, parseInt(playerLevel, 10) || SAVE.playerLevel || 1);
     var b = (customBoard && customBoard.length) ? customBoard : ((typeof boardData !== 'undefined' && boardData && boardData.length) ? boardData : null);
     var activeGens = (typeof getActiveGeneratorsForOrders === 'function') ? getActiveGeneratorsForOrders(b) : ['generator_cooler'];
@@ -3846,6 +3983,8 @@ function ensurePetOrderGroups(playerLevel, customBoard) {
             g.questTitle = profile.campZone || (profile.chapter + ' · ' + profile.name);
         }
 
+        var groupUsedLines = [];
+        var groupProgCap = Math.max(4, getProgressCapForOrder(currentOrderNum + gIdx, pLv) + 1);
         g.orders.forEach(function (o) {
             if (o) {
                 o.petId = gPetId;
@@ -3853,6 +3992,17 @@ function ensurePetOrderGroups(playerLevel, customBoard) {
                 if (o.stashed && !o.stashedVerified) {
                     o.stashed = false;
                 }
+                // Nếu món đang trên khay bị trùng với khay khác hoặc đã đủ 3 lần trong kho Đồ Cắm Trại -> tự động đổi sang món hợp lệ
+                var completedAlready = (typeof getCampItemCompletedCount === 'function') ? getCampItemCompletedCount(o.id) : 0;
+                var maxAllowForItem = (typeof getMaxAllowedCompletions === 'function') ? getMaxAllowedCompletions(o.id) : 3;
+                if (existingIds.indexOf(o.id) !== -1 || completedAlready >= maxAllowForItem) {
+                    var replacedId = adaptItemToActiveBranches(o.id, activeLines, profile.preferredLines, groupUsedLines, groupProgCap, existingIds);
+                    o.id = replacedId;
+                    o.gold = (typeof orderReward === 'function') ? orderReward(replacedId) : o.gold;
+                }
+                var oLn = (typeof itemLine === 'function') ? itemLine(o.id) : String(o.id).split('_lv')[0];
+                if (groupUsedLines.indexOf(oLn) === -1) groupUsedLines.push(oLn);
+                if (o.id) existingIds.push(o.id);
             }
         });
 
@@ -3862,7 +4012,6 @@ function ensurePetOrderGroups(playerLevel, customBoard) {
             g.contextDialogue = getDynamicOrderContextDialogue(curIds, targetOrderNum, b, gPetId);
         }
 
-        g.orders.forEach(function (o) { if (o && o.id) existingIds.push(o.id); });
         return g;
     }).filter(Boolean);
 

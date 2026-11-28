@@ -13,29 +13,30 @@
     var TICKET_TARGET = 5;
     var ASSET_DIR = 'assets/Minigame/matong/';
 
-    // Cấu hình danh sách frame cho từng loại ong (sẵn sàng mở rộng lên nhiều frame sau này)
+    // Cấu hình 2 frame vỗ cánh (10 fps) & kích thước 130% cho 3 loại ong
     // nativeFacing: 1 = ảnh gốc quay mặt sang PHẢI, -1 = ảnh gốc quay mặt sang TRÁI
+    var BEE_ANIM_FPS = 10;
     var BEE_SPRITE_CONFIG = {
         ong1: {
-            frames: [ASSET_DIR + 'ong1_frame1.png'],
+            frames: [ASSET_DIR + 'ong1_frame1.png', ASSET_DIR + 'ong1_frame2.png'],
             nativeFacing: 1,
-            drawW: 27,
-            drawH: 28,
-            bodyRadius: 9.5
+            drawW: 35,
+            drawH: 36,
+            bodyRadius: 12
         },
         ong2: {
-            frames: [ASSET_DIR + 'ong2_frame1.png'],
+            frames: [ASSET_DIR + 'ong2_frame1.png', ASSET_DIR + 'ong2_frame2.png'],
             nativeFacing: -1,
-            drawW: 31,
-            drawH: 28,
-            bodyRadius: 10
+            drawW: 40,
+            drawH: 36,
+            bodyRadius: 12.5
         },
         ong3: {
-            frames: [ASSET_DIR + 'ong3_frame1.png'],
+            frames: [ASSET_DIR + 'ong3_frame1.png', ASSET_DIR + 'ong3_frame2.png'],
             nativeFacing: 1,
-            drawW: 37,
-            drawH: 38,
-            bodyRadius: 12
+            drawW: 48,
+            drawH: 49,
+            bodyRadius: 15
         }
     };
 
@@ -206,8 +207,8 @@
                     '</div>' +
                     '<div class="honey-intro-rule-tip">' +
                         '• <b>Chạm & kéo</b> để lái chiếc muỗng gỗ khéo léo lên tổ mật trên cành cây.<br>' +
-                        '• Tránh <b>vùng ra-đa màu vàng</b> và <b>thân đàn ong</b> đang bay tuần tra.<br>' +
-                        '• Mẹo: Canh lúc <b>Ong Ngái Ngủ (Zzz)</b> nhắm mắt thu hẹp ra-đa để lách qua!' +
+                        '• Né <b>sóng ra-đa trắng</b> và cẩn thận đàn ong sẽ <b>đuổi theo</b> nếu muỗng lại quá gần!<br>' +
+                        '• Mẹo: Canh lúc <b>Ong Ngái Ngủ (Zzz)</b> nhắm mắt hoặc nhanh tay lách ra xa để cắt đuôi ong!' +
                     '</div>' +
                 '</div>' +
                 '<div class="modal-buttons dp-bottom-btn-row is-dual-btns">' +
@@ -254,122 +255,68 @@
         return a + normalizeAngleDiff(b, a) * t;
     }
 
-    function createStageBees(stageNum) {
-        var speedMul = 1 + Math.min(0.24, (stageNum - 1) * 0.04);
-        return [
-            // 1. Ong Trinh Sát tầng dưới trái -> giữa (nhỏ gọn, chừa lối đi rộng rãi)
-            {
-                type: 'ong1',
-                mode: 'patrol',
-                ax: 76, ay: 642,
-                bx: 268, by: 616,
-                speed: 56 * speedMul,
-                progress: 0.18,
-                dir: 1,
-                pauseTimer: 0,
-                pauseDuration: 0.55,
-                coneLen: 92,
-                coneHalfAngle: 0.30,
-                lookAngle: 0,
-                phase: 0.2
-            },
-            // 2. Ong Trinh Sát tầng dưới phải -> giữa
-            {
-                type: 'ong1',
-                mode: 'patrol',
-                ax: 424, ay: 556,
-                bx: 256, by: 536,
-                speed: 58 * speedMul,
-                progress: 0.35,
-                dir: 1,
-                pauseTimer: 0,
-                pauseDuration: 0.52,
-                coneLen: 94,
-                coneHalfAngle: 0.30,
-                lookAngle: Math.PI,
-                phase: 1.7
-            },
-            // 3. Ong Đội Trưởng mũ phi công cánh phải
-            {
-                type: 'ong3',
-                mode: 'sweeper',
-                ax: 356, ay: 468,
-                bx: 430, by: 420,
-                speed: 42 * speedMul,
-                progress: 0.5,
-                dir: -1,
-                pauseTimer: 0,
-                pauseDuration: 0.40,
-                baseLookAngle: 2.36,
-                sweepAmp: 0.38,
-                sweepSpeed: 1.45 * speedMul,
-                coneLen: 104,
-                coneHalfAngle: 0.32,
-                lookAngle: 2.36,
-                phase: 2.9
-            },
-            // 4. Ong Ngái Ngủ trung tâm (ngủ Zzz lâu hơn 2.8s để người chơi dễ lách qua)
-            {
-                type: 'ong2',
-                mode: 'sleeper',
-                ax: 168, ay: 452,
-                bx: 264, by: 446,
-                speed: 34 * speedMul,
-                progress: 0.4,
-                dir: 1,
-                sleepCycle: 0.8,
-                awakeDuration: 2.2,
-                sleepDuration: 2.8,
-                isSleeping: false,
-                coneLen: 92,
-                coneHalfAngle: 0.31,
-                lookAngle: 2.28,
-                phase: 4.1
-            },
-            // 5. Ong Trinh Sát cánh trái tầng trên
-            {
-                type: 'ong1',
-                mode: 'patrol',
-                ax: 76, ay: 382,
-                bx: 214, by: 362,
-                speed: 56 * speedMul,
-                progress: 0.72,
-                dir: -1,
-                pauseTimer: 0,
-                pauseDuration: 0.52,
-                coneLen: 90,
-                coneHalfAngle: 0.29,
-                lookAngle: 0.5,
-                phase: 5.3
-            },
-            // 6. Ong Đội Trưởng gác cổng dưới Tổ Mật
-            {
-                type: 'ong3',
-                mode: 'sweeper',
-                ax: 162, ay: 328,
-                bx: 362, by: 328,
-                speed: 48 * speedMul,
-                progress: 0.22,
-                dir: 1,
-                pauseTimer: 0,
-                pauseDuration: 0.45,
-                baseLookAngle: 1.57,
-                sweepAmp: 0.48,
-                sweepSpeed: 1.55 * speedMul,
-                coneLen: 98,
-                coneHalfAngle: 0.31,
-                lookAngle: 1.57,
-                phase: 0.9
-            }
-        ];
-    }
+    // Đội hình bóng đá 3-3-2 gồm 8 cầu thủ ong phủ kín toàn sân (3 Hậu vệ - 3 Tiền vệ - 2 Tiền đạo)
+    // Khóa chặt cả 2 biên trái/phải lẫn trung lộ, tự động bọc lót & hoán đổi vị trí liên tục!
+    var FORMATION_SLOTS = [
+        // Hàng Hậu Vệ gần tổ (3 vị trí: Biên Trái - Trung Vệ - Biên Phải)
+        { id: 0, x: 76,  y: 274, patrolDx: 38, patrolDy: 12, baseLook: 1.18, sweepAmp: 0.48 },
+        { id: 1, x: 250, y: 256, patrolDx: 44, patrolDy: 10, baseLook: 1.57, sweepAmp: 0.52 },
+        { id: 2, x: 424, y: 274, patrolDx: 38, patrolDy: 12, baseLook: 1.96, sweepAmp: 0.48 },
+        // Hàng Tiền Vệ giữa sân (3 vị trí: Cánh Trái - Trung Tâm - Cánh Phải)
+        { id: 3, x: 72,  y: 432, patrolDx: 40, patrolDy: 18, baseLook: 1.15, sweepAmp: 0.50 },
+        { id: 4, x: 250, y: 416, patrolDx: 46, patrolDy: 12, baseLook: 1.57, sweepAmp: 0.54 },
+        { id: 5, x: 428, y: 432, patrolDx: 40, patrolDy: 18, baseLook: 1.99, sweepAmp: 0.50 },
+        // Hàng Tiền Đạo tầng dưới (2 vị trí: Lệch Trái - Lệch Phải)
+        { id: 6, x: 132, y: 586, patrolDx: 68, patrolDy: 16, baseLook: 1.32, sweepAmp: 0.50 },
+        { id: 7, x: 368, y: 586, patrolDx: 68, patrolDy: 16, baseLook: 1.82, sweepAmp: 0.50 }
+    ];
 
-    function createBonusHoneyDrops() {
-        return [
-            { x: 96,  y: 545, r: 16, collected: false, phase: 0.4 },
-            { x: 408, y: 486, r: 16, collected: false, phase: 1.9 },
-            { x: 112, y: 308, r: 16, collected: false, phase: 3.2 }
+    function createStageBees(stageNum) {
+        var speedMul = 1 + Math.min(0.26, (stageNum - 1) * 0.04);
+        var half45 = Math.PI / 8; // Góc xòe tổng 45 độ (mỗi bên 22.5 độ)
+        var specs = [
+            { slotIdx: 0, type: 'ong1', mode: 'patrol',  speed: 58, chaseSpeed: 124, senseRadius: 96,  coneLen: 108, phase: 0.2 },
+            { slotIdx: 1, type: 'ong3', mode: 'sweeper', speed: 54, chaseSpeed: 136, senseRadius: 110, coneLen: 116, phase: 1.0 },
+            { slotIdx: 2, type: 'ong1', mode: 'patrol',  speed: 58, chaseSpeed: 124, senseRadius: 96,  coneLen: 108, phase: 2.0 },
+            { slotIdx: 3, type: 'ong1', mode: 'patrol',  speed: 62, chaseSpeed: 126, senseRadius: 98,  coneLen: 110, phase: 3.1 },
+            { slotIdx: 4, type: 'ong2', mode: 'sleeper', speed: 44, chaseSpeed: 112, senseRadius: 84,  coneLen: 104, phase: 4.1 },
+            { slotIdx: 5, type: 'ong3', mode: 'sweeper', speed: 52, chaseSpeed: 134, senseRadius: 108, coneLen: 116, phase: 4.9 },
+            { slotIdx: 6, type: 'ong1', mode: 'patrol',  speed: 64, chaseSpeed: 126, senseRadius: 98,  coneLen: 108, phase: 5.5 },
+            { slotIdx: 7, type: 'ong3', mode: 'sweeper', speed: 56, chaseSpeed: 136, senseRadius: 110, coneLen: 116, phase: 0.8 }
         ];
+        return specs.map(function (sp, idx) {
+            var sl = FORMATION_SLOTS[sp.slotIdx];
+            return {
+                id: idx,
+                slotIdx: sp.slotIdx,
+                type: sp.type,
+                mode: sp.mode,
+                speed: sp.speed * speedMul,
+                chaseSpeed: (sp.chaseSpeed + 38) * speedMul,
+                maxChaseSpeed: (sp.chaseSpeed + 105) * speedMul,
+                senseRadius: sp.senseRadius + 14,
+                maxLeashDist: 215,
+                maxChaseDuration: 2.9,
+                vx: 0,
+                vy: 0,
+                wpX: sl.x,
+                wpY: sl.y,
+                flightPhase: 'cruise', // 'cruise' | 'hover' | 'burst'
+                flightTimer: 0.4 + Math.random() * 1.1,
+                speedFactor: 0.9 + Math.random() * 0.5,
+                curveSign: (idx % 2 === 0) ? 1 : -1,
+                sweepSpeed: (1.55 + (idx % 3) * 0.18) * speedMul,
+                coneLen: sp.coneLen + 8,
+                coneHalfAngle: half45,
+                lookAngle: sl.baseLook,
+                sleepCycle: 0.8,
+                awakeDuration: 2.6,
+                sleepDuration: 2.0,
+                isSleeping: false,
+                phase: sp.phase,
+                coverCooldown: 0
+            };
+        });
     }
 
     function openHoneyMinigame(opts) {
@@ -393,12 +340,10 @@
                     '<div class="honey-mg-hud-pill">' +
                         '<img src="' + SCENE_IMAGES_SRC.ticketIcon + '" alt="">' +
                         '<span id="honey-mg-stage-txt">' + (useTickets ? ('Tầng ' + stageNum) : 'Chơi Thử') + '</span>' +
-                        '<span class="honey-mg-hud-sep">•</span>' +
-                        '<span id="honey-mg-drops-txt">Giọt mật: 0/3</span>' +
                     '</div>' +
                 '</div>' +
                 '<div class="honey-mg-guide-banner" id="honey-mg-guide-banner">' +
-                    'Chạm & kéo để di chuyển muỗng mật né vùng ra-đa vàng tiến tới Tổ Ong!' +
+                    'Chạm & kéo muỗng vượt qua đội hình đàn ong để tiến tới Tổ Mật!' +
                 '</div>' +
                 '<div class="honey-mg-result-layer" id="honey-mg-result-layer" style="display:none;"></div>' +
             '</div>';
@@ -408,7 +353,6 @@
         var frameEl = root.querySelector('#honey-mg-frame');
         var canvas = root.querySelector('#honey-mg-canvas');
         var ctx = canvas.getContext('2d');
-        var dropsTxtEl = root.querySelector('#honey-mg-drops-txt');
         var guideBannerEl = root.querySelector('#honey-mg-guide-banner');
         var resultLayerEl = root.querySelector('#honey-mg-result-layer');
 
@@ -424,8 +368,8 @@
             shakeTimer: 0,
             shakeMag: 0,
             hasMovedOnce: false,
-            collectedDrops: 0,
-            hive: { x: 262, y: 196, hitY: 212, hitR: 38, bounce: 0 },
+            rotationTimer: 3.8,
+            hive: { x: 262, y: 157, hitY: 179, hitR: 32, bounce: 0 },
             spoon: {
                 x: 250,
                 y: 804,
@@ -448,15 +392,14 @@
             },
             keys: {},
             bees: createStageBees(stageNum),
-            drops: createBonusHoneyDrops(),
             fireflies: [],
             particles: [],
             floatingTexts: [],
             hiveDrips: [],
             orbitBees: [
-                { angle: 0.2, speed: 2.1, rx: 66, ry: 22, yOff: -16 },
-                { angle: 2.4, speed: -1.8, rx: 72, ry: 25, yOff: 8 },
-                { angle: 4.5, speed: 2.5, rx: 56, ry: 18, yOff: 26 }
+                { angle: 0.2, speed: 2.0, rx: 48, ry: 16, yOff: -12, type: 'ong1', phase: 0.1 },
+                { angle: 2.4, speed: -1.7, rx: 54, ry: 19, yOff: 6,  type: 'ong1', phase: 1.4 },
+                { angle: 4.5, speed: 2.3, rx: 42, ry: 14, yOff: 20, type: 'ong3', phase: 2.7 }
             ],
             caughtByBee: null,
             suspicion: 0
@@ -474,12 +417,21 @@
             });
         }
 
-        // Khởi tạo tọa độ ban đầu cho đàn ong
+        // Khởi tạo tọa độ & trạng thái đội hình ban đầu cho đàn ong
         state.bees.forEach(function (b) {
-            b.x = b.ax + (b.bx - b.ax) * b.progress;
-            b.y = b.ay + (b.by - b.ay) * b.progress;
-            b.facing = (b.bx >= b.ax) ? 1 : -1;
+            var sl = FORMATION_SLOTS[b.slotIdx] || FORMATION_SLOTS[0];
+            b.x = clamp(sl.x + (Math.random() - 0.5) * 44, 38, W - 38);
+            b.y = clamp(sl.y + (Math.random() - 0.5) * 28, 224, 650);
+            b.wpX = b.x;
+            b.wpY = b.y;
+            b.vx = 0;
+            b.vy = 0;
+            b.facing = (Math.cos(b.lookAngle) >= 0) ? 1 : -1;
             b.alertLevel = 0;
+            b.aiState = 'patrol'; // 'patrol' | 'chase' | 'return'
+            b.chaseTimer = 0;
+            b.chaseCooldown = 0;
+            b.coverCooldown = 0;
             b.zzzParticles = [];
             b.zzzSpawnAcc = 0;
         });
@@ -536,7 +488,7 @@
             var dx = pt.x - state.drag.startPointerX;
             var dy = pt.y - state.drag.startPointerY;
             state.spoon.targetX = clamp(state.drag.startSpoonX + dx, 46, W - 46);
-            state.spoon.targetY = clamp(state.drag.startSpoonY + dy, 175, H - 48);
+            state.spoon.targetY = clamp(state.drag.startSpoonY + dy, 135, H - 48);
         }
 
         function onPointerUp(e) {
@@ -672,7 +624,12 @@
                         state.reviveUsed = true;
                         state.camouflageTimer = 2.8;
                         state.suspicion = 0;
-                        state.bees.forEach(function (b) { b.alertLevel = 0; });
+                        state.bees.forEach(function (b) {
+                            b.alertLevel = 0;
+                            b.aiState = 'return';
+                            b.chaseTimer = 0;
+                            b.chaseCooldown = 1.8;
+                        });
                         state.caughtByBee = null;
                         resultLayerEl.style.display = 'none';
                         state.status = 'playing';
@@ -702,7 +659,7 @@
         function grantHoneyRewards(multiplier) {
             var mul = multiplier || 1;
             var energyGain = 35 * mul;
-            var goldGain = (600 + state.collectedDrops * 100) * mul;
+            var goldGain = 800 * mul;
             var gemGain = 3 * mul;
 
             if (typeof playerEnergy !== 'undefined') {
@@ -741,7 +698,7 @@
         function showWinResultCard() {
             if (!resultLayerEl) return;
             var baseEnergy = 35;
-            var baseGold = 600 + state.collectedDrops * 100;
+            var baseGold = 800;
             var baseGem = 3;
 
             resultLayerEl.style.display = 'flex';
@@ -749,7 +706,7 @@
                 '<div class="honey-result-card is-win">' +
                     '<div class="honey-result-ribbon is-win">THU HOẠCH MẬT THÀNH CÔNG!</div>' +
                     '<img src="' + SCENE_IMAGES_SRC.hive + '" class="honey-win-hive-img" alt="Tổ Mật">' +
-                    '<div class="honey-result-sub">Tuyệt đỉnh! Bạn đã khéo léo vượt qua đàn ong và lấy trọn giọt mật vàng óng (' + state.collectedDrops + '/3 giọt phụ)!</div>' +
+                    '<div class="honey-result-sub">Tuyệt đỉnh! Bạn đã khéo léo vượt qua đội hình đàn ong và lấy trọn mật vàng óng!</div>' +
                     '<div class="honey-win-rewards">' +
                         '<div class="honey-win-rw-chip"><img src="assets/images_webp/ui/icon_nangluong.webp" alt=""><span>+' + baseEnergy + '</span></div>' +
                         '<div class="honey-win-rw-chip"><img src="assets/images_webp/ui/icon_glod.webp" alt=""><span>+' + baseGold.toLocaleString('vi-VN') + '</span></div>' +
@@ -793,19 +750,26 @@
             state.spoon.tilt = 0;
             state.suspicion = 0;
             state.camouflageTimer = 0;
-            state.collectedDrops = 0;
+            state.rotationTimer = 4.5;
             state.caughtByBee = null;
             state.bees = createStageBees(stageNum);
             state.bees.forEach(function (b) {
-                b.x = b.ax + (b.bx - b.ax) * b.progress;
-                b.y = b.ay + (b.by - b.ay) * b.progress;
-                b.facing = (b.bx >= b.ax) ? 1 : -1;
+                var sl = FORMATION_SLOTS[b.slotIdx] || FORMATION_SLOTS[0];
+                b.x = clamp(sl.x + (Math.random() - 0.5) * 44, 38, W - 38);
+                b.y = clamp(sl.y + (Math.random() - 0.5) * 28, 224, 650);
+                b.wpX = b.x;
+                b.wpY = b.y;
+                b.vx = 0;
+                b.vy = 0;
+                b.facing = (Math.cos(b.lookAngle) >= 0) ? 1 : -1;
                 b.alertLevel = 0;
+                b.aiState = 'patrol';
+                b.chaseTimer = 0;
+                b.chaseCooldown = 0;
+                b.coverCooldown = 0;
                 b.zzzParticles = [];
                 b.zzzSpawnAcc = 0;
             });
-            state.drops = createBonusHoneyDrops();
-            if (dropsTxtEl) dropsTxtEl.textContent = 'Giọt mật: 0/3';
             if (resultLayerEl) resultLayerEl.style.display = 'none';
             state.lastTs = performance.now();
         }
@@ -827,23 +791,30 @@
 
             // Hỗ trợ phím mũi tên / WASD khi test trên máy tính
             if (state.status === 'playing') {
-                var kbSpeed = 240 * dt;
+                var kbSpeed = 360 * dt;
                 if (state.keys.ArrowLeft || state.keys.a || state.keys.A) state.spoon.targetX -= kbSpeed;
                 if (state.keys.ArrowRight || state.keys.d || state.keys.D) state.spoon.targetX += kbSpeed;
                 if (state.keys.ArrowUp || state.keys.w || state.keys.W) state.spoon.targetY -= kbSpeed;
                 if (state.keys.ArrowDown || state.keys.s || state.keys.S) state.spoon.targetY += kbSpeed;
                 state.spoon.targetX = clamp(state.spoon.targetX, 46, W - 46);
-                state.spoon.targetY = clamp(state.spoon.targetY, 175, H - 48);
+                state.spoon.targetY = clamp(state.spoon.targetY, 135, H - 48);
             }
 
-            // Nội suy mượt cho muỗng mật + độ nghiêng theo vận tốc ngang
-            var followRate = Math.min(1, dt * 18);
+            // Di chuyển muỗng mật mượt mà với tốc độ tối đa 450 px/s
             var prevX = state.spoon.x;
             var prevY = state.spoon.y;
-            state.spoon.x += (state.spoon.targetX - state.spoon.x) * followRate;
-            state.spoon.y += (state.spoon.targetY - state.spoon.y) * followRate;
+            var toTx = state.spoon.targetX - state.spoon.x;
+            var toTy = state.spoon.targetY - state.spoon.y;
+            var toDist = Math.hypot(toTx, toTy);
+            if (toDist > 0.2) {
+                var maxSpoonStep = (state.status === 'playing' ? 450 : 560) * dt;
+                var desiredStep = Math.min(toDist, toDist * Math.min(1, dt * 18), maxSpoonStep);
+                state.spoon.x += (toTx / toDist) * desiredStep;
+                state.spoon.y += (toTy / toDist) * desiredStep;
+            }
             var vxSpoon = (state.spoon.x - prevX) / Math.max(0.001, dt);
             var vySpoon = (state.spoon.y - prevY) / Math.max(0.001, dt);
+            var spoonSpeedNow = Math.hypot(vxSpoon, vySpoon);
             var targetTilt = clamp(vxSpoon * 0.0011, -0.30, 0.30);
             state.spoon.tilt += (targetTilt - state.spoon.tilt) * Math.min(1, dt * 12);
 
@@ -864,11 +835,11 @@
             // Giọt mật nhỏ tự nhiên rơi từ Tổ Ong
             if (Math.random() < dt * 0.85) {
                 state.hiveDrips.push({
-                    x: state.hive.x + (Math.random() - 0.5) * 10,
-                    y: state.hive.y + 62,
+                    x: state.hive.x + (Math.random() - 0.5) * 8,
+                    y: state.hive.y + 42,
                     vy: 28,
                     life: 0,
-                    maxLife: 1.15
+                    maxLife: 1.05
                 });
             }
             for (var di = state.hiveDrips.length - 1; di >= 0; di--) {
@@ -913,73 +884,247 @@
             var headX = state.spoon.x + state.spoon.headOffsetX;
             var headY = state.spoon.y + state.spoon.headOffsetY;
 
-            // Cập nhật từng con ong tuần tra & vùng quét ra-đa
+            // Hàm điều phối bọc lót: khi 1 con ong rời vị trí (đuổi theo muỗng), gọi đồng đội gần nhất bay vào thế chỗ!
+            function assignCoverForBee(leavingBee) {
+                if (leavingBee.coverCooldown > 0) return;
+                var vacatedSlot = FORMATION_SLOTS[leavingBee.slotIdx];
+                if (!vacatedSlot) return;
+                var bestMate = null;
+                var bestDist = Infinity;
+                for (var mi = 0; mi < state.bees.length; mi++) {
+                    var mate = state.bees[mi];
+                    if (mate === leavingBee) continue;
+                    if (mate.aiState !== 'patrol' || mate.isSleeping || mate.coverCooldown > 0) continue;
+                    var d = Math.hypot(mate.x - vacatedSlot.x, mate.y - vacatedSlot.y);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        bestMate = mate;
+                    }
+                }
+                if (bestMate) {
+                    var tmpSlot = leavingBee.slotIdx;
+                    leavingBee.slotIdx = bestMate.slotIdx;
+                    bestMate.slotIdx = tmpSlot;
+                    leavingBee.coverCooldown = 2.6;
+                    bestMate.coverCooldown = 2.6;
+                }
+            }
+
+            // Hoán đổi vị trí định kỳ giữa các cầu thủ ong đang tuần tra để đội hình luôn linh hoạt không hở khoảng trống
+            if (state.status === 'playing') {
+                state.rotationTimer -= dt;
+                if (state.rotationTimer <= 0) {
+                    state.rotationTimer = 4.2 + Math.random() * 1.6;
+                    var readyBees = state.bees.filter(function (mb) {
+                        return mb.aiState === 'patrol' && !mb.isSleeping && mb.coverCooldown <= 0;
+                    });
+                    if (readyBees.length >= 2) {
+                        var pickA = readyBees[Math.floor(Math.random() * readyBees.length)];
+                        var slotA = FORMATION_SLOTS[pickA.slotIdx];
+                        var nearestB = null;
+                        var minD = Infinity;
+                        for (var ri = 0; ri < readyBees.length; ri++) {
+                            var cand = readyBees[ri];
+                            if (cand === pickA) continue;
+                            var slotB = FORMATION_SLOTS[cand.slotIdx];
+                            var distAB = Math.hypot(slotA.x - slotB.x, slotA.y - slotB.y);
+                            if (distAB < minD) {
+                                minD = distAB;
+                                nearestB = cand;
+                            }
+                        }
+                        if (nearestB) {
+                            var swapIdx = pickA.slotIdx;
+                            pickA.slotIdx = nearestB.slotIdx;
+                            nearestB.slotIdx = swapIdx;
+                            pickA.coverCooldown = 3.0;
+                            nearestB.coverCooldown = 3.0;
+                        }
+                    }
+                }
+            }
+
+            // Chọn điểm bay ngẫu nhiên tự nhiên trong phạm vi khu vực đội hình của con ong
+            function pickOrganicWaypoint(bee, slotObj) {
+                var spreadX = Math.max(66, slotObj.patrolDx * 1.9);
+                var spreadY = Math.max(46, slotObj.patrolDy * 2.8);
+                var ang = Math.random() * Math.PI * 2;
+                var rad = 0.35 + Math.random() * 0.65;
+                bee.wpX = clamp(slotObj.x + Math.cos(ang) * spreadX * rad, 34, W - 34);
+                bee.wpY = clamp(slotObj.y + Math.sin(ang) * spreadY * rad, 218, 668);
+                bee.curveSign = (Math.random() < 0.5) ? 1 : -1;
+            }
+
+            // Cập nhật từng con ong (Bay tự nhiên có gia tốc & đột ngột tăng tốc + đội hình 4-3-3 bọc lót + đuổi đón đầu)
             var maxFrameDanger = 0;
             var dangerBee = null;
+            var spoonInSafeBush = (headY > 710);
 
             for (var bi = 0; bi < state.bees.length; bi++) {
                 var b = state.bees[bi];
-                var segDx = b.bx - b.ax;
-                var segDy = b.by - b.ay;
-                var segLen = Math.max(1, Math.hypot(segDx, segDy));
+                var slot = FORMATION_SLOTS[b.slotIdx] || FORMATION_SLOTS[0];
+                var hoverY = Math.sin(state.elapsed * 6.8 + b.phase) * 3.8;
 
-                if (state.status === 'playing' || state.status === 'win_anim') {
-                    if (b.pauseTimer > 0) {
-                        b.pauseTimer = Math.max(0, b.pauseTimer - dt);
+                if (b.chaseCooldown > 0) b.chaseCooldown = Math.max(0, b.chaseCooldown - dt);
+                if (b.coverCooldown > 0) b.coverCooldown = Math.max(0, b.coverCooldown - dt);
+
+                // Cập nhật chu kỳ ngủ Zzz cho Ong Ngái Ngủ (chỉ khi không đang đuổi theo)
+                if (b.mode === 'sleeper') {
+                    if (b.aiState !== 'chase') {
+                        b.sleepCycle += dt;
+                        var totalCyc = b.awakeDuration + b.sleepDuration;
+                        var cycPos = b.sleepCycle % totalCyc;
+                        b.isSleeping = (cycPos >= b.awakeDuration);
                     } else {
-                        b.progress += (b.speed * dt / segLen) * b.dir;
-                        if (b.progress >= 1) {
-                            b.progress = 1;
-                            b.dir = -1;
-                            b.pauseTimer = b.pauseDuration || 0.3;
-                        } else if (b.progress <= 0) {
-                            b.progress = 0;
-                            b.dir = 1;
-                            b.pauseTimer = b.pauseDuration || 0.3;
-                        }
+                        b.isSleeping = false;
                     }
-                } else if (state.status === 'caught_anim' && state.caughtByBee === b) {
-                    // Ong phát hiện lao nhẹ về phía muỗng
-                    b.x += (headX - b.x) * Math.min(1, dt * 5);
-                    b.y += (headY - b.y) * Math.min(1, dt * 5);
-                }
-
-                if (state.status !== 'caught_anim' || state.caughtByBee !== b) {
-                    var hoverY = Math.sin(state.elapsed * 6.8 + b.phase) * 5.5;
-                    b.x = b.ax + segDx * b.progress;
-                    b.y = b.ay + segDy * b.progress + hoverY;
-                }
-
-                // Tính góc hướng nhìn & hướng lật mặt của ong
-                var moveVx = segDx * b.dir;
-                var moveVy = segDy * b.dir;
-
-                if (b.mode === 'sweeper') {
-                    var targetSweep = b.baseLookAngle + Math.sin(state.elapsed * b.sweepSpeed + b.phase) * b.sweepAmp;
-                    b.lookAngle = lerpAngle(b.lookAngle, targetSweep, Math.min(1, dt * 10));
-                    b.facing = (Math.cos(b.lookAngle) >= 0) ? 1 : -1;
-                } else if (b.mode === 'sleeper') {
-                    b.sleepCycle += dt;
-                    var totalCyc = b.awakeDuration + b.sleepDuration;
-                    var cycPos = b.sleepCycle % totalCyc;
-                    b.isSleeping = (cycPos >= b.awakeDuration);
-
-                    // Khi ngủ: sinh chữ Zzz bay lên
                     if (b.isSleeping) {
                         b.zzzSpawnAcc += dt;
                         if (b.zzzSpawnAcc >= 0.55) {
                             b.zzzSpawnAcc = 0;
-                            b.zzzParticles.push({ x: b.x + (b.facing * 7), y: b.y - 10, life: 0, maxLife: 1.1 });
+                            b.zzzParticles.push({ x: b.x + (b.facing * 9), y: b.y - 13, life: 0, maxLife: 1.1 });
                         }
                     }
-                    var slAngle = (b.dir >= 0) ? 0.55 : (Math.PI - 0.55);
-                    b.lookAngle = lerpAngle(b.lookAngle, slAngle, Math.min(1, dt * 6));
-                    b.facing = (Math.cos(b.lookAngle) >= 0) ? 1 : -1;
+                }
+
+                if (state.status === 'caught_anim' && state.caughtByBee === b) {
+                    b.x += (headX - b.x) * Math.min(1, dt * 6);
+                    b.y += (headY - b.y) * Math.min(1, dt * 6);
+                } else if (state.status === 'playing' && b.aiState === 'chase') {
+                    // ĐANG ĐUỔI THEO CÓ GIA TỐC & ĐÓN ĐẦU HƯỚNG CHẠY CỦA MUỖNG!
+                    b.chaseTimer += dt;
+                    var leadX = clamp(headX + vxSpoon * 0.16, 36, W - 36);
+                    var leadY = clamp(headY + vySpoon * 0.16, 170, 705);
+                    var chaseDx = leadX - b.x;
+                    var chaseDy = leadY - b.y;
+                    var chaseDist = Math.max(1, Math.hypot(chaseDx, chaseDy));
+                    var rawSpoonDist = Math.hypot(headX - b.x, headY - b.y);
+                    var distFromSlot = Math.hypot(b.x - slot.x, b.y - slot.y);
+
+                    var lostAggro = spoonInSafeBush ||
+                        state.camouflageTimer > 0 ||
+                        rawSpoonDist > (b.coneLen || 110) * 1.45 ||
+                        distFromSlot > (b.maxLeashDist || 215) ||
+                        b.chaseTimer >= (b.maxChaseDuration || 2.9);
+
+                    if (lostAggro) {
+                        b.aiState = 'return';
+                        b.chaseTimer = 0;
+                        b.chaseCooldown = 1.35;
+                        b.alertLevel = Math.min(b.alertLevel, 0.35);
+                        pickOrganicWaypoint(b, slot);
+                    } else {
+                        // Tăng tốc dần theo thời gian rượt đuổi (gia tốc mạnh lên tới maxChaseSpeed)
+                        var ramp = clamp(b.chaseTimer / 0.85, 0, 1);
+                        var targetSpd = b.chaseSpeed + (b.maxChaseSpeed - b.chaseSpeed) * ramp;
+                        var desVx = (chaseDx / chaseDist) * targetSpd;
+                        var desVy = (chaseDy / chaseDist) * targetSpd;
+                        var chaseAccel = Math.min(1, dt * 6.5);
+                        b.vx += (desVx - b.vx) * chaseAccel;
+                        b.vy += (desVy - b.vy) * chaseAccel;
+                        b.x = clamp(b.x + b.vx * dt, 26, W - 26);
+                        b.y = clamp(b.y + b.vy * dt + Math.cos(state.elapsed * 12 + b.phase) * 0.4, 185, 705);
+
+                        var angChase = Math.atan2(headY - b.y, headX - b.x);
+                        b.lookAngle = lerpAngle(b.lookAngle, angChase, Math.min(1, dt * 12));
+                        b.facing = (Math.cos(b.lookAngle) >= 0) ? 1 : -1;
+                    }
+                } else if (state.status === 'playing' && b.aiState === 'return') {
+                    // BAY QUAY VỀ VỊ TRÍ ĐỘI HÌNH MỚI VỚI QUÁN TÍNH MƯỢT
+                    var retDx = slot.x - b.x;
+                    var retDy = slot.y - b.y;
+                    var retDist = Math.hypot(retDx, retDy);
+                    if (retDist <= 28) {
+                        b.aiState = 'patrol';
+                        pickOrganicWaypoint(b, slot);
+                    } else {
+                        var rSpd = Math.max(105, b.speed * 1.75);
+                        var rDesVx = (retDx / retDist) * rSpd;
+                        var rDesVy = (retDy / retDist) * rSpd;
+                        b.vx += (rDesVx - b.vx) * Math.min(1, dt * 4.8);
+                        b.vy += (rDesVy - b.vy) * Math.min(1, dt * 4.8);
+                        b.x = clamp(b.x + b.vx * dt, 28, W - 28);
+                        b.y = clamp(b.y + b.vy * dt, 200, 680);
+                        var angRet = Math.atan2(b.vy, b.vx);
+                        b.lookAngle = lerpAngle(b.lookAngle, angRet, Math.min(1, dt * 8));
+                        b.facing = (Math.cos(b.lookAngle) >= 0) ? 1 : -1;
+                    }
                 } else {
-                    // Ong trinh sát nghiêng nhẹ chùm ra-đa xuống phía dưới đồng cỏ nơi muỗng đi lên
-                    var rawMoveAngle = Math.atan2(moveVy + 28, moveVx);
-                    b.lookAngle = lerpAngle(b.lookAngle, rawMoveAngle, Math.min(1, dt * 8.5));
-                    b.facing = (Math.cos(b.lookAngle) >= 0) ? 1 : -1;
+                    // BAY TỰ NHIÊN KHÔNG THEO QUY LUẬT: THAY ĐỔI TỐC ĐỘ, LƠ LỬNG, VỌT TĂNG TỐC & LƯỢN CONG
+                    b.flightTimer -= dt;
+                    var distToWp = Math.hypot(b.wpX - b.x, b.wpY - b.y);
+                    var distFromHome = Math.hypot(slot.x - b.x, slot.y - b.y);
+
+                    if (b.isSleeping) {
+                        // Đang ngủ Zzz: giảm dần vận tốc về lơ lửng tại chỗ
+                        b.vx *= Math.max(0, 1 - dt * 4.5);
+                        b.vy *= Math.max(0, 1 - dt * 4.5);
+                        b.x = clamp(b.x + b.vx * dt, 28, W - 28);
+                        b.y = clamp(b.y + b.vy * dt + hoverY * dt * 2.5, 205, 675);
+                    } else {
+                        if (distFromHome > 135) {
+                            // Bọc lót / hoán đổi sang ô đội hình mới: tăng tốc bay sang thế chỗ!
+                            b.flightPhase = 'burst';
+                            b.wpX = slot.x + (Math.random() - 0.5) * 32;
+                            b.wpY = slot.y + (Math.random() - 0.5) * 24;
+                            b.flightTimer = 0.65;
+                            b.speedFactor = 1.95;
+                        } else if (b.flightTimer <= 0 || distToWp < 18) {
+                            // Chuyển pha bay ngẫu nhiên: lơ lửng quan sát / bay lượn / bất ngờ vọt tăng tốc!
+                            var roll = Math.random();
+                            if (roll < 0.22) {
+                                b.flightPhase = 'hover';
+                                b.flightTimer = 0.25 + Math.random() * 0.55;
+                                b.speedFactor = 0.15;
+                            } else if (roll < 0.56) {
+                                b.flightPhase = 'burst';
+                                b.flightTimer = 0.55 + Math.random() * 0.75;
+                                b.speedFactor = 1.75 + Math.random() * 0.65;
+                                pickOrganicWaypoint(b, slot);
+                            } else {
+                                b.flightPhase = 'cruise';
+                                b.flightTimer = 0.85 + Math.random() * 1.15;
+                                b.speedFactor = 0.75 + Math.random() * 0.65;
+                                pickOrganicWaypoint(b, slot);
+                            }
+                        }
+
+                        var toWpX = b.wpX - b.x;
+                        var toWpY = b.wpY - b.y;
+                        var wpDist = Math.max(1, Math.hypot(toWpX, toWpY));
+                        var desiredSpeed = b.speed * b.speedFactor;
+
+                        // Cộng thêm lực lượn cong ngang (curve) để đường bay mềm mại tự nhiên như ong thật
+                        var nx = toWpX / wpDist;
+                        var ny = toWpY / wpDist;
+                        var curveStr = (b.flightPhase === 'hover') ? 0 : (0.34 * b.curveSign * Math.sin(state.elapsed * 3.1 + b.phase));
+                        var steerX = nx - ny * curveStr;
+                        var steerY = ny + nx * curveStr;
+                        var steerLen = Math.max(0.001, Math.hypot(steerX, steerY));
+
+                        var targetVx = (steerX / steerLen) * desiredSpeed;
+                        var targetVy = (steerY / steerLen) * desiredSpeed;
+                        var accelRate = (b.flightPhase === 'burst') ? 5.6 : (b.flightPhase === 'hover' ? 4.2 : 3.2);
+                        b.vx += (targetVx - b.vx) * Math.min(1, dt * accelRate);
+                        b.vy += (targetVy - b.vy) * Math.min(1, dt * accelRate);
+
+                        b.x = clamp(b.x + b.vx * dt, 28, W - 28);
+                        b.y = clamp(b.y + b.vy * dt + hoverY * dt * 2.2, 205, 675);
+
+                        // Hướng nhìn kết hợp giữa hướng bay thực tế & đảo mắt quét về phía sân dưới
+                        var curSpd = Math.hypot(b.vx, b.vy);
+                        var targetLook;
+                        if (b.flightPhase === 'burst' && curSpd > 65) {
+                            targetLook = Math.atan2(b.vy + 18, b.vx);
+                        } else {
+                            var sweepLook = slot.baseLook + Math.sin(state.elapsed * b.sweepSpeed + b.phase) * (slot.sweepAmp + 0.14);
+                            targetLook = (curSpd > 32)
+                                ? lerpAngle(sweepLook, Math.atan2(b.vy + 22, b.vx), 0.45)
+                                : sweepLook;
+                        }
+                        b.lookAngle = lerpAngle(b.lookAngle, targetLook, Math.min(1, dt * 7.5));
+                        b.facing = (Math.cos(b.lookAngle) >= 0) ? 1 : -1;
+                    }
                 }
 
                 for (var zi = b.zzzParticles.length - 1; zi >= 0; zi--) {
@@ -990,57 +1135,85 @@
                     if (zp.life >= zp.maxLife) b.zzzParticles.splice(zi, 1);
                 }
 
-                // Hạt phấn bay sau đuôi ong
-                if (Math.random() < dt * 5.5) {
+                // Hạt phấn bay sau đuôi ong (bay dày hơn khi vọt tăng tốc hoặc rượt đuổi)
+                if (Math.random() < dt * (b.aiState === 'chase' || b.flightPhase === 'burst' ? 11 : 5.5)) {
                     state.particles.push({
-                        x: b.x - b.facing * 10,
-                        y: b.y + 2 + (Math.random() - 0.5) * 5,
-                        vx: -b.facing * 15,
-                        vy: (Math.random() - 0.5) * 10,
-                        r: 1.4 + Math.random() * 1.2,
+                        x: b.x - b.facing * 13,
+                        y: b.y + 3 + (Math.random() - 0.5) * 6,
+                        vx: -b.facing * (b.aiState === 'chase' ? 28 : 15),
+                        vy: (Math.random() - 0.5) * 12,
+                        r: 1.6 + Math.random() * 1.4,
                         life: 0,
                         maxLife: 0.32,
-                        color: 'rgba(255, 241, 118, 0.85)'
+                        color: b.aiState === 'chase' ? 'rgba(255, 171, 64, 0.88)' : 'rgba(255, 241, 118, 0.85)'
                     });
                 }
 
-                // Xét va chạm với đầu muỗng khi đang chơi và không bật lá ngụy trang
+                // Xét phát hiện, kích hoạt truy đuổi, báo động đồng đội bọc lót & va chạm với đầu muỗng
                 if (state.status === 'playing' && state.camouflageTimer <= 0 && state.hasMovedOnce) {
-                    var cfg = BEE_SPRITE_CONFIG[b.type] || BEE_SPRITE_CONFIG.ong1;
+                    var effType = (b.type === 'ong2' && !b.isSleeping) ? 'ong1' : b.type;
+                    var cfg = BEE_SPRITE_CONFIG[effType] || BEE_SPRITE_CONFIG.ong1;
 
-                    // 1. Chạm trực tiếp vào người con ong -> bắt ngay lập tức!
+                    // 1. Chạm trực tiếp vào người con ong -> bị chích ngay lập tức!
                     var bodyDist = Math.hypot(headX - b.x, headY - b.y);
-                    if (bodyDist < cfg.bodyRadius + state.spoon.headRadius * 0.72) {
+                    if (bodyDist < cfg.bodyRadius + state.spoon.headRadius * 0.78) {
                         triggerCaught(b);
                         return;
                     }
 
-                    // 2. Nằm trong chùm ra-đa phía trước mặt ong
+                    // 2. Kiểm tra vùng sóng ra-đa phía trước mặt ong
                     var effConeLen = b.isSleeping ? (b.coneLen * 0.28) : b.coneLen;
                     var effHalfAng = b.isSleeping ? (b.coneHalfAngle * 0.52) : b.coneHalfAngle;
-                    var eyeX = b.x + b.facing * 7;
-                    var eyeY = b.y + 2;
+                    var eyeX = b.x + b.facing * 9;
+                    var eyeY = b.y + 3;
                     var toHeadX = headX - eyeX;
                     var toHeadY = headY - eyeY;
                     var coneDist = Math.hypot(toHeadX, toHeadY);
 
-                    if (coneDist <= effConeLen + state.spoon.headRadius * 0.35 && coneDist > 4) {
+                    var inCone = false;
+                    var coneIntensity = 0;
+                    if (coneDist <= effConeLen + state.spoon.headRadius * 0.38 && coneDist > 4) {
                         var angToHead = Math.atan2(toHeadY, toHeadX);
                         var angDiff = Math.abs(normalizeAngleDiff(angToHead, b.lookAngle));
                         if (angDiff <= effHalfAng) {
+                            inCone = true;
                             var depthRatio = 1 - (coneDist / (effConeLen + 8));
                             var centerRatio = 1 - (angDiff / effHalfAng);
-                            var intensity = (depthRatio > 0.30 && centerRatio > 0.32) ? 5.2 : 2.3;
-                            if (intensity > maxFrameDanger) {
-                                maxFrameDanger = intensity;
-                                dangerBee = b;
-                            }
-                            b.alertLevel = Math.min(1, b.alertLevel + dt * intensity);
-                        } else {
-                            b.alertLevel = Math.max(0, b.alertLevel - dt * 3.5);
+                            coneIntensity = (depthRatio > 0.28 && centerRatio > 0.30) ? 3.4 : 1.85;
                         }
+                    }
+
+                    // 3. Ong CHỈ phát hiện và đuổi theo khi muỗng lọt đúng vào phạm vi sóng ra-đa nó phát ra!
+                    if (b.aiState === 'patrol' && b.chaseCooldown <= 0 && !b.isSleeping && !spoonInSafeBush && inCone) {
+                        b.aiState = 'chase';
+                        b.chaseTimer = 0;
+                        b.alertLevel = Math.max(b.alertLevel, 0.45);
+                        assignCoverForBee(b);
+                        // Báo động nhẹ cho 1 đồng đội gần đó quay đầu & tăng tốc áp sát khu vực
+                        for (var ai = 0; ai < state.bees.length; ai++) {
+                            var ally = state.bees[ai];
+                            if (ally !== b && ally.aiState === 'patrol' && !ally.isSleeping && Math.hypot(ally.x - b.x, ally.y - b.y) < 155) {
+                                ally.flightPhase = 'burst';
+                                ally.flightTimer = 0.7;
+                                ally.speedFactor = 1.85;
+                                ally.wpX = clamp((ally.x + headX) * 0.5, 34, W - 34);
+                                ally.wpY = clamp((ally.y + headY) * 0.5, 215, 665);
+                                break;
+                            }
+                        }
+                        if (typeof playSound === 'function') playSound('click');
+                    }
+
+                    if (inCone) {
+                        if (coneIntensity > maxFrameDanger) {
+                            maxFrameDanger = coneIntensity;
+                            dangerBee = b;
+                        }
+                        b.alertLevel = Math.min(1, b.alertLevel + dt * coneIntensity);
+                    } else if (b.aiState === 'chase') {
+                        b.alertLevel = Math.max(0.45, b.alertLevel - dt * 1.1);
                     } else {
-                        b.alertLevel = Math.max(0, b.alertLevel - dt * 3.5);
+                        b.alertLevel = Math.max(0, b.alertLevel - dt * 2.8);
                     }
                 } else if (state.status === 'playing') {
                     b.alertLevel = Math.max(0, b.alertLevel - dt * 4);
@@ -1055,21 +1228,8 @@
                         return;
                     }
                 } else {
-                    state.suspicion = Math.max(0, state.suspicion - dt * 3.2);
+                    state.suspicion = Math.max(0, state.suspicion - dt * 2.4);
                 }
-
-                // Ăn các giọt mật thưởng trên đồng cỏ
-                state.drops.forEach(function (d) {
-                    if (d.collected) return;
-                    if (Math.hypot(headX - d.x, headY - d.y) < d.r + state.spoon.headRadius + 4) {
-                        d.collected = true;
-                        state.collectedDrops++;
-                        if (dropsTxtEl) dropsTxtEl.textContent = 'Giọt mật: ' + state.collectedDrops + '/3';
-                        if (typeof playSound === 'function') playSound('coin');
-                        spawnBurst(d.x, d.y, ['#ffd54f', '#ffb300', '#ffffff'], 14, 130);
-                        spawnFloatingText(d.x, d.y - 12, '+100 Vàng!', '#ffe082');
-                    }
-                });
 
                 // Kiểm tra chạm Tổ Mật Ong trên cành cây -> CHIẾN THẮNG!
                 var distToHive = Math.hypot(headX - state.hive.x, headY - state.hive.hitY);
@@ -1082,44 +1242,6 @@
         // =====================================================================
         // RENDER ĐỒ HỌA ĐA LỚP 60FPS
         // =====================================================================
-        function drawHoneyDropIcon(x, y, radius, pulse) {
-            var r = radius * (1 + Math.sin(pulse) * 0.08);
-            ctx.save();
-            ctx.translate(x, y);
-
-            // Hào quang vàng ấm
-            var glow = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, r * 1.9);
-            glow.addColorStop(0, 'rgba(255, 238, 88, 0.72)');
-            glow.addColorStop(1, 'rgba(255, 193, 7, 0)');
-            ctx.fillStyle = glow;
-            ctx.beginPath();
-            ctx.arc(0, 0, r * 1.9, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Giọt mật vàng óng
-            ctx.beginPath();
-            ctx.moveTo(0, -r * 1.18);
-            ctx.bezierCurveTo(r * 1.05, -r * 0.15, r * 0.95, r * 1.05, 0, r * 1.05);
-            ctx.bezierCurveTo(-r * 0.95, r * 1.05, -r * 1.05, -r * 0.15, 0, -r * 1.18);
-            ctx.closePath();
-            var gDrop = ctx.createLinearGradient(0, -r, 0, r);
-            gDrop.addColorStop(0, '#ffe57f');
-            gDrop.addColorStop(0.55, '#ffb300');
-            gDrop.addColorStop(1, '#e65100');
-            ctx.fillStyle = gDrop;
-            ctx.fill();
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#8d4004';
-            ctx.stroke();
-
-            // Đốm sáng phản quang
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.beginPath();
-            ctx.ellipse(-r * 0.28, -r * 0.18, r * 0.18, r * 0.32, -0.35, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-
         function render() {
             var cw = canvas.width;
             var ch = canvas.height;
@@ -1170,12 +1292,12 @@
             var hiveGlowBoost = clamp(1 - (distHive - 70) / 220, 0.25, 1);
 
             ctx.save();
-            var hHalo = ctx.createRadialGradient(state.hive.x, state.hive.hitY, 12, state.hive.x, state.hive.hitY, 92);
+            var hHalo = ctx.createRadialGradient(state.hive.x, state.hive.hitY, 8, state.hive.x, state.hive.hitY, 66);
             hHalo.addColorStop(0, 'rgba(255, 238, 88, ' + (0.45 * hiveGlowBoost).toFixed(2) + ')');
             hHalo.addColorStop(1, 'rgba(255, 193, 7, 0)');
             ctx.fillStyle = hHalo;
             ctx.beginPath();
-            ctx.arc(state.hive.x, state.hive.hitY, 92, 0, Math.PI * 2);
+            ctx.arc(state.hive.x, state.hive.hitY, 66, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
 
@@ -1184,19 +1306,19 @@
                 var a = Math.max(0, 1 - dr.life / dr.maxLife);
                 ctx.fillStyle = 'rgba(255, 193, 7, ' + a.toFixed(2) + ')';
                 ctx.beginPath();
-                ctx.ellipse(dr.x, dr.y, 3.4, 5.2, 0, 0, Math.PI * 2);
+                ctx.ellipse(dr.x, dr.y, 2.8, 4.2, 0, 0, Math.PI * 2);
                 ctx.fill();
             });
 
-            // Tổ ong đung đưa nhẹ dưới cành cây
+            // Tổ ong đung đưa nhẹ dưới cành cây (thu nhỏ còn 60% và hạ vừa đúng để cuống tổ chạm khít cành cây)
             if (hiveIm && hiveIm.complete && hiveIm.naturalWidth) {
                 ctx.save();
-                ctx.translate(state.hive.x, 114);
+                ctx.translate(state.hive.x, 103);
                 var hiveSwing = Math.sin(state.elapsed * 2.1) * 0.038;
                 var bounceScale = 1 + Math.sin(state.hive.bounce * Math.PI * 3) * 0.14 * state.hive.bounce;
                 ctx.rotate(hiveSwing);
                 ctx.scale(bounceScale, 2 - bounceScale * 0.99);
-                ctx.drawImage(hiveIm, -64, 0, 128, 195);
+                ctx.drawImage(hiveIm, -38.5, 0, 77, 117);
                 ctx.restore();
             }
 
@@ -1208,35 +1330,33 @@
                 ctx.restore();
             }
 
-            // 3 chú ong thợ tí hon bay vòng quanh tổ mật tạo sức sống
+            // 3 chú ong thật (2 frame, 10 fps) bay vòng quanh tổ mật
             state.orbitBees.forEach(function (ob) {
                 var ox = state.hive.x + Math.cos(ob.angle) * ob.rx;
                 var oy = state.hive.y + ob.yOff + Math.sin(ob.angle * 2) * ob.ry * 0.55;
+                var oVx = -Math.sin(ob.angle) * ob.speed;
+                var oFacing = (oVx >= 0) ? 1 : -1;
+                var oCfg = BEE_SPRITE_CONFIG[ob.type] || BEE_SPRITE_CONFIG.ong1;
+                var oFrameIdx = Math.floor(state.elapsed * BEE_ANIM_FPS + (ob.phase || 0) * 2) % oCfg.frames.length;
+                var oIm = loadImg(oCfg.frames[oFrameIdx]);
+                var oW = Math.round(oCfg.drawW * 0.56);
+                var oH = Math.round(oCfg.drawH * 0.56);
+
                 ctx.save();
-                ctx.fillStyle = 'rgba(255, 241, 118, 0.45)';
-                ctx.beginPath();
-                ctx.arc(ox - Math.cos(ob.angle) * 6, oy, 2.2, 0, Math.PI * 2);
-                ctx.fill();
                 ctx.translate(ox, oy);
-                ctx.fillStyle = '#ffd54f';
-                ctx.strokeStyle = '#3e2723';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 5.5, 4, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                ctx.beginPath();
-                ctx.ellipse(0, -4.5, 3.2, 2.2, Math.sin(state.elapsed * 45) * 0.4, 0, Math.PI * 2);
-                ctx.fill();
+                var oFlipX = (oFacing === oCfg.nativeFacing) ? 1 : -1;
+                ctx.scale(oFlipX, 1);
+                if (oIm && oIm.complete && oIm.naturalWidth) {
+                    ctx.drawImage(oIm, -oW / 2, -oH / 2, oW, oH);
+                }
                 ctx.restore();
             });
 
             // 3. BÓNG ĐỔ DƯỚI BÃI CỎ CHO ĐÀN ONG & MUỖNG MẬT
             state.bees.forEach(function (b) {
-                ctx.fillStyle = 'rgba(34, 68, 20, 0.16)';
+                ctx.fillStyle = 'rgba(34, 68, 20, 0.17)';
                 ctx.beginPath();
-                ctx.ellipse(b.x, b.y + 18, 10, 3.4, 0, 0, Math.PI * 2);
+                ctx.ellipse(b.x, b.y + 23, 13, 4.4, 0, 0, Math.PI * 2);
                 ctx.fill();
             });
             ctx.fillStyle = 'rgba(34, 68, 20, 0.22)';
@@ -1244,64 +1364,84 @@
             ctx.ellipse(state.spoon.x - 4, state.spoon.y + 30, 22, 7.5, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // 4. GIỌT MẬT THƯỞNG PHỤ TRÊN ĐỒNG CỎ
-            state.drops.forEach(function (d) {
-                if (d.collected) return;
-                drawHoneyDropIcon(d.x, d.y + Math.sin(state.elapsed * 3.5 + d.phase) * 3.5, 11.5, state.elapsed * 4 + d.phase);
-            });
-
-            // 5. CHÙM ÁNH SÁNG RA-ĐA QUÉT PHÍA TRƯỚC MẶT ĐÀN ONG (KHỚP ẢNH DEMO)
+            // 4. RA-ĐA SÓNG TRẮNG MỜ NHẸ (~10%) LAN TỎA THEO HÌNH TAM GIÁC 45 ĐỘ PHÍA TRƯỚC MẶT ONG
             state.bees.forEach(function (b) {
                 var effLen = b.isSleeping ? (b.coneLen * 0.28) : b.coneLen;
                 var effHalf = b.isSleeping ? (b.coneHalfAngle * 0.52) : b.coneHalfAngle;
-                var eyeX = b.x + b.facing * 7;
-                var eyeY = b.y + 2;
+                var eyeX = b.x + b.facing * 9;
+                var eyeY = b.y + 3;
 
                 ctx.save();
                 ctx.translate(eyeX, eyeY);
                 ctx.rotate(b.lookAngle);
 
+                var isChasing = (b.aiState === 'chase');
                 var alertLv = clamp(b.alertLevel || 0, 0, 1);
-                var grad = ctx.createRadialGradient(0, 0, 4, 0, 0, effLen);
-                if (alertLv > 0.15) {
-                    // Chuyển dần từ vàng chanh sang cam-đỏ khi phát hiện muỗng mật!
-                    var rCol = 255;
-                    var gCol = Math.round(235 - alertLv * 165);
-                    var bCol = Math.round(60 - alertLv * 50);
-                    grad.addColorStop(0, 'rgba(' + rCol + ',' + gCol + ',' + bCol + ',0.86)');
-                    grad.addColorStop(0.62, 'rgba(' + rCol + ',' + gCol + ',' + bCol + ',0.42)');
-                    grad.addColorStop(1, 'rgba(' + rCol + ',' + gCol + ',' + bCol + ',0)');
+
+                // Lớp nền nón tam giác rất mỏng (~6-10%) để hòa tự nhiên vào nền cỏ
+                var baseGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, effLen);
+                if (isChasing || alertLv > 0.35) {
+                    var tintA = Math.min(0.18, 0.09 + alertLv * 0.08);
+                    baseGrad.addColorStop(0, 'rgba(255, 138, 101, ' + tintA.toFixed(2) + ')');
+                    baseGrad.addColorStop(0.65, 'rgba(255, 224, 178, ' + (tintA * 0.45).toFixed(2) + ')');
+                    baseGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
                 } else if (b.isSleeping) {
-                    grad.addColorStop(0, 'rgba(255, 249, 196, 0.36)');
-                    grad.addColorStop(1, 'rgba(255, 249, 196, 0)');
+                    baseGrad.addColorStop(0, 'rgba(255, 255, 255, 0.04)');
+                    baseGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
                 } else {
-                    grad.addColorStop(0, 'rgba(255, 248, 82, 0.80)');
-                    grad.addColorStop(0.55, 'rgba(255, 242, 75, 0.44)');
-                    grad.addColorStop(1, 'rgba(255, 242, 75, 0)');
+                    baseGrad.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
+                    baseGrad.addColorStop(0.65, 'rgba(255, 255, 255, 0.03)');
+                    baseGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
                 }
 
-                ctx.fillStyle = grad;
+                ctx.fillStyle = baseGrad;
                 ctx.beginPath();
                 ctx.moveTo(0, 0);
                 ctx.arc(0, 0, effLen, -effHalf, effHalf);
                 ctx.closePath();
                 ctx.fill();
 
-                // Sóng radar mảnh chạy dọc chùm sáng tạo cảm giác dò tìm sinh động
+                // Hai tia biên tam giác siêu mảnh mờ (~8%)
                 if (!b.isSleeping) {
-                    var waveR = ((state.elapsed * 68 + b.phase * 30) % (effLen * 0.88)) + 12;
-                    var waveAlpha = (1 - waveR / effLen) * 0.34;
-                    ctx.strokeStyle = 'rgba(255, 255, 255, ' + waveAlpha.toFixed(2) + ')';
-                    ctx.lineWidth = 1.6;
+                    ctx.strokeStyle = isChasing
+                        ? 'rgba(255, 171, 145, 0.16)'
+                        : 'rgba(255, 255, 255, 0.08)';
+                    ctx.lineWidth = 1.0;
                     ctx.beginPath();
-                    ctx.arc(0, 0, waveR, -effHalf * 0.86, effHalf * 0.86);
+                    ctx.moveTo(6, 0);
+                    ctx.lineTo(Math.cos(-effHalf) * effLen * 0.94, Math.sin(-effHalf) * effLen * 0.94);
+                    ctx.moveTo(6, 0);
+                    ctx.lineTo(Math.cos(effHalf) * effLen * 0.94, Math.sin(effHalf) * effLen * 0.94);
+                    ctx.stroke();
+                }
+
+                // Các vòng cung sóng màu trắng mờ nhẹ (~10-14%) chạy thưa dọc theo nón tam giác 45 độ
+                var waveCount = b.isSleeping ? 1 : 2;
+                var waveFreq = b.isSleeping ? 0.38 : (isChasing ? 1.25 : 0.72);
+                ctx.lineCap = 'round';
+                for (var wi = 0; wi < waveCount; wi++) {
+                    var tWave = (state.elapsed * waveFreq + b.phase * 0.37 + wi / waveCount) % 1;
+                    var waveR = 10 + tWave * (effLen - 10);
+                    var fadeEnv = Math.sin(tWave * Math.PI);
+                    var alphaMain = fadeEnv * (b.isSleeping ? 0.07 : (isChasing ? 0.34 : 0.14));
+                    if (alphaMain <= 0.01) continue;
+
+                    var arcHalf = effHalf * (0.86 + tWave * 0.12);
+                    var strokeW = 2.2 - tWave * 0.9;
+
+                    ctx.strokeStyle = isChasing
+                        ? 'rgba(255, 224, 210, ' + alphaMain.toFixed(2) + ')'
+                        : 'rgba(255, 255, 255, ' + alphaMain.toFixed(2) + ')';
+                    ctx.lineWidth = strokeW;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, waveR, -arcHalf, arcHalf);
                     ctx.stroke();
                 }
 
                 ctx.restore();
             });
 
-            // 6. VẼ MUỖNG MẬT ONG CỦA NGƯỜI CHƠI (muong.png)
+            // 5. VẼ MUỖNG MẬT ONG CỦA NGƯỜI CHƠI (muong.png)
             var spoonIm = loadImg(SCENE_IMAGES_SRC.spoon);
             ctx.save();
             ctx.translate(state.spoon.x, state.spoon.y);
@@ -1319,11 +1459,11 @@
                 ctx.stroke();
             }
 
-            // Vòng chấm tâm nhẹ quanh đầu muỗng giúp người chơi căn lách cực chuẩn
+            // Vòng chấm tâm siêu mờ (~10%) quanh đầu muỗng
             ctx.strokeStyle = state.suspicion > 0.2
-                ? 'rgba(255, 82, 82, 0.85)'
-                : 'rgba(255, 245, 157, 0.52)';
-            ctx.lineWidth = 1.8;
+                ? 'rgba(255, 82, 82, 0.45)'
+                : 'rgba(255, 255, 255, 0.10)';
+            ctx.lineWidth = 1.4;
             ctx.beginPath();
             ctx.arc(state.spoon.headOffsetX, state.spoon.headOffsetY, state.spoon.headRadius + 2, 0, Math.PI * 2);
             ctx.stroke();
@@ -1333,10 +1473,11 @@
             }
             ctx.restore();
 
-            // 7. VẼ ĐÀN ONG BAY LƯỢN (HỖ TRỢ 1 FRAME VỚI HIỆU ỨNG VỖ CÁNH & NGHIÊNG MÌNH MƯỢT)
+            // 7. VẼ ĐÀN ONG BAY LƯỢN (2 FRAME VỖ CÁNH 10 FPS; ONG NGỦ THỨC DẬY CHUYỂN THÀNH ONG 1)
             state.bees.forEach(function (b) {
-                var cfg = BEE_SPRITE_CONFIG[b.type] || BEE_SPRITE_CONFIG.ong1;
-                var frameIdx = Math.floor(state.elapsed * 12) % cfg.frames.length;
+                var effType = (b.type === 'ong2' && !b.isSleeping) ? 'ong1' : b.type;
+                var cfg = BEE_SPRITE_CONFIG[effType] || BEE_SPRITE_CONFIG.ong1;
+                var frameIdx = Math.floor(state.elapsed * BEE_ANIM_FPS + b.phase * 2) % cfg.frames.length;
                 var beeIm = loadImg(cfg.frames[frameIdx]);
 
                 ctx.save();
@@ -1344,25 +1485,15 @@
 
                 // Lật ngang chuẩn xác theo hướng mặt của từng ảnh gốc (ong1 & ong3 gốc quay phải, ong2 gốc quay trái)
                 var flipX = (b.facing === cfg.nativeFacing) ? 1 : -1;
-                var buzzFreq = b.isSleeping ? 14 : 38;
-                var buzzAmp = b.isSleeping ? 0.018 : 0.036;
+                var isChasing = (b.aiState === 'chase');
+                var buzzFreq = b.isSleeping ? 10 : (isChasing ? 30 : 18);
+                var buzzAmp = b.isSleeping ? 0.012 : (isChasing ? 0.032 : 0.02);
                 var sx = flipX * (1 + Math.sin(state.elapsed * buzzFreq + b.phase) * buzzAmp);
                 var sy = 1 - Math.sin(state.elapsed * buzzFreq + b.phase) * buzzAmp;
-                var bankTilt = (b.isSleeping ? 0.02 : 0.07) * b.dir;
+                var bankTilt = clamp((b.vx || 0) * 0.0014, -0.22, 0.22);
 
                 ctx.rotate(bankTilt);
                 ctx.scale(sx, sy);
-
-                // Hiệu ứng bóng cánh vỗ mờ nhanh phía sau lưng giúp ảnh 1 frame trông như đang đập cánh thật!
-                var wingFlutter = Math.sin(state.elapsed * (b.isSleeping ? 18 : 54) + b.phase);
-                ctx.save();
-                ctx.translate(-2, -cfg.drawH * 0.28);
-                ctx.rotate(wingFlutter * 0.24);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.34)';
-                ctx.beginPath();
-                ctx.ellipse(0, 0, cfg.drawW * 0.24, cfg.drawH * 0.15, -0.35, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
 
                 if (beeIm && beeIm.complete && beeIm.naturalWidth) {
                     ctx.drawImage(beeIm, -cfg.drawW / 2, -cfg.drawH / 2, cfg.drawW, cfg.drawH);
@@ -1373,26 +1504,27 @@
                 b.zzzParticles.forEach(function (zp) {
                     var za = Math.max(0, 1 - zp.life / zp.maxLife);
                     ctx.save();
-                    ctx.font = '900 ' + Math.round(9 + zp.life * 5) + 'px "Baloo 2", sans-serif';
+                    ctx.font = '900 ' + Math.round(11 + zp.life * 6) + 'px "Baloo 2", sans-serif';
                     ctx.fillStyle = 'rgba(255, 255, 255, ' + za.toFixed(2) + ')';
                     ctx.strokeStyle = 'rgba(74, 20, 140, ' + (za * 0.75).toFixed(2) + ')';
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = 2.4;
                     ctx.strokeText('Z', zp.x, zp.y);
                     ctx.fillText('Z', zp.x, zp.y);
                     ctx.restore();
                 });
 
-                // Dấu chấm hỏi (?) hoặc chấm than (!) trên đầu ong khi muỗng đi sát vào vùng quét
-                if (b.alertLevel > 0.18) {
+                // Dấu chấm than (!) khi đang đuổi theo hoặc chấm hỏi (?) khi vừa mất dấu
+                if (b.aiState === 'chase' || b.alertLevel > 0.18) {
                     ctx.save();
-                    ctx.font = '900 16px "Baloo 2", sans-serif';
+                    ctx.font = '900 18px "Baloo 2", sans-serif';
                     ctx.textAlign = 'center';
-                    var sym = b.alertLevel >= 0.95 ? '!' : '?';
-                    ctx.fillStyle = b.alertLevel >= 0.95 ? '#ff3d00' : '#ffab00';
+                    var showBang = (b.aiState === 'chase' || b.alertLevel >= 0.85);
+                    var sym = showBang ? '!' : '?';
+                    ctx.fillStyle = showBang ? '#ff3d00' : '#ffab00';
                     ctx.strokeStyle = '#3e2211';
-                    ctx.lineWidth = 3;
-                    ctx.strokeText(sym, b.x, b.y - cfg.drawH * 0.68);
-                    ctx.fillText(sym, b.x, b.y - cfg.drawH * 0.68);
+                    ctx.lineWidth = 3.2;
+                    ctx.strokeText(sym, b.x, b.y - cfg.drawH * 0.64);
+                    ctx.fillText(sym, b.x, b.y - cfg.drawH * 0.64);
                     ctx.restore();
                 }
             });

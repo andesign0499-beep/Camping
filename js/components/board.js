@@ -4018,7 +4018,7 @@ function renderOrders() {
             // Cập nhật cụm huy hiệu thưởng [1 Tổ Ong + Vàng] & nút GIAO góc trên phải khay
             var topRow = groupEl.querySelector('.pet-group-top-row');
             var rwStack = groupEl.querySelector('.pet-group-reward-stack');
-            var rwPill = groupEl.querySelector('.pet-group-reward-pill');
+            var rwPill = groupEl.querySelector('.pet-group-gold-pill') || groupEl.querySelector('.pet-group-reward-pill:not(.pet-group-ticket-pill)');
             if (rwPill) {
                 var rwNumEl = rwPill.querySelector('.reward-pill-val');
                 if (rwNumEl) rwNumEl.textContent = computePetOrderGroupTotalGold(group).toLocaleString('vi-VN');
@@ -4161,7 +4161,7 @@ function renderOrders() {
         rewardStack.appendChild(ticketPill);
 
         var rewardPill = document.createElement('div');
-        rewardPill.className = 'pet-group-reward-pill';
+        rewardPill.className = 'pet-group-reward-pill pet-group-gold-pill';
         rewardPill.innerHTML = '<span class="reward-pill-val">' + totalGroupGold.toLocaleString('vi-VN') + '</span>' +
             '<img src="assets/images_webp/ui/icon_glod.webp" alt="Vàng">';
         rewardStack.appendChild(rewardPill);

@@ -207,22 +207,22 @@ var GAME_CONFIG = {
             speechStyle: 'Ấm áp, gần gũi, hay dùng từ ngữ khích lệ kiểu "Tuyệt lắm bạn ơi!", "Chầm chậm thôi, từng cọc lều một nhé!".',
             preferredLines: ['trai', 'ghe', 'ban', 'tham'],
             questList: [
-                // 15 nhiệm vụ cốt truyện Chương 1 của Golden (1-3 món, đảm bảo cặp 2 ghế giống nhau cho Trại của bạn)
+                // 15 nhiệm vụ cốt truyện Chương 1 của Golden (mỗi item tối đa <= 3 lần toàn game, cách xa nhau >= 4 nhiệm vụ, không bao giờ lặp gần nhau)
                 { id: 'golden_q1',  title: 'Dọn Bãi Cỏ Ven Suối',       items: ['trai_lv2', 'ban_lv2'],              dialogue: 'Chầm chậm thôi, từng cọc lều một nhé! Cùng mình dựng góc trại đầu tiên nào!' },
-                { id: 'golden_q2',  title: 'Ghế Nghỉ Hướng Đạo (1/2)',  items: ['ghe_lv3', 'trai_lv2'],              dialogue: 'Tuyệt lắm bạn ơi! Ghép chiếc ghế xếp đầu tiên để nghỉ chân bên bờ suối nhé!' },
-                { id: 'golden_q3',  title: 'Ghế Nghỉ Hướng Đạo (2/2)',  items: ['ghe_lv3', 'ban_lv3'],               dialogue: 'Thêm 1 chiếc ghế xếp giống hệt nữa là đủ bộ đôi ghế đẹp cho khu trại rồi!' },
+                { id: 'golden_q2',  title: 'Ghế Nghỉ Hướng Đạo (1/2)',  items: ['ghe_lv3', 'trai_lv3'],              dialogue: 'Tuyệt lắm bạn ơi! Ghép chiếc ghế xếp đầu tiên để nghỉ chân bên bờ suối nhé!' },
+                { id: 'golden_q3',  title: 'Bàn Trà Gỗ Xếp Nhỏ',        items: ['ban_lv3', 'ghe_lv2'],               dialogue: 'Có thêm chiếc bàn xếp nhỏ bên ghế vải là bày được bình nước mát rồi!' },
                 { id: 'golden_q4',  title: 'Bạt Tăng Che Nắng Sớm',     items: ['trai_lv4'],                         dialogue: 'Tuyệt lắm bạn ơi! Căng tấm bạt tăng che nắng đầu tiên cho bãi cỏ ven suối nào!' },
-                { id: 'golden_q5',  title: 'Bàn Gỗ Cuộn Ven Suối',      items: ['ban_lv4', 'trai_lv3'],              dialogue: 'Có chiếc bàn gỗ cuộn này, khách ghé thăm sẽ có chỗ bày đồ thật gọn gàng!' },
-                { id: 'golden_q6',  title: 'Đôi Ghế Tay Vịn (1/2)',     items: ['ghe_lv4', 'ban_lv3', 'trai_lv3'],   dialogue: 'Chầm chậm thôi! Mình nâng cấp lên ghế có tay vịn ngồi ngắm suối cho êm nhé!' },
-                { id: 'golden_q7',  title: 'Đôi Ghế Tay Vịn (2/2)',     items: ['ghe_lv4', 'trai_lv4'],              dialogue: 'Tuyệt lắm bạn ơi! Chiếc ghế tay vịn thứ hai sẽ giúp bãi cỏ cân đối hoàn hảo!' },
-                { id: 'golden_q8',  title: 'Lều Vòm Cắm Trại Đôi',      items: ['trai_lv5', 'ban_lv4'],              dialogue: 'Lều vòm xanh rêu có cửa sổ tròn đã sẵn sàng đón những người bạn mới!' },
-                { id: 'golden_q9',  title: 'Bàn Kèm Giá Lưới Tiện Lợi', items: ['ban_lv5', 'tham_lv3'],              dialogue: 'Kỹ năng hướng đạo cơ bản: Luôn giữ đồ đạc khô ráo trên bàn giá lưới và thảm cách nhiệt!' },
-                { id: 'golden_q10', title: 'Cặp Ghế Câu Cá (1/2)',      items: ['ghe_lv5', 'trai_lv4', 'tham_lv3'],  dialogue: 'Chuẩn bị ghế câu cá có khay để ngồi thư giãn bên dòng suối trong vắt nhé!' },
-                { id: 'golden_q11', title: 'Cặp Ghế Câu Cá (2/2)',      items: ['ghe_lv5', 'ban_lv5'],               dialogue: 'Đủ cặp ghế câu cá rồi! Bạn làm tốt lắm, khu trại ngày càng ra dáng rồi đấy!' },
-                { id: 'golden_q12', title: 'Lều Chữ A Chống Gió',       items: ['trai_lv6', 'tham_lv4'],             dialogue: 'Đêm rừng gió lớn mấy cũng yên tâm vì đã có lều chữ A kiên cố và túi ngủ ấm!' },
-                { id: 'golden_q13', title: 'Bàn Cắm Trại Đa Năng',      items: ['ban_lv6', 'trai_lv5'],              dialogue: 'Tuyệt lắm bạn ơi! Chiếc bàn đa năng này sẽ là tâm điểm của Lều Chính!' },
+                { id: 'golden_q5',  title: 'Bàn Gỗ Cuộn Ven Suối',      items: ['ban_lv4', 'trai_lv2'],              dialogue: 'Có chiếc bàn gỗ cuộn này, khách ghé thăm sẽ có chỗ bày đồ thật gọn gàng!' },
+                { id: 'golden_q6',  title: 'Đôi Ghế Tay Vịn (1/2)',     items: ['ghe_lv4', 'trai_lv5'],              dialogue: 'Chầm chậm thôi! Mình nâng cấp lên ghế có tay vịn ngồi ngắm suối cho êm nhé!' },
+                { id: 'golden_q7',  title: 'Ghế Nghỉ Hướng Đạo (2/2)',  items: ['ghe_lv3', 'ban_lv5'],               dialogue: 'Thêm 1 chiếc ghế xếp giống hệt nữa là đủ bộ đôi ghế đẹp cho khu trại rồi!' },
+                { id: 'golden_q8',  title: 'Góc Trại Xanh Mát',         items: ['trai_lv3', 'tham_lv2'],             dialogue: 'Trải thêm tấm thảm nhỏ bên cọc lều cho góc nghỉ trưa thật sạch sẽ nào!' },
+                { id: 'golden_q9',  title: 'Bàn Kèm Giá Lưới Tiện Lợi', items: ['ban_lv6', 'tham_lv3'],              dialogue: 'Kỹ năng hướng đạo cơ bản: Luôn giữ đồ đạc khô ráo trên bàn và thảm cách nhiệt!' },
+                { id: 'golden_q10', title: 'Cặp Ghế Câu Cá (1/2)',      items: ['ghe_lv5', 'trai_lv4'],              dialogue: 'Chuẩn bị ghế câu cá có khay để ngồi thư giãn bên dòng suối trong vắt nhé!' },
+                { id: 'golden_q11', title: 'Đôi Ghế Tay Vịn (2/2)',     items: ['ghe_lv4', 'tham_lv4'],              dialogue: 'Tuyệt lắm bạn ơi! Chiếc ghế tay vịn thứ hai sẽ giúp bãi cỏ cân đối hoàn hảo!' },
+                { id: 'golden_q12', title: 'Lều Chữ A Chống Gió',       items: ['trai_lv6', 'ban_lv4'],              dialogue: 'Đêm rừng gió lớn mấy cũng yên tâm vì đã có lều chữ A kiên cố!' },
+                { id: 'golden_q13', title: 'Bàn Cắm Trại Đa Năng',      items: ['ban_lv7', 'trai_lv5'],              dialogue: 'Tuyệt lắm bạn ơi! Chiếc bàn đa năng này sẽ là tâm điểm của Lều Chính!' },
                 { id: 'golden_q14', title: 'Lều Gia Đình Vững Chãi',    items: ['trai_lv7', 'tham_lv5'],             dialogue: 'Khu Lều Chính & Bãi Cỏ Ven Suối của ông nội năm xưa đã hồi sinh rực rỡ rồi!' },
-                { id: 'golden_q15', title: 'Biệt Thự Lều Hướng Đạo',    items: ['trai_lv8', 'ban_lv7'],              dialogue: 'Tự hào về bạn quá! Mọi vị khách đến Thung Lũng Thông Xanh đều tìm thấy bình yên!' }
+                { id: 'golden_q15', title: 'Cặp Ghế Câu Cá & Biệt Thự', items: ['trai_lv8', 'ghe_lv5'],              dialogue: 'Tự hào về bạn quá! Mọi vị khách đến Thung Lũng Thông Xanh đều tìm thấy bình yên!' }
             ]
         },
 
@@ -246,22 +246,22 @@ var GAME_CONFIG = {
             speechStyle: 'Nhẹ nhàng, bay bổng, hay khen màu sắc và ánh sáng ("Ôi, họa tiết thổ cẩm này hợp với ánh nắng chiều quá!").',
             preferredLines: ['cafe', 'congcu', 'hoa', 'ghe', 'ban'],
             questList: [
-                // 15 nhiệm vụ cốt truyện Chương 2 của Poodle (1-3 món, tập trung Glamping, bàn trà, cà phê, dây đèn, hoa)
-                { id: 'poodle_q1',  title: 'Bàn Trà Nắng Chiều',         items: ['ban_lv3'],                          dialogue: 'Ôi, chiếc bàn trà nhỏ nhắn này hợp với ánh nắng chiều bên bờ suối quá!' },
-                { id: 'poodle_q2',  title: 'Góc Ngồi Thư Giãn',          items: ['ghe_lv2', 'ban_lv2'],               dialogue: 'Một góc Glamping chữa lành thì không thể thiếu bộ bàn ghế hài hòa sắc màu!' },
-                { id: 'poodle_q3',  title: 'Cảm Hứng Lều Glamping',      items: ['trai_lv3', 'ban_lv3'],              dialogue: 'Từng đường nét vải lều mềm mại làm tâm hồn nghệ sĩ của mình bừng tỉnh!' },
-                { id: 'poodle_q4',  title: 'Hương Cà Phê Thủ Công',      items: ['cafe_lv3', 'qua_lv2'],              dialogue: 'Tiếng cối xay cà phê thủ công hòa cùng hương cam tươi thật lãng mạn làm sao~' },
-                { id: 'poodle_q5',  title: 'Ấm Moka Pot Kiểu Ý',         items: ['cafe_lv4', 'ban_lv4'],              dialogue: 'Đặt ấm Moka Pot lên bàn gỗ cuộn, hương cà phê lan tỏa khắp đồi thông xanh!' },
-                { id: 'poodle_q6',  title: 'Tách Cappuccino Nghệ Thuật', items: ['cafe_lv6'],                         dialogue: 'Nhìn lớp bọt sữa Cappuccino mịn màng này xem, đúng chuẩn tiệc trà Glamping!' },
-                { id: 'poodle_q7',  title: 'Dây Đèn Đom Đóm Bờ Suối',    items: ['congcu_lv3', 'cafe_lv5'],           dialogue: 'Giăng dây đèn LED đom đóm vàng ấm lên, góc tiệc trà lung linh như tranh vẽ!' },
-                { id: 'poodle_q8',  title: 'Cặp Ghế Mặt Trăng (1/2)',    items: ['ghe_lv6', 'cafe_lv5'],              dialogue: 'Ghế Mặt Trăng Moon Chair tròn trịa êm ái là tuyệt tác cho góc thưởng trà!' },
-                { id: 'poodle_q9',  title: 'Cặp Ghế Mặt Trăng (2/2)',    items: ['ghe_lv6', 'congcu_lv4'],            dialogue: 'Thêm chiếc Ghế Mặt Trăng thứ hai và ánh đèn lồng cam dịu nhẹ cho đôi bạn tri kỷ!' },
-                { id: 'poodle_q10', title: 'Đèn Bão Cổ Điển Vintage',    items: ['congcu_lv6', 'cafe_lv7'],           dialogue: 'Ánh đèn bão cam cổ điển phản chiếu xuống mặt suối đẹp đến nao lòng!' },
+                // 15 nhiệm vụ cốt truyện Chương 2 của Poodle (mỗi item <= 3 lần toàn game, phân bổ đều không trùng lặp gần nhau)
+                { id: 'poodle_q1',  title: 'Góc Ngồi Thư Giãn',          items: ['ghe_lv2', 'cafe_lv2'],              dialogue: 'Một góc Glamping chữa lành thì không thể thiếu chiếc ghế êm và hương cà phê sớm!' },
+                { id: 'poodle_q2',  title: 'Hương Cà Phê Thủ Công',      items: ['cafe_lv3', 'qua_lv2'],              dialogue: 'Tiếng cối xay cà phê thủ công hòa cùng hương cam tươi thật lãng mạn làm sao~' },
+                { id: 'poodle_q3',  title: 'Ấm Moka Pot Kiểu Ý',         items: ['cafe_lv4', 'an_lv2'],               dialogue: 'Đặt ấm Moka Pot bên chiếc bánh sừng bò nóng hổi, hương thơm lan tỏa khắp đồi thông!' },
+                { id: 'poodle_q4',  title: 'Bàn Trà Thổ Cẩm',            items: ['ban_lv5', 'qua_lv3'],               dialogue: 'Ôi, họa tiết thổ cẩm trên chiếc bàn này hợp với ánh nắng chiều bên bờ suối quá!' },
+                { id: 'poodle_q5',  title: 'Tách Cappuccino Nghệ Thuật', items: ['cafe_lv6', 'congcu_lv2'],           dialogue: 'Nhìn lớp bọt sữa Cappuccino mịn màng này xem, đúng chuẩn tiệc trà Glamping!' },
+                { id: 'poodle_q6',  title: 'Dây Đèn Đom Đóm Bờ Suối',    items: ['congcu_lv3', 'cafe_lv5'],           dialogue: 'Giăng dây đèn LED đom đóm vàng ấm lên, góc tiệc trà lung linh như tranh vẽ!' },
+                { id: 'poodle_q7',  title: 'Cặp Ghế Mặt Trăng (1/2)',    items: ['ghe_lv6', 'hoa_lv2'],               dialogue: 'Ghế Mặt Trăng Moon Chair tròn trịa êm ái là tuyệt tác cho góc thưởng trà!' },
+                { id: 'poodle_q8',  title: 'Ánh Đèn Lồng Dịu Nhẹ',       items: ['congcu_lv4', 'hoa_lv3'],            dialogue: 'Ánh đèn lồng cam dịu nhẹ chiếu lên khóm hoa rừng thật nên thơ!' },
+                { id: 'poodle_q9',  title: 'Đèn Bão Cổ Điển Vintage',    items: ['congcu_lv6', 'cafe_lv7'],           dialogue: 'Ánh đèn bão cam cổ điển phản chiếu xuống mặt suối đẹp đến nao lòng!' },
+                { id: 'poodle_q10', title: 'Đôi Ghế Đạo Diễn (1/2)',     items: ['ghe_lv8', 'hoa_lv4'],               dialogue: 'Ghế Đạo Diễn cao cấp kết hợp hoa đồng nội tinh khôi — chuẩn mực thẩm mỹ!' },
                 { id: 'poodle_q11', title: 'Bình Hoa Oải Hương Tím',     items: ['hoa_lv6', 'cafe_lv8', 'congcu_lv5'],dialogue: 'Ôi, sắc tím hoa oải hương đặt cạnh ly cà phê sữa đá mới tinh tế làm sao!' },
-                { id: 'poodle_q12', title: 'Đôi Ghế Đạo Diễn (1/2)',     items: ['ghe_lv8', 'hoa_lv5'],               dialogue: 'Ghế Đạo Diễn cao cấp kết hợp lọ cúc trắng tinh khôi — chuẩn mực thẩm mỹ!' },
-                { id: 'poodle_q13', title: 'Đôi Ghế Đạo Diễn (2/2)',     items: ['ghe_lv8', 'cafe_lv9'],              dialogue: 'Hoàn thiện cặp Ghế Đạo Diễn cùng ly trà trái cây nhiệt đới rực rỡ sắc màu!' },
-                { id: 'poodle_q14', title: 'Lều Chóp Bell Tent Cổ Tích', items: ['trai_lv9', 'congcu_lv8', 'hoa_lv7'],dialogue: 'Chiếc lều Bell Tent màu kem dưới ánh đèn bão đỏ là giấc mơ Glamping của đời mình!' },
-                { id: 'poodle_q15', title: 'Đại Tiệc Trà Hoa Thảo Mộc',  items: ['cafe_lv11', 'hoa_lv8'],             dialogue: 'Ấm trà hoa thảo mộc nóng và bình hoa thảo nguyên — tuyệt tác chữa lành tâm hồn!' }
+                { id: 'poodle_q12', title: 'Cặp Ghế Mặt Trăng (2/2)',    items: ['ghe_lv6', 'ghe_lv7'],               dialogue: 'Thêm chiếc Ghế Mặt Trăng thứ hai và ghế thư giãn cho đôi bạn tri kỷ!' },
+                { id: 'poodle_q13', title: 'Lều Chóp Bell Tent Cổ Tích', items: ['trai_lv9', 'congcu_lv8', 'hoa_lv5'],dialogue: 'Chiếc lều Bell Tent màu kem dưới ánh đèn bão đỏ là giấc mơ Glamping của đời mình!' },
+                { id: 'poodle_q14', title: 'Đôi Ghế Đạo Diễn (2/2)',     items: ['ghe_lv8', 'cafe_lv9'],              dialogue: 'Hoàn thiện cặp Ghế Đạo Diễn cùng ly trà trái cây nhiệt đới rực rỡ sắc màu!' },
+                { id: 'poodle_q15', title: 'Đại Tiệc Trà Hoa Thảo Mộc',  items: ['cafe_lv11', 'ghe_lv9'],             dialogue: 'Ấm trà hoa thảo mộc nóng và ghế nghỉ sang trọng — tuyệt tác chữa lành tâm hồn!' }
             ]
         },
 
@@ -285,22 +285,22 @@ var GAME_CONFIG = {
             speechStyle: 'Ngắn gọn, dứt khoát, ấm áp kiểu đàn anh ("Cứ để anh đóng cái cầu này! Còn em lo nhóm lửa cho nóng nhé!").',
             preferredLines: ['bep', 'an', 'ban', 'antoan'],
             questList: [
-                // 15 nhiệm vụ cốt truyện Chương 3 của Bulldog (1-3 món, tập trung đồ ăn nóng, bàn gỗ chắc chắn, bếp lửa, cơ khí)
-                { id: 'bulldog_q1',  title: 'Bữa Ăn Tiếp Sức Thợ Mộc',    items: ['an_lv3', 'ban_lv3'],                dialogue: 'Làm việc nặng là phải ăn no! Đưa anh ổ Sandwich phô mai để lấy sức xẻ gỗ nhé!' },
-                { id: 'bulldog_q2',  title: 'Cơm Cuộn Bên Bờ Suối',       items: ['an_lv4', 'cafe_lv3'],               dialogue: 'Cứ để anh đo đạc mố cầu gỗ! Em chuẩn bị cơm nắm Onigiri và cà phê đậm nhé!' },
-                { id: 'bulldog_q3',  title: 'Gia Cố Mặt Bàn Gỗ',          items: ['ban_lv5', 'an_lv5'],                dialogue: 'Bàn trại là phải chắc như bàn thạch! Xong đĩa Kimbap này anh đóng lại khung bàn ngay!' },
-                { id: 'bulldog_q4',  title: 'Pizza Nóng Ra Lò',           items: ['an_lv6'],                           dialogue: 'Hực! Pizza xúc xích phô mai kéo sợi nóng hổi đây, ăn một miếng là khỏe re!' },
-                { id: 'bulldog_q5',  title: 'Đồ Nghề Kỹ Sư Đêm',          items: ['antoan_lv4', 'congcu_lv4', 'an_lv5'],dialogue: 'Cáp sạc bọc dù và đèn sạc phải bền bỉ thì ca trực đóng cầu đêm mới chuẩn được!' },
+                // 15 nhiệm vụ cốt truyện Chương 3 của Bulldog (mỗi item <= 3 lần toàn game, cách xa nhau)
+                { id: 'bulldog_q1',  title: 'Bữa Ăn Tiếp Sức Thợ Mộc',    items: ['an_lv3', 'bep_lv2'],                dialogue: 'Làm việc nặng là phải ăn no! Đưa anh ổ Sandwich phô mai để lấy sức xẻ gỗ nhé!' },
+                { id: 'bulldog_q2',  title: 'Cơm Cuộn Bên Bờ Suối',       items: ['an_lv4', 'antoan_lv2'],             dialogue: 'Cứ để anh đo đạc mố cầu gỗ! Em chuẩn bị cơm nắm Onigiri và găng tay bảo hộ nhé!' },
+                { id: 'bulldog_q3',  title: 'Gia Cố Mặt Bàn Gỗ',          items: ['ban_lv3', 'an_lv5'],                dialogue: 'Bàn trại là phải chắc như bàn thạch! Xong đĩa Kimbap này anh đóng lại khung bàn ngay!' },
+                { id: 'bulldog_q4',  title: 'Pizza Nóng Ra Lò',           items: ['an_lv6', 'bep_lv3'],                dialogue: 'Hực! Pizza xúc xích phô mai kéo sợi nóng hổi đây, ăn một miếng là khỏe re!' },
+                { id: 'bulldog_q5',  title: 'Đồ Nghề Kỹ Sư Đêm',          items: ['antoan_lv4', 'congcu_lv4'],         dialogue: 'Cáp sạc bọc dù và đèn sạc phải bền bỉ thì ca trực đóng cầu đêm mới chuẩn được!' },
                 { id: 'bulldog_q6',  title: 'Bàn Chiến Thuật IGT',        items: ['ban_lv7', 'antoan_lv5'],            dialogue: 'Khung bàn chiến thuật IGT lắp ghép chuẩn từng milimet! Hàng chất lượng đấy!' },
                 { id: 'bulldog_q7',  title: 'Pizza Hải Sản Đãi Cả Đội',   items: ['an_lv7', 'ban_lv6'],                dialogue: 'Cầu gỗ qua suối nối xong nhịp đầu rồi! Nướng ngay chiếc Pizza hải sản ăn mừng nào!' },
-                { id: 'bulldog_q8',  title: 'Xây Hố Đá Lửa Trại',         items: ['bep_lv4', 'bep_lv3', 'antoan_lv6'], dialogue: 'Cứ để anh xếp vòng đá lửa trại! Luôn để sẵn túi sơ cứu bên cạnh cho an toàn nhé!' },
+                { id: 'bulldog_q8',  title: 'Xây Hố Đá Lửa Trại',         items: ['bep_lv4', 'antoan_lv6'],            dialogue: 'Cứ để anh xếp vòng đá lửa trại! Luôn để sẵn túi sơ cứu bên cạnh cho an toàn nhé!' },
                 { id: 'bulldog_q9',  title: 'Ngọn Lửa Trại Rực Hồng',     items: ['bep_lv6', 'an_lv8'],                dialogue: 'Lửa trại bùng lên rồi! Đưa xiên cá viên phết sốt vào nướng vàng ruộm thôi!' },
                 { id: 'bulldog_q10', title: 'Lò Nướng Than Hoa Tròn',     items: ['bep_lv7', 'antoan_lv7'],            dialogue: 'Có đèn khò gas mini này thì châm lò than hoa chỉ mất 30 giây! Gọn và chuẩn!' },
                 { id: 'bulldog_q11', title: 'Trạm Bếp Nấu Ăn Glamping',   items: ['ban_lv8', 'bep_lv8', 'an_lv9'],     dialogue: 'Trạm bếp gỗ kết hợp bếp nướng inox và xiên tôm sa tế — đúng tay nghề bếp trưởng!' },
                 { id: 'bulldog_q12', title: 'Bàn Tiệc Gỗ Sồi Hoàng Gia',  items: ['ban_lv9', 'bep_lv9'],               dialogue: 'Gỗ sồi nguyên khối anh tự tay bào nhẵn đấy! Bày tiệc nướng lên đây thì hết ý!' },
-                { id: 'bulldog_q13', title: 'Mực Nướng Sa Tế Đỏ Lửa',     items: ['an_lv10', 'bep_lv10'],              dialogue: 'Bếp thùng đen giữ nhiệt cực tốt, nướng mực tươi nguyên con thơm điếc mũi luôn!' },
-                { id: 'bulldog_q14', title: 'Lò Đá Nướng Pizza & Đùi Heo', items: ['bep_lv11', 'an_lv11'],              dialogue: 'Đỉnh cao lửa trại! Đùi heo nướng BBQ mật ong quay trên bếp chân cao chuẩn bài!' },
-                { id: 'bulldog_q15', title: 'Đại Trạm Bếp Trưởng Bulldog',items: ['bep_lv12', 'ban_lv11'],             dialogue: 'Cầu gỗ đã vững, đại trạm bếp BBQ và bàn đảo bếp đã xong! Tự hào tay nghề anh em mình!' }
+                { id: 'bulldog_q13', title: 'Mực Nướng Sa Tế Đỏ Lửa',     items: ['an_lv10', 'bep_lv5'],               dialogue: 'Bếp nướng giữ nhiệt cực tốt, nướng mực tươi nguyên con thơm điếc mũi luôn!' },
+                { id: 'bulldog_q14', title: 'Lò Đá Nướng Pizza & BBQ',    items: ['bep_lv11'],                         dialogue: 'Đỉnh cao lửa trại! Bếp nướng chân cao nung đỏ lửa chuẩn bài bếp trưởng!' },
+                { id: 'bulldog_q15', title: 'Đại Trạm Bếp Trưởng Bulldog',items: ['bep_lv12'],                         dialogue: 'Cầu gỗ đã vững, đại trạm bếp BBQ đã xong! Tự hào tay nghề anh em mình!' }
             ]
         },
 
@@ -324,22 +324,22 @@ var GAME_CONFIG = {
             speechStyle: 'Lịch thiệp, nhẹ nhàng nhưng có chút kiêu kỳ dễ thương ("Meo~ Đừng giẫm lên khóm nấm đỏ ấy chứ, để tôi chỉ cách hái đúng điệu!").',
             preferredLines: ['hoa', 'qua', 'cafe', 'thucung', 'tham'],
             questList: [
-                // 15 nhiệm vụ cốt truyện Chương 4 của Ba Tư (1-3 món, tập trung trái cây rừng, thảo mộc, hoa, trà, chăm sóc thú cưng)
+                // 15 nhiệm vụ cốt truyện Chương 4 của Ba Tư (mỗi item <= 3 lần toàn game, cách xa nhau >= 4 nhiệm vụ)
                 { id: 'batu_q1',  title: 'Trái Ngọt Bìa Rừng Thông',    items: ['qua_lv4', 'tham_lv3'],              dialogue: 'Meo~ Đừng giẫm lên khóm nấm đỏ ấy chứ! Trải thảm ra rồi thưởng thức lê rừng mát lịm này đi!' },
                 { id: 'batu_q2',  title: 'Bảo Vệ Thảm Thực Vật',        items: ['antoan_lv3', 'qua_lv5', 'cafe_lv4'],dialogue: 'Vào rừng thông của tôi là phải giữ gìn vệ sinh sạch sẽ và thu hoạch đúng điệu nhé~' },
                 { id: 'batu_q3',  title: 'Dứa Vàng & Trà Thảo Mộc',     items: ['qua_lv6', 'cafe_lv6'],              dialogue: 'Purr... Trái dứa rừng chín mọng thắt nơ này có hương thơm thật thanh khiết!' },
-                { id: 'batu_q4',  title: 'Rổ Dâu Tây Đồi Cao Nguyên',   items: ['qua_lv7'],                          dialogue: 'Meo~ Những quả dâu tây đỏ mọng sương sớm này chỉ mọc ở sườn đồi thông phía đông thôi đấy!' },
-                { id: 'batu_q5',  title: 'Góc Nghỉ Kiểm Lâm Quý Phái',  items: ['tham_lv6', 'qua_lv6', 'congcu_lv5'],dialogue: 'Kiểm lâm cũng cần một chiếc đệm êm và ánh sáng dịu để ghi chép sổ tiêu bản thực vật chứ~' },
-                { id: 'batu_q6',  title: 'Tiêu Bản Hoa Đồng Nội',       items: ['hoa_lv4', 'qua_lv7'],               dialogue: 'Cúc trắng, oải hương tím, mao lương vàng — hệ sinh thái Đồi Thông Xanh thật kỳ diệu!' },
+                { id: 'batu_q4',  title: 'Rổ Dâu Tây Đồi Cao Nguyên',   items: ['qua_lv7', 'thucung_lv2'],           dialogue: 'Meo~ Những quả dâu tây đỏ mọng sương sớm này chỉ mọc ở sườn đồi thông phía đông thôi đấy!' },
+                { id: 'batu_q5',  title: 'Góc Nghỉ Kiểm Lâm Quý Phái',  items: ['tham_lv6', 'congcu_lv5'],           dialogue: 'Kiểm lâm cũng cần một chiếc đệm êm và ánh sáng dịu để ghi chép sổ tiêu bản thực vật chứ~' },
+                { id: 'batu_q6',  title: 'Tiêu Bản Hoa Đồng Nội',       items: ['hoa_lv4', 'thucung_lv3'],           dialogue: 'Cúc trắng, oải hương tím, mao lương vàng — hệ sinh thái Đồi Thông Xanh thật kỳ diệu!' },
                 { id: 'batu_q7',  title: 'Đĩa Việt Quất Rừng Xanh',     items: ['qua_lv8', 'hoa_lv5'],               dialogue: 'Meo~ Việt quất rừng giàu dưỡng chất đặt cạnh lọ hoa cúc trắng mới thanh lịch làm sao!' },
                 { id: 'batu_q8',  title: 'Hũ Trà Đào Cam Sả Thanh Mát', items: ['cafe_lv10', 'hoa_lv6'],             dialogue: 'Tôi đã pha công thức trà đào cam sả kết hợp hương oải hương rừng giúp bạn thư giãn đây~' },
-                { id: 'batu_q9',  title: 'Giỏ Mây Trái Cây Thượng Hạng',items: ['qua_lv9'],                          dialogue: 'Tuyệt phẩm của rừng thông! Giỏ mây đầy ắp trái ngọt thu hoạch bền vững mà không hại cây rừng!' },
+                { id: 'batu_q9',  title: 'Giỏ Mây Trái Cây Thượng Hạng',items: ['qua_lv9', 'qua_lv6'],               dialogue: 'Tuyệt phẩm của rừng thông! Giỏ mây đầy ắp trái ngọt thu hoạch bền vững mà không hại cây rừng!' },
                 { id: 'batu_q10', title: 'Bình Hoa Mao Lương Nắng Mai', items: ['hoa_lv7', 'tham_lv7'],              dialogue: 'Đặt bình hoa mao lương vàng rực bên đệm nghỉ đôi, hương rừng sẽ ru bạn ngủ thật ngon~' },
-                { id: 'batu_q11', title: 'Món Quà Nhỏ Cho Thú Rừng',    items: ['thucung_lv4', 'hoa_lv6', 'qua_lv7'],dialogue: 'Các bé thú nhỏ quanh Vườn Nấm Đỏ cũng thích nô đùa với chiếc đĩa bay cầu vồng này lắm!' },
+                { id: 'batu_q11', title: 'Món Quà Nhỏ Cho Thú Rừng',    items: ['thucung_lv4', 'qua_lv7'],           dialogue: 'Các bé thú nhỏ quanh Vườn Nấm Đỏ cũng thích nô đùa với chiếc đĩa bay cầu vồng này lắm!' },
                 { id: 'batu_q12', title: 'Đệm Tròn Dấu Chân Êm Ái',     items: ['thucung_lv7', 'hoa_lv8'],           dialogue: 'Meo~ Chiếc đệm tròn viền dây thừng và bình hoa thảo nguyên này rất hợp với gu của tôi!' },
-                { id: 'batu_q13', title: 'Ấm Trà Hoa Thảo Mộc Cổ Điển', items: ['cafe_lv11', 'qua_lv8'],             dialogue: 'Thưởng thức một tách trà hoa thảo mộc ấm áp giữa sương rừng là nghệ thuật sống đấy~' },
-                { id: 'batu_q14', title: 'Khu Bảo Tồn Thú Cưng Rừng',   items: ['thucung_lv9', 'hoa_lv8'],           dialogue: 'Tuy lúc đầu tôi hơi khắt khe, nhưng bạn đã chăm sóc khu rừng và thú cưng rất chu đáo!' },
-                { id: 'batu_q15', title: 'Đại Bình Trà Thảo Nguyên',    items: ['cafe_lv12', 'qua_lv9', 'thucung_lv10'],dialogue: 'Purr~ Vườn Nấm Đỏ & Cây Thông Tổ Ong nay đã trở thành thiên đường sinh thái tuyệt đẹp!' }
+                { id: 'batu_q13', title: 'Ấm Trà Hoa Thảo Mộc Cổ Điển', items: ['thucung_lv6', 'qua_lv8'],           dialogue: 'Thưởng thức hương trái ngọt ấm áp giữa sương rừng là nghệ thuật sống đấy~' },
+                { id: 'batu_q14', title: 'Khu Bảo Tồn Thú Cưng Rừng',   items: ['thucung_lv9', 'hoa_lv7'],           dialogue: 'Tuy lúc đầu tôi hơi khắt khe, nhưng bạn đã chăm sóc khu rừng và thú cưng rất chu đáo!' },
+                { id: 'batu_q15', title: 'Đại Bình Trà Thảo Nguyên',    items: ['cafe_lv12', 'hoa_lv9'],             dialogue: 'Purr~ Vườn Nấm Đỏ & Cây Thông Tổ Ong nay đã trở thành thiên đường sinh thái tuyệt đẹp!' }
             ]
         },
 
@@ -363,22 +363,22 @@ var GAME_CONFIG = {
             preferredLines: ['an', 'qua', 'antoan', 'tham', 'bep'],
             isMerchantBonusNpc: true,
             questList: [
-                // 15 nhiệm vụ cốt truyện Chương 5 của Mèo Anh (Đơn Hào Phóng / Happy Orders thưởng thêm Xu/Năng lượng)
+                // 15 nhiệm vụ cốt truyện Chương 5 của Mèo Anh (mỗi item <= 3 lần toàn game, không lặp gần nhau)
                 { id: 'meoanh_q1',  title: 'Khai Trương Quầy Tiếp Tế',     items: ['an_lv5', 'qua_lv5', 'bep_lv4'],     isHappyOrder: true, dialogue: 'Khách đông thế này là hốt bạc rồi! Giao nhanh đơn khai trương này, tôi thưởng thêm quà nhé!' },
                 { id: 'meoanh_q2',  title: 'Combo Sandwich & Cà Phê Sữa', items: ['an_lv6', 'cafe_lv7'],               isHappyOrder: false,dialogue: 'Thương nhân sành ăn như tôi nhìn chiếc Pizza và ly cà phê mát lạnh này là biết đắt hàng ngay!' },
                 { id: 'meoanh_q3',  title: 'Nguồn Điện Cho Xe Hàng Lưu Động',items: ['antoan_lv7', 'bep_lv6'],          isHappyOrder: true, dialogue: 'Quầy Tiếp Tế ở Dốc Sương Mù Bắc cần lửa ấm và đồ nghề xịn, đối tác lo giúp tôi nhé!' },
                 { id: 'meoanh_q4',  title: 'Quạt Mát & Trái Cây Đặc Sản', items: ['antoan_lv8', 'qua_lv7', 'tham_lv6'],isHappyOrder: false,dialogue: 'Làm ăn uy tín là phải chu đáo! Khách vừa có quạt mát, đệm êm lại được ăn dâu tây rừng!' },
                 { id: 'meoanh_q5',  title: 'Tiệc Xiên Nướng Hốt Bạc',     items: ['an_lv8', 'bep_lv7'],                isHappyOrder: true, dialogue: 'Mùi xiên nướng thơm phức thế này khách xếp hàng dài cả dốc núi! Giao ngay nhận thưởng lớn!' },
-                { id: 'meoanh_q6',  title: 'Pin Mặt Trời Trạm Giao Thương',items: ['antoan_lv9'],                       isHappyOrder: false,dialogue: 'Đầu tư tấm pin năng lượng mặt trời này là bài toán kinh doanh siêu lợi nhuận, tiết kiệm điện!' },
+                { id: 'meoanh_q6',  title: 'Pin Mặt Trời Trạm Giao Thương',items: ['antoan_lv9', 'ban_lv9'],            isHappyOrder: false,dialogue: 'Đầu tư tấm pin năng lượng mặt trời này là bài toán kinh doanh siêu lợi nhuận, tiết kiệm điện!' },
                 { id: 'meoanh_q7',  title: 'Tôm Nướng Sa Tế & Trà Nhiệt Đới',items: ['an_lv9', 'cafe_lv9', 'qua_lv8'],  isHappyOrder: true, dialogue: 'Thực đơn VIP của Trạm Giao Thương! Giao đơn này tôi bật mí một góc bản đồ Dốc Sương Mù Bắc!' },
-                { id: 'meoanh_q8',  title: 'Giường Xếp Nghỉ Trưa Thương Nhân',items: ['tham_lv8', 'antoan_lv8'],        isHappyOrder: false,dialogue: 'Kiếm tiền cả sáng rồi, ông chủ như tôi cũng phải có chiếc giường xếp khung nhôm ngả lưng chứ!' },
+                { id: 'meoanh_q8',  title: 'Giường Xếp Nghỉ Trưa Thương Nhân',items: ['tham_lv8', 'bep_lv8'],           isHappyOrder: false,dialogue: 'Kiếm tiền cả sáng rồi, ông chủ như tôi cũng phải có chiếc giường xếp khung nhôm ngả lưng chứ!' },
                 { id: 'meoanh_q9',  title: 'Âm Nhạc Khuấy Động Phiên Chợ',items: ['antoan_lv10', 'bep_lv9'],           isHappyOrder: true, dialogue: 'Bật loa Bluetooth xập xình bên bếp than hồng, doanh thu Quầy Tiếp Tế tăng gấp đôi luôn!' },
                 { id: 'meoanh_q10', title: 'Đệm Chăn Bông & Giỏ Trái Cây', items: ['tham_lv9', 'qua_lv9'],              isHappyOrder: true, dialogue: 'Hàng thượng hạng cho khách VIP! Đối tác uy tín như bạn xứng đáng nhận thưởng hậu hĩnh!' },
-                { id: 'meoanh_q11', title: 'Đại Tiệc Mực Nướng & Quầy Bar',items: ['an_lv10', 'ban_lv10'],              isHappyOrder: false,dialogue: 'Bàn Quầy Bar cắm trại kết hợp mực nướng sa tế — thương vụ triệu vàng của chúng ta đây rồi!' },
+                { id: 'meoanh_q11', title: 'Đại Tiệc Hải Sản & Quầy Bar',  items: ['ban_lv10', 'an_lv7'],               isHappyOrder: false,dialogue: 'Bàn Quầy Bar cắm trại kết hợp pizza hải sản — thương vụ triệu vàng của chúng ta đây rồi!' },
                 { id: 'meoanh_q12', title: 'Trạm Sạc Dự Phòng Hậu Cần',    items: ['antoan_lv11', 'bep_lv10'],          isHappyOrder: true, dialogue: 'Có trạm sạc dự phòng này, màn sương mù phía bắc dày đặc mấy cũng không làm khó được đoàn xe!' },
                 { id: 'meoanh_q13', title: 'Đùi Heo BBQ Độc Quyền',        items: ['an_lv11'],                          isHappyOrder: true, dialogue: 'Món tủ tôi mê nhất: Đùi heo nướng BBQ bóng mật ong! Giao liền tay, rương thưởng mở ngay!' },
-                { id: 'meoanh_q14', title: 'Trạm Năng Lượng Glamping',     items: ['antoan_lv12', 'tham_lv9'],          isHappyOrder: true, dialogue: 'Đỉnh cao hậu cần! Trạm năng lượng Glamping cấp điện cho toàn bộ Dốc Sương Mù Bắc!' },
-                { id: 'meoanh_q15', title: 'Trao Tấm Bản Đồ Xuyên Sương Mù',items: ['ban_lv12', 'an_lv11'],             isHappyOrder: true, dialogue: 'Đối tác số một của tôi! Tấm bản đồ cổ mở lối lên Đỉnh Rừng Thông & Đài Thiên Văn là của bạn!' }
+                { id: 'meoanh_q14', title: 'Trạm Năng Lượng Glamping',     items: ['antoan_lv12', 'tham_lv8'],          isHappyOrder: true, dialogue: 'Đỉnh cao hậu cần! Trạm năng lượng Glamping cấp điện cho toàn bộ Dốc Sương Mù Bắc!' },
+                { id: 'meoanh_q15', title: 'Trao Tấm Bản Đồ Xuyên Sương Mù',items: ['ban_lv12'],                        isHappyOrder: true, dialogue: 'Đối tác số một của tôi! Tấm bản đồ cổ mở lối lên Đỉnh Rừng Thông & Đài Thiên Văn là của bạn!' }
             ]
         },
 
@@ -401,21 +401,21 @@ var GAME_CONFIG = {
             speechStyle: 'Trầm lắng, sâu sắc, truyền cảm hứng chinh phục ("Đằng sau màn sương mù luôn là bầu trời sao đẹp nhất. Bạn sẵn sàng cho hành trình mới chưa?").',
             preferredLines: ['cauca', 'congcu', 'trai', 'antoan', 'thucung'],
             questList: [
-                // 15 nhiệm vụ cốt truyện Chương 6 của Xiêm (1-3 món, tập trung thám hiểm, câu cá, kayak, ống nhòm, đài thiên văn, lều geodesic)
+                // 15 nhiệm vụ cốt truyện Chương 6 của Xiêm (mỗi item <= 3 lần toàn game, cách xa nhau >= 4 nhiệm vụ)
                 { id: 'xiem_q1',  title: 'Vượt Qua Màn Sương Mù Bắc',   items: ['cauca_lv3', 'congcu_lv6'],           dialogue: 'Đằng sau màn sương mù luôn là bầu trời sao đẹp nhất. Bạn sẵn sàng cho hành trình mới chưa?' },
-                { id: 'xiem_q2',  title: 'Câu Cá Suối Thượng Nguồn',    items: ['cauca_lv4', 'thucung_lv4', 'bep_lv6'],dialogue: 'Dòng suối trên đỉnh núi trong vắt, thả cần câu trúc và tận hưởng sự tĩnh lặng của đại ngàn.' },
+                { id: 'xiem_q2',  title: 'Câu Cá Suối Thượng Nguồn',    items: ['cauca_lv4', 'thucung_lv5', 'bep_lv6'],dialogue: 'Dòng suối trên đỉnh núi trong vắt, thả cần câu trúc và tận hưởng sự tĩnh lặng của đại ngàn.' },
                 { id: 'xiem_q3',  title: 'Cần Câu Máy & Đèn Bão Xanh',  items: ['cauca_lv5', 'congcu_lv7'],           dialogue: 'Một nhà thám hiểm sắc sảo luôn chuẩn bị thiết bị chuẩn xác trước khi màn đêm buông xuống.' },
                 { id: 'xiem_q4',  title: 'Liên Lạc Từ Đỉnh Rừng Thông', items: ['cauca_lv6', 'antoan_lv8'],           dialogue: 'Tín hiệu bộ đàm từ Đỉnh Rừng Thông đã thông suốt! Gió trên cao thật mát lành.' },
                 { id: 'xiem_q5',  title: 'Ống Nhòm Quan Sát Tinh Vân',  items: ['cauca_lv7', 'congcu_lv9'],           dialogue: 'Qua ống nhòm xanh rêu và ánh đèn măng-xông, dải Ngân Hà hiện lên rõ từng chòm sao.' },
-                { id: 'xiem_q6',  title: 'Hạ Thủy Thuyền Kayak Vượt Thác',items: ['cauca_lv8'],                        dialogue: 'Khoảnh khắc chinh phục! Hạ thủy thuyền Kayak cam vượt dòng thác thượng nguồn Đồi Thông Xanh!' },
+                { id: 'xiem_q6',  title: 'Hạ Thủy Thuyền Kayak Vượt Thác',items: ['cauca_lv8', 'thucung_lv7'],        dialogue: 'Khoảnh khắc chinh phục! Hạ thủy thuyền Kayak cam vượt dòng thác thượng nguồn Đồi Thông Xanh!' },
                 { id: 'xiem_q7',  title: 'Lều Vòm Cầu Geodesic Ngắm Sao',items: ['trai_lv10', 'congcu_lv10'],         dialogue: 'Lều Dome kính thiên văn Geodesic giúp chúng ta nằm ngắm trọn vẹn bầu trời sao đêm!' },
-                { id: 'xiem_q8',  title: 'Bạn Đồng Hành Trên Đỉnh Cao', items: ['thucung_lv8', 'cauca_lv6', 'antoan_lv9'],dialogue: 'Những người bạn nhỏ trên đỉnh núi cũng háo hức đón chờ cơn mưa sao băng đêm nay.' },
-                { id: 'xiem_q9',  title: 'Đèn Măng-Xông Đồng Săn Sao',  items: ['congcu_lv11', 'cauca_lv7'],          dialogue: 'Ánh sáng vàng dịu của đèn măng-xông đồng không làm lóa mắt khi quan sát thiên văn.' },
-                { id: 'xiem_q10', title: 'Lều Thổ Cẩm Cho Đội Thám Hiểm Nhí',items: ['thucung_lv11', 'cauca_lv8'],    dialogue: 'Đội thú cưng thám hiểm đã có chiếc lều thổ cẩm riêng bên cạnh bến thuyền Kayak!' },
-                { id: 'xiem_q11', title: 'Biệt Thự Vòm Đài Thiên Văn',  items: ['trai_lv11'],                         dialogue: 'Biệt thự vòm sàn gỗ với dải đèn LED ấm áp — trạm dừng chân mơ ước trên Đỉnh Rừng Thông!' },
+                { id: 'xiem_q8',  title: 'Đôi Ghế Bập Bênh Ngắm Sao (1/2)',items: ['ghe_lv10', 'thucung_lv8'],        dialogue: 'Ngả lưng trên ghế bập bênh nhâm nhi trà ấm và đếm sao băng cùng tôi nhé.' },
+                { id: 'xiem_q9',  title: 'Đèn Măng-Xông Đồng Săn Sao',  items: ['congcu_lv11', 'cauca_lv6'],          dialogue: 'Ánh sáng vàng dịu của đèn măng-xông đồng không làm lóa mắt khi quan sát thiên văn.' },
+                { id: 'xiem_q10', title: 'Lều Thổ Cẩm Cho Đội Thám Hiểm Nhí',items: ['thucung_lv11', 'cauca_lv7'],    dialogue: 'Đội thú cưng thám hiểm đã có chiếc lều thổ cẩm riêng bên cạnh đài quan sát!' },
+                { id: 'xiem_q11', title: 'Biệt Thự Vòm Đài Thiên Văn',  items: ['trai_lv11', 'cauca_lv8'],            dialogue: 'Biệt thự vòm sàn gỗ với dải đèn LED ấm áp — trạm dừng chân mơ ước trên Đỉnh Rừng Thông!' },
                 { id: 'xiem_q12', title: 'Đèn Cực Quang Thượng Hạng',   items: ['congcu_lv12'],                       dialogue: 'Kiệt tác ánh sáng! Chiếc đèn măng-xông hoàng gia tỏa sáng như dải cực quang giữa rừng đêm!' },
-                { id: 'xiem_q13', title: 'Đôi Ghế Bập Bênh Ngắm Sao (1/2)',items: ['ghe_lv10', 'cafe_lv10'],          dialogue: 'Ngả lưng trên ghế bập bênh nhâm nhi trà ấm và đếm sao băng cùng tôi nhé.' },
-                { id: 'xiem_q14', title: 'Đôi Ghế Bập Bênh Ngắm Sao (2/2)',items: ['ghe_lv10', 'antoan_lv11'],        dialogue: 'Đủ hai chiếc ghế bập bênh trên Đài Thiên Văn rồi — nơi bầu trời gần mặt đất nhất!' },
+                { id: 'xiem_q13', title: 'Bạn Đồng Hành Trên Đỉnh Cao', items: ['thucung_lv10', 'cauca_lv9'],         dialogue: 'Những người bạn nhỏ trên đỉnh núi cũng háo hức đón chờ cơn mưa sao băng đêm nay.' },
+                { id: 'xiem_q14', title: 'Đôi Ghế Bập Bênh Ngắm Sao (2/2)',items: ['ghe_lv10', 'tham_lv9'],           dialogue: 'Đủ hai chiếc ghế bập bênh trên Đài Thiên Văn rồi — nơi bầu trời gần mặt đất nhất!' },
                 { id: 'xiem_q15', title: 'Lâu Đài Cắm Trại Đỉnh Cao',   items: ['trai_lv12'],                         dialogue: 'Đỉnh cao thám hiểm! Bạn đã chinh phục trọn vẹn 6 Chương của Đồi Thông Xanh!' }
             ]
         }
